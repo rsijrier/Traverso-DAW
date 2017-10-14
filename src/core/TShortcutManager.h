@@ -149,6 +149,7 @@ public:
 	void add_translation(const QString& signature, const QString& translation);
 	void add_meta_object(const QMetaObject* mo);
 	void registerItemClass(const QString& item, const QString& className);
+    void register_command_plugin(CommandPlugin* plugin, const QString& pluginName);
 	QString get_translation_for(const QString& entry);
 	QString createHtmlForClass(const QString& className, QObject* obj=0);
 	QList<QString> getClassNames() const;
@@ -167,6 +168,7 @@ public:
 
 private:
 	QHash<QString, CommandPlugin*>	m_commandPlugins;
+
 	QHash<QString, TFunction*>	m_functions;
 	QHash<int, TShortcut*>		m_shortcuts;
 	QHash<QString, QString>		m_translations;

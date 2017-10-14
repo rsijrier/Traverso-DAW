@@ -166,7 +166,7 @@ QString timeref_to_ms_2 (const TimeRef& ref)
 	secs = remainder / UNIVERSAL_SAMPLE_RATE;
 	remainder -= secs * UNIVERSAL_SAMPLE_RATE;
 	frames = remainder * 100 / UNIVERSAL_SAMPLE_RATE;
-	spos.sprintf ( " %02d:%02d%c%02d", mins, secs, QLocale::system().decimalPoint().toAscii(), frames );
+	spos.sprintf ( " %02d:%02d%c%02d", mins, secs, QLocale::system().decimalPoint().toLatin1(), frames );
 
 	return spos;
 }
@@ -185,7 +185,7 @@ QString timeref_to_ms_3(const TimeRef& ref)
 	secs = remainder / UNIVERSAL_SAMPLE_RATE;
 	remainder -= secs * UNIVERSAL_SAMPLE_RATE;
 	frames = remainder * 1000 / UNIVERSAL_SAMPLE_RATE;
-	spos.sprintf ( " %02d:%02d%c%03d", mins, secs, QLocale::system().decimalPoint().toAscii(), frames );
+	spos.sprintf ( " %02d:%02d%c%03d", mins, secs, QLocale::system().decimalPoint().toLatin1(), frames );
 
 	return spos;
 }

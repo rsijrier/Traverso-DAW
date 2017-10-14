@@ -29,26 +29,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QHash>
 #include <QVariant>
 
-class CommandInterface
-{
-public:
-	virtual ~CommandInterface() {}
-	virtual TCommand* create(QObject* obj, const QString& command, QVariantList arguments) = 0;
-};
-
-Q_DECLARE_INTERFACE(CommandInterface, "org.traversodaw.Command.CommandInterface/1.0")
-
-
 /**
  * \class CommandPlugin
  * \brief An abstract class to create new Command's which can be loaded dynamically
  *
  */
 
-class CommandPlugin : public QObject, public CommandInterface
+class CommandPlugin : public QObject
 {
 	Q_OBJECT
-	Q_INTERFACES(CommandInterface)
 
 public:
 	virtual ~CommandPlugin() {}

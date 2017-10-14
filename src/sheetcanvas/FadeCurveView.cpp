@@ -108,7 +108,7 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 	
 	
 	painter->save();
-	painter->setClipRect(m_boundingRect.intersect(m_parentViewItem->boundingRect()));
+    painter->setClipRect(m_boundingRect.intersected(m_parentViewItem->boundingRect()));
 	painter->setRenderHint(QPainter::Antialiasing);
 	
 	QPainterPath path;

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioDevice.h"
 #include "Utils.h"
 #include "TShortcutManager.h"
+#include "../commands/plugins/TraversoCommands/TraversoCommands.h"
 
 #include <QSettings>
 #include <QString>
@@ -57,6 +58,9 @@ void TConfig::load_configuration()
 	}
 	
 	set_audiodevice_driver_properties();
+
+    TraversoCommands* commands = new TraversoCommands();
+    tShortCutManager().register_command_plugin(commands, "TraversoCommands");
 	tShortCutManager().loadFunctions();
 	tShortCutManager().loadShortcuts();
 }
@@ -90,7 +94,7 @@ void TConfig::check_and_load_configuration( )
 void TConfig::save( )
 {
 	QSettings settings(QSettings::IniFormat, QSettings::UserScope, "Traverso", "Traverso");
-	printf("Saving config to %s\n", settings.fileName().toAscii().data());
+	printf("Saving config to %s\n", settings.fileName().toLatin1().data());
 	
 	QHash<QString, QVariant>::const_iterator i = m_configs.constBegin();
 	

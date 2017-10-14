@@ -72,7 +72,7 @@ VUMeter::VUMeter(QWidget* parent, AudioBus* bus)
 	mainlayout = new QVBoxLayout;
 	load_theme_data();
 	
-	QWidget* levelLedLayoutwidget = new QWidget(this);
+    QWidget* levelLedLayoutwidget = new QWidget(this);
 	levelLedLayout = new QHBoxLayout(levelLedLayoutwidget);
 	
 	levelLedLayout->setSpacing(0);
@@ -84,7 +84,7 @@ VUMeter::VUMeter(QWidget* parent, AudioBus* bus)
 	m_minSpace += levelLedLayout->spacing();
 
 	for (int i = 0; i < bus->get_channel_count(); ++i) {
-		QWidget* widget = new QWidget(this);
+        QWidget* widget = new QWidget(this);
 		QVBoxLayout* levellayout = new QVBoxLayout(widget);
 		levellayout->setMargin(0);
 		levellayout->setSpacing(0);

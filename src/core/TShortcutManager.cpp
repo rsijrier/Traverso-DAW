@@ -244,7 +244,7 @@ TFunction* TShortcutManager::getFunction(const QString &functionName) const
 	TFunction* function = m_functions.value(functionName, 0);
 	if (!function)
 	{
-		printf("TShortcutManager::getFunction: Function %s not in database!!\n", functionName.toAscii().data());
+		printf("TShortcutManager::getFunction: Function %s not in database!!\n", functionName.toLatin1().data());
 	}
 
 	return function;
@@ -317,6 +317,10 @@ CommandPlugin* TShortcutManager::getCommandPlugin(const QString &pluginName)
 	return m_commandPlugins.value(pluginName);
 }
 
+void TShortcutManager::register_command_plugin(CommandPlugin *plugin, const QString &pluginName)
+{
+    m_commandPlugins.insert(pluginName, plugin);
+}
 
 bool TShortcutManager::isCommandClass(const QString &className)
 {
@@ -355,17 +359,13 @@ QString TShortcutManager::getClassForObject(const QString &object) const
 
 void TShortcutManager::loadFunctions()
 {
-#if defined (STATIC_BUILD)
-	Q_IMPORT_PLUGIN(tcp_traversocommands);
-#endif
-
-	foreach (QObject* obj, QPluginLoader::staticInstances()) {
-		CommandPlugin* plug = qobject_cast<CommandPlugin*>(obj);
-		if (plug)
-		{
-			m_commandPlugins.insert(plug->metaObject()->className(), plug);
-		}
-	}
+//	foreach (QObject* obj, QPluginLoader::staticInstances()) {
+//		CommandPlugin* plug = qobject_cast<CommandPlugin*>(obj);
+//		if (plug)
+//		{
+//			m_commandPlugins.insert(plug->metaObject()->className(), plug);
+//		}
+//	}
 
 
 	add_translation("GainBase", tr("Gain"));

@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <Debugger.h>
 
-#define UC_(x) (const unsigned char* ) x.toAscii().data()
+#define UC_(x) (const unsigned char* ) x.toLatin1().data()
 
 enum PortDirection {
 	INPUT,
@@ -314,7 +314,7 @@ LV2ControlPort* LV2Plugin::create_port(int portIndex, float defaultValue)
 		case CONTROL:
 			switch (direction) {
 			case INPUT:
-				defaultValue = isnan(defaultValue) ? 0.0 : defaultValue;
+                defaultValue = std::isnan(defaultValue) ? 0.0 : defaultValue;
 				ctrlport = new LV2ControlPort(this, portIndex, defaultValue);
 				break;
 			case OUTPUT:

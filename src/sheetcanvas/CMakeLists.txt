@@ -9,8 +9,6 @@ ${CMAKE_SOURCE_DIR}/src/plugins/LV2
 ${CMAKE_SOURCE_DIR}/src/3rdparty/slv2
 ${CMAKE_SOURCE_DIR}/src/traverso
 ${CMAKE_SOURCE_DIR}/src/traverso/dialogs
-${QT_QTGUI_INCLUDE_DIR}
-${QT_QTXML_INCLUDE_DIR}
 )
 
 SET(TRAVERSO_SONGCANVAS_SOURCES
@@ -22,6 +20,7 @@ CurveNodeView.cpp
 CurveView.cpp
 FadeCurveView.cpp
 MarkerView.cpp
+LineView.cpp
 PluginChainView.cpp
 PluginView.cpp
 PositionIndicator.cpp
@@ -43,50 +42,11 @@ TCanvasCursor.cpp
 TKnobView.cpp
 )
 
-SET(TRAVERSO_SONGCANVAS_MOC_CLASSES
-AudioClipView.h
-AudioTrackView.h
-ClipsViewPort.h
-Cursors.h
-CurveNodeView.h
-FadeCurveView.h
-MarkerView.h
-PluginChainView.h
-PluginView.h
-TrackView.h
-TTrackLaneView.h
-PositionIndicator.h
-TBusTrackView.h
-ViewItem.h
-dialogs/AudioClipEditDialog.h
-dialogs/TTrackManagerDialog.h
-CurveView.h
-SheetView.h
-SheetWidget.h
-TrackPanelView.h
-TimeLineView.h
-LineView.h
-ViewPort.h
-VUMeterView.h
-TCanvasCursor.h
-TKnobView.h
-)
-
-SET(TRAVERSO_SONGCANVAS_UI_FILES
-ui/AudioClipEditDialog.ui
-ui/TTrackManagerDialog.ui
-)
-
-QT4_WRAP_CPP(TRAVERSO_SONGCANVAS_MOC_SOURCES ${TRAVERSO_SONGCANVAS_MOC_CLASSES})
-QT4_WRAP_UI(TRAVERSO_SONGCANVAS_UI_SOURCES ${TRAVERSO_SONGCANVAS_UI_FILES})
-
 
 SET(TRAVERSO_SONGCANVAS_LIBRARY "traversosheetcanvas")
 
 ADD_LIBRARY(${TRAVERSO_SONGCANVAS_LIBRARY} STATIC 
 	${TRAVERSO_SONGCANVAS_SOURCES} 
-	${TRAVERSO_SONGCANVAS_MOC_SOURCES} 
-	${TRAVERSO_SONGCANVAS_UI_SOURCES}
 )
 
 IF(USE_PCH)

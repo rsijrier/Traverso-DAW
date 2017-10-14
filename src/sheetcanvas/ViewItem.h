@@ -69,8 +69,8 @@ public:
 	
 	QRectF boundingRect() const;
 	virtual void calculate_bounding_rect() {
-		for (int i=0; i< QGraphicsItem::children().size(); ++i) {
-			QGraphicsItem* item = QGraphicsItem::children().at(i);
+        for (int i=0; i< QGraphicsItem::childItems().size(); ++i) {
+            QGraphicsItem* item = QGraphicsItem::childItems().at(i);
 			if (is_viewitem(item)) {
                                 (qgraphicsitem_cast<ViewItem*>(item))->calculate_bounding_rect();
 			}

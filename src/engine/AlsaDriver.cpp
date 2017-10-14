@@ -110,8 +110,8 @@ int AlsaDriver::setup(bool capture, bool playback, const QString& devicename, co
         if (devicename != "default") {
                 pcmName = QString("hw:%1").arg(get_device_id_by_name(devicename));
 	}
-	char *playback_pcm_name = strdup(pcmName.toAscii().data());
-	char *capture_pcm_name = strdup(pcmName.toAscii().data());
+    char *playback_pcm_name = strdup(pcmName.toLatin1().data());
+    char *capture_pcm_name = strdup(pcmName.toLatin1().data());
 	int shorts_first = false;
 
 	/* duplex is the default */
@@ -1272,7 +1272,7 @@ again:
 			}
 
 			if (revents & POLLERR) {
-				xrun_detected = TRUE;
+                xrun_detected = true;
 			}
 
 			if (revents & POLLOUT) {
@@ -1296,7 +1296,7 @@ again:
 			}
 
 			if (revents & POLLERR) {
-				xrun_detected = TRUE;
+                xrun_detected = true;
 			}
 
 			if (revents & POLLIN) {

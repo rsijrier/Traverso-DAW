@@ -78,7 +78,7 @@ public :
 			TSession* sheet);
 	~SheetView();
 
-	void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget*) {}
+    void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget*) {}
 	QRectF boundingRect() const {return QRectF();}
 
 	TSession* get_sheet() const {return m_session;}

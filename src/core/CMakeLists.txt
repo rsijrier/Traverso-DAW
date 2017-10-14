@@ -6,8 +6,6 @@ ${CMAKE_SOURCE_DIR}/src/common
 ${CMAKE_SOURCE_DIR}/src/engine
 ${CMAKE_SOURCE_DIR}/src/plugins
 ${CMAKE_SOURCE_DIR}/src/plugins/native
-${QT_QTGUI_INCLUDE_DIR}
-${QT_QTXML_INCLUDE_DIR}
 )
 
 SET(TRAVERSO_CORE_SOURCES
@@ -28,8 +26,10 @@ TCommand.cpp
 TConfig.cpp
 TShortcutManager.cpp
 ContextPointer.cpp
+ContextItem.cpp
 Curve.cpp
 CurveNode.cpp
+CommandPlugin.cpp
 DiskIO.cpp
 Export.cpp
 FadeCurve.cpp
@@ -58,45 +58,6 @@ ProjectConverter.cpp
 TGlobalContext.cpp
 )
 
-SET(TRAVERSO_CORE_MOC_CLASSES
-${CMAKE_SOURCE_DIR}/src/common/Tsar.h
-AudioClip.h
-AudioClipManager.h
-AudioFileMerger.h
-AudioFileCopyConvert.h
-AudioTrack.h
-ProcessingData.h
-TConfig.h
-ContextPointer.h
-Curve.h
-DiskIO.h
-Export.h
-FadeCurve.h
-Information.h
-Marker.h
-Peak.h
-Project.h
-ProjectConverter.h
-ProjectManager.h
-ReadSource.h
-ResourcesManager.h
-Sheet.h
-TBusTrack.h
-Themer.h
-TimeLine.h
-Track.h
-TSession.h
-TCommand.h
-TShortcutManager.h
-WriteSource.h
-ContextItem.h
-TInputEventDispatcher.h
-CommandPlugin.h
-TGlobalContext.h
-)
-
-QT4_WRAP_CPP(TRAVERSO_CORE_MOC_SOURCES ${TRAVERSO_CORE_MOC_CLASSES})
-
 IF(UNIX)
 	IF(HOST_SUPPORTS_SSE)
 		IF(IS_ARCH_X86)
@@ -117,7 +78,7 @@ ENDIF(UNIX)
 
 SET(TRAVERSO_CORE_LIBRARY "traversocore")
 
-ADD_LIBRARY(${TRAVERSO_CORE_LIBRARY} STATIC ${TRAVERSO_CORE_SOURCES} ${TRAVERSO_CORE_MOC_SOURCES} ${SSE_OBJECT_FILE})
+ADD_LIBRARY(${TRAVERSO_CORE_LIBRARY} STATIC ${TRAVERSO_CORE_SOURCES} ${SSE_OBJECT_FILE})
 
 IF(USE_PCH)
     ADD_DEPENDENCIES(traversocore precompiled_headers)

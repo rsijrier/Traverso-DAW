@@ -1770,8 +1770,8 @@ TCommand* TMainWindow::show_track_finder()
 		}
 	}
 
-	m_trackFinderTreeView->header()->setResizeMode(0, QHeaderView::Stretch);
-	m_trackFinderTreeView->header()->setResizeMode(1, QHeaderView::ResizeToContents);
+    m_trackFinderTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    m_trackFinderTreeView->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 
 	m_trackFinder->setFocus();
 

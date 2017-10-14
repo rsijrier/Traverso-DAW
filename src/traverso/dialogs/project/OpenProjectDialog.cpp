@@ -82,14 +82,14 @@ void OpenProjectDialog::update_projects_list()
 		QFile file(fileToOpen);
 
 		if (!file.open(QIODevice::ReadOnly)) {
-			PWARN("OpenProjectDialog:: Cannot open project properties file (%s)", fileToOpen.toAscii().data());
+			PWARN("OpenProjectDialog:: Cannot open project properties file (%s)", fileToOpen.toLatin1().data());
 			continue;
 		}
 
 		QString errorMsg;
 		if (!doc.setContent(&file, &errorMsg)) {
 			file.close();
-			PWARN("OpenProjectDialog:: Cannot set content of XML file (%s)", errorMsg.toAscii().data());
+			PWARN("OpenProjectDialog:: Cannot set content of XML file (%s)", errorMsg.toLatin1().data());
 			continue;
 		}
 
@@ -195,7 +195,7 @@ void OpenProjectDialog::on_loadProjectButton_clicked( )
 	}
 	
 	if (pm().load_project(title)<0) {
-		PERROR("Could not load project %s", title.toAscii().data());
+		PERROR("Could not load project %s", title.toLatin1().data());
 	}
 	
         hide();
@@ -219,7 +219,7 @@ void OpenProjectDialog::on_deleteProjectbutton_clicked( )
 
 	switch (QMessageBox::information(this,
 		tr("Traverso - Question"),
-		   tr("Are you sure that you want to remove the project %1 ? It's not possible to undo it !").arg(title).toAscii().data(),
+		   tr("Are you sure that you want to remove the project %1 ? It's not possible to undo it !").arg(title).toLatin1().data(),
 		      "Yes", "No", QString::null, 1, -1)) {
 			      case 0:
 				      pm().remove_project(title);

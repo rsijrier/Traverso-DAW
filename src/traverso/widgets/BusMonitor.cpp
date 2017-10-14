@@ -185,7 +185,7 @@ void BusMonitor::keyPressEvent(QKeyEvent * event)
 	} else if (event->key() == Qt::Key_R) {
 		reset_vu_meters();
 	} else {
-		QWidget::keyPressEvent(event);
+        QWidget::keyPressEvent(event);
 	}
 }
 

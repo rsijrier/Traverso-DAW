@@ -206,7 +206,7 @@ int ProjectManager::load_project(const QString& projectName)
 	PENTER;
 
 	if( ! project_exists(projectName) ) {
-		PERROR("project %s doesn't exist!", projectName.toAscii().data());
+		PERROR("project %s doesn't exist!", projectName.toLatin1().data());
 		return -1;
 	}
 

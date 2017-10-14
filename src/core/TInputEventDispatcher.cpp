@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 /**
- * \class InputEngine
+ * \class InputEventDispatcher
  * \brief Processes keyboard/mouse events, dispatches the result, and handles the returned Command objects
  *
 	InputEngine forms, together with ViewPort, Command, ContextPointer, QObject <br />

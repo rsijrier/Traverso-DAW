@@ -37,11 +37,11 @@ PluginPropertiesDialog::PluginPropertiesDialog(QWidget* parent, Plugin* plugin)
 	: QDialog(parent)
 	, m_plugin(plugin)
 {
-	QWidget* sliderWidget = new QWidget(this);
+    QWidget* sliderWidget = new QWidget(this);
 	QVBoxLayout* sliderWidgetLayout = new QVBoxLayout;
 	sliderWidget->setLayout(sliderWidgetLayout);
 
-	QWidget* optionsWidget = new QWidget(this);
+    QWidget* optionsWidget = new QWidget(this);
 	QHBoxLayout* optionsLayout = new QHBoxLayout;
 	optionsWidget->setLayout(optionsLayout);
 	m_bypassButton = new QPushButton(tr("Bypass"), optionsWidget);
@@ -67,7 +67,7 @@ PluginPropertiesDialog::PluginPropertiesDialog(QWidget* parent, Plugin* plugin)
 			continue;
 		}
 		
-		QWidget* widget = new QWidget(sliderWidget);
+        QWidget* widget = new QWidget(sliderWidget);
 		widget->setMaximumHeight(22);
 		QHBoxLayout* lay = new QHBoxLayout();
 		lay->setSpacing(12);

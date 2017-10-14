@@ -1,8 +1,5 @@
 #CMAKE SETUP
-#Require 2.4.2 for Qt finding
-#Require 2.4.3 for moc change detection
-#Require 2.4.6 for FindPkgConfig.cmake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)
+#Require 3.1.0 for Qt finding
 
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -97,7 +94,6 @@ IF(APPLE)
         LINK_DIRECTORIES("/opt/local/lib")
 ENDIF(APPLE)
 
-SET (QT_MIN_VERSION "4.6.0")
 SET(MINIMAL_ALSA_VERSION 1.0.0)
 SET(MINIMAL_JACK_VERSION 0.100)
 SET(MINIMAL_PORTAUDIO_VERSION 19)
@@ -137,11 +133,6 @@ TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 FIND_PACKAGE(PkgConfig)
 
 #FIND DEPENDENCIES
-FIND_PACKAGE(Qt4 REQUIRED)
-
-
-include(${QT_USE_FILE})
-
 
 INCLUDE (ConfigureChecks.cmake)
 
@@ -293,19 +284,21 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 
+SET (QT_MIN_VERSION "5.6.0")
+find_package(Qt5 COMPONENTS Core Widgets Xml REQUIRED)
+set(CMAKE_AUTOMOC ON)
+SET(CMAKE_AUTOUIC ON)
+
 #Set up include dirs with all found packages
 INCLUDE_DIRECTORIES(
 ${CMAKE_SOURCE_DIR}/src/common
-${QT_INCLUDE_DIR}
-${QT_QTCORE_INCLUDE_DIR}
+${Qt5Widgets_INCLUDE_DIRS}
+${Qt5Widgets_INCLUDES}
+${Qt5Xml_INCLUDE_DIRS}
+${Qt5Xml_INCLUDES}
 )
 
-
-#Set up libraries to link with all found packages
-LINK_LIBRARIES (
-${QT_QT_LIBRARY}
-)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 CHECK_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN)
 IF(NOT HAVE_POSIX_MEMALIGN)

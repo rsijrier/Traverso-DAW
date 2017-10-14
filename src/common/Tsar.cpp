@@ -288,7 +288,7 @@ void Tsar::process_event_slot(const TsarEvent& event )
 		// This equals QMetaObject::invokeMethod(), without type checking. But we know that the types
 		// are the correct ones, and will be casted just fine!
 		if ( ! (event.caller->qt_metacall(QMetaObject::InvokeMetaMethod, event.slotindex, _a) < 0) ) {
-			qDebug("Tsar::process_event_slot failed (%s::%s)", event.caller->metaObject()->className(), event.caller->metaObject()->method(event.slotindex).signature());
+            qDebug("Tsar::process_event_slot failed (%s::%s)", event.caller->metaObject()->className(), event.caller->metaObject()->method(event.slotindex).methodSignature());
 		}
 	}
 }
@@ -313,7 +313,7 @@ void Tsar::process_event_signal(const TsarEvent & event )
                 // This equals QMetaObject::invokeMethod(), without type checking. But we know that the types
                 // are the correct ones, and will be casted just fine!
                 if ( ! (event.caller->qt_metacall(QMetaObject::InvokeMetaMethod, event.signalindex, _a) < 0) ) {
-                        qDebug("Tsar::process_event_signal failed (%s::%s)", event.caller->metaObject()->className(), event.caller->metaObject()->method(event.signalindex).signature());
+                        qDebug("Tsar::process_event_signal failed (%s::%s)", event.caller->metaObject()->className(), event.caller->metaObject()->method(event.signalindex).methodSignature());
                 }
         }
 }

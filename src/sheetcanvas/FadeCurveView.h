@@ -37,7 +37,7 @@ public:
 	FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve* fadeCuve);
 	~FadeCurveView();
 	
-	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 	int get_vector(int xstart, int pixelcount, float * arg);
 	void calculate_bounding_rect();
 	void set_holding(bool hold);

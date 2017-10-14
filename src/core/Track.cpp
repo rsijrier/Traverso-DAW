@@ -275,7 +275,7 @@ void Track::add_post_send(qint64 busId)
 {
         apill_foreach(TSend* send, TSend, m_postSends) {
                 if (send->get_bus_id() == busId) {
-                        printf("Track %s already has this bus (bus id: %lld) as Post Send\n", m_name.toAscii().data(), busId);
+                        printf("Track %s already has this bus (bus id: %lld) as Post Send\n", m_name.toLatin1().data(), busId);
                         return;
                 }
         }
@@ -304,7 +304,7 @@ void Track::add_pre_send(qint64 busId)
 {
         apill_foreach(TSend* send, TSend, m_preSends) {
                 if (send->get_bus_id() == busId) {
-                        printf("Track %s already has this bus (bus id: %lld) as Pre Send\n", m_name.toAscii().data(), busId);
+                        printf("Track %s already has this bus (bus id: %lld) as Pre Send\n", m_name.toLatin1().data(), busId);
                         return;
                 }
         }

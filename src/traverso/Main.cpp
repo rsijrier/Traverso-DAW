@@ -130,7 +130,7 @@ int main( int argc, char **argv )
 	// then using native (X11). Not sure if this is the case on
 	// systems with a high-end graphics card that properly accelerate
 	// all the XRender calls used by QPainter ?
-	QApplication::setGraphicsSystem("raster");
+//	QApplication::setGraphicsSystem("raster");
 
 	traverso = new Traverso(argc, argv);
 	

@@ -150,8 +150,8 @@ int Peak::read_header()
 		
 		if (fileModTime > peakModTime) {
 			PERROR("Source and Peak file modification time do not match");
-			printf("SourceFile modification time is %s\n", fileModTime.toString().toAscii().data());
-			printf("PeakFile modification time is %s\n", peakModTime.toString().toAscii().data());
+			printf("SourceFile modification time is %s\n", fileModTime.toString().toLatin1().data());
+			printf("PeakFile modification time is %s\n", peakModTime.toString().toLatin1().data());
 			return -1;
 		}
 		
@@ -264,7 +264,7 @@ int Peak::calculate_peaks(
 // 			printf("index %d\n", index);
 		}
 		
-		int offset = qRound(startPos / nearestpow2) * 2;
+        int offset = qRound(float(startPos) / nearestpow2) * 2;
         int truncate = 0;
 
 		// Check if this zoom level has as many data as requested.
@@ -383,7 +383,7 @@ int Peak::prepare_processing(int rate)
 		data->file.setFileName(data->fileName);
 		
 		if (! data->file.open(QIODevice::ReadWrite)) {
-			PWARN("Couldn't open peak file for writing! (%s)", data->fileName.toAscii().data());
+			PWARN("Couldn't open peak file for writing! (%s)", data->fileName.toLatin1().data());
 			m_permanentFailure  = true;
 			return -1;
 		}
@@ -392,7 +392,7 @@ int Peak::prepare_processing(int rate)
 		data->normFile.setFileName(data->normFileName);
 		
 		if (! data->normFile.open(QIODevice::ReadWrite)) {
-			PWARN("Couldn't open normalization data file for writing! (%s)", data->normFileName.toAscii().data());
+			PWARN("Couldn't open normalization data file for writing! (%s)", data->normFileName.toLatin1().data());
 			m_permanentFailure  = true;
 			return -1;
 		}
@@ -506,7 +506,7 @@ int Peak::finish_processing()
 		data->normFile.close();
 		
 		if (!QFile::remove(data->normFileName)) {
-			PERROR("Failed to remove temp. norm. data file! (%s)", data->normFileName.toAscii().data()); 
+			PERROR("Failed to remove temp. norm. data file! (%s)", data->normFileName.toLatin1().data()); 
 		}
 		
 		written = data->file.write((char*)saveBuffer, sizeof(audio_sample_t) * read) / sizeof(audio_sample_t);
@@ -606,7 +606,7 @@ int Peak::create_from_scratch()
 	int progression = 0;
 
 	if (m_source->get_length() == TimeRef()) {
-		qWarning("Peak::create_from_scratch() : m_source (%s) has length 0", m_source->get_name().toAscii().data());
+		qWarning("Peak::create_from_scratch() : m_source (%s) has length 0", m_source->get_name().toLatin1().data());
 		return ret;
 	}
 

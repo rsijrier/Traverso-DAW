@@ -36,7 +36,7 @@ public:
 	}
 	void set_bounding_rect(QRectF rect) {m_boundingRect = rect;}
 	void set_color(QColor color) {m_color = color;}
-	void paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*) 
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
 	{
 		painter->setPen(m_color);
 		QLineF line(0, 0, 0, m_boundingRect.height());

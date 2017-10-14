@@ -44,8 +44,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TMainWindow.h"
 #include "TShortcutManager.h"
 #include <QDomDocument>
-#include <QPrinter>
-#include <QPrintDialog>
+#include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 
 #if defined (JACK_SUPPORT)
 RELAYTOOL_JACK
@@ -874,13 +874,13 @@ void KeyboardConfigPage::on_printButton_clicked()
 	QString kmap;
 	tShortCutManager().get_keymap(kmap);
 
-	QPrinter printer(QPrinter::ScreenResolution);
-	QPrintDialog printDialog(&printer, TMainWindow::instance());
-	if (printDialog.exec() == QDialog::Accepted) {
-                QTextDocument doc;
-                doc.setHtml(kmap);
-                doc.print(&printer);
-	}
+//	QPrinter printer(QPrinter::ScreenResolution);
+//	QPrintDialog printDialog(&printer, TMainWindow::instance());
+//	if (printDialog.exec() == QDialog::Accepted) {
+//                QTextDocument doc;
+//                doc.setHtml(kmap);
+//                doc.print(&printer);
+//	}
 }
 
 

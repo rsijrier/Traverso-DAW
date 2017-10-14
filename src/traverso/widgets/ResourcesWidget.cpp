@@ -162,7 +162,7 @@ void FileWidget::set_current_path(const QString& path) const
 
 
 ResourcesWidget::ResourcesWidget(QWidget * parent)
-	: QWidget(parent)
+    : QWidget(parent)
 {
 	sourcesTreeWidget = 0;
 }
@@ -189,10 +189,10 @@ void ResourcesWidget::showEvent( QShowEvent * event )
 	sourcesTreeWidget->setDragEnabled(true);
 	sourcesTreeWidget->setDropIndicatorShown(true);
 	sourcesTreeWidget->setIndentation(COLUMN_INDENTION);
-	sourcesTreeWidget->header()->setResizeMode(0, QHeaderView::Fixed);
-	sourcesTreeWidget->header()->setResizeMode(1, QHeaderView::Fixed);
-	sourcesTreeWidget->header()->setResizeMode(2, QHeaderView::Fixed);
-	sourcesTreeWidget->header()->setResizeMode(3, QHeaderView::Fixed);
+    sourcesTreeWidget->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+    sourcesTreeWidget->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    sourcesTreeWidget->header()->setSectionResizeMode(2, QHeaderView::Fixed);
+    sourcesTreeWidget->header()->setSectionResizeMode(3, QHeaderView::Fixed);
 	sourcesTreeWidget->header()->resizeSection(1, LENGTH_SECTION_WIDTH);
 	sourcesTreeWidget->header()->resizeSection(2, LENGTH_SECTION_WIDTH);
 	sourcesTreeWidget->header()->resizeSection(3, LENGTH_SECTION_WIDTH);

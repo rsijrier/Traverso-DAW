@@ -24,13 +24,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QDialog>
 
-#include <QtGui/QApplication>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QLabel>
-#include <QtGui/QPushButton>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QVBoxLayout>
+#include <QApplication>
+#include <QWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QSpacerItem>
+#include <QTreeWidget>
+#include <QVBoxLayout>
 
 
 class Plugin;
@@ -47,7 +47,7 @@ public:
 	void set_description(const QString& des);
 
 private:
-	PluginSelectorDialog(QWidget* parent = 0);
+    PluginSelectorDialog(QWidget* parent = 0);
 	~PluginSelectorDialog();
 	
 	static PluginSelectorDialog* m_instance;
@@ -121,13 +121,13 @@ private:
 
 	void retranslateUi(QDialog *PluginSelectorDialog)
 	{
-		PluginSelectorDialog->setWindowTitle(QApplication::translate("PluginSelectorDialog", "Plugin Selector", 0, QApplication::UnicodeUTF8));
-		objectToAddPluginTooLabel->setText(QApplication::translate("PluginSelectorDialog", "Add Plugin too", 0, QApplication::UnicodeUTF8));
-		pluginTreeWidget->headerItem()->setText(0, QApplication::translate("PluginSelectorDialog", "Plugin Name", 0, QApplication::UnicodeUTF8));
-		pluginTreeWidget->headerItem()->setText(1, QApplication::translate("PluginSelectorDialog", "Type", 0, QApplication::UnicodeUTF8));
-		pluginTreeWidget->headerItem()->setText(2, QApplication::translate("PluginSelectorDialog", "In/Out", 0, QApplication::UnicodeUTF8));
-		okButton->setText(QApplication::translate("PluginSelectorDialog", "OK", 0, QApplication::UnicodeUTF8));
-		cancelButton->setText(QApplication::translate("PluginSelectorDialog", "Cancel", 0, QApplication::UnicodeUTF8));
+        PluginSelectorDialog->setWindowTitle(QApplication::translate("PluginSelectorDialog", "Plugin Selector", 0, 0));
+        objectToAddPluginTooLabel->setText(QApplication::translate("PluginSelectorDialog", "Add Plugin too", 0, 0));
+        pluginTreeWidget->headerItem()->setText(0, QApplication::translate("PluginSelectorDialog", "Plugin Name", 0, 0));
+        pluginTreeWidget->headerItem()->setText(1, QApplication::translate("PluginSelectorDialog", "Type", 0, 0));
+        pluginTreeWidget->headerItem()->setText(2, QApplication::translate("PluginSelectorDialog", "In/Out", 0, 0));
+        okButton->setText(QApplication::translate("PluginSelectorDialog", "OK", 0, 0));
+        cancelButton->setText(QApplication::translate("PluginSelectorDialog", "Cancel", 0, 0));
 		Q_UNUSED(PluginSelectorDialog);
 	} // retranslateUi
 	

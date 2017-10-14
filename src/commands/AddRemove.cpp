@@ -293,5 +293,6 @@ void AddRemove::set_instantanious(bool instant)
 	m_instantanious = instant;
 }
 
+#include "AddRemove.moc"
 
 // eof

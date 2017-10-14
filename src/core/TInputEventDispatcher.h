@@ -43,101 +43,102 @@ struct TShortcut;
 
 class TInputEventDispatcher : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
 
-        void catch_key_press(QKeyEvent *);
-        void catch_key_release(QKeyEvent *);
-        void catch_mousebutton_press( QMouseEvent * e );
-        void catch_mousebutton_release( QMouseEvent * e );
-        void catch_scroll(QWheelEvent * e );
+    void catch_key_press(QKeyEvent *);
+    void catch_key_release(QKeyEvent *);
+    void catch_mousebutton_press( QMouseEvent * e );
+    void catch_mousebutton_release( QMouseEvent * e );
+    void catch_scroll(QWheelEvent * e );
 
-        int collected_number();
-        bool has_collected_number();
-        QString get_collected_number() const {return m_sCollectedNumber;}
+    int collected_number();
+    bool has_collected_number();
+    QString get_collected_number() const {return m_sCollectedNumber;}
 
-	bool is_jogging();
-	bool is_holding();
+    bool is_jogging();
+    bool is_holding();
 
-	TCommand* get_holding_command() const;
+    TCommand* get_holding_command() const;
 
-	int dispatch_shortcut_from_contextmenu(TFunction* function);
+    int dispatch_shortcut_from_contextmenu(TFunction* function);
 
-        void jog();
-        void bypass_jog_until_mouse_movements_exceeded_manhattenlength(int length=50);
-        void update_jog_bypass_pos();
-	void reject_current_hold_actions();
-	
-	TCommand* succes();
-	TCommand* failure();
-	TCommand* did_not_implement();
+    void jog();
+    void bypass_jog_until_mouse_movements_exceeded_manhattenlength(int length=50);
+    void update_jog_bypass_pos();
+    void reject_current_hold_actions();
+
+    TCommand* succes();
+    TCommand* failure();
+    TCommand* did_not_implement();
 
 private:
-	TInputEventDispatcher();
-	TInputEventDispatcher(const TInputEventDispatcher&) : QObject() {}
-	~TInputEventDispatcher();
+    TInputEventDispatcher();
+    TInputEventDispatcher(const TInputEventDispatcher&) : QObject() {}
+    ~TInputEventDispatcher();
 
-	enum BroadcastResult {
-		SUCCESS=1,
-		FAILURE=2,
-		DIDNOTIMPLEMENT=3
-	};
+    enum BroadcastResult {
+        SUCCESS=1,
+        FAILURE=2,
+        DIDNOTIMPLEMENT=3
+    };
 
-        struct HoldModifierKey {
-                int             keycode;
-                bool            wasExecuted;
-                trav_time_t     lastTimeExecuted;
-		TShortcut*      shortcut;
-        };
+    struct HoldModifierKey {
+        int             keycode;
+        bool            wasExecuted;
+        trav_time_t     lastTimeExecuted;
+        TShortcut*      shortcut;
+    };
 
-	QList<int>		m_modifierKeys;
-	QList<int>		m_activeModifierKeys;
-        QHash<int, HoldModifierKey*>  m_holdModifierKeys;
-	QHash<QString, int>	m_modes;
-        TCommand* 		m_holdingCommand;
-        QString			m_sCollectedNumber;
-	QPoint			m_jogBypassPos;
-        QTimer                  m_holdKeyRepeatTimer;
+    QList<int>		m_modifierKeys;
+    QList<int>		m_activeModifierKeys;
+    QHash<int, HoldModifierKey*>  m_holdModifierKeys;
 
-
-        bool 			m_isHolding;
-	bool			m_enterFinishesHold;
-        bool 			m_isJogging;
-	bool			m_cancelHold;
-	bool			m_bypassJog;
-
-        int 			m_collectedNumber;
-	int			m_dispatchResult;
-	int			m_unbypassJogDistance;
-        int                     m_holdEventCode;
-
-        void 			finish_hold();
-	void 			reset();
-        void 			stop_collecting();
-        bool 			check_number_collection(int eventcode);
-
-        //! call the slot that handler a given action
-	int dispatch_shortcut(TShortcut* shortCut, bool autorepeat=false, bool fromContextMenu=false);
-
-        void set_jogging(bool jog);
-        void set_numerical_input(const QString& number);
-	void process_press_event(int keyValue);
-	void process_release_event(int keyValue);
-	bool is_modifier_keyfact(int eventcode);
-	bool modifierKeysMatch(QList<int> first, QList<int> second);
-        void clear_hold_modifier_keys();
+    QHash<QString, int>	m_modes;
+    TCommand* 		m_holdingCommand;
+    QString			m_sCollectedNumber;
+    QPoint			m_jogBypassPos;
+    QTimer          m_holdKeyRepeatTimer;
 
 
-        // allow this function to create one instance
-	friend TInputEventDispatcher& ied();
+    bool 			m_isHolding;
+    bool			m_enterFinishesHold;
+    bool 			m_isJogging;
+    bool			m_cancelHold;
+    bool			m_bypassJog;
+
+    int 			m_collectedNumber;
+    int             m_dispatchResult;
+    int             m_unbypassJogDistance;
+    int             m_holdEventCode;
+
+    void 			finish_hold();
+    void 			reset();
+    void 			stop_collecting();
+    bool 			check_number_collection(int eventcode);
+
+    //! call the slot that handler a given action
+    int dispatch_shortcut(TShortcut* shortCut, bool autorepeat=false, bool fromContextMenu=false);
+
+    void set_jogging(bool jog);
+    void set_numerical_input(const QString& number);
+    void process_press_event(int keyValue);
+    void process_release_event(int keyValue);
+    bool is_modifier_keyfact(int eventcode);
+    bool modifierKeysMatch(QList<int> first, QList<int> second);
+    void clear_hold_modifier_keys();
+
+
+    // allow this function to create one instance
+    friend TInputEventDispatcher& ied();
 
 private slots:
-        void process_hold_modifier_keys();
+    void process_hold_modifier_keys();
 
 signals:
-        void collectedNumberChanged();
-        void jogStarted();
-        void jogFinished();
+    void collectedNumberChanged();
+    void jogStarted();
+    void jogFinished();
 };
 
 // use this function to get the InputEngine object

@@ -36,7 +36,7 @@ class ExternalProcessingDialog : public QDialog, protected Ui::ExternalProcessin
 	Q_OBJECT
 	
 public:
-	ExternalProcessingDialog(QWidget* parent, AudioClipExternalProcessing* acep);
+    ExternalProcessingDialog(QWidget* parent, AudioClipExternalProcessing* acep);
 	~ExternalProcessingDialog();
 
 

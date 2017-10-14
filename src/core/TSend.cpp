@@ -104,7 +104,7 @@ int TSend::set_state( const QDomNode & node )
         m_bus = project->get_audio_bus(busId);
 
         if (!m_bus) {
-                printf("TSend::set_state: Project didn't return my Bus (%s)!\n", busName.toAscii().data());
+                printf("TSend::set_state: Project didn't return my Bus (%s)!\n", busName.toLatin1().data());
                 return -1;
         }
 

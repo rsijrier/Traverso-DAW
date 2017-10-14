@@ -45,7 +45,7 @@ PluginSelectorDialog::PluginSelectorDialog(QWidget* parent)
 	setupUi(this);
 
 	pluginTreeWidget->header()->resizeSection(0, 250);
-	pluginTreeWidget->header()->setResizeMode(1, QHeaderView::ResizeToContents);
+    pluginTreeWidget->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 	pluginTreeWidget->header()->resizeSection(2, 60);
 	
 

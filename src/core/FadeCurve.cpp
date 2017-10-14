@@ -268,7 +268,7 @@ void FadeCurve::set_shape(QString shapeName)
 	QDomElement fadeElement = node.firstChildElement(shapeName);
 	
 	if (fadeElement.isNull()) {
-		printf("%s does not exist?????\n", shapeName.toAscii().data());
+		printf("%s does not exist?????\n", shapeName.toLatin1().data());
 		return;
 	}
 	

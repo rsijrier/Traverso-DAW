@@ -199,12 +199,12 @@ TimeRef SnapList::get_snap_value(const TimeRef& pos)
 	}
 	
 	if (is_snap_value(pos)) {
-                SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(m_xposLut.at(i)).toAscii().data(), timeref_to_ms_3(pos).toAscii().data());
+                SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
 		return m_xposLut.at(i);
 	}
 	
 	
-        SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(pos).toAscii().data(), timeref_to_ms_3(pos).toAscii().data());
+        SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(pos).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
         return pos;
 }
 
@@ -251,13 +251,13 @@ qint64 SnapList::get_snap_diff(const TimeRef& pos)
 		return 0;
 	}
 
-        SLPRINT("get_snap_diff returns: %s\n", timeref_to_ms_3(m_xposLut.at(i)).toAscii().data());
+        SLPRINT("get_snap_diff returns: %s\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data());
 	return (pos - m_xposLut.at(i)).universal_frame();
 }
 
 void SnapList::set_range(const TimeRef& start, const TimeRef& end, int scalefactor)
 {
-        SLPRINT("setting xstart %s, xend %s scalefactor %d\n", timeref_to_ms_3(start).toAscii().data(), timeref_to_ms_3(end).toAscii().data(), scalefactor);
+        SLPRINT("setting xstart %s, xend %s scalefactor %d\n", timeref_to_ms_3(start).toLatin1().data(), timeref_to_ms_3(end).toLatin1().data(), scalefactor);
 
 	if (m_rangeStart == start && m_rangeEnd == end && m_scalefactor == scalefactor) {
 		return;

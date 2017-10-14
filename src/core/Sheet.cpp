@@ -410,7 +410,7 @@ int Sheet::prepare_export(ExportSpecification* spec)
         // compute some default values
 	spec->totalTime = spec->endLocation - spec->startLocation;
 
-// 	PWARN("Render length is: %s",timeref_to_ms_3(spec->totalTime).toAscii().data() );
+// 	PWARN("Render length is: %s",timeref_to_ms_3(spec->totalTime).toLatin1().data() );
 
 	spec->pos = spec->startLocation;
 	spec->progress = 0;
@@ -876,13 +876,13 @@ void Sheet::set_audio_sources_dir(const QString &dir)
         QDir asDir;
 
         if (!asDir.exists(m_audioSourcesDir)) {
-                printf("creating new audio sources dir: %s\n", dir.toAscii().data());
+                printf("creating new audio sources dir: %s\n", dir.toLatin1().data());
                 if (asDir.mkdir(m_audioSourcesDir) < 0) {
                         info().critical(tr("Cannot create dir %1").arg(m_audioSourcesDir));
                 }
         }
 
-        printf("created new audiosrouces dir here: %s\n", m_audioSourcesDir.toAscii().data());
+        printf("created new audiosrouces dir here: %s\n", m_audioSourcesDir.toLatin1().data());
 }
 
 void Sheet::handle_diskio_readbuffer_underrun( )

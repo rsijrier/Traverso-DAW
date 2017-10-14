@@ -76,9 +76,9 @@ int TraversoDebugger::get_debug_level()
 void TraversoDebugger::create_log(QString fn)
 {
         logFileName = QString(getenv("HOME")) + "/" + fn;
-        logFile = fopen(logFileName.toAscii(),"a+");
+        logFile = fopen(logFileName.toLatin1(),"a+");
         if (!logFile) {
-                PERROR("Cannot create TraversoDebugger Log file (%s)",fn.toAscii().data());
+                PERROR("Cannot create TraversoDebugger Log file (%s)",fn.toLatin1().data());
                 logging=false;
         } else {
                 fclose(logFile);
@@ -97,9 +97,9 @@ void TraversoDebugger::close_log()
 
 void TraversoDebugger::log(QString s)
 {
-        const char* sc = s.toAscii();
+        const char* sc = s.toLatin1();
         int len = s.length();
-        logFile = fopen(logFileName.toAscii(),"a+");
+        logFile = fopen(logFileName.toLatin1(),"a+");
         fwrite(sc,len,1,logFile);
         fclose(logFile);
 }

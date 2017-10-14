@@ -69,7 +69,7 @@ void MeterWidget::resizeEvent( QResizeEvent *  )
 
 void MeterWidget::hideEvent(QHideEvent * event)
 {
-	QWidget::hideEvent(event);
+    QWidget::hideEvent(event);
 	if (m_item) {
 		m_item->hide_event();
 	}
@@ -78,7 +78,7 @@ void MeterWidget::hideEvent(QHideEvent * event)
 
 void MeterWidget::showEvent(QShowEvent * event)
 {
-	QWidget::showEvent(event);
+    QWidget::showEvent(event);
 	if (m_item) {
 		m_item->show_event();
 	}

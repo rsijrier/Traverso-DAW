@@ -41,7 +41,7 @@ class FileWidget : public QWidget
 	Q_OBJECT
 public:
 
-	FileWidget(QWidget* parent=0) : QWidget(parent) {
+    FileWidget(QWidget* parent=0) : QWidget(parent) {
 		m_dirModel = 0;
 	}
 

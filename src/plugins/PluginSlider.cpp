@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Plugin.h"
 
 PluginSlider::PluginSlider(PluginControlPort* port)
-	: QWidget()
+    : QWidget()
 	, m_port(port)
 {
 	setMaximumHeight(18);

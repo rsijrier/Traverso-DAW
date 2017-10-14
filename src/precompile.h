@@ -4,11 +4,11 @@
 #include <qaction.h>
 #include <qbuttongroup.h>
 #include <qcombobox.h>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QLabel>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QDialogButtonBox>
+#include <QtWidget/QHBoxLayout>
+#include <QtWidget/QLabel>
+#include <QtWidget/QVBoxLayout>
+#include <QtWidget/QSpacerItem>
+#include <QtWidget/QDialogButtonBox>
 #include <qobject.h>
 #include <qstring.h>
 #include <qstringlist.h>

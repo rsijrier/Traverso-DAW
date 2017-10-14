@@ -47,7 +47,7 @@ public:
 	AudioClipView(SheetView* view, AudioTrackView* parent, AudioClip* clip);
 	~AudioClipView();
 
-	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 	
 	
 	AudioClip* get_clip() const {return m_clip;}
