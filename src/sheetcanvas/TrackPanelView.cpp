@@ -204,6 +204,7 @@ void TrackPanelView::layout_panel_items()
 {
         int height =  m_sv->get_track_height(m_track);
         int adjust = 0;
+        // FIXME adjust is not actualy used
 
         Qt::Orientation orientation = (Qt::Orientation)config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt();
         if (orientation == Qt::Vertical) {

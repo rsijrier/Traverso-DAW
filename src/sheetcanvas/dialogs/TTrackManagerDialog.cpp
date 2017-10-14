@@ -225,6 +225,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
 
         if (sheet) {
                 QList<TBusTrack*> busTracks = sheet->get_bus_tracks();
+                // FIXME: this doesn't make sense at all
                 if (!m_track->get_type() == Track::BUS && busTracks.size()) {
                         foreach(TBusTrack* busTrack, busTracks) {
                                 action = menu->addAction(busTrack->get_name());

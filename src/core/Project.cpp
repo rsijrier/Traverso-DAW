@@ -143,7 +143,7 @@ int Project::create(int sheetcount, int numtracks)
 	PMESG("Creating new project %s  NumSheets=%d", QS_C(m_name), sheetcount);
 
 	QDir dir;
-	if (dir.mkdir(m_rootDir) < 0) {
+    if (!dir.mkdir(m_rootDir)) {
 		info().critical(tr("Cannot create dir %1").arg(m_rootDir));
 		return -1;
 	}
@@ -188,7 +188,7 @@ int Project::create(int sheetcount, int numtracks)
 int Project::create_audiosources_dir()
 {
 	QDir dir;
-	if (dir.mkdir(m_sourcesDir) < 0) {
+    if (!dir.mkdir(m_sourcesDir)) {
 		info().critical(tr("Cannot create dir %1").arg(m_sourcesDir));
 		return -1;
 	}
@@ -202,7 +202,7 @@ int Project::create_peakfiles_dir()
 	QDir dir;
 	QString peaksDir = m_rootDir + "/peakfiles/";
 
-	if (dir.mkdir(peaksDir) < 0) {
+    if (!dir.mkdir(peaksDir)) {
 		info().critical(tr("Cannot create dir %1").arg(peaksDir));
 		return -1;
 	}
@@ -548,10 +548,6 @@ QDomNode Project::get_state(QDomDocument doc, bool istemplate)
 	properties.setAttribute("arranger", m_arranger);
 	properties.setAttribute("songwriter", m_songwriter);
 	properties.setAttribute("message", m_message);
-        qint64 activeSessionId = 0;
-        if (m_activeSession) {
-                activeSessionId = m_activeSession->get_id();
-        }
         properties.setAttribute("currentsheetid", m_activeSheetId);
         properties.setAttribute("activesessionid", m_activeSessionId);
         properties.setAttribute("rate", m_rate);

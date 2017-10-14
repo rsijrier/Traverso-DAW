@@ -1,5 +1,6 @@
 #CMAKE SETUP
 #Require 3.1.0 for Qt finding
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0 FATAL_ERROR)
 
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -34,7 +35,7 @@ OPTION(WANT_LV2		"Include LV2 Plugin support" ON)
 OPTION(WANT_MP3_DECODE	"Include mp3 decoding support, for playing mp3 files" ON)
 OPTION(WANT_MP3_ENCODE	"Include mp3 encoding support, for creating mp3 files" OFF)
 OPTION(WANT_PCH     	"Use precompiled headers" OFF)
-OPTION(WANT_DEBUG   	"Debug build" OFF)
+OPTION(WANT_DEBUG   	"Debug build" ON)
 OPTION(WANT_TRAVERSO_DEBUG "Provides 4 levels of debug ouput on the command line, always on for DEBUG builds" OFF)
 OPTION(WANT_THREAD_CHECK	"Checks at runtime if functions are called from the correct thread, used by developers for debugging" OFF)
 OPTION(WANT_VECLIB_OPTIMIZATIONS "Build with veclib optimizations (Only for PPC based Mac OS X)" OFF)

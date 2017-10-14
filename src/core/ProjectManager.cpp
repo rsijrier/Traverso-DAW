@@ -626,7 +626,7 @@ int ProjectManager::create_projectfilebackup_dir(const QString& rootDir)
 	QDir dir;
 	QString path = rootDir + "/projectfilebackup/";
 
-	if (dir.mkdir(path) < 0) {
+    if (!dir.mkdir(path)) {
 		info().critical(tr("Cannot create dir %1").arg(path));
 		return -1;
 	}

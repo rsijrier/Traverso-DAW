@@ -1308,6 +1308,7 @@ void TMainWindow::import_audio()
 
 	QList<AudioTrack*> tracks = sheet->get_audio_tracks();
 	AudioTrack*	track = tracks.first();
+    // FIXME: markers isn't actually used
 	bool markers = false;
 
 	ImportClipsDialog *importClips = new ImportClipsDialog(this);

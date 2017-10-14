@@ -691,7 +691,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 	channel_t chn;
 	unsigned int pr = 0;
 	unsigned int cr = 0;
-	int err;
+    int err;
 
 	frame_rate = rate;
 	frames_per_cycle = frames_per_interupt;
@@ -1575,12 +1575,9 @@ int AlsaDriver::attach()
 	char buf[32];
 	channel_t chn;
 	AudioChannel* chan;
-    int port_flags;
 
 	device->set_buffer_size (frames_per_cycle);
 	device->set_sample_rate (frame_rate);
-
-	port_flags = PortIsOutput|PortIsPhysical|PortIsTerminal;
 
 	for (chn = 0; chn < capture_nchannels; chn++) {
 
@@ -1590,8 +1587,6 @@ int AlsaDriver::attach()
 		chan->set_latency( frames_per_cycle + capture_frame_latency );
 
 	}
-
-	port_flags = PortIsInput|PortIsPhysical|PortIsTerminal;
 
 	for (chn = 0; chn < playback_nchannels; chn++) {
 

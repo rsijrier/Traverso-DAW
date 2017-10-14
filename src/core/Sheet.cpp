@@ -877,7 +877,7 @@ void Sheet::set_audio_sources_dir(const QString &dir)
 
         if (!asDir.exists(m_audioSourcesDir)) {
                 printf("creating new audio sources dir: %s\n", dir.toLatin1().data());
-                if (asDir.mkdir(m_audioSourcesDir) < 0) {
+                if (!asDir.mkdir(m_audioSourcesDir)) {
                         info().critical(tr("Cannot create dir %1").arg(m_audioSourcesDir));
                 }
         }

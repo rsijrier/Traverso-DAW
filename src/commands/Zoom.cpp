@@ -229,6 +229,7 @@ void Zoom::set_collected_number(const QString &collected)
         cleared = cleared.remove(".").remove("-").remove(",");
 
         if (cleared.size() >= 1) {
+                //FIXME number is not used for anything?
                 number = QString(cleared.data()[cleared.size() -1]).toInt(&ok);
         }
 

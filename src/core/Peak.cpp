@@ -270,6 +270,8 @@ int Peak::calculate_peaks(
 		// Check if this zoom level has as many data as requested.
 		if ( (peakDataCount + offset) > data->headerdata.peakDataSizeForLevel[index]) {
 			truncate = peakDataCount - (data->headerdata.peakDataSizeForLevel[index] - offset);
+            //FIXME: nothing done here?
+            qDebug("truncate: %d", truncate);
 // 			pixelcount = data->headerdata.peakDataSizeForLevel[index] - offset;
 		}
 		
