@@ -79,8 +79,8 @@ AudioClip::AudioClip(const QString& name)
 
 AudioClip::AudioClip(const QDomNode& node)
 	: Snappable()
-	, m_track(0)
-	, m_readSource(0)
+    , m_track(nullptr)
+    , m_readSource(nullptr)
 {
 	PENTERCONS;
 	
@@ -119,15 +119,15 @@ void AudioClip::init()
 {
 	QObject::tr("AudioClip");
 
-        m_sheet = 0;
-	m_track = 0;
-	m_readSource = 0;
-	m_peak = 0;
+        m_sheet = nullptr;
+    m_track = nullptr;
+    m_readSource = nullptr;
+    m_peak = nullptr;
 	m_recordingStatus = NO_RECORDING;
 	m_isReadSourceValid = m_isMoving = false;
 	m_isLocked = config().get_property("AudioClip", "LockByDefault", false).toBool();
-	fadeIn = 0;
-	fadeOut = 0;
+    fadeIn = nullptr;
+    fadeOut = nullptr;
 	m_fader->automate_port(0, true);
 	m_fader->set_gain(1.0);
 
@@ -417,10 +417,10 @@ void AudioClip::set_fade_out(double range)
 void AudioClip::set_gain(float gain)
 {
 	PENTER3;
-        if (gain < 0.0) {
+        if (gain < 0.0f) {
 		gain = 0.0;
         }
-        if (gain > 10000.0) {
+        if (gain > 10000.0f) {
                 gain = 10000.0;
         }
 	
@@ -428,7 +428,7 @@ void AudioClip::set_gain(float gain)
 	emit stateChanged();
 }
 
-void AudioClip::set_selected(bool selected)
+void AudioClip::set_selected(bool /*selected*/)
 {
 	emit stateChanged();
 }
@@ -465,8 +465,11 @@ int AudioClip::process(nframes_t nframes)
 	
 	TimeRef mix_pos;
 	int channelcount = get_channel_count();
-	audio_sample_t* mixdown[channelcount];
-	uint framesToProcess = nframes;
+    // not supported by C++ although correct, but this way it is a variable lenght array
+//	audio_sample_t* mixdown[channelcount];
+    // since we only use 2 channels, this will do for now
+    audio_sample_t* mixdown[2];
+    uint framesToProcess = nframes;
 
 
 	int outputRate = m_readSource->get_output_rate();
@@ -633,7 +636,7 @@ int AudioClip::init_recording()
         if (m_writer->prepare_export() == -1) {
                 delete m_writer;
 		delete spec;
-		spec = 0;
+        spec = nullptr;
 		return -1;
 	}
         m_writer->set_process_peaks( true );
@@ -650,13 +653,13 @@ int AudioClip::init_recording()
 TCommand* AudioClip::mute()
 {
 	toggle_mute();
-	return 0;
+    return nullptr;
 }
 
 TCommand* AudioClip::lock()
 {
 	toggle_lock();
-	return 0;
+    return nullptr;
 }
 
 TCommand* AudioClip::reset_fade_in()
@@ -664,7 +667,7 @@ TCommand* AudioClip::reset_fade_in()
 	if (fadeIn) {
 		return new FadeRange(this, fadeIn, 1.0);
 	}
-	return 0;
+    return nullptr;
 }
 
 TCommand* AudioClip::reset_fade_out()
@@ -672,13 +675,13 @@ TCommand* AudioClip::reset_fade_out()
 	if (fadeOut) {
 		return new FadeRange(this, fadeOut, 1.0);
 	}
-	return 0;
+    return nullptr;
 }
 
 TCommand* AudioClip::reset_fade_both()
 {
 	if (!fadeOut && !fadeIn) {
-		return 0;
+        return nullptr;
 	}
 	
 	CommandGroup* group = new CommandGroup(this, tr("Remove Fades"));
@@ -768,7 +771,7 @@ void AudioClip::finish_write_source()
 	}
 	
         delete m_writer;
-        m_writer = 0;
+        m_writer = nullptr;
 	
 	m_recordingStatus = NO_RECORDING;
 	
@@ -888,7 +891,7 @@ TCommand * AudioClip::normalize( )
 {
         bool ok;
         float normfactor;
-        double d = QInputDialog::getDouble(0, tr("Normalization"),
+        double d = QInputDialog::getDouble(nullptr, tr("Normalization"),
                                            tr("Set Normalization level:"), 0.0, -120, 0, 1, &ok);
         if (ok) {
                 normfactor = calculate_normalization_factor(d);
@@ -955,9 +958,9 @@ void AudioClip::private_add_fade( FadeCurve* fade )
 void AudioClip::private_remove_fade( FadeCurve * fade )
 {
 	if (fade == fadeIn) {
-		fadeIn = 0;
+        fadeIn = nullptr;
 	} else if (fade == fadeOut) {
-		fadeOut = 0;
+        fadeOut = nullptr;
 	}
 	
 	m_fades.remove(fade);
