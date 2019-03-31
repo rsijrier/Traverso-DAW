@@ -340,13 +340,19 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "AudioClipExternalProcessing";
 	addFunction(function, AudioClipExternalProcessingCommand);
 
-	function = new TFunction();
-	function->object = "AudioClipView";
-	function->setDescription(tr("Move Edge"));
-	function->commandName = "MoveClipEdge";
-	function->arguments << "false";
-	function->useX = true;
-	addFunction(function, MoveEdgeCommand);
+    function = new TFunction();
+    function->object = "AudioClipView";
+    function->setDescription(tr("Move Edge"));
+    function->commandName = "MoveClipEdge";
+    function->arguments << "false";
+    function->useX = true;
+    addFunction(function, MoveEdgeCommand);
+
+    function = new TFunction();
+    function->object = "AudioClip";
+    function->setDescription(tr("Normalize Clip"));
+    function->commandName = "NormalizeClip";
+    addFunction(function, NormalizeClipCommand);
 
 	function = new TFunction();
 	function->object = "SheetView";

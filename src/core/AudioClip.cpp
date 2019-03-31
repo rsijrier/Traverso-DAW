@@ -889,19 +889,23 @@ int AudioClip::recording_state( ) const
 
 TCommand * AudioClip::normalize( )
 {
-        bool ok;
-        float normfactor;
-        double d = QInputDialog::getDouble(nullptr, tr("Normalization"),
-                                           tr("Set Normalization level:"), 0.0, -120, 0, 1, &ok);
-        if (ok) {
-                normfactor = calculate_normalization_factor(d);
-        }
+        bool ok = false;
+        audio_sample_t normfactor = 0.0;
 
-        if (!ok || (normfactor == get_gain())) {
+        double d = QInputDialog::getDouble(nullptr, tr("Normalization"),
+                                           tr("Set normalization level (in dB):"), 0.0, -120, 0, 1, &ok);
+        if (ok) {
+                normfactor = calculate_normalization_factor(audio_sample_t(d));
+        } else {
             return ied().failure();
         }
 
-        return new PCommand(this, "set_gain", normfactor, get_gain(), tr("AudioClip: Normalize"));
+        if (qFuzzyCompare(normfactor, get_gain())) {
+            info().information(tr("Requested normalization factor equals actual level, nothing to be done"));
+            return ied().failure();
+        }
+
+        return new PCommand(this, "set_gain", normfactor, get_gain(), tr("AudioClip: Normalize to %1 dB").arg(d));
 }
 
 
@@ -916,15 +920,15 @@ float AudioClip::calculate_normalization_factor(float targetdB)
 		target -= FLT_EPSILON;
 	}
 
-	double maxamp = m_peak->get_max_amplitude(m_sourceStartLocation, m_sourceEndLocation);
+    audio_sample_t maxamp = m_peak->get_max_amplitude(m_sourceStartLocation, m_sourceEndLocation);
 	
-	if (maxamp == 0.0f) {
+    if (qFuzzyCompare(maxamp, 0.0f)) {
 		printf("AudioClip::normalization: max amplitude == 0\n");
 		/* don't even try */
                 return get_gain();
 	}
 	
-	if (maxamp == target) {
+    if (qFuzzyCompare(maxamp, target)) {
 		printf("AudioClip::normalization: max amplitude == target amplitude\n");
 		/* we can't do anything useful */
                 return get_gain();
