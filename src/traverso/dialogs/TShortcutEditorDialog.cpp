@@ -62,16 +62,22 @@ TShortcutEditorDialog::TShortcutEditorDialog(QWidget *parent)
 	keys << "Enter|ENTER" << "Home|HOME" << "End|END" << "Delete|DELETE";
 	keys << "Page Up|PAGEUP" << "Page Down|PAGEDOWN";
 	keys << "Space Bar|SPACE";
-	keys << "Left Button|MOUSEBUTTONLEFT" << "Right Button|MOUSEBUTTONRIGHT";
-	keys << "Scroll Up|MOUSESCROLLVERTICALUP" << "Scroll Down|MOUSESCROLLVERTICALDOWN";
 	keys << "+|PLUS" << "-|MINUS" << "/|/" << "\\|\\" << "[|[" << "]|]" << ",|," << ".|." << ";|;" << "'|'";
 
 	foreach(QString string, keys)
 	{
 		QStringList list = string.split("|");
-		ui->keyComboBox1->addItem(list.at(0), list.at(1));
-		ui->keyComboBox2->addItem(list.at(0), list.at(1));
+        ui->keyComboBox1->addItem(list.at(0), list.at(1));
 	}
+    keys.clear();
+    keys << "|";
+    keys << "Left Button|MOUSEBUTTONLEFT" << "Right Button|MOUSEBUTTONRIGHT";
+    keys << "Scroll Up|MOUSESCROLLVERTICALUP" << "Scroll Down|MOUSESCROLLVERTICALDOWN";
+    foreach(QString string, keys)
+    {
+        QStringList list = string.split("|");
+        ui->keyComboBox2->addItem(list.at(0), list.at(1));
+    }
 
 
 	QMap<QString, QString> classNamesMap;
@@ -94,7 +100,7 @@ TShortcutEditorDialog::TShortcutEditorDialog(QWidget *parent)
 
 	foreach(QString className, commandClassNamesMap)
 	{
-		ui->objectsComboBox->addItem(commandClassNamesMap.key(className) + " " + tr("(Edit Function)"), className);
+        ui->objectsComboBox->addItem(commandClassNamesMap.key(className) + " " + tr("(Additional keys)"), className);
 	}
 
 	connect(ui->objectsComboBox, SIGNAL(activated(int)), this, SLOT(objects_combo_box_activated(int)));
@@ -315,8 +321,9 @@ void TShortcutEditorDialog::shortcut_tree_widget_item_activated()
 	bool usesInheritedBase = function->usesInheritedBase();
 	if (inheritedFunction)
 	{
-		ui->baseFunctionGroupBox->setTitle(tr("Inherits:") + " " + inheritedFunction->getDescription());
-		ui->baseFunctionShortCutLable->setText(inheritedFunction->getKeySequence());
+        ui->baseFunctionGroupBox->setTitle(tr("Use common shortcut:"));
+        ui->baseFunctionShortCutKey->setText(inheritedFunction->getKeySequence());
+        ui->baseFunctionShortCutLable->setText(inheritedFunction->getDescription());
 		ui->configureInheritedShortcutPushButton->setText(tr("Configure %1").arg(inheritedFunction->getDescription()));
 		ui->baseFunctionGroupBox->show();
 
