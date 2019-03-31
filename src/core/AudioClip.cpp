@@ -893,7 +893,7 @@ TCommand * AudioClip::normalize( )
         audio_sample_t normfactor = 0.0;
 
         double d = QInputDialog::getDouble(nullptr, tr("Normalization"),
-                                           tr("Set normalization level (in dB):"), 0.0, -120, 0, 1, &ok);
+                                           tr("Set normalization level (dB):"), 0.0, -120, 0, 1, &ok);
         if (ok) {
                 normfactor = calculate_normalization_factor(audio_sample_t(d));
         } else {
@@ -905,7 +905,7 @@ TCommand * AudioClip::normalize( )
             return ied().failure();
         }
 
-        return new PCommand(this, "set_gain", normfactor, get_gain(), tr("AudioClip: Normalize to %1 dB").arg(d));
+        return new PCommand(this, "set_gain", normfactor, get_gain(), tr("AudioClip: Normalized to %1 dB").arg(d));
 }
 
 
