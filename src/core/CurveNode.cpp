@@ -35,7 +35,7 @@ void CurveNode::set_relative_when_and_value( double relwhen, double value )
 
 void CurveNode::set_when_and_value(double when, double value)
 {
-	if (this->when == when && this->value == value) return;
+    if (this->when == when && this->value == value) return;
 	this->when = when;
 	this->value = value;
 	emit m_curve->nodePositionChanged();

@@ -48,7 +48,7 @@ struct ExportSpecification
     		CREATE_CDRDAO_TOC
 	};
 	
-	int      	sample_rate;
+    uint      	sample_rate;
 	int             src_quality;
 	int       	channels;
 	TimeRef		startLocation;
@@ -61,7 +61,7 @@ struct ExportSpecification
 
 	QString		writerType;
 	float*          dataF;
-	int		blocksize;
+    uint		blocksize;
 	int	        data_width;
 
 	TimeRef      	totalTime;

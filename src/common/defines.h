@@ -166,12 +166,12 @@ struct TimeRef {
 	
 	friend qreal operator/(const TimeRef& left, const qint64 right) {
 		Q_ASSERT(right != 0);
-		return (qreal)left.m_position / right;
+        return qreal(left.m_position) / right;
 	}
 	
 	friend qreal operator/(const TimeRef& left, double right) {
 		Q_ASSERT(right != 0);
-		return (qreal)left.m_position / qint64(right);
+        return qreal(left.m_position) / qint64(right);
 	}
 	
 	friend TimeRef operator*(const qint64 left, TimeRef& right) {

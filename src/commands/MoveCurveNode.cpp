@@ -56,7 +56,7 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
         d->scalefactor = scalefactor;
         d->verticalOnly = false;
 
-	m_valueDiff = 0.0f;
+    m_valueDiff = 0.0f;
 }
 
 void MoveCurveNode::toggle_vertical_only(bool autorepeat)
