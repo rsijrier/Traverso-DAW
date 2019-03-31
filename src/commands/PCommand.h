@@ -42,6 +42,7 @@ public :
         int undo_action();
         int begin_hold();
         int finish_hold();
+        bool is_hold_command() const {return false;}
 
 private :
         ContextItem*	m_contextitem;

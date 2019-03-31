@@ -143,6 +143,6 @@ int PCommand::finish_hold( )
 
 int PCommand::begin_hold( )
 {
-	return QMetaObject::invokeMethod(m_contextitem, m_slot);
+    return 1;
 }
 
