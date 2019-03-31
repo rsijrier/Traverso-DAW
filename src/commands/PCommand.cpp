@@ -135,14 +135,3 @@ int PCommand::undo_action()
 
 	return QMetaObject::invokeMethod(m_contextitem, m_slot);
 }
-
-int PCommand::finish_hold( )
-{
-	return 1;
-}
-
-int PCommand::begin_hold( )
-{
-    return 1;
-}
-

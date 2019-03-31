@@ -40,8 +40,6 @@ public :
         int prepare_actions();
         int do_action();
         int undo_action();
-        int begin_hold();
-        int finish_hold();
         bool is_hold_command() const {return false;}
 
 private :

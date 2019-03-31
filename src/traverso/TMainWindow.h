@@ -78,7 +78,7 @@ class ProgressToolBar;
 class WelcomeWidget;
 class TSessionTabWidget;
 class TShortcutEditorDialog;
-struct TFunction;
+class TFunction;
 
 class AbstractVUMeterLevel
 {

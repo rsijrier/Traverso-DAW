@@ -38,7 +38,7 @@ class QKeyEvent;
 class QWheelEvent;
 class QMouseEvent;
 
-struct TShortcut;
+class TShortcut;
 
 
 class TInputEventDispatcher : public QObject

@@ -20,7 +20,7 @@
 */
 
 #ifndef REMOVE_CLIP_H
-#define REMOVE_CLIP_HS
+#define REMOVE_CLIP_H
 
 #include "TCommand.h"
 #include "AudioClipGroup.h"
