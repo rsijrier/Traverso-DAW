@@ -65,7 +65,7 @@ const int INDENT = 10;
 
 
 TrackPanelView::TrackPanelView(TrackView* view)
-        : ViewItem(0, view)
+        : ViewItem(nullptr, view)
 {
         PENTERCONS;
 
@@ -126,8 +126,8 @@ void TrackPanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
 {
         Q_UNUSED(widget);
 
-        int xstart = (int)option->exposedRect.x();
-        int pixelcount = (int)option->exposedRect.width();
+        int xstart = int(option->exposedRect.x());
+        int pixelcount = int(option->exposedRect.width());
 
         QRectF rect= option->exposedRect;
         // detect if only vu's are displayed, if so, do nothing.
@@ -206,7 +206,7 @@ void TrackPanelView::layout_panel_items()
         int adjust = 0;
         // FIXME adjust is not actualy used
 
-        Qt::Orientation orientation = (Qt::Orientation)config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt();
+        Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
         if (orientation == Qt::Vertical) {
                 m_vuMeterView->set_bounding_rect(QRectF(0, 0, VU_WIDTH, height - 4));
                 m_vuMeterView->setPos(m_boundingRect.width() - VU_WIDTH - 5, 2);
@@ -299,8 +299,8 @@ void TBusTrackPanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem
         Q_UNUSED(widget);
         Q_UNUSED(option);
 
-        int xstart = (int)option->exposedRect.x();
-        int pixelcount = (int)option->exposedRect.width();
+        int xstart = int(option->exposedRect.x());
+        int pixelcount = int(option->exposedRect.width());
 
         QColor color = themer()->get_color("BusTrack:background");
         painter->fillRect(xstart, m_trackView->m_topborderwidth, pixelcount, m_sv->get_track_height(m_track) - m_trackView->m_bottomborderwidth, color);
@@ -350,20 +350,20 @@ void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsIte
 	int height = m_laneView->get_height() - CurveView::BORDER_MARGIN;
 	int topBorderMargin = CurveView::BORDER_MARGIN / 2;
 
-	int y = (1.0 - dB_to_scale_factor(0.0f)) * height + topBorderMargin;
+    int y = int(1.0f - dB_to_scale_factor(0.0)) * height + topBorderMargin;
 	int textY = y + halfFontHeight;
-	painter->drawLine(m_boundingRect.width() - 4, y, m_boundingRect.width(), y);
-	painter->drawText(m_boundingRect.width() - xpos, textY, "  0 dB");
+    painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
+    painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), "  0 dB");
 
-	y = (1.0 - dB_to_scale_factor(-6.0f)) * height + topBorderMargin;
+    y = int(1.0f - dB_to_scale_factor(-6.0f)) * height + topBorderMargin;
 	textY = y + halfFontHeight;
-	painter->drawLine(m_boundingRect.width() - 4, y, m_boundingRect.width(), y);
-	painter->drawText(m_boundingRect.width() - xpos, textY, " - 6 dB");
+    painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
+    painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), " - 6 dB");
 
-	y = (1.0 - dB_to_scale_factor(-24.0f)) * height + topBorderMargin;
+    y = int(1.0f - dB_to_scale_factor(-24.0f)) * height + topBorderMargin;
 	textY = y + halfFontHeight;
-	painter->drawLine(m_boundingRect.width() - 4, y, m_boundingRect.width(), y);
-	painter->drawText(m_boundingRect.width() - xpos, textY, " -24 dB");
+    painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
+    painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), " -24 dB");
 }
 
 void TTrackLanePanelView::calculate_bounding_rect()
@@ -374,12 +374,12 @@ void TTrackLanePanelView::calculate_bounding_rect()
 
 
 TrackPanelGain::TrackPanelGain(TrackPanelView *parent, Track *track)
-        : ViewItem(parent, 0)
+        : ViewItem(parent, nullptr)
         , m_track(track)
 {
 }
 
-void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget )
+void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem * /*option*/, QWidget * widget )
 {
 	Q_UNUSED(widget);
         const int height = 6;
@@ -390,7 +390,7 @@ void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem *
         }
 
 
-	int sliderWidth = (int)m_boundingRect.width() - 75;
+    int sliderWidth = int(m_boundingRect.width() - 75);
         float gain = m_track->get_gain();
 	QString sgain = coefficient_to_dbstring(gain);
 	float db = coefficient_to_dB(gain);
@@ -398,16 +398,16 @@ void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem *
 	if (db < -60) {
 		db = -60;
 	}
-	int sliderdbx =  (int) (sliderWidth - (sliderWidth*0.3)) - (int) ( ( (-1 * db) / 60 ) * sliderWidth);
+    int sliderdbx =  int(sliderWidth - (sliderWidth*0.3)) - int( ( (-1 * db) / 60 ) * sliderWidth);
 	if (sliderdbx < 0) {
 		sliderdbx = 0;
 	}
 	if (db > 0) {
-		sliderdbx =  (int)(sliderWidth*0.7) + (int) ( ( db / 6 ) * (sliderWidth*0.3));
+        sliderdbx =  int(sliderWidth*0.7) + int( ( db / 6 ) * (sliderWidth*0.3f));
 	}
 
-	int cr = (gain >= 1 ? 30 + (int)(100 * gain) : (int)(50 * gain));
-	int cb = ( gain < 1 ? 150 + (int)(50 * gain) : abs((int)(10 * gain)) );
+    int cr = (gain >= 1 ? 30 + int(100 * gain) : int(50 * gain));
+    int cb = ( gain < 1 ? 150 + int(50 * gain) : abs(int(10 * gain)) );
 	
 	painter->save();
 	
@@ -438,15 +438,15 @@ void TrackPanelGain::set_width(int width)
 
 void TrackPanelGain::load_theme_data()
 {
-        float zeroDB = 1.0 - 100.0/115.0;  // 0 dB position
-        float msixDB = 1.0 -  80.0/115.0;  // -6 dB position
-        float smooth = themer()->get_property("GainSlider:smoothfactor", 0.05).toDouble();
+        float zeroDB = 1.0f - 100.0f/115.0f;  // 0 dB position
+        float msixDB = 1.0f -  80.0f/115.0f;  // -6 dB position
+        float smooth = float(themer()->get_property("GainSlider:smoothfactor", 0.05).toDouble());
 
         m_gradient2D.setColorAt(0.0,           themer()->get_color("GainSlider:6db"));
-        m_gradient2D.setColorAt(zeroDB-smooth, themer()->get_color("GainSlider:6db"));
-        m_gradient2D.setColorAt(zeroDB+smooth, themer()->get_color("GainSlider:0db"));
-        m_gradient2D.setColorAt(msixDB-smooth, themer()->get_color("GainSlider:0db"));
-        m_gradient2D.setColorAt(msixDB+smooth, themer()->get_color("GainSlider:-6db"));
+        m_gradient2D.setColorAt(qreal(zeroDB-smooth), themer()->get_color("GainSlider:6db"));
+        m_gradient2D.setColorAt(qreal(zeroDB+smooth), themer()->get_color("GainSlider:0db"));
+        m_gradient2D.setColorAt(qreal(msixDB-smooth), themer()->get_color("GainSlider:0db"));
+        m_gradient2D.setColorAt(qreal(msixDB+smooth), themer()->get_color("GainSlider:-6db"));
         m_gradient2D.setColorAt(1.0,           themer()->get_color("GainSlider:-60db"));
 
 
@@ -457,19 +457,19 @@ void TrackPanelGain::load_theme_data()
 
 TCommand* TrackPanelGain::gain_increment()
 {
-        m_track->set_gain(m_track->get_gain() + 0.05);
-	return 0;
+        m_track->set_gain(m_track->get_gain() + 0.05f);
+        return nullptr;
 }
 
 TCommand* TrackPanelGain::gain_decrement()
 {
-        m_track->set_gain(m_track->get_gain() - 0.05);
-	return 0;
+        m_track->set_gain(m_track->get_gain() - 0.05f);
+        return nullptr;
 }
 
 
 TrackPanelLed::TrackPanelLed(TrackPanelView* view, QObject *obj, const QString& name, const QString& toggleslot)
-        : ViewItem(view, 0)
+        : ViewItem(view, nullptr)
 	, m_name(name)
 	, m_toggleslot(toggleslot)
 	, m_isOn(false)
@@ -477,7 +477,7 @@ TrackPanelLed::TrackPanelLed(TrackPanelView* view, QObject *obj, const QString& 
 	m_object = obj;
 }
 
-void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * option, QWidget * widget )
+void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*option*/, QWidget * widget )
 {
 	Q_UNUSED(widget);
 
@@ -547,5 +547,5 @@ TCommand * TrackPanelLed::toggle()
 	QMetaObject::invokeMethod(m_object, QS_C(m_toggleslot), Qt::DirectConnection, Q_RETURN_ARG(TCommand*, com));
 	Q_ASSERT(!com);
 
-	return 0;
+    return nullptr;
 }
