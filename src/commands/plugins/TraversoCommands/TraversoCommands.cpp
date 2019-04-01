@@ -147,7 +147,6 @@ TraversoCommands::TraversoCommands()
 	function->setSlotSignature("up");
 	function->setDescription(tr("Up"));
 	function->commandName = "ArrowKeyBrowserUp";
-	function->setUsesAutoRepeat(true);
 	addFunction(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
@@ -155,7 +154,6 @@ TraversoCommands::TraversoCommands()
 	function->setSlotSignature("down");
 	function->setDescription(tr("Down"));
 	function->commandName = "ArrowKeyBrowserDown";
-	function->setUsesAutoRepeat(true);
 	addFunction(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
@@ -163,7 +161,6 @@ TraversoCommands::TraversoCommands()
 	function->setSlotSignature("left");
 	function->setDescription(tr("Left"));
 	function->commandName = "ArrowKeyBrowserLeft";
-	function->setUsesAutoRepeat(true);
 	addFunction(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
@@ -171,7 +168,6 @@ TraversoCommands::TraversoCommands()
 	function->setSlotSignature("right");
 	function->setDescription(tr("Right"));
 	function->commandName = "ArrowKeyBrowserRight";
-	function->setUsesAutoRepeat(true);
 	addFunction(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();

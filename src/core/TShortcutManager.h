@@ -73,8 +73,7 @@ public:
 	void setDescription(const QString& des);
 	void setInheritedBase(const QString& base);
 	void setUsesInheritedbase(bool b) {m_usesInheritedBase = b;}
-	void setUsesAutoRepeat(bool b) {m_usesAutoRepeat = b;}
-	void setAutoRepeatInterval(int interval) {m_autorepeatInterval = interval;}
+    void setAutoRepeatInterval(int interval) {m_autorepeatInterval = interval; m_usesAutoRepeat = true;}
 	void setAutoRepeatStartDelay(int delay) {m_autorepeatStartDelay = delay;}
 	void setSlotSignature(const QString& signature) {slotsignature = signature;}
 

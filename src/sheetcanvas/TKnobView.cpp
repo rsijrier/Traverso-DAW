@@ -135,12 +135,12 @@ void TPanKnobView::track_pan_changed()
 
 TCommand* TPanKnobView::pan_left()
 {
-	m_track->set_pan(m_track->get_pan() - 0.05);
-	return 0;
+    m_track->set_pan(m_track->get_pan() - 0.05f);
+    return nullptr;
 }
 
 TCommand* TPanKnobView::pan_right()
 {
-	m_track->set_pan(m_track->get_pan() + 0.05);
-	return 0;
+    m_track->set_pan(m_track->get_pan() + 0.05f);
+    return nullptr;
 }

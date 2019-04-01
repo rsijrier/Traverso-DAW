@@ -455,7 +455,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_right";
 	function->m_description = tr("Move Right");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandRight";
 	addFunction(function);
 
@@ -463,7 +462,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_left";
 	function->m_description = tr("Move Left");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandLeft";
 	addFunction(function);
 
@@ -471,7 +469,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_up";
 	function->m_description = tr("Move Up");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandUp";
 	addFunction(function);
 
@@ -479,7 +476,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_down";
 	function->m_description = tr("Move Down");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandDown";
 	addFunction(function);
 
@@ -487,7 +483,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_faster";
 	function->m_description = tr("Move Faster");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandFaster";
 	addFunction(function);
 
@@ -495,7 +490,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveCommand";
 	function->slotsignature = "move_slower";
 	function->m_description = tr("Move Slower");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveCommandSlower";
 	addFunction(function);
 
@@ -552,7 +546,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Zoom";
 	function->slotsignature = "hzoom_out";
 	function->setDescription(tr("Out"));
-	function->setUsesAutoRepeat(true);
 	function->commandName = "ZoomOut";
 	addFunction(function);
 
@@ -560,7 +553,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Zoom";
 	function->slotsignature = "hzoom_in";
 	function->setDescription(tr("In"));
-	function->setUsesAutoRepeat(true);
 	function->commandName = "ZoomIn";
 	addFunction(function);
 
@@ -568,7 +560,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "TrackPan";
 	function->slotsignature = "pan_left";
 	function->m_description = tr("Pan to Left");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "TrackPanLeft";
 	addFunction(function);
 
@@ -576,7 +567,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "TrackPan";
 	function->slotsignature = "pan_right";
 	function->m_description = tr("Pan to Right");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "TrackPanRight";
 	addFunction(function);
 
@@ -584,7 +574,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Gain";
 	function->slotsignature = "increase_gain";
 	function->m_description = tr("Increase");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "GainIncrease";
 	addFunction(function);
 
@@ -592,7 +581,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Gain";
 	function->slotsignature = "decrease_gain";
 	function->m_description = tr("Decrease");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "GainDecrease";
 	addFunction(function);
 
@@ -600,7 +588,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveTrack";
 	function->slotsignature = "move_up";
 	function->m_description = tr("Move Up");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveTrackUp";
 	addFunction(function);
 
@@ -608,7 +595,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "MoveTrack";
 	function->slotsignature = "move_down";
 	function->m_description = tr("Move Down");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "MoveTrackDown";
 	addFunction(function);
 
@@ -630,7 +616,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Zoom";
 	function->slotsignature = "track_vzoom_out";
 	function->m_description = tr("Track Vertical Zoom Out");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "ZoomTrackVerticalOut";
 	addFunction(function);
 
@@ -638,7 +623,6 @@ void TShortcutManager::loadFunctions()
 	function->object = "Zoom";
 	function->slotsignature = "track_vzoom_in";
 	function->m_description = tr("Track Vertical Zoom In");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "ZoomTrackVerticalIn";
 	addFunction(function);
 
@@ -822,15 +806,13 @@ void TShortcutManager::loadFunctions()
 	function->object = "CropClip";
 	function->slotsignature = "adjust_left";
 	function->m_description = tr("Adjust Left");
-	function->setUsesAutoRepeat(true);
-	function->commandName = "CropClipAdjustLeft";
+    function->commandName = "CropClipAdjustLeft";
 	addFunction(function);
 
 	function = new TFunction();
 	function->object = "CropClip";
 	function->slotsignature = "adjust_right";
 	function->m_description = tr("Adjust Right");
-	function->setUsesAutoRepeat(true);
 	function->commandName = "CropClipAdjustRight";
 	addFunction(function);
 

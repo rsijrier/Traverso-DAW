@@ -53,7 +53,7 @@ class ViewItem : public ContextItem, public QGraphicsItem
 	
 public:
 
-        ViewItem(ViewItem* parentViewItem=0, ContextItem* parentContext=0) :
+        ViewItem(ViewItem* parentViewItem=nullptr, ContextItem* parentContext=nullptr) :
         ContextItem(parentViewItem)
         , QGraphicsItem(parentViewItem)
         {
@@ -79,7 +79,7 @@ public:
 
 	virtual int type() const;
 	bool ignore_context() const {return m_ignoreContext;}
-	virtual int get_height() const {return (int)m_boundingRect.height();}
+    virtual int get_height() const {return int(m_boundingRect.height());}
 	virtual QString get_name() const {return m_parentViewItem ? m_parentViewItem->get_name() : "";}
 	
 	/**
