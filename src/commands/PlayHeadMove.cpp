@@ -200,3 +200,10 @@ void PlayHeadMove::move_to_work_cursor(bool autorepeat)
         }
         do_keyboard_move(m_session->get_work_location());
 }
+
+void PlayHeadMove::move_to_start(bool autorepeat)
+{
+    if (autorepeat)
+        return;
+    do_keyboard_move(TimeRef());
+}

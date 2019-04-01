@@ -270,3 +270,10 @@ void WorkCursorMove::move_to_play_cursor(bool autorepeat)
 
 	do_keyboard_move(m_session->get_transport_location());
 }
+
+void WorkCursorMove::move_to_start(bool autorepeat)
+{
+    if (autorepeat)
+        return;
+    do_keyboard_move(TimeRef());
+}

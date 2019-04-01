@@ -67,6 +67,7 @@ public slots:
 	void prev_snap_pos(bool autorepeat);
 	void toggle_snap_on_off(bool autorepeat);
 	void move_to_play_cursor(bool autorepeat);
+    void move_to_start(bool autorepeat);
 
 };
 

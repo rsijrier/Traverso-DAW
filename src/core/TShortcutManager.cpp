@@ -340,7 +340,7 @@ QList<QString> TShortcutManager::getClassNames() const
 {
 	QStringList stringList = m_classes.keys();
 	stringList.sort();
-	return stringList;
+    return stringList;
 }
 
 QString TShortcutManager::getClassForObject(const QString &object) const
@@ -1047,7 +1047,14 @@ void TShortcutManager::loadFunctions()
 	function->commandName = "PlayHeadMoveToWorkCursor";
 	addFunction(function);
 
-	function = new TFunction();
+    function = new TFunction();
+    function->object = "PlayHeadMove";
+    function->slotsignature = "move_to_start";
+    function->setDescription(tr("To Start"));
+    function->commandName = "PlayHeadMoveToStart";
+    addFunction(function);
+
+    function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "touch_play_cursor";
 	function->setDescription(tr("Set"));
@@ -1088,6 +1095,13 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("To Playhead"));
 	function->commandName = "WorkCursorMoveToPlayhead";
 	addFunction(function);
+
+    function = new TFunction();
+    function->object = "WorkCursorMove";
+    function->slotsignature = "move_to_start";
+    function->setDescription(tr("To Start"));
+    function->commandName = "WorkCursorMoveToStart";
+    addFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
@@ -1471,15 +1485,15 @@ TCommand * TShortcutManager::export_keymap()
 	if (data.open(QFile::WriteOnly | QFile::Truncate)) {
 		out.setDevice(&data);
 	} else {
-		return 0;
+        return nullptr;
 	}
 
 	QString str;
-	(TCommand *) get_keymap(str);
+    get_keymap(str);
 	out << str;
 
 	data.close();
-	return 0;
+    return nullptr;
 }
 
 TCommand * TShortcutManager::get_keymap(QString &str)
@@ -1500,7 +1514,7 @@ TCommand * TShortcutManager::get_keymap(QString &str)
 
 	str += "</body>\n</html>";
 
-	return 0;
+    return nullptr;
 }
 
 bool TShortcutManager::classInherits(const QString& className, const QString &inherited)

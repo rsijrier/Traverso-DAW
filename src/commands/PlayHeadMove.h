@@ -64,6 +64,7 @@ public slots:
         void next_snap_pos(bool autorepeat);
         void prev_snap_pos(bool autorepeat);
         void move_to_work_cursor(bool autorepeat);
+        void move_to_start(bool autorepeat);
 };
 
 #endif
