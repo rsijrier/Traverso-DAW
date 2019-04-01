@@ -44,12 +44,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TMainWindow.h"
 #include "TShortcutManager.h"
 #include <QDomDocument>
-#include <QtPrintSupport/QPrinter>
-#include <QtPrintSupport/QPrintDialog>
-
-#if defined (JACK_SUPPORT)
-RELAYTOOL_JACK
-#endif
 
 
 /****************************************/
@@ -837,9 +831,9 @@ void KeyboardConfigPage::load_config()
         }
 
 	if (enterFinishesHold) {
-		enterPressedCheckBox->setChecked(true);
+        enterPressedRadioButton->setChecked(true);
 	} else {
-		keyReleaseCheckBox->setChecked(true);
+        keyReleasedRadioButton->setChecked(true);
 	}
 }
 
@@ -847,7 +841,7 @@ void KeyboardConfigPage::save_config()
 {
 	config().set_property("InputEventDispatcher", "jobbypassdistance", mouseTreshHoldSpinBox->value());
 	config().set_property("InputEventDispatcher", "mouseclicktakesoverkeyboardnavigation", leftMouseClickRadioButton->isChecked());
-	config().set_property("InputEventDispatcher", "EnterFinishesHold", enterPressedCheckBox->isChecked());
+    config().set_property("InputEventDispatcher", "EnterFinishesHold", enterPressedRadioButton->isChecked());
 
         cpointer().set_jog_bypass_distance(mouseTreshHoldSpinBox->value());
         cpointer().set_left_mouse_click_bypasses_jog(leftMouseClickRadioButton->isChecked());
@@ -868,22 +862,6 @@ void KeyboardConfigPage::on_exportButton_clicked()
 		     tr("The exported keymap can be found here:\n\n %1").arg(QDir::homePath() + "/traversokeymap.html"),
 		     QMessageBox::Ok);
 }
-
-void KeyboardConfigPage::on_printButton_clicked()
-{
-	QString kmap;
-	tShortCutManager().get_keymap(kmap);
-
-//	QPrinter printer(QPrinter::ScreenResolution);
-//	QPrintDialog printDialog(&printer, TMainWindow::instance());
-//	if (printDialog.exec() == QDialog::Accepted) {
-//                QTextDocument doc;
-//                doc.setHtml(kmap);
-//                doc.print(&printer);
-//	}
-}
-
-
 
 
 PerformanceConfigPage::PerformanceConfigPage(QWidget* parent)

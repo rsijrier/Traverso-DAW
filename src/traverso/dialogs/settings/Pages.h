@@ -156,7 +156,6 @@ public:
 
 private slots:
 	void on_exportButton_clicked();
-	void on_printButton_clicked();
 };
 
 
