@@ -132,7 +132,7 @@ int Curve::process(
 	const TimeRef& endlocation,
 	nframes_t nframes,
 	uint channels,
-	float makeupgain
+    audio_sample_t makeupgain
 	)
 {
 	// Do nothing if there are no nodes!
@@ -142,8 +142,8 @@ int Curve::process(
 	
 	// Check if we are beyond the last node and only apply gain if != 1.0
 	if (endlocation > qint64(get_range())) {
-		float gain = ((CurveNode*)m_nodes.last())->value * makeupgain;
-		
+        audio_sample_t gain = audio_sample_t((static_cast<CurveNode*>(m_nodes.last()))->value) * makeupgain;
+
 		if (gain == 1.0f) {
 			return 0;
 		}
@@ -213,7 +213,7 @@ void Curve::solve ()
 		i = 0;
 		for(APILinkedListNode* node = m_nodes.first(); node!=0; node = node->next, ++i) {
 			
-			cn = (CurveNode*)node;
+            cn = (CurveNode*)node;
 			
 			if (cn == 0) {
 /*				qCritical  << _("programming error: ")
