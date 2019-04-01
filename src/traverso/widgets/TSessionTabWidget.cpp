@@ -373,7 +373,7 @@ void TSessionTabWidget::project_session_is_current(TSession *session)
 
 void TSessionTabWidget::update_arrow_button_shortcut_and_icon()
 {
-        int number = pm().get_project()->get_session_index(m_session->get_id());
+        int number = pm().get_project()->get_session_index(m_session->get_id()) + 1;
         if (number < 10) {
                 m_arrowButton->setText(QString("&%1").arg(number));
         } else {
