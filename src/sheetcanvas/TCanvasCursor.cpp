@@ -57,8 +57,8 @@ void TCanvasCursor::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 
 void TCanvasCursor::create_cursor_pixmap(const QString &shape)
 {
-	int width = 9;
-	int height = 16;
+    int width = 13;
+    int height = 20;
 	int bottom = height + height / 2 - 2;
 	m_pixmap = QPixmap(width + 2, bottom);
 	m_pixmap.fill(Qt::transparent);
@@ -74,9 +74,9 @@ void TCanvasCursor::create_cursor_pixmap(const QString &shape)
 	path.quadTo(QPointF(halfWidth + 1, bottom), c2);
 	path.quadTo(QPointF(width + 3, height * 0.75), endPoint);
 	QLinearGradient gradient;
-	int graycolor = 160;
+    int graycolor = 180;
 	int transparanty = 230;
-	QColor gray(graycolor, graycolor, graycolor, transparanty);
+    QColor gray(graycolor, graycolor, graycolor, transparanty);
 	QColor black(0, 0, 0, transparanty);
 	gradient.setColorAt(0.0, gray);
 	gradient.setColorAt(1.0, black);
@@ -84,20 +84,19 @@ void TCanvasCursor::create_cursor_pixmap(const QString &shape)
 	gradient.setFinalStop(0, -height);
 	gradient.setSpread(QGradient::ReflectSpread);
 
-	painter.setBrush(gradient);
-	int white = 200;
+    painter.setBrush(gradient);
+    int white = 230;
 	painter.setPen(QColor(white, white, white));
 	painter.setRenderHint(QPainter::Antialiasing);
 	painter.drawPath(path);
-	QColor color (Qt::yellow);
-	color.setAlpha(160);
+    QColor color (Qt::yellow);
 	painter.setPen(color);
 	QFont font;
-	font.setPointSizeF(6);
+    font.setPointSizeF(8);
 	font.setKerning(false);
 	painter.setFont(font);
-	QRectF textRect(0, 8, width + 2, height - 8);
-	painter.drawText(textRect, Qt::AlignHCenter, shape);
+    QRectF textRect(0, 11, width + 2, height - 11);
+    painter.drawText(textRect, Qt::AlignCenter, shape);
 }
 
 void TCanvasCursor::set_text( const QString & text, int mseconds)
