@@ -1242,13 +1242,13 @@ void TShortcutManager::loadShortcuts()
 		int interval = autorepeatinterval.toInt(&ok);
 		if (ok)
 		{
-			function->m_autorepeatInterval = interval;
+            function->setAutoRepeatInterval(interval);
 		}
 
 		int startdelay = autorepeatstartdelay.toInt(&ok);
 		if (ok)
 		{
-			function->m_autorepeatStartDelay = startdelay;
+            function->setAutoRepeatStartDelay(startdelay);
 		}
 
 		int order = sortorder.toInt(&ok);

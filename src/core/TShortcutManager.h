@@ -102,7 +102,7 @@ private:
 	void setInheritedFunction(TFunction* inherited);
 
 
-	friend class TShortcutManager;
+    friend class TShortcutManager;
 };
 
 class TShortcut
