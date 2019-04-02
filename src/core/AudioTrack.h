@@ -84,7 +84,6 @@ signals:
         void armedChanged(bool isArmed);
 
 public slots:
-        void set_gain(float gain);
         void clip_position_changed(AudioClip* clip);
 
         TCommand* toggle_arm();

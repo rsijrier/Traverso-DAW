@@ -205,18 +205,6 @@ AudioClip* AudioTrack::init_recording()
         return clip;
 }
 
-
-void AudioTrack::set_gain(float gain)
-{
-        if(gain < 0.0)
-                gain = 0.0;
-        if (gain > 2.0)
-                gain = 2.0;
-        m_fader->set_gain(gain);
-        emit stateChanged();
-}
-
-
 void AudioTrack::set_armed( bool armed )
 {
         m_isArmed = armed;
