@@ -145,9 +145,9 @@ int TrackPan::jog()
 	return 1;
 }
 
-void TrackPan::pan_left(bool autorepeat)
+void TrackPan::pan_left()
 {
-	Q_UNUSED(autorepeat);
+
 	
 	m_newPan -= 0.05f;
 	if (m_newPan < -1.0) 
@@ -156,9 +156,9 @@ void TrackPan::pan_left(bool autorepeat)
 	set_value_by_keyboard_input(m_newPan);
 }
 
-void TrackPan::pan_right(bool autorepeat)
+void TrackPan::pan_right()
 {
-	Q_UNUSED(autorepeat);
+
 
         m_newPan += 0.05f;
         if (m_newPan > 1.0f)
@@ -167,12 +167,8 @@ void TrackPan::pan_right(bool autorepeat)
 	set_value_by_keyboard_input(m_newPan);
 }
 
-void TrackPan::reset_pan(bool autorepeat)
+void TrackPan::reset_pan()
 {
-	if (autorepeat) {
-		return;
-	}
-
 	set_value_by_keyboard_input(0.0f);
 }
 

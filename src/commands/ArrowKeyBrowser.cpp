@@ -50,22 +50,22 @@ void ArrowKeyBrowser::set_cursor_shape(int useX, int useY)
         }
 }
 
-void ArrowKeyBrowser::up(bool autorepeat)
+void ArrowKeyBrowser::up()
 {
 	m_sv->browse_to_context_item_above();
 }
 
-void ArrowKeyBrowser::down(bool autorepeat)
+void ArrowKeyBrowser::down()
 {
 	m_sv->browse_to_context_item_below();
 }
 
-void ArrowKeyBrowser::left(bool autorepeat)
+void ArrowKeyBrowser::left()
 {
 	m_sv->browse_to_previous_context_item();
 }
 
-void ArrowKeyBrowser::right(bool autorepeat)
+void ArrowKeyBrowser::right()
 {
 	m_sv->browse_to_next_context_item();
 }

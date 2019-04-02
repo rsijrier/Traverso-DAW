@@ -85,10 +85,10 @@ void MoveMarker::cancel_action()
 	undo_action();
 }
 
-void MoveMarker::move_left(bool autorepeat)
+void MoveMarker::move_left()
 {
 	if (m_doSnap) {
-		return prev_snap_pos(autorepeat);
+        return prev_snap_pos();
 	}
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
@@ -101,10 +101,10 @@ void MoveMarker::move_left(bool autorepeat)
 	m_marker->set_when(m_newWhen);
 }
 
-void MoveMarker::move_right(bool autorepeat)
+void MoveMarker::move_right()
 {
 	if (m_doSnap) {
-		return next_snap_pos(autorepeat);
+        return next_snap_pos();
 	}
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
@@ -113,18 +113,18 @@ void MoveMarker::move_right(bool autorepeat)
 	m_marker->set_when(m_newWhen);
 }
 
-void MoveMarker::next_snap_pos(bool autorepeat)
+void MoveMarker::next_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
 	m_newWhen = slist->next_snap_pos(m_newWhen);
 	m_marker->set_when(m_newWhen);
 }
 
-void MoveMarker::prev_snap_pos(bool autorepeat)
+void MoveMarker::prev_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
 	m_newWhen = slist->prev_snap_pos(m_newWhen);

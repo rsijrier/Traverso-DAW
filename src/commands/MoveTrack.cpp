@@ -112,24 +112,24 @@ int MoveTrack::jog()
 }
 
 
+//void MoveTrack::move_up()
+//{
+//        m_sv->move_trackview_up(m_trackView);
+//}
+
+//void MoveTrack::move_down()
+//{
+//        m_sv->move_trackview_down(m_trackView);
+//}
+
+
 void MoveTrack::move_up()
-{
-        m_sv->move_trackview_up(m_trackView);
-}
-
-void MoveTrack::move_down()
-{
-        m_sv->move_trackview_down(m_trackView);
-}
-
-
-void MoveTrack::move_up(bool /*autorepeat*/)
 {
         m_sv->move_trackview_up(m_trackView);
         m_sv->browse_to_track(m_trackView->get_track());
 }
 
-void MoveTrack::move_down(bool /*autorepeat*/)
+void MoveTrack::move_down()
 {
         m_sv->move_trackview_down(m_trackView);
         m_sv->browse_to_track(m_trackView->get_track());
@@ -142,13 +142,13 @@ void MoveTrack::set_cursor_shape(int /*useX*/, int useY)
         }
 }
 
-void MoveTrack::to_bottom(bool autorepeat)
+void MoveTrack::to_bottom()
 {
         m_sv->to_bottom(m_trackView);
         m_sv->browse_to_track(m_trackView->get_track());
 }
 
-void MoveTrack::to_top(bool autorepeat)
+void MoveTrack::to_top()
 {
         m_sv->to_top(m_trackView);
         m_sv->browse_to_track(m_trackView->get_track());

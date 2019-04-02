@@ -44,10 +44,10 @@ private:
         SheetView*      m_sv;
 
 public slots:
-	void up(bool autorepeat);
-	void down(bool autorepeat);
-	void left(bool autorepeat);
-	void right(bool autorepeat);
+	void up();
+	void down();
+	void left();
+	void right();
 };
 
 #endif // ARROWKEYBROWSER_H

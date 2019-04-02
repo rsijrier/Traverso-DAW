@@ -48,22 +48,22 @@ int Shuttle::jog()
         return 1;
 }
 
-void Shuttle::move_up(bool )
+void Shuttle::move_up()
 {
         m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() - 5);
 }
 
-void Shuttle::move_down(bool )
+void Shuttle::move_down()
 {
         m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() + 5);
 }
 
-void Shuttle::move_left(bool )
+void Shuttle::move_left()
 {
         m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() - (m_speed * 5));
 }
 
-void Shuttle::move_right(bool )
+void Shuttle::move_right()
 {
         m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() + (m_speed * 5));
 }

@@ -115,9 +115,9 @@ int WorkCursorMove::jog()
 	return 1;
 }
 
-void WorkCursorMove::move_left(bool autorepeat)
+void WorkCursorMove::move_left()
 {
-	Q_UNUSED(autorepeat);
+	
 
 	if (m_browseMarkers) {
 		return browse_to_previous_marker();
@@ -129,15 +129,15 @@ void WorkCursorMove::move_left(bool autorepeat)
 	remove_markers_from_active_context();
 
 	if (m_doSnap) {
-		return prev_snap_pos(autorepeat);
+        return prev_snap_pos();
 	}
 	do_keyboard_move(m_session->get_work_location() - (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void WorkCursorMove::move_right(bool autorepeat)
+void WorkCursorMove::move_right()
 {
-	Q_UNUSED(autorepeat);
+	
 
 	if (m_browseMarkers) {
 		return browse_to_next_marker();
@@ -149,21 +149,21 @@ void WorkCursorMove::move_right(bool autorepeat)
 	remove_markers_from_active_context();
 
 	if (m_doSnap) {
-		return next_snap_pos(autorepeat);
+        return next_snap_pos();
 	}
 	do_keyboard_move(m_session->get_work_location() + (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void WorkCursorMove::next_snap_pos(bool autorepeat)
+void WorkCursorMove::next_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	do_keyboard_move(m_session->get_snap_list()->next_snap_pos(m_session->get_work_location()));
 }
 
-void WorkCursorMove::prev_snap_pos(bool autorepeat)
+void WorkCursorMove::prev_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_session->get_work_location()));
 }
 
@@ -174,10 +174,10 @@ void WorkCursorMove::do_keyboard_move(TimeRef newLocation)
 	m_sv->move_edit_point_to(newLocation, m_holdCursorSceneY);
 }
 
-void WorkCursorMove::toggle_snap_on_off(bool autorepeat)
+void WorkCursorMove::toggle_snap_on_off()
 {
 	m_browseMarkers = false;
-	MoveCommand::toggle_snap_on_off(autorepeat);
+    MoveCommand::toggle_snap_on_off();
 }
 
 void WorkCursorMove::browse_to_next_marker()
@@ -262,18 +262,12 @@ void WorkCursorMove::remove_markers_from_active_context()
 	}
 }
 
-void WorkCursorMove::move_to_play_cursor(bool autorepeat)
+void WorkCursorMove::move_to_play_cursor()
 {
-	if (autorepeat) {
-		return;
-	}
-
 	do_keyboard_move(m_session->get_transport_location());
 }
 
-void WorkCursorMove::move_to_start(bool autorepeat)
+void WorkCursorMove::move_to_start()
 {
-    if (autorepeat)
-        return;
     do_keyboard_move(TimeRef());
 }

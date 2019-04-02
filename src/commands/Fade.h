@@ -74,10 +74,10 @@ private :
 
 
 public slots:
-        void next_snap_pos(bool autorepeat);
-        void prev_snap_pos(bool autorepeat);
-        void move_left(bool autorepeat);
-        void move_right(bool autorepeat);
+        void next_snap_pos();
+        void prev_snap_pos();
+        void move_left();
+        void move_right();
 };
 
 

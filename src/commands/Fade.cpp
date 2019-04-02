@@ -140,38 +140,38 @@ int FadeRange::jog()
 }
 
 
-void FadeRange::move_left(bool autorepeat)
+void FadeRange::move_left()
 {
-        Q_UNUSED(autorepeat);
+
         if (m_doSnap) {
-                return prev_snap_pos(autorepeat);
+                return prev_snap_pos();
         }
         do_keyboard_move(m_newRange - (d->scalefactor * m_speed * d->direction));
 }
 
 
-void FadeRange::move_right(bool autorepeat)
+void FadeRange::move_right()
 {
-        Q_UNUSED(autorepeat);
+
         if (m_doSnap) {
-                return next_snap_pos(autorepeat);
+                return next_snap_pos();
         }
 
         do_keyboard_move(m_newRange + (d->scalefactor * m_speed * d->direction));
 }
 
 
-void FadeRange::next_snap_pos(bool autorepeat)
+void FadeRange::next_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+
         TimeRef snap = d->sheet->get_snap_list()->next_snap_pos(d->clip->get_track_start_location() + m_newRange);
         TimeRef newpos = snap - d->clip->get_track_start_location();
         do_keyboard_move(newpos.universal_frame());
 }
 
-void FadeRange::prev_snap_pos(bool autorepeat)
+void FadeRange::prev_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+
         TimeRef snap = d->sheet->get_snap_list()->prev_snap_pos(d->clip->get_track_start_location() + m_newRange);
         TimeRef newpos = snap - d->clip->get_track_start_location();
         do_keyboard_move(newpos.universal_frame());

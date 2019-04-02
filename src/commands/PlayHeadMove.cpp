@@ -125,36 +125,36 @@ int PlayHeadMove::jog()
 	return 1;
 }
 
-void PlayHeadMove::move_left(bool autorepeat)
+void PlayHeadMove::move_left()
 {
-        Q_UNUSED(autorepeat);
+
         if (m_doSnap) {
-                return prev_snap_pos(autorepeat);
+                return prev_snap_pos();
         }
 
         do_keyboard_move(m_newTransportLocation - (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void PlayHeadMove::move_right(bool autorepeat)
+void PlayHeadMove::move_right()
 {
-        Q_UNUSED(autorepeat);
+
         if (m_doSnap) {
-                return next_snap_pos(autorepeat);
+                return next_snap_pos();
         }
         do_keyboard_move(m_newTransportLocation + (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void PlayHeadMove::next_snap_pos(bool autorepeat)
+void PlayHeadMove::next_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+
         do_keyboard_move(m_session->get_snap_list()->next_snap_pos(m_newTransportLocation), true);
 }
 
-void PlayHeadMove::prev_snap_pos(bool autorepeat)
+void PlayHeadMove::prev_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+
         do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_newTransportLocation), true);
 }
 
@@ -193,17 +193,12 @@ void PlayHeadMove::do_keyboard_move(TimeRef newLocation, bool centerInView)
 	cpointer().setCursorPos(QPointF(m_playhead->scenePos().x(), m_holdCursorSceneY));
 }
 
-void PlayHeadMove::move_to_work_cursor(bool autorepeat)
+void PlayHeadMove::move_to_work_cursor()
 {
-        if (autorepeat) {
-                return;
-        }
         do_keyboard_move(m_session->get_work_location());
 }
 
-void PlayHeadMove::move_to_start(bool autorepeat)
+void PlayHeadMove::move_to_start()
 {
-    if (autorepeat)
-        return;
     do_keyboard_move(TimeRef());
 }

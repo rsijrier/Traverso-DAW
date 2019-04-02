@@ -254,10 +254,10 @@ int MoveClip::do_action()
 		m_group.move_to(m_newTrackIndex, m_trackStartLocation + m_posDiff);
 	}
 	else if (m_actionType == MOVE_TO_START) {
-		move_to_start(false);
+        move_to_start();
 	}
 	else if (m_actionType == MOVE_TO_END) {
-		move_to_end(false);
+        move_to_end();
 	}
 	
 	foreach(MarkerAndOrigin markerAndOrigin, m_markers) {
@@ -349,16 +349,16 @@ int MoveClip::jog()
 }
 
 
-void MoveClip::next_snap_pos(bool autorepeat)
+void MoveClip::next_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+
         do_prev_next_snap(m_session->get_snap_list()->next_snap_pos(m_group.get_track_start_location()),
                           m_session->get_snap_list()->next_snap_pos(m_group.get_track_end_location()));
 }
 
-void MoveClip::prev_snap_pos(bool autorepeat)
+void MoveClip::prev_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+
         do_prev_next_snap(m_session->get_snap_list()->prev_snap_pos(m_group.get_track_start_location()),
                         m_session->get_snap_list()->prev_snap_pos(m_group.get_track_end_location()));
 }
@@ -372,21 +372,21 @@ void MoveClip::do_prev_next_snap(TimeRef trackStartLocation, TimeRef trackEndLoc
 	do_move();
 }
 
-void MoveClip::move_to_start(bool autorepeat)
+void MoveClip::move_to_start()
 {
-	Q_UNUSED(autorepeat);
+
 	m_group.move_to(m_group.get_track_index(), TimeRef());
 }
 
-void MoveClip::move_to_end(bool autorepeat)
+void MoveClip::move_to_end()
 {
-	Q_UNUSED(autorepeat);
+
         m_group.move_to(m_group.get_track_index(), m_session->get_last_location());
 }
 
-void MoveClip::move_up(bool autorepeat)
+void MoveClip::move_up()
 {
-	Q_UNUSED(autorepeat);
+
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	int deltaTrackIndex = -1;
 	m_group.check_valid_track_index_delta(deltaTrackIndex);
@@ -394,9 +394,9 @@ void MoveClip::move_up(bool autorepeat)
 	do_move();
 }
 
-void MoveClip::move_down(bool autorepeat)
+void MoveClip::move_down()
 {
-	Q_UNUSED(autorepeat);
+
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	int deltaTrackIndex = 1;
 	m_group.check_valid_track_index_delta(deltaTrackIndex);
@@ -404,17 +404,17 @@ void MoveClip::move_down(bool autorepeat)
 	do_move();
 }
 
-void MoveClip::move_left(bool autorepeat)
+void MoveClip::move_left()
 {
         if (d->zoom) {
-                d->zoom->hzoom_out(autorepeat);
+                d->zoom->hzoom_out();
                 return;
         }
 
 	if (d->verticalOnly) return;
 
         if (m_doSnap) {
-                return prev_snap_pos(autorepeat);
+                return prev_snap_pos();
         }
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
@@ -425,17 +425,17 @@ void MoveClip::move_left(bool autorepeat)
 	do_move();
 }
 
-void MoveClip::move_right(bool autorepeat)
+void MoveClip::move_right()
 {
         if (d->zoom) {
-                d->zoom->hzoom_in(autorepeat);
+                d->zoom->hzoom_in();
                 return;
         }
 
 	if (d->verticalOnly) return;
 
         if (m_doSnap) {
-                return next_snap_pos(autorepeat);
+                return next_snap_pos();
         }
 
         ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
@@ -443,10 +443,8 @@ void MoveClip::move_right(bool autorepeat)
 	do_move();
 }
 
-void MoveClip::start_zoom(bool autorepeat)
+void MoveClip::start_zoom()
 {
-	if (autorepeat) return;
-	
 	if (!d->zoom) {
 		d->zoom = new Zoom(d->sv, QList<QVariant>() << "HJogZoom" << "1.2" << "0.2");
 		d->zoom->begin_hold();
@@ -471,10 +469,8 @@ void MoveClip::set_cursor_shape(int useX, int useY)
 	}
 }
 
-void MoveClip::toggle_vertical_only(bool autorepeat)
+void MoveClip::toggle_vertical_only()
 {
-	if (autorepeat) return;
-	
 	d->verticalOnly = !d->verticalOnly;
 	if (d->verticalOnly) {
 		set_cursor_shape(0, 1);

@@ -78,24 +78,24 @@ int Scroll::undo_action( )
 	return -1;
 }
 
-void Scroll::move_up(bool )
+void Scroll::move_up()
 {
 	int step = m_sv->getVScrollBar()->pageStep();
 	m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() - step * m_speed);
 }
 
-void Scroll::move_down(bool )
+void Scroll::move_down()
 {
 	int step = m_sv->getVScrollBar()->pageStep();
 	m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() + step * m_speed);
 }
 
-void Scroll::move_left(bool )
+void Scroll::move_left()
 {
 	m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() - (m_speed * 5));
 }
 
-void Scroll::move_right(bool )
+void Scroll::move_right()
 {
 	m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() + (m_speed * 5));
 }

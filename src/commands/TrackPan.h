@@ -58,9 +58,9 @@ private :
 	void set_value_by_keyboard_input(float newPan);
 	
 public slots:
-	void pan_left(bool autorepeat);
-	void pan_right(bool autorepeat);
-	void reset_pan(bool autorepeat);
+	void pan_left();
+	void pan_right();
+	void reset_pan();
 
 };
 

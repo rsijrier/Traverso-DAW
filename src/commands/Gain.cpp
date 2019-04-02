@@ -194,9 +194,9 @@ void Gain::set_cursor_shape(int useX, int useY)
 }
 
 
-void Gain::increase_gain( bool autorepeat )
+void Gain::increase_gain(  )
 {
-	Q_UNUSED(autorepeat);
+
 	
         audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor += 0.2f;
@@ -211,9 +211,9 @@ void Gain::increase_gain( bool autorepeat )
 	cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
 }
 
-void Gain::decrease_gain(bool autorepeat)
+void Gain::decrease_gain()
 {
-	Q_UNUSED(autorepeat);
+
 	
         audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor -= 0.2f;

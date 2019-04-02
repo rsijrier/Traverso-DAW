@@ -59,12 +59,8 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
     m_valueDiff = 0.0f;
 }
 
-void MoveCurveNode::toggle_vertical_only(bool autorepeat)
+void MoveCurveNode::toggle_vertical_only()
 {
-	if (autorepeat) {
-		return;
-	}
-
 	d->verticalOnly = !d->verticalOnly;
 	if (d->verticalOnly)
 	{
@@ -120,28 +116,28 @@ int MoveCurveNode::undo_action()
         return 1;
 }
 
-void MoveCurveNode::move_up(bool )
+void MoveCurveNode::move_up()
 {
 	m_valueDiff += m_speed / d->height;
 
 	check_and_apply_when_and_value_diffs();
 }
 
-void MoveCurveNode::move_down(bool )
+void MoveCurveNode::move_down()
 {
 	m_valueDiff -= m_speed / d->height;
 
 	check_and_apply_when_and_value_diffs();
 }
 
-void MoveCurveNode::move_left(bool )
+void MoveCurveNode::move_left()
 {
 	m_whenDiff -= d->scalefactor * m_speed;
 
 	check_and_apply_when_and_value_diffs();
 }
 
-void MoveCurveNode::move_right(bool )
+void MoveCurveNode::move_right()
 {
 	m_whenDiff += d->scalefactor * m_speed;
 

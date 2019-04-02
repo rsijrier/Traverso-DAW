@@ -40,9 +40,9 @@ protected :
         bool            m_doSnap;
 
 public slots:
-        void move_faster(bool autorepeat);
-        void move_slower(bool autorepeat);
-        void toggle_snap_on_off(bool autorepeat);
+        void move_faster();
+        void move_slower();
+        void toggle_snap_on_off();
 
 };
 

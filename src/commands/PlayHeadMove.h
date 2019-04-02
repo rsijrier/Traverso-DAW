@@ -59,12 +59,12 @@ private :
         void do_keyboard_move(TimeRef newLocation, bool centerInView = false);
 
 public slots:
-        void move_left(bool autorepeat);
-        void move_right(bool autorepeat);
-        void next_snap_pos(bool autorepeat);
-        void prev_snap_pos(bool autorepeat);
-        void move_to_work_cursor(bool autorepeat);
-        void move_to_start(bool autorepeat);
+        void move_left();
+        void move_right();
+        void next_snap_pos();
+        void prev_snap_pos();
+        void move_to_work_cursor();
+        void move_to_start();
 };
 
 #endif

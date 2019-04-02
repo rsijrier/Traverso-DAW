@@ -130,9 +130,9 @@ int Zoom::jog()
 		if (abs(dx) > 10  /*1*/) {
                         m_horizontalJogZoomLastX = x;
 			if (dx > 0) {
-                                hzoom_in(false);
+                                hzoom_in();
 			} else {
-                                hzoom_out(false);
+                                hzoom_out();
 			}
 		}
 	}
@@ -160,34 +160,34 @@ int Zoom::undo_action( )
 	return -1;
 }
 
-void Zoom::vzoom_in(bool autorepeat)
+void Zoom::vzoom_in()
 {
-        Q_UNUSED(autorepeat);
+
         m_sv->vzoom(1.3);
 }
 
-void Zoom::vzoom_out(bool autorepeat)
+void Zoom::vzoom_out()
 {
-        Q_UNUSED(autorepeat);
+
         m_sv->vzoom(0.7);
 }
 
-void Zoom::hzoom_in(bool autorepeat)
+void Zoom::hzoom_in()
 {
-        Q_UNUSED(autorepeat);
+
         m_sv->hzoom(0.5);
 }
 
-void Zoom::hzoom_out(bool autorepeat)
+void Zoom::hzoom_out()
 {
-        Q_UNUSED(autorepeat);
+
         m_sv->hzoom(2.0);
 }
 
 
-void Zoom::track_vzoom_in(bool autorepeat)
+void Zoom::track_vzoom_in()
 {
-        Q_UNUSED(autorepeat);
+
 
         if (!m_tv) {
                 return;
@@ -199,9 +199,9 @@ void Zoom::track_vzoom_in(bool autorepeat)
         m_sv->set_track_height(m_tv, trackheight);
 }
 
-void Zoom::track_vzoom_out(bool autorepeat)
+void Zoom::track_vzoom_out()
 {
-        Q_UNUSED(autorepeat);
+
 
         if (!m_tv) {
                 return;
@@ -273,10 +273,8 @@ int Zoom::collected_number_to_track_height(const QString& collected) const
 }
 
 
-void Zoom::toggle_vertical_horizontal_jog_zoom(bool autorepeat)
+void Zoom::toggle_vertical_horizontal_jog_zoom()
 {
-	if (autorepeat) return;
-	
 	if (m_jogVertical) {
 		cpointer().setCursorShape(":/cursorZoomHorizontal");
 		cpointer().setCursorText(tr("Vertical Off"), 1000);
@@ -292,12 +290,8 @@ void Zoom::toggle_vertical_horizontal_jog_zoom(bool autorepeat)
 	}
 }
 
-void Zoom::toggle_expand_all_tracks(bool autorepeat)
+void Zoom::toggle_expand_all_tracks()
 {
-        if (autorepeat) {
-                return;
-        }
-
 	m_sv->toggle_expand_all_tracks(-1);
 }
 

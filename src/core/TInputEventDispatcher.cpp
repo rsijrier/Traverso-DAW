@@ -123,7 +123,7 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* functio
 		m_activeModifierKeys.append(modifier);
 	}
 
-	dispatch_shortcut(shortCut, false, true);
+    dispatch_shortcut(shortCut, true);
 
 	m_activeModifierKeys.clear();
 
@@ -131,7 +131,7 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* functio
 }
 
 
-int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool autorepeat, bool fromContextMenu)
+int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromContextMenu)
 {
 	PENTER2;
 
@@ -233,7 +233,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool autorepea
 
 		if (item == m_holdingCommand) {
 			PMESG("Dispatching to holdcommand");
-			if (QMetaObject::invokeMethod(item, QS_C(slotsignature), Qt::DirectConnection, Q_ARG(bool, autorepeat))) {
+            if (QMetaObject::invokeMethod(item, QS_C(slotsignature), Qt::DirectConnection)) {
 				PMESG("HIT, invoking %s::%s", m_holdingCommand->metaObject()->className(), QS_C(slotsignature));
 				// only now we know which object this hold modifier key was dispatched on.
 				// the process_hold_modifier_keys() only knows about the corresonding ieaction

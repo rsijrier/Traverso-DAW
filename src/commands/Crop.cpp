@@ -170,7 +170,7 @@ int CropClip::jog()
 	return 1;
 }
 
-void CropClip::adjust_left(bool autorepeat)
+void CropClip::adjust_left()
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
@@ -190,7 +190,7 @@ void CropClip::adjust_left(bool autorepeat)
 	m_selection->setPos(x1, 0);
 }
 
-void CropClip::adjust_right(bool /*autorepeat*/)
+void CropClip::adjust_right()
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 

@@ -59,8 +59,8 @@ private :
 	int get_gain_from_object(float& gain);
 	
 public slots:
-        void increase_gain(bool autorepeat);
-        void decrease_gain(bool autorepeat);
+        void increase_gain();
+        void decrease_gain();
 };
 
 #endif

@@ -171,35 +171,35 @@ int SplitClip::jog()
 }
 
 
-void SplitClip::move_left(bool autorepeat)
+void SplitClip::move_left()
 {
-        Q_UNUSED(autorepeat);
+        
         if (m_doSnap) {
-                return prev_snap_pos(autorepeat);
+                return prev_snap_pos();
         }
         do_keyboard_move(m_splitPoint - (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void SplitClip::move_right(bool autorepeat)
+void SplitClip::move_right()
 {
-        Q_UNUSED(autorepeat);
+        
         if (m_doSnap) {
-                return next_snap_pos(autorepeat);
+                return next_snap_pos();
         }
         do_keyboard_move(m_splitPoint + (m_sv->timeref_scalefactor * m_speed));
 }
 
 
-void SplitClip::next_snap_pos(bool autorepeat)
+void SplitClip::next_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+        
         do_keyboard_move(m_session->get_snap_list()->next_snap_pos(m_splitPoint));
 }
 
-void SplitClip::prev_snap_pos(bool autorepeat)
+void SplitClip::prev_snap_pos()
 {
-        Q_UNUSED(autorepeat);
+        
         do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_splitPoint));
 }
 

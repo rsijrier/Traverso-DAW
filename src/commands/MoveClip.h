@@ -96,16 +96,16 @@ private :
 	void do_move();
 	
 public slots:
-	void next_snap_pos(bool autorepeat);
-	void prev_snap_pos(bool autorepeat);
-        void move_to_start(bool autorepeat);
-        void move_to_end(bool autorepeat);
-	void move_up(bool autorepeat);
-	void move_down(bool autorepeat);
-	void move_left(bool autorepeat);
-	void move_right(bool autorepeat);
-	void start_zoom(bool autorepeat);
-	void toggle_vertical_only(bool autorepeat);
+	void next_snap_pos();
+	void prev_snap_pos();
+        void move_to_start();
+        void move_to_end();
+	void move_up();
+	void move_down();
+	void move_left();
+	void move_right();
+	void start_zoom();
+	void toggle_vertical_only();
 };
 
 #endif

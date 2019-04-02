@@ -54,14 +54,14 @@ private:
         SheetView*      m_sv;
         TrackView*      m_trackView;
 
-        void move_up();
-        void move_down();
+//        void move_up();
+//        void move_down();
 
 public slots:
-        void move_up(bool autorepeat);
-        void move_down(bool autorepeat);
-        void to_top(bool autorepeat);
-        void to_bottom(bool autorepeat);
+        void move_up();
+        void move_down();
+        void to_top();
+        void to_bottom();
 };
 
 

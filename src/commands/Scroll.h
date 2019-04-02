@@ -49,10 +49,10 @@ private :
 	int m_dy;
 
 public slots:
-	void move_up(bool autorepeat);
-	void move_down(bool autorepeat);
-	void move_left(bool autorepeat);
-	void move_right(bool autorepeat);
+	void move_up();
+	void move_down();
+	void move_left();
+	void move_right();
 
 };
 

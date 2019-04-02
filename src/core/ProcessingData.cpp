@@ -91,7 +91,7 @@ TCommand* ProcessingData::mute()
         PENTER;
         set_muted(!m_isMuted);
 
-        return (TCommand*) 0;
+        return nullptr;
 }
 
 TCommand* ProcessingData::add_plugin( Plugin * plugin )

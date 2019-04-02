@@ -118,7 +118,7 @@ private:
     bool 			check_number_collection(int eventcode);
 
     //! call the slot that handler a given action
-    int dispatch_shortcut(TShortcut* shortCut, bool autorepeat=false, bool fromContextMenu=false);
+    int dispatch_shortcut(TShortcut* shortCut, bool fromContextMenu=false);
 
     void set_jogging(bool jog);
     void set_numerical_input(const QString& number);

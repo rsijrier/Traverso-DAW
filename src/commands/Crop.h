@@ -57,8 +57,8 @@ private:
         qint64 x2;
 
 public slots:
-        void adjust_left(bool autorepeat);
-        void adjust_right(bool autorepeat);
+        void adjust_left();
+        void adjust_right();
 };
 
 #endif

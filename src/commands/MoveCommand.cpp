@@ -54,7 +54,7 @@ MoveCommand::MoveCommand(ContextItem* item, const QString &description)
 	}
 }
 
-void MoveCommand::move_faster(bool autorepeat)
+void MoveCommand::move_faster()
 {
 	if (m_speed > 32) {
 		m_speed = 32;
@@ -77,7 +77,7 @@ void MoveCommand::move_faster(bool autorepeat)
 }
 
 
-void MoveCommand::move_slower(bool autorepeat)
+void MoveCommand::move_slower()
 {
 	if (m_speed > 32) {
 		m_speed = 32;
@@ -133,12 +133,8 @@ void MoveCommand::set_collected_number(const QString &collected)
 }
 
 
-void MoveCommand::toggle_snap_on_off(bool autorepeat)
+void MoveCommand::toggle_snap_on_off()
 {
-	if (autorepeat) {
-		return;
-	}
-
 	Sheet* sheet = pm().get_project()->get_active_sheet();
 	sheet->toggle_snap();
 	m_doSnap = sheet->is_snap_on();

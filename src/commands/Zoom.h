@@ -69,14 +69,14 @@ private :
         TrackView* m_tv;
 	
 public slots:
-	void vzoom_in(bool autorepeat);
-	void vzoom_out(bool autorepeat);
-        void hzoom_in(bool autorepeat);
-        void hzoom_out(bool autorepeat);
-        void track_vzoom_in(bool autorepeat);
-        void track_vzoom_out(bool autorepeat);
-	void toggle_vertical_horizontal_jog_zoom(bool autorepeat);
-        void toggle_expand_all_tracks(bool autorepeat);
+	void vzoom_in();
+	void vzoom_out();
+        void hzoom_in();
+        void hzoom_out();
+        void track_vzoom_in();
+        void track_vzoom_out();
+	void toggle_vertical_horizontal_jog_zoom();
+        void toggle_expand_all_tracks();
 };
 
 #endif

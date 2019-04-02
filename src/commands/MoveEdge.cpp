@@ -157,37 +157,37 @@ int MoveEdge::jog()
 }
 
 
-void MoveEdge::move_left(bool autorepeat)
+void MoveEdge::move_left()
 {
 	if (m_doSnap)
 	{
-		return prev_snap_pos(autorepeat);
+        return prev_snap_pos();
 	}
 	m_newPos = m_newPos - (m_sv->timeref_scalefactor * m_speed);
 	do_keyboard_move();
 }
 
-void MoveEdge::move_right(bool autorepeat)
+void MoveEdge::move_right()
 {
 	if (m_doSnap)
 	{
-		return next_snap_pos(autorepeat);
+        return next_snap_pos();
 	}
 	m_newPos = m_newPos + (m_sv->timeref_scalefactor * m_speed);
 	do_keyboard_move();
 }
 
-void MoveEdge::next_snap_pos(bool autorepeat)
+void MoveEdge::next_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	SnapList* slist = m_sv->get_sheet()->get_snap_list();
 	m_newPos = slist->next_snap_pos(m_newPos);
 	do_keyboard_move();
 }
 
-void MoveEdge::prev_snap_pos(bool autorepeat)
+void MoveEdge::prev_snap_pos()
 {
-	Q_UNUSED(autorepeat);
+	
 	SnapList* slist = m_sv->get_sheet()->get_snap_list();
 	m_newPos = slist->prev_snap_pos(m_newPos);
 	do_keyboard_move();
