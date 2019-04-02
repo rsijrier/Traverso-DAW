@@ -135,7 +135,6 @@ SystemResources::SystemResources(QWidget * parent)
 void SystemResources::update_status( )
 {
 	float time = audiodevice().get_cpu_time();
-        float ioCPUTime = 0;
 	int bufReadStatus = 100;
 	int bufWriteStatus = 100;
 	
@@ -143,7 +142,6 @@ void SystemResources::update_status( )
 		foreach(Sheet* sheet, m_project->get_sheets() ) {
 			bufReadStatus = std::min(sheet->get_diskio()->get_read_buffers_fill_status(), bufReadStatus);
 			bufWriteStatus = std::min(sheet->get_diskio()->get_write_buffers_fill_status(), bufWriteStatus);
-                        ioCPUTime += sheet->get_diskio()->get_cpu_time();
 		}
 	}
 

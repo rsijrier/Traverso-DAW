@@ -106,9 +106,9 @@ TCommand* ProcessingData::remove_plugin( Plugin * plugin )
 
 void ProcessingData::set_gain(float gain)
 {
-        if (gain < 0.0)
+        if (gain < 0.0f)
                 gain = 0.0;
-        if (gain > 2.0)
+        if (gain > 2.0f)
                 gain = 2.0;
         m_fader->set_gain(gain);
         emit stateChanged();

@@ -47,7 +47,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
 {
         m_gainObject = context;
 
-	float gain = -1;
+    audio_sample_t gain = -1;
 	QString des = "";
         ProcessingData* data = qobject_cast<ProcessingData*>(m_gainObject);
         QString name;
@@ -56,7 +56,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
         }
 	
         if (args.size() > 0) {
-		gain = args.at(0).toDouble();
+        gain = audio_sample_t(args.at(0).toDouble());
 		des = QString(context->metaObject()->className()) + ": Reset gain";
 	} else {
                 des = "Gain (" + QString(context->metaObject()->className()) + " " + name + ")";
@@ -70,7 +70,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
 	}
 	
         Track* track = qobject_cast<Track*>(context);
-        if (track && m_origGain == 0.5) {
+        if (track && qFuzzyCompare(m_origGain, 0.5f)) {
                 m_newGain = 1.0;
 	} else {
 		Sheet* sheet = qobject_cast<Sheet*>(context);
@@ -78,7 +78,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
                         // if context == sheet, then use sheets master out
                         // as the gain object as sheet itself doesn't apply any gain.
                         m_gainObject = sheet->get_master_out();
-                        if (m_origGain == 0.5) {
+                        if (qFuzzyCompare(m_origGain, 0.5f)) {
                                 m_newGain = 1.0;
                         }
                 }
@@ -153,7 +153,7 @@ void Gain::set_collected_number(const QString & collected)
 	}
 	
 	bool ok;
-	float dbFactor = collected.toDouble(&ok);
+    audio_sample_t dbFactor = audio_sample_t(collected.toDouble(&ok));
 	if (!ok) {
 		if (collected.contains(".") || collected.contains("-")) {
 			QString s = collected;
@@ -170,16 +170,16 @@ void Gain::set_collected_number(const QString & collected)
 	
         m_newGain = dB_to_scale_factor(dbFactor);
 
-        if (m_newGain < 0.0)
+        if (m_newGain < 0.0f)
                 m_newGain = 0.0;
-        if (m_newGain > 2.0)
+        if (m_newGain > 2.0f)
                 m_newGain = 2.0;
 
 	// Update the vieport's hold cursor with the _actuall_ gain value!
 	if(rightfromdot) {
-		cpointer().setCursorText(QByteArray::number(dbFactor, 'f', rightfromdot).append(" dB"));
+        cpointer().setCursorText(QByteArray::number(double(dbFactor), 'f', rightfromdot).append(" dB"));
 	} else {
-		cpointer().setCursorText(QByteArray::number(dbFactor).append(" dB"));
+        cpointer().setCursorText(QByteArray::number(double(dbFactor)).append(" dB"));
 	}
 
 }
@@ -198,8 +198,8 @@ void Gain::increase_gain( bool autorepeat )
 {
 	Q_UNUSED(autorepeat);
 	
-        float dbFactor = coefficient_to_dB(m_newGain);
-	dbFactor += 0.2;
+        audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
+    dbFactor += 0.2f;
         m_newGain = dB_to_scale_factor(dbFactor);
         QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
 	
@@ -215,8 +215,8 @@ void Gain::decrease_gain(bool autorepeat)
 {
 	Q_UNUSED(autorepeat);
 	
-        float dbFactor = coefficient_to_dB(m_newGain);
-	dbFactor -= 0.2;
+        audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
+    dbFactor -= 0.2f;
         m_newGain = dB_to_scale_factor(dbFactor);
 	
         QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
@@ -234,23 +234,23 @@ int Gain::jog()
 {
 	PENTER;
 	
-	float of = 0;
+    qreal of = 0;
 	
-        float dbFactor = coefficient_to_dB(m_newGain);
+    audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
 	
-	int diff;
+    qreal diff;
 
         diff = m_origPos.y() - cpointer().scene_y();
 
 	if (dbFactor > -1) {
-		of = diff * 0.05;
+        of = diff * 0.05;
 	}
 	if (dbFactor <= -1) {
-		of = diff * ((1 - dB_to_scale_factor(dbFactor)) / 3);
+        of = diff * ((1 - double(dB_to_scale_factor(dbFactor))) / 3);
 	}
 	
 	
-        m_newGain = dB_to_scale_factor( dbFactor + of );
+        m_newGain = dB_to_scale_factor( dbFactor + float(of) );
 	
 	// Set the gain for gainObject
         QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
