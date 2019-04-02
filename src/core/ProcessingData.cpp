@@ -46,6 +46,7 @@ ProcessingData::ProcessingData(TSession *session)
         m_processBus = 0;
         m_isMuted = false;
         m_pan = 0.0f;
+        m_maxGainAmplification = 2.0f;
         m_fader = m_pluginChain->get_fader();
 }
 
@@ -59,10 +60,10 @@ void ProcessingData::set_name( const QString & name )
 
 void ProcessingData::set_pan(float pan)
 {
-        if ( pan < -1.0 ) {
+        if ( pan < -1.0f ) {
                 m_pan=-1.0;
         } else {
-                if ( pan > 1.0 ) {
+                if ( pan > 1.0f ) {
                         m_pan=1.0;
                 } else {
                         m_pan=pan;
@@ -108,8 +109,8 @@ void ProcessingData::set_gain(float gain)
 {
         if (gain < 0.0f)
                 gain = 0.0;
-        if (gain > 2.0f)
-                gain = 2.0;
+        if (gain > m_maxGainAmplification)
+                gain = m_maxGainAmplification;
         m_fader->set_gain(gain);
         emit stateChanged();
 }

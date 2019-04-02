@@ -65,7 +65,8 @@ protected:
         TSession*       m_session;
         GainEnvelope*   m_fader;
         PluginChain*    m_pluginChain;
-        QString		m_name;
+        QString         m_name;
+        audio_sample_t  m_maxGainAmplification;
         bool            m_isMuted;
         float           m_pan;
 

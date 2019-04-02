@@ -69,7 +69,7 @@ AudioClip::AudioClip(const QString& name)
 	: Snappable()
 {
 	PENTERCONS;
-        m_name = name;
+    m_name = name;
 	m_isMuted=false;
 	m_id = create_id();
 	m_readSourceId = m_sheetId = 0;
@@ -92,8 +92,8 @@ AudioClip::AudioClip(const QDomNode& node)
 	m_sheetId = e.attribute("sheet", "0").toLongLong();
 	m_name = e.attribute( "clipname", "" ) ;
 	m_isMuted =  e.attribute( "mute", "" ).toInt();
-        m_length = TimeRef(e.attribute( "length", "0" ).toLongLong());
-        m_sourceStartLocation = TimeRef(e.attribute( "sourcestart", "" ).toLongLong());
+    m_length = TimeRef(e.attribute( "length", "0" ).toLongLong());
+    m_sourceStartLocation = TimeRef(e.attribute( "sourcestart", "" ).toLongLong());
 	
 	m_sourceEndLocation = m_sourceStartLocation + m_length;
         TimeRef location(e.attribute( "trackstart", "" ).toLongLong());
@@ -119,7 +119,7 @@ void AudioClip::init()
 {
 	QObject::tr("AudioClip");
 
-        m_sheet = nullptr;
+    m_sheet = nullptr;
     m_track = nullptr;
     m_readSource = nullptr;
     m_peak = nullptr;
@@ -130,11 +130,12 @@ void AudioClip::init()
     fadeOut = nullptr;
 	m_fader->automate_port(0, true);
 	m_fader->set_gain(1.0);
+    m_maxGainAmplification = 4.0f;
 
-        // read in the configuration from the global configuration settings.
-        update_global_configuration();
+    // read in the configuration from the global configuration settings.
+    update_global_configuration();
 
-        connect(&config(), SIGNAL(configChanged()), this, SLOT(update_global_configuration()));
+    connect(&config(), SIGNAL(configChanged()), this, SLOT(update_global_configuration()));
 }
 
 void AudioClip::update_global_configuration()
