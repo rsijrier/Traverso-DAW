@@ -344,7 +344,7 @@ void AudioDriverConfigPage::driver_combobox_index_changed(QString driver)
 
 	if (driver == "ALSA") {
 		m_alsadevices->show();
-		m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox) + 1, m_alsadevices);
+        m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox), m_alsadevices);
 	} else {
 		m_alsadevices->hide();
 		m_mainLayout->removeWidget(m_alsadevices);
@@ -352,7 +352,7 @@ void AudioDriverConfigPage::driver_combobox_index_changed(QString driver)
 
 	if (driver == "PortAudio") {
 		m_portaudiodrivers->show();
-		m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox) + 1, m_portaudiodrivers);
+        m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox), m_portaudiodrivers);
 	} else {
 		m_portaudiodrivers->hide();
 		m_mainLayout->removeWidget(m_portaudiodrivers);
@@ -360,7 +360,7 @@ void AudioDriverConfigPage::driver_combobox_index_changed(QString driver)
 	
 	if (driver == "Jack") {
 		jackGroupBox->show();
-		m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox) + 1, jackGroupBox);
+        m_mainLayout->insertWidget(m_mainLayout->indexOf(driverConfigGroupBox), jackGroupBox);
 	} else {
 		jackGroupBox->hide();
 		m_mainLayout->removeWidget(jackGroupBox);
