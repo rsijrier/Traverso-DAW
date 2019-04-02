@@ -166,7 +166,6 @@ public slots:
 	void track_audible_state_changed();
 	void toggle_mute();
 	void toggle_lock();
-	void set_gain(float g);
 	
 	TCommand* mute();
 	TCommand* reset_fade_in();
