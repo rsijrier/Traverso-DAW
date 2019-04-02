@@ -218,7 +218,7 @@ void TShortcutEditorDialog::key1_combo_box_activated(int /*index*/)
 	ui->shortcutsTreeWidget->clear();
 
 	QString keyString = ui->keyComboBox1->itemData(ui->keyComboBox1->currentIndex()).toString();
-	TShortcut* shortCut = tShortCutManager().getShortcut(keyString);
+	TShortcut* shortCut = tShortCutManager().getShortcutForKey(keyString);
 
 	if (!shortCut)
 	{

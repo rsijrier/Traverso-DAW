@@ -286,7 +286,7 @@ QList< TFunction* > TShortcutManager::getFunctionsFor(QString className)
 	return functionsList;
 }
 
-TShortcut* TShortcutManager::getShortcut(const QString &keyString)
+TShortcut* TShortcutManager::getShortcutForKey(const QString &keyString)
 {
 	int keyValue = -1;
 
@@ -306,7 +306,7 @@ TShortcut* TShortcutManager::getShortcut(const QString &keyString)
 	return shortcut;
 }
 
-TShortcut* TShortcutManager::getShortcut(int key)
+TShortcut* TShortcutManager::getShortcutForKey(int key)
 {
 	TShortcut* shortcut = m_shortcuts.value(key, 0);
 	return shortcut;
@@ -1268,7 +1268,7 @@ void TShortcutManager::loadShortcuts()
 		{
 			foreach(QString key, function->getKeys())
 			{
-				TShortcut* shortcut = getShortcut(key);
+                TShortcut* shortcut = getShortcutForKey(key);
 				if (shortcut)
 				{
 					foreach(QString object, function->getObjects())
@@ -1290,7 +1290,7 @@ void TShortcutManager::loadShortcuts()
 			{
 				foreach(QString key, function->getKeys())
 				{
-					TShortcut* shortcut = getShortcut(key);
+                    TShortcut* shortcut = getShortcutForKey(key);
 					if (shortcut)
 					{
 						foreach(QString object, function->getObjects())

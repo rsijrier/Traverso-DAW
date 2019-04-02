@@ -140,8 +140,8 @@ public:
 	TFunction* getFunction(const QString& function) const;
 
 	QList<TFunction* > getFunctionsFor(QString className);
-	TShortcut* getShortcut(const QString& key);
-	TShortcut* getShortcut(int key);
+	TShortcut* getShortcutForKey(const QString& key);
+	TShortcut* getShortcutForKey(int key);
 	CommandPlugin* getCommandPlugin(const QString& pluginName);
 	void modifyFunctionKeys(TFunction* function, QStringList keys, QStringList modifiers);
 	void modifyFunctionInheritedBase(TFunction* function, bool usesInheritedBase);
