@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 GainEnvelope::GainEnvelope(TSession* session)
         : Plugin(session)
 {
+    m_gain = 1.0f;
 	PluginControlPort* port = new PluginControlPort(this, 0, 1.0);
 	port->set_index(0);
 	m_controlPorts.append(port);

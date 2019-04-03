@@ -51,7 +51,7 @@ public:
         void set_moving(bool move);
 	void move_to(int x, int y);
         bool is_moving() const {return m_isMoving;}
-	virtual int get_height();
+    virtual int get_height() const;
 	virtual void set_height(int height);
 	int get_total_height();
 	void layout_lanes();

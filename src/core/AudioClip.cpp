@@ -129,7 +129,6 @@ void AudioClip::init()
     fadeIn = nullptr;
     fadeOut = nullptr;
 	m_fader->automate_port(0, true);
-	m_fader->set_gain(1.0);
     m_maxGainAmplification = 4.0f;
 
     // read in the configuration from the global configuration settings.

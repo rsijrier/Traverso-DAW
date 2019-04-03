@@ -106,7 +106,7 @@ void AudioTrackView::remove_audioclipview( AudioClip * clip )
 	}
 }
 
-int AudioTrackView::get_height( )
+int AudioTrackView::get_height( ) const
 {
 	return m_sv->get_track_height(m_track);
 }

@@ -605,7 +605,7 @@ void Sheet::set_gain(float gain)
 void Sheet::set_work_at(TimeRef location, bool isFolder)
 {
         if ((! isFolder) && m_project->sheets_are_track_folder()) {
-                return m_project->set_work_at(location);
+                return m_project->set_work_at(location, isFolder);
         }
 
         // catch location < 0
@@ -1072,7 +1072,7 @@ void Sheet::start_transport_rolling(bool realtime)
 	m_transport = 1;
 	
 	if (realtime) {
-		RT_THREAD_EMIT(this, 0, transportStarted());
+        RT_THREAD_EMIT(this, nullptr, transportStarted());
 	} else {
 		emit transportStarted();
 	}

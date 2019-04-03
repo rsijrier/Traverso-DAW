@@ -126,7 +126,7 @@ public :
         void set_current_session(qint64 id);
 	void set_import_dir(const QString& dir);
         void set_sheets_are_tracks_folder(bool isFolder);
-        void set_work_at(TimeRef worklocation);
+        void set_work_at(TimeRef worklocation, bool isFolder);
         void set_keyboard_arrow_key_navigation_speed(int speed) {m_keyboardArrowNavigationSpeed = speed;}
         int save_from_template_to_project_file(const QString& file, const QString& projectName);
 

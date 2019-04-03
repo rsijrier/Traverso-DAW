@@ -45,7 +45,7 @@ public:
         QList<AudioClipView* > get_clipviews() {return m_clipViews;}
 	CurveView* get_gain_curve_view() const {return m_curveView;}
 	
-        int get_height();
+        int get_height() const;
 	
 	void load_theme_data();
 	

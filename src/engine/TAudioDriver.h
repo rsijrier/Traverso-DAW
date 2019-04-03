@@ -38,6 +38,8 @@ class AudioChannel;
 
 class TAudioDriver : public QObject
 {
+    Q_OBJECT
+
 public:
         TAudioDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
         virtual ~TAudioDriver();
@@ -46,7 +48,6 @@ public:
         virtual int _read(nframes_t nframes);
         virtual int _write(nframes_t nframes);
         virtual int _null_cycle(nframes_t nframes);
-	virtual int setup(bool capture=true, bool playback=true, const QString& cardDevice="none");
         virtual int attach();
         virtual int detach();
         virtual int start();

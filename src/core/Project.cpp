@@ -1715,10 +1715,10 @@ bool Project::is_recording() const
 	return false;
 }
 
-void Project::set_work_at(TimeRef worklocation)
+void Project::set_work_at(TimeRef worklocation, bool isFolder)
 {
         foreach(Sheet* sheet, m_sheets) {
-                sheet->set_work_at_for_sheet_as_track_folder(worklocation);
+                sheet->set_work_at(worklocation, isFolder);
         }
 }
 

@@ -377,7 +377,6 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
 
 void VUMeterLevelView::resize_level_pixmap( )
 {
-        PENTER;
         m_levelPixmap = QPixmap(m_boundingRect.width(), m_boundingRect.height());
         QPainter painter(&m_levelPixmap);
 

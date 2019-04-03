@@ -123,7 +123,7 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 	}
 }
 
-int TrackView::get_height( )
+int TrackView::get_height( ) const
 {
 	return m_sv->get_track_height(m_track);
 }

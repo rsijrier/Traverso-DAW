@@ -379,7 +379,7 @@ void AudioDevice::set_parameters(AudioDeviceSetup ads)
 	}
 #endif
 		
-        if (ads.driverType == "PortAudio"|| (ads.driverType == "PulseAudio") || (ads.driverType == "CoreAudio")) {
+        if (ads.driverType == "PortAudio"|| /*(ads.driverType == "PulseAudio") ||*/ (ads.driverType == "CoreAudio")) {
                 if (m_driver->start() == -1) {
 			// PortAudio driver failed to start, fallback to Null Driver:
                         set_parameters(m_fallBackSetup);
@@ -397,10 +397,11 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 	if (libjack_is_present) {
 		if (driverType == "Jack") {
                         m_driver = new JackDriver(this, m_rate, m_bufferSize);
-                        if (((JackDriver*)m_driver)->setup(m_setup.jackChannels) < 0) {
+                        JackDriver* jackDriver = qobject_cast<JackDriver*>(m_driver);
+                        if (jackDriver && jackDriver->setup(m_setup.jackChannels) < 0) {
 				message(tr("Audiodevice: Failed to create the Jack Driver"), WARNING);
                                 delete m_driver;
-                                m_driver = 0;
+                                m_driver = nullptr;
 				return -1;
 			}
 			m_driverType = driverType;
@@ -412,10 +413,11 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 #if defined (ALSA_SUPPORT)
 	if (driverType == "ALSA") {
                 m_driver =  new AlsaDriver(this, m_rate, m_bufferSize);
-                if (((AlsaDriver*)m_driver)->setup(capture,playback, cardDevice, m_ditherShape) < 0) {
+                AlsaDriver* alsaDriver = qobject_cast<AlsaDriver*>(m_driver);
+                if (alsaDriver && alsaDriver->setup(capture,playback, cardDevice, m_ditherShape) < 0) {
 			message(tr("Audiodevice: Failed to create the ALSA Driver"), WARNING);
                         delete m_driver;
-                        m_driver = 0;
+                        m_driver = nullptr;
 			return -1;
 		}
 		m_driverType = driverType;
@@ -426,10 +428,11 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 #if defined (PORTAUDIO_SUPPORT)
 	if (driverType == "PortAudio") {
                 m_driver = new PADriver(this, m_rate, m_bufferSize);
-                if (m_driver->setup(capture, playback, cardDevice) < 0) {
+                PADriver* paDriver = qobject_cast<PADriver*>(m_driver);
+                if (paDriver && paDriver->setup(capture, playback, cardDevice) < 0) {
 			message(tr("Audiodevice: Failed to create the PortAudio Driver"), WARNING);
                         delete m_driver;
-                        m_driver = 0;
+                        m_driver = nullptr;
 			return -1;
 		}
 		m_driverType = driverType;
@@ -439,11 +442,12 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 	
 #if defined (PULSEAUDIO_SUPPORT)
 	if (driverType == "PulseAudio") {
-		driver = new PulseAudioDriver(this, m_rate, m_bufferSize);
-		if (driver->setup(capture, playback, cardDevice) < 0) {
+        m_driver = new PulseAudioDriver(this, m_rate, m_bufferSize);
+        PulseAudioDriver* paDriver = qobject_cast<PulseAudioDriver*>(m_driver);
+        if (paDriver && paDriver->setup(capture, playback, cardDevice) < 0) {
 			message(tr("Audiodevice: Failed to create the PulseAudio Driver"), WARNING);
-			delete driver;
-			driver = 0;
+            delete m_driver;
+            m_driver = nullptr;
 			return -1;
 		}
 		m_driverType = driverType;
@@ -454,11 +458,12 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 
 #if defined (COREAUDIO_SUPPORT)
 	if (driverType == "CoreAudio") {
-		driver = new CoreAudioDriver(this, m_rate, m_bufferSize);
-		if (driver->setup(capture, playback, cardDevice) < 0) {
+        m_driver = new CoreAudioDriver(this, m_rate, m_bufferSize);
+        CoreAudioDriver* coreAudioDriver = qojbect_cast<CoreAudioDriver*>(m_driver);
+        if (coreAudioDriver && coreAudiodriver->setup(capture, playback, cardDevice) < 0) {
 			message(tr("Audiodevice: Failed to create the CoreAudio Driver"), WARNING);
-			delete driver;
-			driver = 0;
+            delete m_driver;
+            m_driver = nullptr;
 			return -1;
 		}
 		m_driverType = driverType;
@@ -469,7 +474,7 @@ int AudioDevice::create_driver(QString driverType, bool capture, bool playback, 
 	
 	if (driverType == "Null Driver") {
 		printf("Creating Null Driver...\n");
-                m_driver = new TAudioDriver(this, m_rate, m_bufferSize);
+        m_driver = new TAudioDriver(this, m_rate, m_bufferSize);
 		m_driverType = driverType;
 		return 1;
 	}

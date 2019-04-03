@@ -37,7 +37,7 @@ public:
 
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-	int get_height() { return m_height;}
+    int get_height() const { return m_height;}
 	void set_height(int height);
 	void set_child_view(ViewItem* view);
 	QString get_name() const;

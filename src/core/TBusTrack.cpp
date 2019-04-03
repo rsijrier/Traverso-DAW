@@ -35,7 +35,6 @@ TBusTrack::TBusTrack(TSession* session, const QString& name, int channelCount)
 
         m_name = name;
         m_channelCount = channelCount;
-        m_fader->set_gain(1.0);
 
         create_process_bus();
 

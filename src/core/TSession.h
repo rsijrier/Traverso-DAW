@@ -76,8 +76,8 @@ public:
 
 
 	void set_hzoom(qreal hzoom);
-	virtual void set_work_at(TimeRef location, bool isFolder=false);
-	void set_edit_point_location(const EditPointLocation& editPoint);
+    virtual void set_work_at(TimeRef location, bool isFolder=false);
+    void set_edit_point_location(const EditPointLocation& editPoint);
 	void set_scrollbar_xy(int x, int y);
 	void set_scrollbar_x(int x);
 	void set_scrollbar_y(int y);

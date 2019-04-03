@@ -35,7 +35,7 @@ public:
 
 #define apill_foreach(variable, upcasttype, apillist) \
         for(APILinkedListNode* apillnode = apillist.first(); apillnode!=nullptr; apillnode = apillnode->next) \
-                if (variable = (upcasttype*)apillnode) \
+                if (variable = dynamic_cast<upcasttype*>(apillnode)) \
 
 class APILinkedList
 {

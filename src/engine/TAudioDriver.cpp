@@ -82,14 +82,6 @@ int TAudioDriver::_null_cycle( nframes_t  )
 	return 1;
 }
 
-int TAudioDriver::setup(bool capture, bool playback, const QString& cardDevice)
-{
-	Q_UNUSED(capture);
-	Q_UNUSED(playback);
-	Q_UNUSED(cardDevice);
-	return 1;
-}
-
 int TAudioDriver::attach( )
 {
         int port_flags;

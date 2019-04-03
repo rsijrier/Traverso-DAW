@@ -330,8 +330,8 @@ void TSession::set_hzoom( qreal hzoom )
 void TSession::set_work_at(TimeRef location, bool isFolder)
 {
 	if (m_parentSession) {
-		m_parentSession->set_work_at(location);
-	}
+        m_parentSession->set_work_at(location, isFolder);
+    }
 }
 
 void TSession::set_edit_point_location(const EditPointLocation& editPoint)
@@ -520,7 +520,7 @@ void TSession::private_add_track(Track* track)
 		m_rtBusTracks.append(track);
 		break;
 	default:
-		Q_ASSERT("TSession::private_add_track() Unknown Track type, this is a programming error!");
+        qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
 
 	}
 }
@@ -535,7 +535,7 @@ void TSession::private_remove_track(Track* track)
 		m_rtBusTracks.remove(track);
 		break;
 	default:
-		Q_ASSERT("TSession::private_remove_track() Unknown Track type, this is a programming error!");
+        qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");
 	}
 }
 
@@ -549,7 +549,7 @@ void TSession::private_track_added(Track *track)
 		m_busTracks.append((TBusTrack*)track);
 		break;
 	default:
-		Q_ASSERT("TSession::private_track_added() Unknown Track type, this is a programming error!");
+        qFatal("TSession::private_track_added() Unknown Track type, this is a programming error!");
 	}
 
 	m_tracks.insert(track->get_id(), track);
@@ -571,7 +571,7 @@ void TSession::private_track_removed(Track *track)
 		m_busTracks.removeAll((TBusTrack*)track);
 		break;
 	default:
-		Q_ASSERT("TSession::private_track_removed() Unknown Track type, this is a programming error!");
+        qFatal("TSession::private_track_removed() Unknown Track type, this is a programming error!");
 	}
 
 	m_tracks.remove(track->get_id());

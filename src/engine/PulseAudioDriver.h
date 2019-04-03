@@ -22,12 +22,14 @@
 #ifndef PULSE_AUDIO_DRIVER_H
 #define PULSE_AUDIO_DRIVER_H
 
-#include "Driver.h"
+#include "TAudioDriver.h"
 #include "defines.h"
 #include <pulse/pulseaudio.h>
 
-class PulseAudioDriver : public Driver
+class PulseAudioDriver : public TAudioDriver
 {
+    Q_OBJECT
+
 public:
 	PulseAudioDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
 	~PulseAudioDriver();
@@ -50,7 +52,7 @@ public:
 
 private:
 	/** PulseAudio playback stream object */
-	pa_mainloop* mainloop;
+    pa_mainloop* m_mainloop;
 	pa_context *context;
 	pa_stream *stream;
 	pa_mainloop_api *mainloop_api;

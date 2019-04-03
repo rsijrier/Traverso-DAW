@@ -52,7 +52,7 @@ AudioTrack::AudioTrack(Sheet* sheet, const QString& name, int height )
         m_name = name;
         sheet->set_track_height(m_id, height);
         m_pan = m_numtakes = 0;
-	m_showClipVolumeAutomation = false;
+        m_showClipVolumeAutomation = false;
 
         m_busInName = "Capture 1-2";
 
@@ -80,7 +80,6 @@ void AudioTrack::init()
 
         m_type = AUDIOTRACK;
         m_isArmed = false;
-        m_fader->set_gain(1.0);
         m_processBus = m_sheet->get_render_bus();
 }
 

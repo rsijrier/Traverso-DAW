@@ -34,6 +34,7 @@ class AudioDevice;
 
 class VUMonitor : public APILinkedListNode
 {
+
 public:
         VUMonitor() {
                 m_flag = 0;
