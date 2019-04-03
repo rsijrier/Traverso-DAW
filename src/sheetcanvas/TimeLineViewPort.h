@@ -29,7 +29,7 @@ class SheetWidget;
 class SheetView;
 class TimeLineView;
 
-#define TIMELINE_HEIGHT 32
+#define TIMELINE_HEIGHT 46
 		
 class TimeLineViewPort : public ViewPort
 {

@@ -29,17 +29,15 @@
 	<font value="0.8000000317891439" name="TrackPanel:fontscale:pan"/>
 	<font value="1" name="MessageWidget:fontscale:log"/>
 	<font value="1.5" name="Playhead:fontscale:info"/>
-	<font value="0.8999999364217123" name="Timeline:fontscale:label"/>
 	<font value="0.8999999364217123" name="AudioClip:fontscale:title"/>
 	<font value="0.8999999364217123" name="TrackPanel:fontscale:led"/>
 	<font value="0.75" name="AudioClip:fontscale:dblines"/>
 	<font value="1" name="ViewPort:fontscale:infocursor"/>
 	<font value="0.8000000317891439" name="TrackPanel:fontscale:gain"/>
 	<font value="0.8500000105963813" name="TrackPanel:fontscale:bus"/>
-	<font value="0.8999999364217123" name="TrackPanel:fontscale:name"/>
+        <font value="1" name="TrackPanel:fontscale:name"/>
 	<font value="0.75" name="FFTMeter:fontscale:label"/>
 	<font value="0.9500000211927626" name="ContextMenu:fontscale:actions"/>
-	<font value="0.9500000211927626" name="Timeline:fontscale:marker"/>
 	<font value="0.75" name="CurveView:fontscale:label"/>
 	<font value="0.75" name="CorrelationMeter:fontscale:label"/>
 	<font value="0.8999999364217123" name="Plugin:fontscale:name"/>

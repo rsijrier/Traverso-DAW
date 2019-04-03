@@ -57,8 +57,8 @@ static bool smallerMarker(const MarkerView* left, const MarkerView* right )
 
 
 TimeLineView::TimeLineView(SheetView* view)
-	: ViewItem(0, view->get_sheet()->get_timeline())
-	, m_blinkingMarker(0)
+    : ViewItem(nullptr, view->get_sheet()->get_timeline())
+    , m_blinkingMarker(nullptr)
 {
 	PENTERCONS2;
 
@@ -192,7 +192,7 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 	// Draw major ticks
 	for (int i=0; i<majorTicks.size(); ++i) {
 		int x = majorTicks.at(i);
-		painter->drawLine(x, height - 16, x, height - 1);
+        painter->drawLine(x, height - TIMELINE_HEIGHT / 2, x, height - 1);
 	}
 
 	painter->setPen(themer()->get_color("Timeline:text"));

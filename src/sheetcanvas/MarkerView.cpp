@@ -45,12 +45,12 @@ MarkerView::MarkerView(Marker* marker, SheetView* sv, ViewItem* parentView)
 	m_sv = sv;
 	m_marker = marker;
 	m_line = new LineView(this);
-	m_posIndicator = 0;
+    m_posIndicator = nullptr;
 
 	QFontMetrics fm(themer()->get_font("Timeline:marker"));
-	m_ascent = fm.ascent();
-	m_width = fm.width("NI"); // use any two letters to set the width of the marker indicator
-	m_line->setPos(m_width / 2, m_ascent);
+    m_width = 16;//fm.width("NI"); // use any two letters to set the width of the marker indicator
+    m_height = m_width;//fm.ascent();
+    m_line->setPos(m_width / 2, m_height);
 	
 	load_theme_data();
 	
@@ -83,19 +83,19 @@ void MarkerView::paint(QPainter * painter, const QStyleOptionGraphicsItem * opti
 	const QPointF pts[3] = {
 			QPointF(0, 0),
 			QPointF(m_width + 0.5, 0),
-			QPointF((m_width+ 0.5)/2, m_ascent) };
+            QPointF((m_width+ 0.5)/2, m_height) };
 
 	painter->drawPolygon(pts, 3);
 
 	painter->setPen(themer()->get_color("Timeline:text"));
 
 	if (m_marker->get_type() == Marker::ENDMARKER) {
-		painter->drawText(m_width + 1, m_ascent-2, m_marker->get_description());
+        painter->drawText(m_width + 1, m_height-2, m_marker->get_description());
 	} else {
 		if (m_marker->get_description().length() > 0) {
-			painter->drawText(m_width + 1, m_ascent-2, QString("%1: %2").arg(m_marker->get_index()).arg(m_marker->get_description()));
+            painter->drawText(m_width + 4, m_height-2, QString("%1: %2").arg(m_marker->get_index()).arg(m_marker->get_description()));
 		} else {
-			painter->drawText(m_width + 1, m_ascent-2, QString("%1").arg(m_marker->get_index()));
+            painter->drawText(m_width + 4, m_height-2, QString("%1").arg(m_marker->get_index()));
 		}
 	}
 
@@ -123,8 +123,8 @@ void MarkerView::calculate_bounding_rect()
 	int descriptionwidth = fm.width(desc) + 1;
 
 	m_line->set_bounding_rect(QRectF(0, 0, 1, m_sv->get_clips_viewport()->sceneRect().height()));
-	m_line->setPos(m_width / 2, m_ascent);
-	m_boundingRect = QRectF(-1, 0, m_width + descriptionwidth, m_ascent);
+    m_line->setPos(m_width / 2, m_height);
+    m_boundingRect = QRectF(-1, 0, m_width + descriptionwidth, m_height);
 }
 
 void MarkerView::update_position()
@@ -191,7 +191,7 @@ void MarkerView::set_dragging(bool dragging)
         }
 
         if (dragging) {
-		m_posIndicator->setPos(- (m_posIndicator->boundingRect().width() + 4), 0);
+        m_posIndicator->setPos(m_width + 4, m_height + 4);
                 m_posIndicator->show();
         } else {
                 m_posIndicator->hide();

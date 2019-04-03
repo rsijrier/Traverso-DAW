@@ -28,7 +28,7 @@
 #include "Themer.h"
 
 PositionIndicator::PositionIndicator(ViewItem* parentView)
-	: ViewItem(parentView, 0)
+    : ViewItem(parentView, nullptr)
 {
 	calculate_bounding_rect();
 	setZValue(200);
@@ -42,22 +42,23 @@ void PositionIndicator::paint(QPainter * painter, const QStyleOptionGraphicsItem
 	painter->drawPixmap(0, 0, m_background);
 	painter->setPen(Qt::black);
 	painter->setFont(themer()->get_font("TrackPanel:fontscale:name"));
-        painter->drawText(m_boundingRect, Qt::AlignHCenter, m_value);
+    painter->drawText(m_boundingRect, Qt::AlignCenter, m_value);
 }
 
 void PositionIndicator::calculate_bounding_rect()
 {
 	prepareGeometryChange();
-	m_boundingRect = QRectF(0, 0, 70, 14);
+    int fontSize = themer()->get_font("TrackPanel:fontscale:name").pointSize();
+    m_boundingRect = QRectF(0, 0, 80, fontSize * 2);
 	
-	m_background = QPixmap((int)m_boundingRect.width(), (int)m_boundingRect.height());
+    m_background = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
 	m_background.fill(QColor(Qt::transparent));
 	
 	QPainter painter(&m_background);
 	painter.setRenderHint(QPainter::Antialiasing);
 	painter.setBrush(QColor(255, 255, 255, 200));
 	painter.setPen(Qt::NoPen);
-	int rounding = m_boundingRect.height() / 2;
+    qreal rounding = m_boundingRect.height() / 2;
 	painter.drawRoundedRect(m_boundingRect, rounding, rounding);
 }
 

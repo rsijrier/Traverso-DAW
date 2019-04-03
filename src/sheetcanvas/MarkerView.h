@@ -56,7 +56,7 @@ private:
 	bool	m_active;
 	bool	m_dragging;
 	PositionIndicator* m_posIndicator;
-	int	m_ascent;
+    int	m_height;
 	int	m_width;
 	
 private slots:
