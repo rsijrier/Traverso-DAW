@@ -125,8 +125,8 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 	
 	// When the scrollarea moves by a small value, the text
 	// can be screwed up, so give it some room, 100 pixels should do!
-	int xstart = (int) option->exposedRect.x() - 100;
-	int pixelcount = (int) option->exposedRect.width() + 100;
+    qreal xstart = option->exposedRect.x() - 100;
+    qreal pixelcount = option->exposedRect.width() + 100;
 	
 	if (xstart < 0) {
 		xstart = 0;
@@ -140,7 +140,7 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
         if (m_timeline->has_active_context()) {
 		backgroundColor = backgroundColor.lighter(130);
         }
-        painter->fillRect(xstart, 0,  pixelcount, height, backgroundColor );
+        painter->fillRect(QRectF(xstart, 0,  pixelcount, height), backgroundColor);
 	
 	TimeRef major;
 	
@@ -161,14 +161,14 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 	
 	painter->setMatrixEnabled(false);
 
-	int count = TimeRef((lastLocation-firstLocation+major) / minor).universal_frame();
+    qint64 count = TimeRef((lastLocation-firstLocation+major) / minor).universal_frame();
 
 	QList<int> minorTicks, majorTicks;
 	QList<TimeRef> majorTimeRefs;
 
 	// calculate minor tick x values
 	for (qint64 i = 0; i < count; i++ ) {
-		int x = (int)((firstLocation + i * minor) / m_sv->timeref_scalefactor) - xstartoffset;
+        int x = int((firstLocation + i * minor) / m_sv->timeref_scalefactor) - xstartoffset;
 		minorTicks.append(x);
 	}
 	
@@ -227,7 +227,7 @@ void TimeLineView::remove_marker_view(Marker * marker)
 		if (view->get_marker() == marker) {
 			m_markerViews.removeAll(view);
 			scene()->removeItem(view);
-			m_blinkingMarker = 0;
+            m_blinkingMarker = nullptr;
 			delete view;
 			return;
 		}
@@ -240,7 +240,7 @@ TCommand* TimeLineView::add_marker()
 	
         qreal x = point.x();
         if (x < 0) {
-                return 0;
+                return nullptr;
         }
         TimeRef when(x * m_sv->timeref_scalefactor);
 	
@@ -292,7 +292,7 @@ TCommand* TimeLineView::playhead_to_marker()
 
 	if (m_blinkingMarker) {
 		m_sv->get_sheet()->set_transport_pos(m_blinkingMarker->get_marker()->get_when());
-		return 0;
+        return nullptr;
 	}
 
 	return ied().did_not_implement();
@@ -309,7 +309,7 @@ TCommand* TimeLineView::remove_marker()
 		return m_timeline->remove_marker(marker);
 	}
 
-	return 0;
+    return nullptr;
 }
 
 void TimeLineView::update_softselected_marker(QPointF pos)
@@ -341,7 +341,7 @@ void TimeLineView::update_softselected_marker(QPointF pos)
 	}
 	
 	if (blinkMarkerDist > MARKER_SOFT_SELECTION_DISTANCE) {
-		m_blinkingMarker = 0;
+        m_blinkingMarker = nullptr;
 	}
 	
 	if (prevMarker && (prevMarker != m_blinkingMarker) ) {
@@ -373,7 +373,7 @@ void TimeLineView::active_context_changed()
                         // TODO add these functions, or something else to
                         // let the user know which marker is to be moved!
                         m_blinkingMarker->set_active(false);
-                        m_blinkingMarker = 0;
+                        m_blinkingMarker = nullptr;
                 }
 
         }
@@ -425,7 +425,7 @@ MarkerView* TimeLineView::get_marker_view_after(TimeRef location)
                         return markerView;
                 }
         }
-        return 0;
+        return nullptr;
 }
 
 MarkerView* TimeLineView::get_marker_view_before(TimeRef location)
@@ -440,5 +440,5 @@ MarkerView* TimeLineView::get_marker_view_before(TimeRef location)
                 }
         }
 
-        return 0;
+        return nullptr;
 }

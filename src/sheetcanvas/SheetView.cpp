@@ -84,8 +84,8 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	m_hScrollBar = sheetwidget->m_hScrollBar;
 	m_actOnPlayHead = true;
 	m_viewportReady = false;
-	m_sheetMasterOutView = 0;
-	m_projectMasterOutView = 0;
+    m_sheetMasterOutView = nullptr;
+    m_projectMasterOutView = nullptr;
 	timeref_scalefactor = UNIVERSAL_SAMPLE_RATE;
 
 	m_clipsViewPort->scene()->addItem(this);
@@ -139,25 +139,25 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 
 	connect(&cpointer(), SIGNAL(contextChanged()), this, SLOT(context_changed()));
 
-	m_shuttleCurve = new Curve(0);
+    m_shuttleCurve = new Curve(nullptr);
 	m_shuttleCurve->set_sheet(m_session);
-	m_dragShuttleCurve = new Curve(0);
+    m_dragShuttleCurve = new Curve(nullptr);
 	m_dragShuttleCurve->set_sheet(m_session);
 
 	// Use these variables to fine tune the scroll behavior
-	float whens[7] = {0.0, 0.2, 0.3, 0.4, 0.6, 0.9, 1.2};
-	float values[7] = {0.0, 0.15, 0.3, 0.8, 0.95, 1.5, 8.0};
+    qreal whens[7] = {0.0, 0.2, 0.3, 0.4, 0.6, 0.9, 1.2};
+    qreal values[7] = {0.0, 0.15, 0.3, 0.8, 0.95, 1.5, 8.0};
 
 	// Use these variables to fine tune the scroll during drag behavior
-	float dragWhens[7] =  {0.0, 0.9, 0.94, 0.98, 1.0, 1.1, 1.3};
-	float dragValues[7] = {0.0, 0.0, 0.2,  0.5,  0.85,  1.1,  2.0};
+    qreal dragWhens[7] =  {0.0, 0.9, 0.94, 0.98, 1.0, 1.1, 1.3};
+    qreal dragValues[7] = {0.0, 0.0, 0.2,  0.5,  0.85,  1.1,  2.0};
 
 	for (int i=0; i<7; ++i) {
-		AddRemove* cmd = (AddRemove*) m_dragShuttleCurve->add_node(new CurveNode(m_dragShuttleCurve, dragWhens[i], dragValues[i]), false);
-		cmd->set_instantanious(true);
+        AddRemove* cmd = static_cast<AddRemove*>(m_dragShuttleCurve->add_node(new CurveNode(m_dragShuttleCurve, dragWhens[i], dragValues[i]), false));
+        cmd->set_instantanious(true);
 		TCommand::process_command(cmd);
 
-		cmd = (AddRemove*) m_shuttleCurve->add_node(new CurveNode(m_shuttleCurve, whens[i], values[i]), false);
+        cmd = static_cast<AddRemove*>(m_shuttleCurve->add_node(new CurveNode(m_shuttleCurve, whens[i], values[i]), false));
 		cmd->set_instantanious(true);
 		TCommand::process_command(cmd);
 	}
@@ -188,7 +188,7 @@ SheetView::~SheetView()
 void SheetView::scale_factor_changed( )
 {
 	qreal zoom = m_session->get_hzoom();
-	if (zoom == 0.0f) {
+    if (qFuzzyCompare(zoom, 0.0)) {
 		PERROR("Session %s return 0 hzoom factor!", m_session->get_name().toLatin1().data());
 		// Woopsy, zoom can't be zero, if we allow that, timeref_scalefactor
 		// will be zero too, and we use timeref_scalefactor as a divider so...:
@@ -210,7 +210,7 @@ void SheetView::sheet_mode_changed()
 
 AudioTrackView* SheetView::get_audio_trackview_under( QPointF point )
 {
-	AudioTrackView* view = 0;
+    AudioTrackView* view = nullptr;
 	QList<QGraphicsItem*> views = m_clipsViewPort->items(m_clipsViewPort->mapFromScene(point));
 
 	for (int i=0; i<views.size(); ++i) {
@@ -219,7 +219,7 @@ AudioTrackView* SheetView::get_audio_trackview_under( QPointF point )
 			return view;
 		}
 	}
-	return  0;
+    return  nullptr;
 
 }
 
@@ -238,7 +238,7 @@ TrackView* SheetView::get_trackview_under( QPointF point )
 			return tpv->get_track_view();
 		}
 	}
-	return  0;
+    return  nullptr;
 
 }
 
@@ -452,7 +452,7 @@ void SheetView::remove_track_view(Track* track)
 
 void SheetView::update_scrollbars()
 {
-	int width = (int)(m_session->get_last_location() / timeref_scalefactor) - (m_clipsViewPort->width() / 4);
+    int width = int(m_session->get_last_location() / timeref_scalefactor) - (m_clipsViewPort->width() / 4);
 	if (width < m_clipsViewPort->width() / 4) {
 		width = m_clipsViewPort->width() / 4;
 	}
@@ -507,7 +507,7 @@ void SheetView::vzoom(qreal factor)
 		TrackView* view = m_audioTrackViews.at(i);
 		Track* track = view->get_track();
 		int height = get_track_height(track);
-		height = (int) (height * factor);
+        height = int(height * factor);
 		if (height > m_trackMaximumHeight) {
 			height = m_trackMaximumHeight;
 		} else if (height < m_trackMinimumHeight) {
@@ -540,7 +540,7 @@ TCommand* SheetView::toggle_expand_all_tracks(int height)
 
 	update_tracks_bounding_rect();
 
-	return 0;
+    return nullptr;
 }
 
 void SheetView::set_track_height(TrackView *view, int newheight)
@@ -614,7 +614,7 @@ TCommand* SheetView::center()
 
 	int x = qRound(centerX / timeref_scalefactor);
 	set_hscrollbar_value(x - m_clipsViewPort->width() / 2);
-	return (TCommand*) 0;
+    return nullptr;
 }
 
 

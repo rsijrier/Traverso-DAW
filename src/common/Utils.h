@@ -34,7 +34,7 @@ QString timeref_to_hms(const TimeRef& ref);
 QString timeref_to_ms(const TimeRef& ref);
 QString timeref_to_ms_2 (const TimeRef& ref);
 QString timeref_to_ms_3 (const TimeRef& ref);
-QString timeref_to_text(const TimeRef& ref, int scalefactor);
+QString timeref_to_text(const TimeRef& ref, qint64 scalefactor);
 QString timeref_to_cd(const TimeRef& ref);
 QString timeref_to_cd_including_hours(const TimeRef& ref);
 

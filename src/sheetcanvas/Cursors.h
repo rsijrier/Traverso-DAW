@@ -63,7 +63,7 @@ private:
 	bool		m_followDisabled;
         PlayHeadMode	m_mode;
         int 		m_animationScrollStartPos;
-	int		m_animFrameRange;
+    qreal		m_animFrameRange;
 	qreal		m_animScaleFactor;
         QBrush          m_brushActive;
         QBrush          m_brushInactive;

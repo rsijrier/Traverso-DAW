@@ -101,7 +101,7 @@ SpectralMeterView::SpectralMeterView(SpectralMeterWidget* widget)
 void SpectralMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
 	Q_UNUSED(option);
-	Q_UNUSED(widget);
+    Q_UNUSED(widget);
 
         // re-draw the background pixmap
         if (bgPixmap.width() != int(m_boundingRect.width()) || bgPixmap.height() != int(m_boundingRect.height())) {

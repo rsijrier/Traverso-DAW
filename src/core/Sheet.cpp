@@ -79,7 +79,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 Sheet::Sheet(Project* project, int numtracks)
-        : TSession(0)
+        : TSession(nullptr)
         , m_project(project)
 {
 	PENTERCONS;
@@ -101,7 +101,7 @@ Sheet::Sheet(Project* project, int numtracks)
 }
 
 Sheet::Sheet(Project* project, const QDomNode node)
-        : TSession(0)
+        : TSession(nullptr)
         , m_project(project)
 {
 	PENTERCONS;
@@ -143,7 +143,7 @@ void Sheet::init()
 
 	m_diskio = new DiskIO(this);
 	m_currentSampleRate = audiodevice().get_sample_rate();
-	m_diskio->output_rate_changed(m_currentSampleRate);
+    m_diskio->output_rate_changed(int(m_currentSampleRate));
 	int converter_type = config().get_property("Conversion", "RTResamplingConverterType", DEFAULT_RESAMPLE_QUALITY).toInt();
 	m_diskio->set_resample_quality(converter_type);
 
@@ -164,7 +164,7 @@ void Sheet::init()
 	connect(this, SIGNAL(transportStarted()), m_diskio, SLOT(start_io()));
 	connect(this, SIGNAL(transportStopped()), m_diskio, SLOT(stop_io()));
 
-	mixdown = gainbuffer = 0;
+    mixdown = gainbuffer = nullptr;
 
         BusConfig busConfig;
         busConfig.name = "Sheet Render Bus";
@@ -507,10 +507,10 @@ int Sheet::start_export(ExportSpecification* spec)
 int Sheet::render(ExportSpecification* spec)
 {
 	int chn;
-	uint32_t x;
+    int x;
         int progress = 0;
 
-        nframes_t diff = (spec->cdTrackEnd - spec->pos).to_frame(audiodevice().get_sample_rate());
+        nframes_t diff = (spec->cdTrackEnd - spec->pos).to_frame(int(audiodevice().get_sample_rate()));
 	nframes_t nframes = spec->blocksize;
 	nframes_t this_nframes = std::min(diff, nframes);
 
@@ -531,7 +531,7 @@ int Sheet::render(ExportSpecification* spec)
 
 	nframes = this_nframes;
 
-	memset (spec->dataF, 0, sizeof (spec->dataF[0]) * nframes * spec->channels);
+    memset (spec->dataF, 0, sizeof (spec->dataF[0]) * nframes * ulong(spec->channels));
 
 	/* foreach output channel ... */
 
@@ -547,22 +547,22 @@ int Sheet::render(ExportSpecification* spec)
 			buf = masterOutBus->get_buffer(0, nframes);
 		}
 
-		for (x = 0; x < nframes; ++x) {
+        for (x = 0; x < int(nframes); ++x) {
 			spec->dataF[chn+(x*spec->channels)] = buf[x];
 		}
 	}
 
 
-	int bufsize = spec->blocksize * spec->channels;
+    int bufsize = int(int(spec->blocksize) * spec->channels);
 	if (spec->normalize) {
 		if (spec->renderpass == ExportSpecification::CALC_NORM_FACTOR) {
-			spec->peakvalue = Mixer::compute_peak(spec->dataF, bufsize, spec->peakvalue);
+            spec->peakvalue = Mixer::compute_peak(spec->dataF, nframes_t(bufsize), spec->peakvalue);
 		}
 	}
 	
 	if (spec->renderpass == ExportSpecification::WRITE_TO_HARDDISK) {
 		if (spec->normalize) {
-			Mixer::apply_gain_to_buffer(spec->dataF, bufsize, spec->normvalue);
+            Mixer::apply_gain_to_buffer(spec->dataF, nframes_t(bufsize), spec->normvalue);
 		}
 		if (m_exportSource->process (nframes)) {
                         return -1;
@@ -570,9 +570,9 @@ int Sheet::render(ExportSpecification* spec)
 	}
 	
 
-	spec->pos.add_frames(nframes, audiodevice().get_sample_rate());
+    spec->pos.add_frames(nframes, int(audiodevice().get_sample_rate()));
 
-        progress = (int) (double( 100 * (spec->pos - spec->cdTrackStart).universal_frame()) / (spec->totalTime.universal_frame()));
+        progress = int(double( 100 * (spec->pos - spec->cdTrackStart).universal_frame()) / (spec->totalTime.universal_frame()));
 
         // only update the progress info if progress is higher then the
         // old progress value, to avoid a flood of progress changed signals!
@@ -592,9 +592,9 @@ void Sheet::set_artists(const QString& pArtists)
 
 void Sheet::set_gain(float gain)
 {
-	if (gain < 0.0)
+    if (gain < 0.0f)
 		gain = 0.0;
-	if (gain > 2.0)
+    if (gain > 2.0f)
 		gain = 2.0;
 
         m_masterOut->set_gain(gain);
@@ -630,7 +630,7 @@ void Sheet::set_work_at_for_sheet_as_track_folder(const TimeRef &location)
 TCommand* Sheet::toggle_snap()
 {
 	set_snapping( ! m_isSnapOn );
-	return 0;
+    return nullptr;
 }
 
 
@@ -722,7 +722,7 @@ int Sheet::process( nframes_t nframes )
 		m_realtimepath = false;
 		m_stopTransport = false;
 		
-                RT_THREAD_EMIT(this, 0, transportStopped())
+                RT_THREAD_EMIT(this, nullptr, transportStopped())
 
 		return 0;
 	}
@@ -747,7 +747,7 @@ int Sheet::process( nframes_t nframes )
         }
 
 	// update the transport location
-	m_transportLocation.add_frames(nframes, audiodevice().get_sample_rate());
+    m_transportLocation.add_frames(nframes, int(audiodevice().get_sample_rate()));
 
 	if (!processResult) {
 		return 0;
@@ -783,7 +783,7 @@ int Sheet::process_export( nframes_t nframes )
 
 	// update the m_transportFrame
 // 	m_transportFrame += nframes;
-        m_transportLocation.add_frames(nframes, audiodevice().get_sample_rate());
+        m_transportLocation.add_frames(nframes, int(audiodevice().get_sample_rate()));
 
         return 1;
 }
@@ -822,10 +822,10 @@ void Sheet::audiodevice_params_changed()
 	if (m_currentSampleRate != audiodevice().get_sample_rate()) {
 		m_currentSampleRate = audiodevice().get_sample_rate();
 		
-		m_diskio->output_rate_changed(m_currentSampleRate);
+        m_diskio->output_rate_changed(int(m_currentSampleRate));
 		
 		TimeRef location = m_transportLocation;
-		location.add_frames(1, audiodevice().get_sample_rate());
+        location.add_frames(1, int(audiodevice().get_sample_rate()));
 	
 		set_transport_pos(location);
 	}
@@ -937,7 +937,7 @@ TCommand * Sheet::set_recordable()
 	
 	// Do nothing if transport is rolling!
 	if (is_transport_rolling()) {
-		return 0;
+        return nullptr;
 	}
 	
 	// Transport is not rolling, it's save now to switch 
@@ -947,13 +947,13 @@ TCommand * Sheet::set_recordable()
 	} else {
                 if (!any_audio_track_armed()) {
 			info().critical(tr("No Tracks armed for recording!"));
-			return 0;
+            return nullptr;
 		}
 		
 		set_recording(true, false);
 	}
 	
-	return 0;
+    return nullptr;
 }
 
 // Function is only to be called from GUI thread.
@@ -965,7 +965,7 @@ TCommand* Sheet::set_recordable_and_start_transport()
 	
 	start_transport();
 	
-	return 0;
+    return nullptr;
 }
 
 // Function is only to be called from GUI thread.
@@ -1018,7 +1018,7 @@ int Sheet::transport_control(transport_state_t state)
 					// so we delegate the prepare_recording() function call via a 
 					// RT thread save signal!
 					Q_ASSERT(state.realtime);
-                                        RT_THREAD_EMIT(this, 0, prepareRecording())
+                                        RT_THREAD_EMIT(this, nullptr, prepareRecording())
                                         PMESG("transport starting: initiating prepare for record");
 					return false;
 				}
@@ -1098,7 +1098,7 @@ void Sheet::set_recording(bool recording, bool realtime)
 	}
 	
 	if (realtime) {
-		RT_THREAD_EMIT(this, 0, recordingStateChanged());
+        RT_THREAD_EMIT(this, nullptr, recordingStateChanged());
 	} else {
 		emit recordingStateChanged();
 	}
@@ -1237,7 +1237,7 @@ AudioTrack * Sheet::get_audio_track_for_index(int index)
 		}
 	}
 	
-	return 0;
+    return nullptr;
 }
 
 

@@ -49,7 +49,7 @@ public:
 	int init();
 	QDomNode get_state(QDomDocument doc);
 	int set_state(const QDomNode & node );
-	void process(AudioBus* bus, unsigned long nframes);
+    void process(AudioBus* bus, nframes_t nframes);
 	QString get_name();
 	int get_fr_size();
 	void set_fr_size(int);
@@ -60,7 +60,7 @@ public:
 	
 
 private:
-	int	m_frlen;
+    int	m_frlen;
 	int	m_windowingFunction;
 	int	m_bufferreadouts;
 

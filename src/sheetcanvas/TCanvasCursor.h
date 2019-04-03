@@ -33,7 +33,7 @@ class TCanvasCursor : public ViewItem
 {
         Q_OBJECT
 public:
-	TCanvasCursor(SheetView* sv);
+    TCanvasCursor(SheetView*);
 	~TCanvasCursor();
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -43,11 +43,10 @@ public:
         void set_pos(QPointF pos);
 
 private:
-	SheetView*		m_sv;
 	PositionIndicator*	m_textItem;
 	QPointF			m_pos;
-	float			m_xOffset;
-	float			m_yOffset;
+    qreal			m_xOffset;
+    qreal			m_yOffset;
 	QPixmap			m_pixmap;
 	QString			m_text;
 	QTimer			m_timer;

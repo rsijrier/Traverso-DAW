@@ -50,7 +50,7 @@ AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, qi
         m_number = channelNumber;
         m_type = type;
         m_monitoring = true;
-        m_buffer = 0;
+        m_buffer = nullptr;
         m_bufferSize = 0;
         mlocked = 0;
         if (id == 0) {
@@ -167,13 +167,19 @@ void AudioChannel::read_from_hardware_port(audio_sample_t *buf, nframes_t nframe
  */
 audio_sample_t VUMonitor::get_peak_value( )
 {
-        if (m_flag) {
-                return 0.0;
+    if (m_flag) {
+        return 0.0;
         }
 
         float result = m_peak;
 
         return result;
 }
+
+bool VUMonitor::is_smaller_then(APILinkedListNode *)
+{
+    return true;
+}
+
 
 //eof

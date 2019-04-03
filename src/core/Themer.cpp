@@ -37,7 +37,7 @@ $Id: Themer.cpp,v 1.14 2009/04/16 19:38:18 n_doebelin Exp $
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-Themer* Themer::m_instance = 0;
+Themer* Themer::m_instance = nullptr;
 
 Themer* themer()
 {
@@ -46,7 +46,7 @@ Themer* themer()
 
 Themer* Themer::instance()
 {
-	if (m_instance == 0) {
+    if (!m_instance) {
 		m_instance = new Themer();
 	}
 
@@ -262,9 +262,9 @@ void Themer::load( )
 		QDomElement e = colorNode.toElement();
 		
 		QColor color(
-			e.attribute("red").toUInt(),
-			e.attribute("green").toUInt(), 
-			e.attribute("blue").toUInt(), 
+            e.attribute("red").toInt(),
+            e.attribute("green").toInt(),
+            e.attribute("blue").toInt(),
 			e.attribute("alpha").toInt()
 			);
 		QString name = e.attribute("name", "");
@@ -295,9 +295,9 @@ void Themer::load( )
 		while(!gradientStopNode.isNull()) {
 			QDomElement ee = gradientStopNode.toElement();	
 			QColor color(
-				ee.attribute("red").toUInt(),
-				ee.attribute("green").toUInt(), 
-				ee.attribute("blue").toUInt(), 
+                ee.attribute("red").toInt(),
+                ee.attribute("green").toInt(),
+                ee.attribute("blue").toInt(),
 				ee.attribute("alpha").toInt()				
 			);
 			
@@ -310,7 +310,7 @@ void Themer::load( )
 				}
 			}
 
-			float value = ee.attribute("value", "0.0").toFloat();
+            qreal value = ee.attribute("value", "0.0").toDouble();
 			
 			gradient.setColorAt(value, color);
 			gradientStopNode = gradientStopNode.nextSibling();
@@ -331,7 +331,7 @@ void Themer::load( )
 		
 		QString name = e.attribute("name", "");
 		QFont font(basefont);
-		font.setPointSizeF(e.attribute("value", "1.0").toFloat() * (float)basefont.pointSizeF());
+        font.setPointSizeF(e.attribute("value", "1.0").toDouble() * basefont.pointSizeF());
 		
 		m_fonts.insert(name, font);
 		fontNode = fontNode.nextSibling();

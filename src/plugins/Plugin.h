@@ -38,55 +38,55 @@ class Curve;
 class TSession;
 
 struct PluginInfo {
-	PluginInfo() {
-		audioPortInCount = 0;
-		audioPortOutCount = 0;
-	}
-	int audioPortInCount;
-	int audioPortOutCount;
-	QString type;
-	QString name;
-	QString uri;
+    PluginInfo() {
+        audioPortInCount = 0;
+        audioPortOutCount = 0;
+    }
+    int audioPortInCount;
+    int audioPortOutCount;
+    QString type;
+    QString name;
+    QString uri;
 };
 
 class Plugin : public ContextItem
 {
-	Q_OBJECT
-	
-public:
-        Plugin(TSession* session = 0);
-        virtual ~Plugin(){}
+    Q_OBJECT
 
-	virtual int init() {return 1;}
-	virtual	QDomNode get_state(QDomDocument doc);
-	virtual int set_state(const QDomNode & node );
-	virtual void process(AudioBus* bus, unsigned long nframes) = 0;
-	virtual QString get_name() = 0;
-	
-	PluginControlPort* get_control_port_by_index(int index) const;
-	QList<PluginControlPort* > get_control_ports() const { return m_controlPorts; }
-	
-	Plugin* get_slave() const {return m_slave;}
-        TSession* get_session() const {return m_session;}
-	bool is_bypassed() const {return m_bypass;}
-	
-	void automate_port(int index, bool automate);
-	
+public:
+    Plugin(TSession* session = nullptr);
+    virtual ~Plugin(){}
+
+    virtual int init() {return 1;}
+    virtual	QDomNode get_state(QDomDocument doc);
+    virtual int set_state(const QDomNode & node );
+    virtual void process(AudioBus* bus, nframes_t nframes) = 0;
+    virtual QString get_name() = 0;
+
+    PluginControlPort* get_control_port_by_index(int index) const;
+    QList<PluginControlPort* > get_control_ports() const { return m_controlPorts; }
+
+    Plugin* get_slave() const {return m_slave;}
+    TSession* get_session() const {return m_session;}
+    bool is_bypassed() const {return m_bypass;}
+
+    void automate_port(int index, bool automate);
+
 protected:
-        Plugin*                         m_slave;
-        TSession*                       m_session;
-	QList<PluginControlPort* > 	m_controlPorts;
-	QList<AudioInputPort* >		m_audioInputPorts;
-	QList<AudioOutputPort* >	m_audioOutputPorts;
-	
-	bool	m_bypass;
-	
-	
+    Plugin*                         m_slave;
+    TSession*                       m_session;
+    QList<PluginControlPort* > 	m_controlPorts;
+    QList<AudioInputPort* >		m_audioInputPorts;
+    QList<AudioOutputPort* >	m_audioOutputPorts;
+
+    bool	m_bypass;
+
+
 signals:
-	void bypassChanged();
-	
+    void bypassChanged();
+
 public slots:
-	TCommand* toggle_bypass();
+    TCommand* toggle_bypass();
 };
 
 
@@ -94,71 +94,71 @@ class PluginPort : public QObject
 {
 
 public:
-        PluginPort(QObject* parent, int index) : QObject(parent), m_index(index), m_hint(FLOAT_CONTROL) {}
-        PluginPort(QObject* parent) : QObject(parent), m_hint(FLOAT_CONTROL) {}
-        virtual ~PluginPort(){}
+    PluginPort(QObject* parent, int index) : QObject(parent), m_index(index), m_hint(FLOAT_CONTROL) {}
+    PluginPort(QObject* parent) : QObject(parent), m_hint(FLOAT_CONTROL) {}
+    virtual ~PluginPort(){}
 
-	virtual QDomNode get_state(QDomDocument doc);
-	virtual int set_state( const QDomNode & node ) = 0;
-	
-	enum PortHint {
-		FLOAT_CONTROL,
-  		INT_CONTROL,
-    		LOG_CONTROL
-	};
-	
-	int get_index() const {return m_index;}
-	int get_hint() const {return m_hint;}
-	
-	void set_index(int index) {m_index = index;}
+    virtual QDomNode get_state(QDomDocument doc);
+    virtual int set_state( const QDomNode & node ) = 0;
+
+    enum PortHint {
+        FLOAT_CONTROL,
+        INT_CONTROL,
+        LOG_CONTROL
+    };
+
+    int get_index() const {return m_index;}
+    int get_hint() const {return m_hint;}
+
+    void set_index(int index) {m_index = index;}
 
 protected:
-	int	m_index;
-	int	m_hint;
+    int	m_index;
+    int	m_hint;
 }; 
 
 
 class PluginControlPort : public PluginPort
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	PluginControlPort(Plugin* parent, int index, float value);
-	PluginControlPort(Plugin* parent, const QDomNode node);
-	virtual ~PluginControlPort(){}
+    PluginControlPort(Plugin* parent, int index, float value);
+    PluginControlPort(Plugin* parent, const QDomNode node);
+    virtual ~PluginControlPort(){}
 
-	virtual float get_control_value() {return m_value; }
-	virtual float get_min_control_value() {return m_min;}
-	virtual float get_max_control_value() {return m_max;}
-	virtual float get_default_value() {return m_default;}
-	
-	void set_min(float min) {m_min = min;}
-	void set_max(float max) {m_max = max;}
-	void set_default(float def) {m_default = def;}
-	void set_use_automation(bool automation);
-	
-	bool use_automation();
-	Curve* get_curve() const {return m_curve;}
+    virtual float get_control_value() {return m_value; }
+    virtual float get_min_control_value() {return m_min;}
+    virtual float get_max_control_value() {return m_max;}
+    virtual float get_default_value() {return m_default;}
 
-	virtual QDomNode get_state(QDomDocument doc);
+    void set_min(float min) {m_min = min;}
+    void set_max(float max) {m_max = max;}
+    void set_default(float def) {m_default = def;}
+    void set_use_automation(bool automation);
 
-	virtual QString get_description();
-	virtual QString get_symbol();
+    bool use_automation();
+    Curve* get_curve() const {return m_curve;}
+
+    virtual QDomNode get_state(QDomDocument doc);
+
+    virtual QString get_description();
+    virtual QString get_symbol();
 
 protected:
-	Curve*	m_curve;
-	Plugin*	m_plugin;
-	float	m_value;
-	float 	m_default;
-	float	m_min;
-	float	m_max;
-	bool	m_automation;
-	QString m_description;
-	
-	virtual int set_state( const QDomNode & node );
-	
+    Curve*	m_curve;
+    Plugin*	m_plugin;
+    float	m_value;
+    float 	m_default;
+    float	m_min;
+    float	m_max;
+    bool	m_automation;
+    QString m_description;
+
+    virtual int set_state( const QDomNode & node );
+
 public slots:
-	void set_control_value(float value);
+    void set_control_value(float value);
 };
 
 
@@ -166,12 +166,12 @@ class AudioInputPort : public PluginPort
 {
 
 public:
-	AudioInputPort(QObject* parent, int index);
-	AudioInputPort(QObject* parent) : PluginPort(parent) {};
-	virtual ~AudioInputPort(){};
+    AudioInputPort(QObject* parent, int index);
+    AudioInputPort(QObject* parent) : PluginPort(parent) {};
+    virtual ~AudioInputPort(){};
 
-	QDomNode get_state(QDomDocument doc);
-	int set_state( const QDomNode & node );
+    QDomNode get_state(QDomDocument doc);
+    int set_state( const QDomNode & node );
 
 };
 
@@ -180,12 +180,12 @@ class AudioOutputPort : public PluginPort
 {
 
 public:
-	AudioOutputPort(QObject* parent, int index);
-        AudioOutputPort(QObject* parent) : PluginPort(parent) {}
-        virtual ~AudioOutputPort(){}
+    AudioOutputPort(QObject* parent, int index);
+    AudioOutputPort(QObject* parent) : PluginPort(parent) {}
+    virtual ~AudioOutputPort(){}
 
-	QDomNode get_state(QDomDocument doc);
-	int set_state( const QDomNode & node );
+    QDomNode get_state(QDomDocument doc);
+    int set_state( const QDomNode & node );
 
 }; 
 

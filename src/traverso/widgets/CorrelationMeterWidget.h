@@ -47,8 +47,8 @@ public:
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 private:
-	float		coeff;
-	float		direction;
+    qreal		coeff;
+    qreal		direction;
 	int		range;
 	QBrush		m_bgBrush;
 	QLinearGradient	gradPhase;

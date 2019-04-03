@@ -78,7 +78,7 @@ VUMeterView::~ VUMeterView( )
 {}
 
 
-void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
         PENTER3;
 
@@ -127,7 +127,7 @@ void VUMeterView::set_bounding_rect(QRectF rect)
 
 void VUMeterView::update_orientation()
 {
-        m_orientation = (Qt::Orientation)config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt();
+        m_orientation = static_cast<Qt::Orientation>(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
         foreach(VUMeterLevelView* level, m_levels) {
                 level->set_orientation(m_orientation);
         }
@@ -135,17 +135,17 @@ void VUMeterView::update_orientation()
 
 void VUMeterView::calculate_lut_data()
 {
-        for (int i = 60; i >= -700; i -= 2) {
+        for (float i = 60; i >= -700; i -= 2) {
                 if (i >= -200) {
-                        lut.push_back(100.0 + (float)i * 2.5 / 10.0);
+                        lut.push_back(100.0f + i * 2.5f / 10.0f);
                 } else if (i >= -300) {
-                        lut.push_back( 50.0 + float(i+200) * 2.0 / 10.0);
+                        lut.push_back( 50.0f + (i+200) * 2.0f / 10.0f);
                 } else if (i >= -400) {
-                        lut.push_back( 30.0 + float(i+300) * 1.5 / 10.0);
+                        lut.push_back( 30.0f + (i+300) * 1.5f / 10.0f);
                 } else if (i >= -500) {
-                        lut.push_back( 15.0 + float(i+400) * 0.75 / 10.0);
+                        lut.push_back( 15.0f + (i+400) * 0.75f / 10.0f);
                 } else {
-                        lut.push_back(  7.5 + float(i+500) * 0.5 / 10.0);
+                        lut.push_back(  7.5f + (i+500) * 0.5f / 10.0f);
                 }
         }
 }
@@ -196,7 +196,7 @@ VUMeterRulerView::VUMeterRulerView(ViewItem* parent)
         connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
 }
 
-void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
         PENTER4;
 
@@ -206,7 +206,7 @@ void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         painter->setFont(m_font);
 
         // offset is the space occupied by the 'over' LED
-        float levelRange = m_boundingRect.width();
+        qreal levelRange = m_boundingRect.width();
 
         painter->setPen(m_colorActive);
 
@@ -220,7 +220,7 @@ void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem *
                         continue;
                 }
 
-                deltaY = (int) ( VUMeterView::VUMeterView_lut()->at(idx)/115.0  * levelRange );
+                deltaY = int( VUMeterView::VUMeterView_lut()->at(idx)/115.0  * levelRange );
                 spm.sprintf("%2i", m_presetMark[j]);
 
                 painter->drawText(deltaY - m_fontLabelAscent + 2, m_fontLabelAscent + 3, spm);
@@ -265,7 +265,7 @@ void VUMeterRulerView::set_bounding_rect(QRectF rect)
 
 static const int OVER_SAMPLES_COUNT = 2;	// sensitivity of the 'over' indicator
 static const int RMS_SAMPLES = 50;		// number of updates to be stored for RMS calculation
-static const int PEAK_HOLD_TIME = 1000;		// peak hold time (ms)
+//static const int PEAK_HOLD_TIME = 1000;		// peak hold time (ms)
 static const int PEAK_HOLD_MODE = 1;		// 0 = no peak hold, 1 = dynamic, 2 = constant
 static const bool SHOW_RMS = false;		// toggle RMS lines on / off
 
@@ -283,7 +283,7 @@ VUMeterLevelView::VUMeterLevelView(ViewItem* parent, VUMonitor* monitor)
         m_orientation = Qt::Vertical;
 
         // falloff speed, according to IEC 60268-18: 20 dB in 1.7 sec.
-        m_maxFalloff = 20.0 / (1700.0 / (float)TMainWindow::instance()->get_vulevel_update_frequency());
+        m_maxFalloff = 20.0f / (1700.0f / float(TMainWindow::instance()->get_vulevel_update_frequency()));
 
         for (int i = 0; i < RMS_SAMPLES; i++) {
                 m_peakHistory[i] = 0.0;
@@ -300,7 +300,7 @@ VUMeterLevelView::~VUMeterLevelView()
         TMainWindow::instance()->unregister_vumeter_level(this);
 }
 
-void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
         PENTER4;
         if (m_levelPixmap.width() != int(m_boundingRect.width())
@@ -309,9 +309,9 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
         }
 
         // convert the peak value to dB and make sure it's in a valid range
-        float dBVal = coefficient_to_dB(m_peak);
-        if (dBVal > 6.0) {
-                dBVal = 6.0;
+        float dBVal = float(coefficient_to_dB(m_peak));
+        if (dBVal > 6.0f) {
+                dBVal = 6.0f;
         }
 
         // calculate smooth falloff
@@ -323,9 +323,9 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
         }
 
         // check for a new peak hold value
-        if (m_peakHoldFalling && (m_peakHoldValue >= -120.0)) {
+        if (m_peakHoldFalling && (m_peakHoldValue >= -120.0f)) {
                 // smooth falloff, a little faster than the level meter, looks better
-                m_peakHoldValue -= 1.2 * m_maxFalloff;
+                m_peakHoldValue -= 1.2f * m_maxFalloff;
         }
 
         if (m_peakHoldValue <= dBVal) {
@@ -348,9 +348,9 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
 
         if (meterLevel > 0) {
                 if (m_orientation == Qt::Horizontal) {
-                        painter->drawPixmap(0, 0, m_levelPixmap, 0, 0, meterLevel, m_boundingRect.height());
+                        painter->drawPixmap(0, 0, m_levelPixmap, 0, 0, meterLevel, int(m_boundingRect.height()));
                 } else {
-                        painter->drawPixmap(0, meterLevel, m_levelPixmap, 0, meterLevel, m_boundingRect.width(), m_boundingRect.height() - meterLevel);
+                        painter->drawPixmap(0, meterLevel, m_levelPixmap, 0, meterLevel, int(m_boundingRect.width()), int(m_boundingRect.height()) - meterLevel);
                 }
         }
 
@@ -358,9 +358,9 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
         if (SHOW_RMS) {
                 painter->setPen(Qt::blue);
                 if (m_orientation == Qt::Horizontal) {
-                        painter->drawLine(rmsLevel, 0, rmsLevel, m_boundingRect.height() - 1);
+                        painter->drawLine(rmsLevel, 0, rmsLevel, int(m_boundingRect.height()) - 1);
                 } else {
-                        painter->drawLine(2, rmsLevel, m_boundingRect.width() - 3, rmsLevel);
+                        painter->drawLine(2, rmsLevel, int(m_boundingRect.width()) - 3, rmsLevel);
                 }
         }
 
@@ -368,16 +368,16 @@ void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem *
         if (PEAK_HOLD_MODE) {
                 painter->setPen(m_colOverLed);
                 if (m_orientation == Qt::Horizontal) {
-                        painter->drawLine(peakHoldLevel, 0, peakHoldLevel, m_boundingRect.height() - 1);
+                        painter->drawLine(peakHoldLevel, 0, peakHoldLevel, int(m_boundingRect.height() - 1));
                 } else {
-                        painter->drawLine(0, peakHoldLevel, m_boundingRect.width() - 1, peakHoldLevel);
+                        painter->drawLine(0, peakHoldLevel, int(m_boundingRect.width() - 1), peakHoldLevel);
                 }
         }
 }
 
 void VUMeterLevelView::resize_level_pixmap( )
 {
-        m_levelPixmap = QPixmap(m_boundingRect.width(), m_boundingRect.height());
+        m_levelPixmap = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
         QPainter painter(&m_levelPixmap);
 
         if (m_orientation == Qt::Horizontal) {
@@ -389,11 +389,11 @@ void VUMeterLevelView::resize_level_pixmap( )
         painter.fillRect(m_boundingRect, m_gradient2D);
         painter.end();
 
-        m_clearPixmap = QPixmap(m_boundingRect.width(), m_boundingRect.height());
+        m_clearPixmap = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
         if (m_orientation == Qt::Horizontal) {
-                m_levelClearColor = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(m_boundingRect.width(), m_boundingRect.height()));
+                m_levelClearColor = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(int(m_boundingRect.width()), int(m_boundingRect.height())));
         } else {
-                m_levelClearColor  = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(0, m_boundingRect.height()));
+                m_levelClearColor  = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(0, int(m_boundingRect.height())));
         }
         painter.begin(&m_clearPixmap);
         painter.fillRect(m_boundingRect, m_levelClearColor);
@@ -410,7 +410,7 @@ void VUMeterLevelView::update_peak( )
         m_peak = m_monitor->get_peak_value();
 
         // if the meter drops to -inf, reset the 'over LED' and peak hold values
-        if ((m_peak == 0.0) && (m_tailDeltaY <= -70.0)) {
+        if (qFuzzyCompare(m_peak, 0.0f) && (m_tailDeltaY <= -70.0f)) {
                 m_peakHoldValue = -120.0;
 //                emit activate_over_led(false);
                 return;
@@ -432,13 +432,13 @@ void VUMeterLevelView::update_peak( )
                         squares += m_peakHistory[i] * m_peakHistory[i];
                 }
 
-                m_rms = sqrt(squares / float(RMS_SAMPLES));
+                m_rms = float(sqrtf(squares / RMS_SAMPLES));
                 m_rmsIndex++;
         }
 
         // 'over' detection
-        if (m_peak >= 1.0) m_overCount++;
-        if (m_peak <  1.0) m_overCount = 0;
+        if (m_peak >= 1.0f) m_overCount++;
+        if (m_peak <  1.0f) m_overCount = 0.0f;
 
         if (m_overCount >= OVER_SAMPLES_COUNT) {
                 emit activate_over_led(true);
@@ -466,9 +466,9 @@ void VUMeterLevelView::reset_peak_hold_value()
 
 void VUMeterLevelView::load_theme_data()
 {
-        float zeroDB = 1.0 - 100.0/115.0;  // 0 dB position
-        float msixDB = 1.0 -  80.0/115.0;  // -6 dB position
-        float smooth = 0.05;
+        qreal zeroDB = 1.0 - 100.0/115.0;  // 0 dB position
+        qreal msixDB = 1.0 -  80.0/115.0;  // -6 dB position
+        qreal smooth = 0.05;
 
         m_gradient2D.setStart(0,0);
 
@@ -479,7 +479,7 @@ void VUMeterLevelView::load_theme_data()
         m_gradient2D.setColorAt(msixDB+smooth, themer()->get_color("VUMeter:foreground:-6db"));
         m_gradient2D.setColorAt(1.0,           themer()->get_color("VUMeter:foreground:-60db"));
 
-        m_levelClearColor  = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(0, m_boundingRect.height()));
+        m_levelClearColor  = themer()->get_brush("VUMeter:background:bar", QPoint(0, 0), QPoint(0, int(m_boundingRect.height())));
         m_colOverLed = themer()->get_color("VUMeter:overled:active");
         m_colBg = themer()->get_brush("VUMeter:background:bar");
 }
@@ -487,7 +487,7 @@ void VUMeterLevelView::load_theme_data()
 // accepts dB-values and returns the position in the widget from top
 int VUMeterLevelView::get_meter_position(float f)
 {
-        int idx = int(LUT_MULTIPLY * (-f + 6.0));
+        int idx = int(LUT_MULTIPLY * (-f + 6.0f));
 
         // Comment by Remon: If it happens, then it's a coding error?
         // if so, it could be an idea to hard check for this by using:
@@ -508,13 +508,13 @@ int VUMeterLevelView::get_meter_position(float f)
                 if (m_orientation == Qt::Horizontal) {
                         return 0;
                 } else {
-                        return m_boundingRect.height();
+                        return int(m_boundingRect.height());
                 }
         } else {
                 if (m_orientation == Qt::Horizontal) {
-                        return  int(VUMeterView::VUMeterView_lut()->at(idx)/115.0 * (float)m_boundingRect.width());
+                        return  int(VUMeterView::VUMeterView_lut()->at(idx)/115.0f * float(m_boundingRect.width()));
                 } else {
-                        return  m_boundingRect.height() - int(VUMeterView::VUMeterView_lut()->at(idx)/115.0 * m_boundingRect.height());
+                        return  int(m_boundingRect.height() - int(VUMeterView::VUMeterView_lut()->at(idx)/115.0f * float(m_boundingRect.height())));
                 }
         }
 }

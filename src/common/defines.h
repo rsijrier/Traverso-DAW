@@ -315,7 +315,7 @@ struct AudioDeviceSetup {
         QList<BusConfig>        busConfigs;
         QList<ChannelConfig>    channelConfigs;
         QList<AudioChannel*>    jackChannels;
-        int             rate;
+        uint             rate;
         nframes_t       bufferSize;
         QString         driverType;
         bool            capture;

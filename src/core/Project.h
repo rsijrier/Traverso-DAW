@@ -74,10 +74,10 @@ public :
 
 
 	// Get functions
-	int get_current_sheet_id() const;
+    qint64 get_current_sheet_id() const;
 	int get_num_sheets() const;
-	int get_rate() const;
-	int get_bitdepth() const;
+    uint get_rate() const;
+    uint get_bitdepth() const;
         TimeRef get_last_location() const;
         TimeRef get_transport_location() const;
 
@@ -196,8 +196,8 @@ private:
 	QString		m_message;
 	QString		m_errorString;
 
-	int		m_rate;
-	int		m_bitDepth;
+    uint		m_rate;
+    uint		m_bitDepth;
         int             m_keyboardArrowNavigationSpeed;
 	bool		m_useResampling;
         bool            m_sheetsAreTrackFolder;

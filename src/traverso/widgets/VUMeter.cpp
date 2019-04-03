@@ -647,13 +647,13 @@ void VUMeterLevel::update_peak( )
 			squares += peakHistory[i] * peakHistory[i];
 		}
 
-		rms = sqrt(squares / float(RMS_SAMPLES));
+        rms = sqrtf(squares / RMS_SAMPLES);
 		rmsIndex++;
 	}
 
 	// 'over' detection
-	if (peak >= 1.0) overCount++;
-	if (peak <  1.0) overCount = 0;
+    if (peak >= 1.0f) overCount++;
+    if (peak <  1.0f) overCount = 0;
 
 	if (overCount >= OVER_SAMPLES_COUNT) {
 		emit activate_over_led(true);

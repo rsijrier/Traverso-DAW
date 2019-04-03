@@ -64,7 +64,7 @@ public:
 	int get_num_channels();
 	const TimeRef& get_length() const {return m_length;}
 	nframes_t get_nframes() const {return m_nframes;}
-	int get_file_rate();
+    uint get_file_rate();
 	bool eof();
 	nframes_t pos();
 	
@@ -88,7 +88,7 @@ protected:
 	int		m_channels;
 	TimeRef		m_length;
 	nframes_t	m_nframes;
-	int		m_rate;
+    uint		m_rate;
 };
 
 #endif

@@ -42,7 +42,7 @@ SpectralMeter::SpectralMeter()
 	m_windowingFunction = 1;
 	m_bufferreadouts = 0;
 
-	(int) init();
+    init();
 
 	// constructs a ringbuffer that can hold 16384 samples
 	m_databufferL = new RingBufferNPT<float>(16384);
@@ -140,7 +140,7 @@ int SpectralMeter::get_windowing_function()
 	return m_windowingFunction;
 }
 
-void SpectralMeter::process(AudioBus* bus, unsigned long nframes)
+void SpectralMeter::process(AudioBus* bus, nframes_t nframes)
 {
 	if ( is_bypassed() ) {
 		return;
@@ -163,13 +163,13 @@ QString SpectralMeter::get_name( )
 // writes the fft output into two qvector<float> (left and right channel).
 int SpectralMeter::get_data(QVector<float> &specl, QVector<float> &specr)
 {
-	int readcount = m_databufferL->read_space();
+    size_t readcount = m_databufferL->read_space();
 	
 	// If there is not enough new data for an FFT window in the ringbuffer,
 	// decide if the cycle should be ignored or if the fft spectrum should
 	// be filled with 0. Ignore it as long as the number of readouts is 
 	// below the BUFFER_READOUT_TOLERANCE.
-	if (readcount < m_frlen) {
+    if (readcount < size_t(m_frlen)) {
 		// add another 'if' to avoid unlimited growth of the variable
 		if (m_bufferreadouts <= BUFFER_READOUT_TOLERANCE) {
 			m_bufferreadouts++;
@@ -178,7 +178,7 @@ int SpectralMeter::get_data(QVector<float> &specl, QVector<float> &specr)
 		if (m_bufferreadouts >= BUFFER_READOUT_TOLERANCE) {
 			// return spectra filled with 0	
 			specl.clear();
-			specr.clear();
+            specr.clear();
 			for (int i = 1; i < m_frlen/2 + 1; ++i) {
 				specl.push_back(0.0);
 				specr.push_back(0.0);
@@ -205,8 +205,8 @@ int SpectralMeter::get_data(QVector<float> &specl, QVector<float> &specr)
 	for (int i = 0; i < m_frlen; ++i) {
 		m_databufferL->read(&left, 1);
 		m_databufferR->read(&right, 1);
-		fftsigl[i] = (double)left * win[i];
-		fftsigr[i] = (double)right * win[i];
+        fftsigl[i] = double(left) * win[i];
+        fftsigr[i] = double(right) * win[i];
 	}
 
 	// do the FFT calculations for the left and right channel
@@ -219,14 +219,14 @@ int SpectralMeter::get_data(QVector<float> &specl, QVector<float> &specr)
 
 	// send the fft spectrum to the caller
 	for (int i = 1; i < m_frlen/2 + 1; ++i) {
-		tmp = pow((float)fftspecl[i][0],2.0f) + pow((float)fftspecl[i][1],2.0f);
+        tmp = pow(float(fftspecl[i][0]),2.0f) + pow(float(fftspecl[i][1]),2.0f);
 		specl.push_back(tmp);
-		if (tmp != 0.0) {
+        if (tmp != 0.0f) {
 			isNullL = false;
 		}
-		tmp = pow((float)fftspecr[i][0],2.0f) + pow((float)fftspecr[i][1],2.0f);
+        tmp = pow(float(fftspecr[i][0]),2.0f) + pow(float(fftspecr[i][1]),2.0f);
 		specr.push_back(tmp);
-		if (tmp != 0.0) {
+        if (tmp != 0.0f) {
 			isNullR = false;
 		}
 	}

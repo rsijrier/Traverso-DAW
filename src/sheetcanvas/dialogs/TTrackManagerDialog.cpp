@@ -47,15 +47,15 @@ TTrackManagerDialog::TTrackManagerDialog(Track *track, QWidget *parent)
         preSendsGainPanGroupBox->setEnabled(false);
         postSendsGainPanGroupBox->setEnabled(false);
 
-        m_routingInputMenu = m_routingOutputMenu = m_preSendsMenu = 0;
-        m_selectedPostSend = m_selectedPreSend = 0;
+        m_routingInputMenu = m_routingOutputMenu = m_preSendsMenu = nullptr;
+        m_selectedPostSend = m_selectedPreSend = nullptr;
         create_routing_input_menu();
         create_routing_output_menu();
         create_pre_sends_menu();
 
         update_routing_input_output_widget_view();
-        trackPanSlider->setValue(m_track->get_pan() * 64);
-        trackGainSlider->setValue(coefficient_to_dB(m_track->get_gain()) * 10);
+        trackPanSlider->setValue(int(m_track->get_pan() * 64));
+        trackGainSlider->setValue(int(coefficient_to_dB(m_track->get_gain()) * 10.f));
 
         update_gain_indicator();
         update_pan_indicator();
@@ -206,7 +206,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
         Sheet* sheet = qobject_cast<Sheet*>(m_track->get_session());
         Project* project = pm().get_project();
 
-        TBusTrack* sheetMaster = 0;
+        TBusTrack* sheetMaster = nullptr;
         TBusTrack* projectMaster = project->get_master_out();
 
         if (sheet) {
@@ -226,7 +226,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
         if (sheet) {
                 QList<TBusTrack*> busTracks = sheet->get_bus_tracks();
                 // FIXME: this doesn't make sense at all
-                if (!m_track->get_type() == Track::BUS && busTracks.size()) {
+                if (!(m_track->get_type() == Track::BUS) && busTracks.size()) {
                         foreach(TBusTrack* busTrack, busTracks) {
                                 action = menu->addAction(busTrack->get_name());
                                 action->setData(busTrack->get_id());
@@ -425,7 +425,7 @@ void TTrackManagerDialog::update_gain_indicator()
 
 void TTrackManagerDialog::update_pan_indicator()
 {
-        panLabel->setText(QByteArray::number(m_track->get_pan(), 'f', 2));
+        panLabel->setText(QByteArray::number(double(m_track->get_pan()), 'f', 2));
 }
 
 void TTrackManagerDialog::pre_sends_selection_changed()
@@ -436,12 +436,12 @@ void TTrackManagerDialog::pre_sends_selection_changed()
                 qint64 sendId = selectedItems.first()->data(Qt::UserRole).toLongLong();
                 m_selectedPreSend = m_track->get_send(sendId);
                 if (m_selectedPreSend) {
-                        preSendsGainSlider->setValue(coefficient_to_dB(m_selectedPreSend->get_gain()) * 10);
-                        postSendsPanSlider->setValue(m_selectedPreSend->get_pan() * 64);
+                        preSendsGainSlider->setValue(int(coefficient_to_dB(m_selectedPreSend->get_gain()) * 10.f));
+                        postSendsPanSlider->setValue(int(m_selectedPreSend->get_pan() * 64));
                 }
         } else {
                 preSendsGainPanGroupBox->setEnabled(false);
-                m_selectedPreSend = 0;
+                m_selectedPreSend = nullptr;
         }
 }
 
@@ -453,12 +453,12 @@ void TTrackManagerDialog::post_sends_selection_changed()
                 qint64 sendId = selectedItems.first()->data(Qt::UserRole).toLongLong();
                 m_selectedPostSend = m_track->get_send(sendId);
                 if (m_selectedPostSend) {
-                        postSendsGainSlider->setValue(coefficient_to_dB(m_selectedPostSend->get_gain()) * 10);
-                        postSendsPanSlider->setValue(m_selectedPostSend->get_pan() * 64);
+                        postSendsGainSlider->setValue(int(coefficient_to_dB(m_selectedPostSend->get_gain()) * 10));
+                        postSendsPanSlider->setValue(int(m_selectedPostSend->get_pan() * 64));
                 }
         } else {
                 postSendsGainPanGroupBox->setEnabled(false);
-                m_selectedPreSend = 0;
+                m_selectedPreSend = nullptr;
         }
 }
 
@@ -481,8 +481,8 @@ void TTrackManagerDialog::pre_sends_gain_value_changed(int value)
                 return;
         }
 
-        float v = float(value) / 10;
-        float gain = dB_to_scale_factor(v);
+        qreal v = value / 10;
+        float gain = dB_to_scale_factor(float(v));
         QByteArray gainString = QByteArray::number(v, 'f', 1) + " dB";
         preSendGainLabel->setText(gainString);
         m_selectedPreSend->set_gain(gain);
@@ -495,7 +495,7 @@ void TTrackManagerDialog::pre_sends_pan_value_changed(int value)
         }
 
         float pan = float(value) / 64;
-        QByteArray panString = QByteArray::number(pan, 'f', 2);
+        QByteArray panString = QByteArray::number(double(pan), 'f', 2);
         preSendPanLabel->setText(panString);
         m_selectedPreSend->set_pan(pan);
 }
@@ -507,7 +507,7 @@ void TTrackManagerDialog::post_sends_gain_value_changed(int value)
         }
         float v = float(value) / 10;
         float gain = dB_to_scale_factor(v);
-        QByteArray gainString = QByteArray::number(v, 'f', 1) + " dB";
+        QByteArray gainString = QByteArray::number(double(v), 'f', 1) + " dB";
         postSendGainLabel->setText(gainString);
         m_selectedPostSend->set_gain(gain);
 }
@@ -519,7 +519,7 @@ void TTrackManagerDialog::post_sends_pan_value_changed(int value)
         }
 
         float pan = float(value) / 64;
-        QByteArray panString = QByteArray::number(pan, 'f', 2);
+        QByteArray panString = QByteArray::number(double(pan), 'f', 2);
         postSendPanLabel->setText(panString);
         m_selectedPostSend->set_pan(pan);
 }

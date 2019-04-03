@@ -33,39 +33,39 @@ class AudioBus;
 
 struct CorrelationMeterData
 {
-	float 	r;
-	float	levelLeft;
-	float	levelRight;
+    qreal 	r;
+    qreal	levelLeft;
+    qreal	levelRight;
 };
 
 class CorrelationMeter : public Plugin
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	CorrelationMeter();
-	~CorrelationMeter();
+    CorrelationMeter();
+    ~CorrelationMeter();
 
-	int init();
-	QDomNode get_state(QDomDocument doc);
-	int set_state(const QDomNode & node );
-	void process(AudioBus* bus, unsigned long nframes);
-	QString get_name();
-	
-	int get_data(float& r, float& direction);
+    int init();
+    QDomNode get_state(QDomDocument doc);
+    int set_state(const QDomNode & node );
+    void process(AudioBus* bus, nframes_t nframes);
+    QString get_name();
+
+    int get_data(qreal &r, qreal &direction);
 
 private:
-	RingBufferNPT<CorrelationMeterData>*	m_databuffer;
-	CorrelationMeterData			m_history;
-	float					m_fract;
-	int					m_bufferreadouts;
-	
+    RingBufferNPT<CorrelationMeterData>*	m_databuffer;
+    CorrelationMeterData			m_history;
+    qreal					m_fract;
+    int					m_bufferreadouts;
+
 private slots:
-	void calculate_fract();
+    void calculate_fract();
 
 
 };
 
 
 #endif
- 
+

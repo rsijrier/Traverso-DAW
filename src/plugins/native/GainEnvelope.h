@@ -38,7 +38,7 @@ public:
 
 	QDomNode get_state(QDomDocument doc);
 	int set_state(const QDomNode & node );
-	void process(AudioBus* bus, unsigned long nframes);
+    void process(AudioBus* bus, nframes_t nframes);
 	void process_gain(audio_sample_t** buffer, const TimeRef& startlocation, const TimeRef& endlocation, nframes_t nframes, uint channels);
 	
         void set_session(TSession* session);

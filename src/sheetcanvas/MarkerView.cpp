@@ -68,10 +68,10 @@ void MarkerView::paint(QPainter * painter, const QStyleOptionGraphicsItem * opti
 	
 	painter->save();
 	
-	int xstart = (int)option->exposedRect.x();
-	int clipx = (int)mapToParent(xstart, 0).x();
+    qreal xstart = option->exposedRect.x();
+    qreal clipx = mapToParent(xstart, 0).x();
 	if (clipx < 0) {
-		painter->setClipRect(-clipx, 0, (int)m_boundingRect.width(), (int)m_boundingRect.height());
+        painter->setClipRect(QRectF(-clipx, 0, m_boundingRect.width(), m_boundingRect.height()));
 	}
 
 	painter->setRenderHint(QPainter::Antialiasing);
@@ -135,7 +135,7 @@ void MarkerView::update_position()
 
 int MarkerView::position()
 {
-	return (int)(pos().x() + m_width / 2);
+    return int(pos().x() + m_width / 2);
 }
 
 void MarkerView::set_position(int i)

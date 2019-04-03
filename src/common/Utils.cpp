@@ -230,7 +230,7 @@ QString timeref_to_cd_including_hours (const TimeRef& ref)
 	return spos;
 }
 
-QString timeref_to_text(const TimeRef & ref, int scalefactor)
+QString timeref_to_text(const TimeRef & ref, qint64 scalefactor)
 {
 	if (scalefactor >= 512*640) {
 		return timeref_to_ms_2(ref);

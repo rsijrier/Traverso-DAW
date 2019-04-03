@@ -40,7 +40,7 @@
 
 
 PlayHead::PlayHead(SheetView* sv, TSession* session, ClipsViewPort* vp)
-        : ViewItem(0, session)
+        : ViewItem(nullptr, session)
         , m_session(session)
 	, m_vp(vp)
 {
@@ -72,7 +72,7 @@ PlayHead::~PlayHead( )
 
 void PlayHead::check_config( )
 {
-	m_mode = (PlayHeadMode) config().get_property("PlayHead", "Scrollmode", ANIMATED_FLIP_PAGE).toInt();
+    m_mode = static_cast<PlayHeadMode>(config().get_property("PlayHead", "Scrollmode", ANIMATED_FLIP_PAGE).toInt());
 	m_follow = config().get_property("PlayHead", "Follow", true).toBool();
 	m_followDisabled = false;
 }
@@ -89,7 +89,7 @@ void PlayHead::paint( QPainter * painter, const QStyleOptionGraphicsItem * optio
                 brush = m_brushInactive;
 	}
 	
-        painter->fillRect(1, 0, (int)m_boundingRect.width() - 2, (int)m_boundingRect.height(), brush);
+        painter->fillRect(QRectF(1, 0, m_boundingRect.width() - 2, m_boundingRect.height()), brush);
 }
 
 void PlayHead::play_start()
@@ -171,7 +171,7 @@ void PlayHead::update_position()
                 // processing the event stack manually solves this.
                 qApp->processEvents();
 
-                m_sv->set_hscrollbar_value(int(scenePos().x()) - (int)(0.5 * vpWidth));
+                m_sv->set_hscrollbar_value(int(scenePos().x()) - int(0.5 * vpWidth));
 		return;
 	}
 	 
@@ -180,7 +180,7 @@ void PlayHead::update_position()
 	if (vppoint.x() < 0 || (vppoint.x() > vpWidth)) {
 		
 		// If the playhead is _not_ in the viewports range, center it in the middle!
-		m_sv->set_hscrollbar_value(int(scenePos().x()) - (int)(0.5 * vpWidth));
+        m_sv->set_hscrollbar_value(int(scenePos().x()) - int(0.5 * vpWidth));
 	
 	} else if (vppoint.x() > ( vpWidth * (1.0 - AUTO_SCROLL_MARGIN) )) {
 		
@@ -189,8 +189,8 @@ void PlayHead::update_position()
 		// playhead cursor ~ 1/10 from the left viewport border
 		if (m_mode == ANIMATED_FLIP_PAGE) {
 			if (m_animation.state() != QTimeLine::Running) {
-				m_animFrameRange = (int)(vpWidth * (1.0 - (AUTO_SCROLL_MARGIN * 2)));
-				m_animation.setFrameRange(0, m_animFrameRange);
+                m_animFrameRange = int(vpWidth * (1.0 - (AUTO_SCROLL_MARGIN * 2)));
+                m_animation.setFrameRange(0, int(m_animFrameRange));
 				m_animationScrollStartPos = m_sv->hscrollbar_value();
 				m_animScaleFactor = m_sv->timeref_scalefactor;
 				//during the animation, we stop the play update timer
@@ -200,16 +200,16 @@ void PlayHead::update_position()
 				m_animation.start();
 			}
 		} else {
-			m_sv->set_hscrollbar_value((int) (int(scenePos().x()) - (AUTO_SCROLL_MARGIN * vpWidth)) );
+            m_sv->set_hscrollbar_value(int(int(scenePos().x()) - (AUTO_SCROLL_MARGIN * vpWidth)) );
 		}
 	}
 }
 
-void PlayHead::set_animation_value(int value)
+void PlayHead::set_animation_value(int /*value*/)
 {
 	// When the scalefactor changed, stop the animation here as it's no longer valid to run
 	// and reset the animation timeline time back to 0.
-	if (m_animScaleFactor != m_sv->timeref_scalefactor) {
+    if (!qFuzzyCompare(m_animScaleFactor, m_sv->timeref_scalefactor)) {
 		m_animation.stop();
 		m_animation.setCurrentTime(0);
 		animation_finished();
@@ -219,12 +219,12 @@ void PlayHead::set_animation_value(int value)
 	QPointF newPos(m_session->get_transport_location() / m_sv->timeref_scalefactor, 0);
 	
 	// calculate the animation x diff.
-	int diff = m_animation.currentValue() * m_animFrameRange;
+    qreal diff = m_animation.currentValue() * m_animFrameRange;
 	
 	// compensate for the playhead movement.
 	m_animationScrollStartPos += newPos.x() - pos().x();
 	
-	int newXPos = (int)(m_animationScrollStartPos + diff);
+    int newXPos = int(m_animationScrollStartPos + diff);
 	
 	if (newPos != pos()) {
 		setPos(newPos);
@@ -290,7 +290,7 @@ void PlayHead::load_theme_data()
 
 
 WorkCursor::WorkCursor(SheetView* sv, TSession* session)
-        : ViewItem(0, session)
+        : ViewItem(nullptr, session)
         , m_session(session)
 	, m_sv(sv)
 {

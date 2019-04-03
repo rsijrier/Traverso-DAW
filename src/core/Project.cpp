@@ -73,11 +73,11 @@ Project::Project(const QString& title)
 {
 	PENTERCONS;
         m_name = title;
-	m_exportThread = 0;
-        m_activeSheet = 0;
-        m_spectralMeter = 0;
-        m_correlationMeter = 0;
-        m_activeSession = 0;
+    m_exportThread = nullptr;
+        m_activeSheet = nullptr;
+        m_spectralMeter = nullptr;
+        m_correlationMeter = nullptr;
+        m_activeSession = nullptr;
         m_activeSessionId = m_activeSheetId = -1;
 	engineer = "";
         m_keyboardArrowNavigationSpeed = 4;
@@ -273,8 +273,8 @@ int Project::load(QString projectfile)
 	m_arranger = e.attribute( "arranger", "" );
 	m_songwriter = e.attribute( "songwriter", "" );
 	m_message = e.attribute( "message", "" );
-	m_rate = e.attribute( "rate", "" ).toInt();
-	m_bitDepth = e.attribute( "bitdepth", "" ).toInt();
+    m_rate = e.attribute( "rate", "" ).toUInt();
+    m_bitDepth = e.attribute( "bitdepth", "" ).toUInt();
 	m_id = e.attribute("id", "0").toLongLong();
         m_sheetsAreTrackFolder = e.attribute("sheetsaretrackfolder", "0").toInt();
 	if (m_id == 0) {
@@ -662,8 +662,8 @@ void Project::prepare_audio_device(QDomDocument doc)
         QDomElement e = audioConfigurationNode.toElement();
         ads.driverType = e.attribute("driver", "");
         ads.cardDevice = e.attribute("device", "");
-        ads.rate = e.attribute("samplerate", "44100").toInt();
-        ads.bufferSize = e.attribute("buffersize", "512").toInt();
+        ads.rate = e.attribute("samplerate", "44100").toUInt();
+        ads.bufferSize = e.attribute("buffersize", "512").toUInt();
 //        ads.jackChannels.append(m_softwareAudioChannels.values());
 
         if (ads.driverType.isEmpty() || ads.driverType.isNull()) {
@@ -775,7 +775,7 @@ AudioBus* Project::get_playback_bus(const QString& name) const
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 /**
@@ -802,7 +802,7 @@ AudioBus* Project::get_capture_bus(const QString& name) const
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 AudioBus* Project::get_audio_bus(qint64 id)
@@ -840,7 +840,7 @@ AudioBus* Project::get_audio_bus(qint64 id)
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 AudioBus* Project::create_software_audio_bus(const BusConfig& conf)
@@ -849,7 +849,7 @@ AudioBus* Project::create_software_audio_bus(const BusConfig& conf)
 
         AudioChannel* channel;
         for (int i=0; i< conf.channelNames.size(); ++i) {
-                channel = new AudioChannel(conf.channelNames.at(i), i, bus->get_type());
+                channel = new AudioChannel(conf.channelNames.at(i), uint(i), bus->get_type());
                 channel->set_buffer_size(audiodevice().get_buffer_size());
 
                 audiodevice().add_jack_channel(channel);
@@ -925,7 +925,7 @@ Track* Project::get_track(qint64 id) const
                         return track;
                 }
         }
-        return 0;
+        return nullptr;
 }
 
 
@@ -1017,7 +1017,7 @@ void Project::set_title(const QString& title)
 		return;
 	}
 	
-	QMessageBox::information( 0, 
+    QMessageBox::information( nullptr,
 			tr("Traverso - Information"), 
 			tr("Project title changed, Project will to be reloaded to ensure proper operation"),
 			QMessageBox::Ok);
@@ -1086,7 +1086,7 @@ TCommand* Project::add_sheet(Sheet* sheet, bool historable)
 	PENTER;
 	
 	AddRemove* cmd;
-	cmd = new AddRemove(this, sheet, historable, 0,
+    cmd = new AddRemove(this, sheet, historable, nullptr,
                 "private_add_sheet(Sheet*)", "privateSheetAdded(Sheet*)",
                 "private_remove_sheet(Sheet*)", "privateSheetRemoved(Sheet*)",
                 tr("Sheet %1 added").arg(sheet->get_name()));
@@ -1098,7 +1098,7 @@ TCommand* Project::add_sheet(Sheet* sheet, bool historable)
 TCommand* Project::remove_sheet(Sheet* sheet, bool historable)
 {
         AddRemove* cmd;
-        cmd = new AddRemove(this, sheet, historable, 0,
+        cmd = new AddRemove(this, sheet, historable, nullptr,
                 "private_remove_sheet(Sheet*)", "privateSheetRemoved(Sheet*)",
                 "private_add_sheet(Sheet*)", "privateSheetAdded(Sheet*)",
                 tr("Remove Sheet %1").arg(sheet->get_name()));
@@ -1110,7 +1110,7 @@ TCommand* Project::remove_sheet(Sheet* sheet, bool historable)
 
 Sheet* Project::get_sheet(qint64 id) const
 {
-        Sheet* current = 0;
+        Sheet* current = nullptr;
 
         foreach(Sheet* sheet, m_sheets) {
                 if (sheet->get_id() == id) {
@@ -1132,7 +1132,7 @@ TSession* Project::get_session(qint64 id)
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 void Project::set_current_session(qint64 id)
@@ -1262,9 +1262,9 @@ int Project::start_export(ExportSpecification* spec)
 			
                         sheet->start_export(spec);
 			
-			spec->normvalue = (1.0 - FLT_EPSILON) / spec->peakvalue;
+            spec->normvalue = (1.0f - FLT_EPSILON) / spec->peakvalue;
 			
-			if (spec->peakvalue > 1.0) {
+            if (spec->peakvalue > 1.0f) {
 				info().critical(tr("Detected clipping in exported audio! (%1)")
 						.arg(coefficient_to_dbstring(spec->peakvalue)));
 			}
@@ -1307,7 +1307,7 @@ int Project::start_export(ExportSpecification* spec)
 	
 	delete [] spec->dataF;
 	delete [] readbuffer;
-	spec->dataF = 0;
+    spec->dataF = nullptr;
 
 	emit exportFinished();
 
@@ -1414,7 +1414,7 @@ int Project::create_cdrdao_toc(ExportSpecification* spec)
 	return 1;
 }
 
-int Project::get_rate( ) const
+uint Project::get_rate( ) const
 {
 	// FIXME: Projects should eventually just use the universal samplerate
 	if (m_useResampling) {
@@ -1424,7 +1424,7 @@ int Project::get_rate( ) const
 	return m_rate;
 }
 
-int Project::get_bitdepth( ) const
+uint Project::get_bitdepth( ) const
 {
 	return m_bitDepth;
 }
@@ -1489,7 +1489,7 @@ QList<TSession*> Project::get_sessions()
         return sessions;
 }
 
-int Project::get_current_sheet_id( ) const
+qint64 Project::get_current_sheet_id( ) const
 {
         return m_activeSheetId;
 }
@@ -1572,7 +1572,7 @@ void Project::audiodevice_params_changed()
                 bus->audiodevice_params_changed();
         }
 
-        int bufferSize = audiodevice().get_buffer_size();
+        uint bufferSize = audiodevice().get_buffer_size();
         foreach(AudioChannel* channel, m_softwareAudioChannels) {
                 channel->set_buffer_size(bufferSize);
         }
@@ -1696,7 +1696,7 @@ void Project::set_import_dir(const QString& dir)
 bool Project::is_save_to_close() const
 {
 	if (is_recording()) {
-		QMessageBox::information( 0, 
+        QMessageBox::information( nullptr,
 				tr("Traverso - Information"), 
 				tr("You're still recording, please stop recording first to be able to exit the application!"),
 				QMessageBox::Ok);
@@ -1819,16 +1819,16 @@ TCommand* Project::remove_child_session()
         PENTER;
 
         if (!m_activeSession) {
-                return 0;
+                return nullptr;
         }
 
         if (m_activeSession->is_project_session()) {
                 // Oh no, we're not gonna delete project itself!
-                return 0;
+                return nullptr;
         }
 
         if (!m_activeSession->is_child_session()) {
-                return 0;
+                return nullptr;
         }
 
         TSession* toBeRemoved = m_activeSession;
@@ -1841,5 +1841,5 @@ TCommand* Project::remove_child_session()
 
         delete toBeRemoved;
 
-        return 0;
+        return nullptr;
 }

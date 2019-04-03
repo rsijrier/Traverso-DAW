@@ -86,7 +86,7 @@ int CorrelationMeter::init()
 }
 
 
-void CorrelationMeter::process(AudioBus* bus, unsigned long nframes)
+void CorrelationMeter::process(AudioBus* bus, nframes_t nframes)
 {
 	if ( is_bypassed() ) {
 		return;
@@ -105,12 +105,12 @@ void CorrelationMeter::process(AudioBus* bus, unsigned long nframes)
 
 
         // Variables we need to calculate the correlation and averages/levels
-	float a1, a2, a1a2 = 0, a1sq = 0, a2sq = 0, r, levelLeft = 0, levelRight = 0;
+    qreal a1, a2, a1a2 = 0, a1sq = 0, a2sq = 0, r, levelLeft = 0, levelRight = 0;
 	
 	// calculate coefficient
 	for (uint i = 0; i < nframes; ++i) {
-		a1 = bufferLeft[i];
-		a2 = bufferRight[i];
+        a1 = qreal(bufferLeft[i]);
+        a2 = qreal(bufferRight[i]);
 
 		a1a2 += a1 * a2;
 		a1sq += a1 * a1;
@@ -122,15 +122,15 @@ void CorrelationMeter::process(AudioBus* bus, unsigned long nframes)
 
 	// We have all data to calculate the correlation coefficient
 	// for the processed buffer (but check for division by 0 first)
-	if ((a1sq == 0.0) || (a2sq == 0.0)) {
+    if ((a1sq == 0.0) || (a2sq == 0.0)) {
 		r = 1.0;
 	} else {
-		r = a1a2 / (sqrtf(a1sq) * sqrtf(a2sq));
+        r = a1a2 / (sqrtf64(a1sq) * sqrtf64(a2sq));
 	}
 
 	// calculate RMS of the levels
-	levelLeft = sqrtf(levelLeft / nframes);
-	levelRight = sqrtf(levelRight / nframes);
+    levelLeft = sqrtf64(levelLeft / nframes);
+    levelRight = sqrtf64(levelRight / nframes);
 
 	// And we store this in a CorrelationMeterData struct
 	// and write this struct into the data ringbuffer,
@@ -170,12 +170,12 @@ void CorrelationMeter::process(AudioBus* bus, unsigned long nframes)
  * @returns 0 if no new data was available, > 0 when new data was available
  *	The new data will be assigned to \a r and \a direction
  **/
-int CorrelationMeter::get_data(float& r, float& direction)
+int CorrelationMeter::get_data(qreal& r, qreal& direction)
 {
 	// RingBuffer::read_space() tells us how many data
 	// of type T (CorrelationMeterData in this case) has been written 
 	// to the buffer since last time we checked.
-	int readcount = m_databuffer->read_space();
+    int readcount = int(m_databuffer->read_space());
 
 	// Create an empty CorrelationMeterData struct data,
 	CorrelationMeterData data;
@@ -184,8 +184,8 @@ int CorrelationMeter::get_data(float& r, float& direction)
 	// and consistent (independend of buffersizes) stereometer behaviour.
 	// So we get it from our history struct.
 	r = m_history.r;
-	float levelLeft = m_history.levelLeft;
-	float levelRight = m_history.levelRight;
+    qreal levelLeft = m_history.levelLeft;
+    qreal levelRight = m_history.levelRight;
 	
 	// If there is no new data in the buffer, this may have 2 reasons:
 	// 
@@ -202,7 +202,7 @@ int CorrelationMeter::get_data(float& r, float& direction)
 	// and start collapsing the meter to r = 1.0 in the center.
 
  	if (readcount <= 0) {
-		// add another 'if' to avoid unlimited growth of the variable
+        // add another 'if' to avoid unlimited growth of the variable
 		if (m_bufferreadouts < RINGBUFFER_SIZE) {
 			m_bufferreadouts++;
 		}
@@ -222,7 +222,7 @@ int CorrelationMeter::get_data(float& r, float& direction)
 			// This is ugly, there shouldn't be a loop here. Maybe it is possible without.
 			// The loop makes sure that the collapse speed is independent of the buffer size
 			for (int i = 0; i < METER_COLLAPSE_SPEED / m_fract; ++i) {
-				r = data.r * m_fract + r * (1.0 - m_fract);
+                r = data.r * m_fract + r * (1.0 - m_fract);
 				levelLeft = data.levelLeft * m_fract + levelLeft * (1.0 - m_fract);
 				levelRight = data.levelRight * m_fract + levelRight * (1.0 - m_fract);
 			}
@@ -234,7 +234,7 @@ int CorrelationMeter::get_data(float& r, float& direction)
 	} else {
 		m_bufferreadouts = 0;
 
-		for (int i=0; i<readcount; ++i) {
+        for (int i=0; i<readcount; ++i) {
 			// which we fill by reading from the databuffer.
 			m_databuffer->read(&data, 1);
 		
@@ -254,8 +254,8 @@ int CorrelationMeter::get_data(float& r, float& direction)
 	if (levelLeft + levelRight == 0.0) {
 		direction = 0.0;
 	} else {
-		float vl = levelLeft / (levelLeft + levelRight);
-		float vr = levelRight / (levelLeft + levelRight);
+        qreal vl = levelLeft / (levelLeft + levelRight);
+        qreal vr = levelRight / (levelLeft + levelRight);
 		direction = vr - vl;
 	}
 
@@ -265,12 +265,12 @@ int CorrelationMeter::get_data(float& r, float& direction)
 	m_history.levelLeft = levelLeft;
 	m_history.levelRight = levelRight;
 
-	return readcount;
+    return readcount;
 }
 
 void CorrelationMeter::calculate_fract( )
 {
-	m_fract = ((float) audiodevice().get_buffer_size()) / (audiodevice().get_sample_rate());
+    m_fract = qreal(audiodevice().get_buffer_size()) / (audiodevice().get_sample_rate());
 }
 
 

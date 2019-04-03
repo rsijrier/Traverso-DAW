@@ -41,7 +41,7 @@ public:
         }
         ~VUMonitor() {}
 
-        bool is_smaller_then(APILinkedListNode* /*node*/) {return true;}
+        virtual bool is_smaller_then(APILinkedListNode* /*node*/);
 
         void process(float peakValue) {
                 if (m_flag) {

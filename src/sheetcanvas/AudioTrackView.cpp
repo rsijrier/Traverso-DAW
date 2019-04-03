@@ -74,12 +74,12 @@ void AudioTrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
 
 // 	printf("TrackView:: PAINT :: exposed rect is: x=%f, y=%f, w=%f, h=%f\n", option->exposedRect.x(), option->exposedRect.y(), option->exposedRect.width(), option->exposedRect.height());
 	
-	int xstart = (int)option->exposedRect.x();
-	int pixelcount = (int)option->exposedRect.width();
+    qreal xstart = option->exposedRect.x();
+    qreal pixelcount = option->exposedRect.width();
 	
 	if (m_paintBackground) {
 		QColor color = themer()->get_color("Track:background");
-                painter->fillRect(xstart, m_topborderwidth, pixelcount+1, m_sv->get_track_height(m_track) - m_bottomborderwidth, color);
+                painter->fillRect(QRectF(xstart, m_topborderwidth, pixelcount+1, m_sv->get_track_height(m_track) - m_bottomborderwidth), color);
 	}
 }
 
@@ -123,8 +123,8 @@ void AudioTrackView::load_theme_data()
 TCommand* AudioTrackView::insert_silence()
 {
 	TMainWindow::instance()->show_insertsilence_dialog();
-        TMainWindow::instance()->set_insertsilence_track((AudioTrack*)m_track);
-	return 0; 
+    TMainWindow::instance()->set_insertsilence_track(m_track);
+    return nullptr;
 }
 
 void AudioTrackView::to_front(AudioClipView * view)
@@ -140,10 +140,10 @@ AudioClipView* AudioTrackView::get_nearest_audioclip_view(TimeRef location) cons
 {
         PENTER;
         if (!m_clipViews.size()) {
-                return (AudioClipView*) 0;
+                return nullptr;
         }
 
-        AudioClipView* nearestClipView = 0;
+        AudioClipView* nearestClipView = nullptr;
         TimeRef shortestDistance(LONG_LONG_MAX);
 
         foreach(AudioClipView* clipview, m_clipViews) {
@@ -185,7 +185,7 @@ TCommand* AudioTrackView::show_track_gain_curve()
 		m_curveView->show();
         }
 
-        return 0;
+        return nullptr;
 }
 
 void AudioTrackView::automation_visibility_changed()

@@ -50,7 +50,7 @@ struct ExportSpecification
 	
     uint      	sample_rate;
 	int             src_quality;
-	int       	channels;
+    uint       	channels;
 	TimeRef		startLocation;
 	TimeRef		endLocation;
         TimeRef		cdTrackStart;

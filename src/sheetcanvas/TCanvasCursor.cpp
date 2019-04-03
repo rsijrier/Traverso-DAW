@@ -29,16 +29,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Debugger.h"
 
-TCanvasCursor::TCanvasCursor(SheetView* sv)
-        : m_sv(sv)
+TCanvasCursor::TCanvasCursor(SheetView* )
+        : ViewItem(nullptr)
 {
 	m_textItem = new PositionIndicator(this);
 	m_textItem->hide();
 
 	m_ignoreContext = true;
-	m_xOffset = m_yOffset = 0.0f;
+    m_xOffset = m_yOffset = 0.0;
 
-        setZValue(200);
+        setZValue(20000);
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 }
@@ -65,7 +65,7 @@ void TCanvasCursor::create_cursor_pixmap(const QString &shape)
 	QPainter painter(&m_pixmap);
 	QPainterPath path;
 
-	float halfWidth = float(width) / 2;
+    qreal halfWidth = width / 2;
 	QPointF endPoint(halfWidth + 1, 1);
 	QPointF c1(1, height);
 	QPointF c2(width + 1, height);
@@ -146,12 +146,12 @@ void TCanvasCursor::set_cursor_shape(QString shape, int alignment)
 
 	if (alignment & Qt::AlignHCenter)
 	{
-		m_xOffset = float(m_pixmap.width()) / 2;
+        m_xOffset = qreal(m_pixmap.width()) / 2;
 	}
 
 	if (alignment & Qt::AlignVCenter)
 	{
-		m_yOffset = float(m_pixmap.height() / 2);
+        m_yOffset = qreal(m_pixmap.height() / 2);
 	}
 
 	m_boundingRect = m_pixmap.rect();
@@ -176,19 +176,19 @@ void TCanvasCursor::set_pos(QPointF p)
 	if (vp && m_textItem->isVisible())
 	{
 		QPointF textPos(textItemX, textItemY);
-		int xRightTextItem = vp->mapFromScene(scenePos()).x()  + m_textItem->boundingRect().width() + textItemX;
+        qreal xRightTextItem = vp->mapFromScene(scenePos()).x()  + m_textItem->boundingRect().width() + textItemX;
 		int xLeftTextItem = vp->mapFromScene(scenePos()).x() + textItemX;
 
 		int viewPortWidth = vp->width();
 
 		if (xLeftTextItem < 0)
 		{
-			textPos = mapFromScene(vp->mapToScene(0, m_textItem->scenePos().y()));
+            textPos = mapFromScene(vp->mapToScene(0, int(m_textItem->scenePos().y())));
 		}
 
 		if (xRightTextItem > viewPortWidth)
 		{
-			textPos = mapFromScene(vp->mapToScene(viewPortWidth - m_textItem->boundingRect().width(), m_textItem->scenePos().y()));
+            textPos = mapFromScene(vp->mapToScene(viewPortWidth - int(m_textItem->boundingRect().width()),int(m_textItem->scenePos().y())));
 		}
 
 		m_textItem->setPos(textPos);

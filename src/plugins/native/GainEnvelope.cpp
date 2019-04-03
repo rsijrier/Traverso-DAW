@@ -88,7 +88,7 @@ void GainEnvelope::set_session(TSession * session)
 	}
 }
 
-void GainEnvelope::process(AudioBus * bus, unsigned long nframes)
+void GainEnvelope::process(AudioBus * bus, nframes_t nframes)
 {
         for (int chan=0; chan<bus->get_channel_count(); ++chan) {
                 Mixer::apply_gain_to_buffer(bus->get_buffer(chan, nframes), nframes, get_gain());

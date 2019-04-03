@@ -46,7 +46,7 @@ public:
         LV2Plugin(TSession* session, char* pluginUri);
 	~LV2Plugin();
 
-	void process(AudioBus* bus, unsigned long nframes);
+    void process(AudioBus* bus, nframes_t nframes);
 
 	LilvInstance*  get_instance() const {return m_instance; }
 	const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
@@ -74,7 +74,7 @@ private:
 	LilvNode*      optional;        /**< lv2:connectionOptional port property */
 	bool 		m_isSlave;
 	
-	LV2ControlPort* create_port(int portIndex, float defaultValue);
+    LV2ControlPort* create_port(uint32_t portIndex, float defaultValue);
 
 	int create_instance();
 

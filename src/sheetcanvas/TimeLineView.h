@@ -55,7 +55,7 @@ private:
 	MarkerView* 	m_blinkingMarker;
 	QColor		m_blinkColor;
 
-	QHash<nframes_t, QString>	m_zooms;	
+    QHash<qint64, QString>	m_zooms;
 
 	TCommand* add_marker_at(const TimeRef when);
         void update_softselected_marker(QPointF pos);
