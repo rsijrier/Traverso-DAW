@@ -392,6 +392,7 @@ void AudioDevice::set_parameters(AudioDeviceSetup ads)
 
 int AudioDevice::create_driver(QString driverType, bool capture, bool playback, const QString& cardDevice)
 {
+    Q_ASSERT(!m_driver);
 
 #if defined (JACK_SUPPORT)
 	if (libjack_is_present) {
