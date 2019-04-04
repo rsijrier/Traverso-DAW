@@ -553,10 +553,16 @@ int AlsaDriver::configure_stream(char *device_name,
 		}
 	}
 
+    uint requestedFrameRate = frame_rate;
 	if ( (err = snd_pcm_hw_params_set_rate_near (handle, hw_params, &frame_rate, NULL)) < 0) {
 		printf("ALSA: cannot set sample/frame rate to % for %s\n", (double)frame_rate, stream_name);
 		return -1;
 	}
+
+    if (requestedFrameRate != frame_rate) {
+        device->driverSetupMessage(tr("Requested framerate of %1 not supported by soundcard, setting to nearest framerate of %2 instead").
+                                   arg(requestedFrameRate).arg(frame_rate), AudioDevice::DRIVER_SETUP_INFO);
+    }
 
 	if (!*nchns) {
 		/*if not user-specified, try to find the maximum number of channels */
