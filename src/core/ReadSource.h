@@ -70,8 +70,8 @@ public :
 	void set_audio_clip(AudioClip* clip);
 	void set_diskio(DiskIO* diskio);
 	nframes_t get_nframes() const;
-	int get_file_rate() const;
-	int get_output_rate() const {return m_outputRate;}
+    uint get_file_rate() const;
+    uint get_output_rate() const {return m_outputRate;}
 	const TimeRef& get_length() const {return m_length;}
 	
 	void sync(DecodeBuffer* buffer);
@@ -101,7 +101,7 @@ private:
 	
 	mutable TimeRef		m_length;
 	QString			m_decodertype;
-	int			m_outputRate;
+    uint			m_outputRate;
 	
 	BufferStatus*		m_bufferstatus;
 	

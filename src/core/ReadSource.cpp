@@ -673,7 +673,7 @@ void ReadSource::set_active(bool active)
 	}
 }
 
-int ReadSource::get_file_rate() const
+uint ReadSource::get_file_rate() const
 {
 	if (m_audioReader) {
 		return m_audioReader->get_file_rate();

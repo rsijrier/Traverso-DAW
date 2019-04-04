@@ -44,10 +44,10 @@ public:
 	QString decoder_type() const {return (m_reader) ? m_reader->decoder_type() : "";}
 	void clear_buffers();
 	
-	int get_output_rate();
-	int get_file_rate();
+	uint get_output_rate();
+	uint get_file_rate();
 	int get_convertor_type() const {return m_convertorType;}
-	void set_output_rate(int rate);
+	void set_output_rate(uint rate);
 	void set_converter_type(int converter_type);
 	void set_resample_decode_buffer(DecodeBuffer* buffer);
 	
@@ -64,8 +64,8 @@ protected:
 	QVector<SRC_STATE*>	m_srcStates;
 	SRC_DATA		m_srcData;
 	audio_sample_t**	m_overflowBuffers;
-	long			m_overflowUsed;
-	int			m_outputRate;
+    long			m_overflowUsed;
+    uint			m_outputRate;
 	int			m_convertorType;
 	bool			m_isResampleAvailable;
 	nframes_t		m_readExtraFrames;

@@ -457,7 +457,7 @@ int AudioClip::process(nframes_t nframes)
     uint framesToProcess = nframes;
 
 
-    int outputRate = m_readSource->get_output_rate();
+    uint outputRate = m_readSource->get_output_rate();
     TimeRef transportLocation = m_sheet->get_transport_location();
     TimeRef upperRange = transportLocation + TimeRef(framesToProcess, outputRate);
 

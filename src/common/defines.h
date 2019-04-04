@@ -64,19 +64,19 @@ struct TimeRef {
 	explicit TimeRef(qint64 position) : m_position(position) {}
         explicit TimeRef(double position) : m_position(qint64(position)) {}
 	
-	TimeRef(nframes_t frame, int rate) {
+    TimeRef(nframes_t frame, uint rate) {
 		m_position = (UNIVERSAL_SAMPLE_RATE / rate) * frame;
 	}
 	
-	TimeRef(qreal frame, int rate) {
+    TimeRef(qreal frame, uint rate) {
 		m_position = qint64((qreal(UNIVERSAL_SAMPLE_RATE) / rate) * frame);
 	}
 	
-	void add_frames(nframes_t frames, int rate) {
+    void add_frames(nframes_t frames, uint rate) {
 		m_position += ((UNIVERSAL_SAMPLE_RATE / rate) * frames);
 	}
 	
-	nframes_t to_frame(int rate) {
+    nframes_t to_frame(uint rate) {
 		Q_ASSERT(rate);
 		return nframes_t(m_position / (UNIVERSAL_SAMPLE_RATE / rate));
 	}
