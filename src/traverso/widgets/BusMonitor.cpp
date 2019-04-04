@@ -46,14 +46,17 @@ BusMonitor::BusMonitor(QWidget* parent)
 	PENTERCONS;
 	
 	setAutoFillBackground(false);
-        m_masterOutMeter = m_projectMaster = 0;
-        m_sheet = 0;
-        m_layout = 0;
-	
-	m_menu = 0;
-	
-        connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(create_vu_meters()));
-	connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
+    m_masterOutMeter = nullptr;
+    m_projectMaster = nullptr;
+    m_sheet = nullptr;
+    m_layout = nullptr;
+
+    create_vu_meters();
+
+    m_menu = nullptr;
+
+    connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(create_vu_meters()));
+    connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
 }
 
 
@@ -133,11 +136,13 @@ void BusMonitor::create_vu_meters( )
 
         if (m_masterOutMeter) {
                 m_layout->removeWidget(m_masterOutMeter);
-                m_layout->removeWidget(m_projectMaster);
                 delete m_masterOutMeter;
+                m_masterOutMeter = nullptr;
+        }
+        if (m_projectMaster) {
+                m_layout->removeWidget(m_projectMaster);
                 delete m_projectMaster;
-                m_masterOutMeter = 0;
-                m_projectMaster = 0;
+                m_projectMaster = nullptr;
         }
 
         if (m_sheet) {
@@ -198,15 +203,17 @@ void BusMonitor::mousePressEvent(QMouseEvent * event)
 
 void BusMonitor::reset_vu_meters()
 {
-	foreach(VUMeter* meter, inMeters) {
-		meter->reset();
-	}
-	foreach(VUMeter* meter, outMeters) {
-		meter->reset();
-	}
+    foreach(VUMeter* meter, inMeters) {
+        meter->reset();
+    }
+    foreach(VUMeter* meter, outMeters) {
+        meter->reset();
+    }
         if (m_masterOutMeter) {
                 m_masterOutMeter->reset();
-                m_projectMaster->reset();
+        }
+        if (m_projectMaster) {
+            m_projectMaster->reset();
         }
 }
 
