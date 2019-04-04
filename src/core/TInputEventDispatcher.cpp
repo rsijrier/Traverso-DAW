@@ -114,7 +114,7 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* functio
     TShortcut* shortCut = tShortCutManager().getShortcutForKey(keys.first());
 
 	if (! shortCut) {
-		PERROR("ContextMenu keySequence doesn't apply to any InputEngine knows off!! (%s)", QS_C(keys.first()));
+//		PERROR("ContextMenu keySequence doesn't apply to any InputEngine knows off!! (%s)", QS_C(keys.first()));
 		return -1;
 	}
 

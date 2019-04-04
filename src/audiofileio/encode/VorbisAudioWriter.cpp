@@ -170,7 +170,7 @@ bool VorbisAudioWriter::open_private()
 	}
 	
 	if (ret) {
-		PERROR("vorbis_encode_init failed: %d", ret);
+//		PERROR("vorbis_encode_init failed: %d", ret);
 		cleanup();
 		return false;
 	}

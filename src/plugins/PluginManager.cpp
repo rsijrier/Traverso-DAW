@@ -108,7 +108,7 @@ Plugin* PluginManager::get_plugin(const  QDomNode node )
 			plugin = 0;
 		}
 	} else {
-		PERROR("PluginManager couldn't create Plugin ???? (%s)", QS_C(type));
+//		PERROR("PluginManager couldn't create Plugin ???? (%s)", QS_C(type));
 	}
 
 	return plugin;

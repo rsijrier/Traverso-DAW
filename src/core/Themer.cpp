@@ -127,7 +127,7 @@ void Themer::save( )
         m_watcher->removePath(fileName);
 
         if (!data.open( QIODevice::WriteOnly ) ) {
-                PWARN("Could not open Themer properties file for writing! (%s)", QS_C(fileName));
+                PWARN(QString("Could not open Themer properties file for writing! (%1)").arg(fileName).toLatin1().data());
                 return;
         }
 

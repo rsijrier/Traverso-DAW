@@ -77,7 +77,7 @@ int ClipSelection::do_action()
 {
 	foreach(AudioClip* clip, m_clips) {
 		if ( ! QMetaObject::invokeMethod(m_acmanager, m_slot, Q_ARG(AudioClip*, clip))) {
-			PERROR("AudioClip::%s failed for %s", m_slot, QS_C(clip->get_name()));
+//			PERROR("AudioClip::%s failed for %s", m_slot, QS_C(clip->get_name()));
 		}
 	}
 	

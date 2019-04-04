@@ -239,11 +239,11 @@ TsarEvent Tsar::create_event( QObject* caller, void* argument, const char* slotS
 	if (qstrlen(slotSignature) > 0) {
 		index = caller->metaObject()->indexOfMethod(slotSignature);
 		if (index < 0) {
-			PWARN("Slot signature contains whitespaces, please remove to avoid unneeded processing (%s::%s)", caller->metaObject()->className(), slotSignature);
+            PWARN(QString("Slot signature contains whitespaces, please remove to avoid unneeded processing (%1::%2)").arg(caller->metaObject()->className()).arg(slotSignature).toLatin1().data());
 			QByteArray norm = QMetaObject::normalizedSignature(slotSignature);
 			index = caller->metaObject()->indexOfMethod(norm.constData());
 			if (index < 0) {
-				PERROR("Couldn't find a valid index for %s", slotSignature);
+//				PERROR("Couldn't find a valid index for %s", slotSignature);
 			}
 		}
 		event.slotindex = index;
@@ -254,7 +254,7 @@ TsarEvent Tsar::create_event( QObject* caller, void* argument, const char* slotS
 	if (qstrlen(signalSignature) > 0) {
                 index = caller->metaObject()->indexOfMethod(signalSignature);
 		if (index < 0) {
-			PWARN("Signal signature contains whitespaces, please remove to avoid unneeded processing (%s::%s)", caller->metaObject()->className(), signalSignature);
+            PWARN(QString("Signal signature contains whitespaces, please remove to avoid unneeded processing (%1::%2)").arg(caller->metaObject()->className()).arg(signalSignature).toLatin1().data());
 			QByteArray norm = QMetaObject::normalizedSignature(signalSignature);
                         index = caller->metaObject()->indexOfMethod(norm.constData());
 		}

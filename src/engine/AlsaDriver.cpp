@@ -741,7 +741,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 
 	if (capture_handle && playback_handle) {
 		if (cr != pr) {
-			PERROR ("ALSA Driver: playback and capture sample rates do not match (%d vs. %d)", pr, cr);
+//			PERROR ("ALSA Driver: playback and capture sample rates do not match (%d vs. %d)", pr, cr);
 		}
 
 		/* only change if *both* capture and playback rates
@@ -750,15 +750,15 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 		* different rate values between adc and dac
 		*/
 		if (cr != frame_rate && pr != frame_rate) {
-			PERROR ("ALSA Driver: sample rate in use (%d Hz) does not match requested rate (%d Hz)", cr, frame_rate);
+//			PERROR ("ALSA Driver: sample rate in use (%d Hz) does not match requested rate (%d Hz)", cr, frame_rate);
 			frame_rate = cr;
 		}
 
 	} else if (capture_handle && cr != frame_rate) {
-		PERROR ("ALSA Driver: capture sample rate in use (%d Hz) does not match requested rate (%d Hz)", cr, frame_rate);
+//		PERROR ("ALSA Driver: capture sample rate in use (%d Hz) does not match requested rate (%d Hz)", cr, frame_rate);
 		frame_rate = cr;
 	} else if (playback_handle && pr != frame_rate) {
-		PERROR ("ALSA Driver: playback sample rate in use (%d Hz) does not match requested rate (%d Hz)", pr, frame_rate);
+//		PERROR ("ALSA Driver: playback sample rate in use (%d Hz) does not match requested rate (%d Hz)", pr, frame_rate);
 		frame_rate = pr;
 	}
 
@@ -775,7 +775,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 					|| (access == SND_PCM_ACCESS_MMAP_COMPLEX);
 
 		if (p_period_size != frames_per_cycle) {
-			PERROR ("alsa_pcm: requested an interrupt every %ld frames but got %ld frames for playback", (long)frames_per_cycle, p_period_size);
+//			PERROR ("alsa_pcm: requested an interrupt every %ld frames but got %ld frames for playback", (long)frames_per_cycle, p_period_size);
 			return -1;
 		}
 	}
@@ -791,7 +791,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 
 
 		if (c_period_size != frames_per_cycle) {
-			PERROR ("alsa_pcm: requested an interrupt every %ld frames but got %ld frames for capture", (long)frames_per_cycle, p_period_size);
+//			PERROR ("alsa_pcm: requested an interrupt every %ld frames but got %ld frames for capture", (long)frames_per_cycle, p_period_size);
 			return -1;
 		}
 	}
@@ -835,7 +835,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 		const snd_pcm_channel_area_t *my_areas;
 		snd_pcm_uframes_t offset, frames;
 		if (snd_pcm_mmap_begin(playback_handle, &my_areas, &offset, &frames) < 0) {
-			PERROR ("ALSA: %s: mmap areas info error", alsa_name_playback);
+//			PERROR ("ALSA: %s: mmap areas info error", alsa_name_playback);
 			return -1;
 		}
 		
@@ -848,7 +848,7 @@ int  AlsaDriver::set_parameters (nframes_t frames_per_interupt,
 		const snd_pcm_channel_area_t *my_areas;
 		snd_pcm_uframes_t offset, frames;
 		if (snd_pcm_mmap_begin(capture_handle, &my_areas, &offset, &frames) < 0) {
-			PERROR ("ALSA: %s: mmap areas info error", alsa_name_capture);
+//			PERROR ("ALSA: %s: mmap areas info error", alsa_name_capture);
 			return -1;
 		}
 	}
@@ -925,7 +925,7 @@ int AlsaDriver::get_channel_addresses (snd_pcm_uframes_t *capture_avail,
 
 	if (capture_avail) {
 		if ((err = snd_pcm_mmap_begin (capture_handle, &capture_areas, capture_offset, capture_avail)) < 0) {
-			PERROR ("ALSA: %s: mmap areas info error", alsa_name_capture);
+//			PERROR ("ALSA: %s: mmap areas info error", alsa_name_capture);
 			return -1;
 		}
 
@@ -938,7 +938,7 @@ int AlsaDriver::get_channel_addresses (snd_pcm_uframes_t *capture_avail,
 
 	if (playback_avail) {
 		if ((err = snd_pcm_mmap_begin (playback_handle, &playback_areas, playback_offset, playback_avail)) < 0) {
-			PERROR ("ALSA: %s: mmap areas info error ", alsa_name_playback);
+//			PERROR ("ALSA: %s: mmap areas info error ", alsa_name_playback);
 			return -1;
 		}
 
@@ -963,15 +963,15 @@ int AlsaDriver::start()
 
 	if (playback_handle) {
 		if ((err = snd_pcm_prepare (playback_handle)) < 0) {
-			PERROR ("ALSA: prepare error for playback on \"%s\" (%s)", alsa_name_playback, snd_strerror(err));
+            device->driverSetupMessage(QString("ALSA: prepare error for playback on \"%s\" (%s)").arg(alsa_name_playback).arg(snd_strerror(err)), AudioDevice::DRIVER_SETUP_FAILURE);
 			return -1;
 		}
 	}
 
 	if ((capture_handle && capture_and_playback_not_synced)  || !playback_handle) {
 		if ((err = snd_pcm_prepare (capture_handle)) < 0) {
-			PERROR ("ALSA: prepare error for capture on \"%s\" (%s)", alsa_name_capture,  snd_strerror(err));
-			return -1;
+            device->driverSetupMessage(QString("ALSA: prepare error for capture on \"%s\" (%s)").arg(alsa_name_capture).arg(snd_strerror(err)), AudioDevice::DRIVER_SETUP_FAILURE);
+            return -1;
 		}
 	}
 
@@ -1026,14 +1026,14 @@ int AlsaDriver::start()
 		snd_pcm_mmap_commit (playback_handle, poffset, user_nperiods * frames_per_cycle);
 
 		if ((err = snd_pcm_start (playback_handle)) < 0) {
-			PERROR ("ALSA: could not start playback (%s)", snd_strerror (err));
+            device->driverSetupMessage(QString("ALSA: could not start playback (%1)").arg(snd_strerror (err)), AudioDevice::DRIVER_SETUP_FAILURE);
 			return -1;
 		}
 	}
 
 	if ((capture_handle && capture_and_playback_not_synced)  || !playback_handle) {
 		if ((err = snd_pcm_start (capture_handle)) < 0) {
-			PERROR ("ALSA: could not start capture (%s)", snd_strerror (err));
+            device->driverSetupMessage(QString("ALSA: could not start capture (%1)").arg(snd_strerror (err)), AudioDevice::DRIVER_SETUP_FAILURE);
 			return -1;
 		}
 	}
@@ -1060,7 +1060,7 @@ int AlsaDriver::stop()
 
 	if (playback_handle) {
 		if ((err = snd_pcm_drop (playback_handle)) < 0) {
-                        PERROR ("ALSA: channel flush for playback failed (%s)", snd_strerror (err));
+//                        PERROR ("ALSA: channel flush for playback failed (%s)", snd_strerror (err));
 			return -1;
 		}
 	}
@@ -1068,7 +1068,7 @@ int AlsaDriver::stop()
 	if (!playback_handle || capture_and_playback_not_synced) {
 		if (capture_handle) {
 			if ((err = snd_pcm_drop (capture_handle)) < 0) {
-				PERROR ("ALSA: channel flush for capture failed (%s)", snd_strerror (err));
+//				PERROR ("ALSA: channel flush for capture failed (%s)", snd_strerror (err));
 				return -1;
 			}
 		}
@@ -1222,8 +1222,8 @@ again:
 				return 0;
 			}
 
-			PERROR ("ALSA: poll call failed (%s)",
-				strerror (errno));
+//			PERROR ("ALSA: poll call failed (%s)",
+//				strerror (errno));
 			*status = -3;
 			return 0;
 
@@ -1324,7 +1324,7 @@ again:
 			if (capture_avail == -EPIPE) {
 				xrun_detected = true;
 			} else {
-				PERROR ("ALSA Driver: unknown avail_update return value (%ld)", capture_avail);
+//				PERROR ("ALSA Driver: unknown avail_update return value (%ld)", capture_avail);
 			}
 		}
 	} else {
@@ -1337,7 +1337,7 @@ again:
 			if (playback_avail == -EPIPE) {
 				xrun_detected = true;
 			} else {
-				PERROR ("ALSA Driver: unknown avail_update return value (%ld)", playback_avail);
+//				PERROR ("ALSA Driver: unknown avail_update return value (%ld)", playback_avail);
 			}
 		}
 	} else {
@@ -1480,7 +1480,7 @@ int AlsaDriver::_read(nframes_t nframes)
                 }
 
 		if ((err = snd_pcm_mmap_commit (capture_handle, offset, contiguous)) < 0) {
-			PERROR ("ALSA: could not complete read of %ld frames: error = %d\n", contiguous, err);
+//			PERROR ("ALSA: could not complete read of %ld frames: error = %d\n", contiguous, err);
 			return -1;
 		}
 
@@ -1535,7 +1535,7 @@ int AlsaDriver::_write(nframes_t nframes)
 		}
 
 		if ((err = snd_pcm_mmap_commit (playback_handle, offset, contiguous)) < 0) {
-			PERROR ("ALSA: could not complete playback of %ld frames: error = %d", contiguous, err);
+//			PERROR ("ALSA: could not complete playback of %ld frames: error = %d", contiguous, err);
 			if (err != EPIPE && err != ESTRPIPE)
 				return -1;
 		}

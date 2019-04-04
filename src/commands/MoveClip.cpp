@@ -91,7 +91,7 @@ MoveClip::MoveClip(ViewItem* view, QVariantList args)
 		des = tr("Fold Markers");
 		m_actionType = FOLD_MARKERS;
 	} else {
-		PERROR("MoveClip: Unknown action type: %s", QS_C(action));
+//		PERROR("MoveClip: Unknown action type: %s", QS_C(action));
 	}
 	
 	setText(des);

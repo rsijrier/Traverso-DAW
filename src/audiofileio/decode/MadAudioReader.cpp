@@ -167,7 +167,7 @@ bool K3bMad::open(const QString& filename)
 	m_inputFile.setFileName(filename);
 	
 	if (!m_inputFile.open(QIODevice::ReadOnly)) {
-		PERROR("could not open file %s", QS_C(filename));
+//		PERROR("could not open file %s", QS_C(filename));
 		return false;
 	}
 	
@@ -277,7 +277,7 @@ bool K3bMad::skipTag()
 		
 		// skip the id3 tag
 		if (!m_inputFile.seek(offset)) {
-			PERROR("Couldn't seek to %u in %s", offset, QS_C(m_inputFile.fileName()));
+//			PERROR("Couldn't seek to %u in %s", offset, QS_C(m_inputFile.fileName()));
 			return false;
 		}
 	}

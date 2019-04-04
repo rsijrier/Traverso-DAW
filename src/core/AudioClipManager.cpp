@@ -87,7 +87,7 @@ void AudioClipManager::add_clip( AudioClip * clip )
 {
 	PENTER;
 	if (m_clips.contains(clip)) {
-		PERROR("Trying to add clip %s, but it's already in my list!!", QS_C(clip->get_name()));
+//		PERROR("Trying to add clip %s, but it's already in my list!!", QS_C(clip->get_name()));
 		return;
 	}
 	
@@ -104,7 +104,7 @@ void AudioClipManager::remove_clip( AudioClip * clip )
 {
 	PENTER;
 	if (m_clips.removeAll(clip) == 0) {
-		PERROR("Clip %s was not in my list, couldn't remove it!!", QS_C(clip->get_name()));
+//		PERROR("Clip %s was not in my list, couldn't remove it!!", QS_C(clip->get_name()));
 		return;
 	}
 	

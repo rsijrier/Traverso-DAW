@@ -279,7 +279,7 @@ int Peak::calculate_peaks(
 		produced = data->peakreader->read_from(data->peakdataDecodeBuffer, readposition, peakDataCount);
 		
 		if (produced != peakDataCount) {
-			PERROR("Could not read in all peak data, peakDataCount is %d, read count is %d", peakDataCount, produced);
+//			PERROR("Could not read in all peak data, peakDataCount is %d, read count is %d", peakDataCount, produced);
 		}
 		
 // 		PROFILE_END("Peak calculate_peaks");
@@ -308,7 +308,7 @@ int Peak::calculate_peaks(
 		}
 		
 		if ( readFrames != toRead) {
-			PWARN("Unable to read nframes %d (only %d available)", toRead, readFrames);
+            PWARN(QString("Unable to read nframes %1 (only %2 available)").arg(toRead).arg(readFrames).toLatin1().data());
 		}
 
 		int count = 0;
@@ -385,7 +385,7 @@ int Peak::prepare_processing(int rate)
 		data->file.setFileName(data->fileName);
 		
 		if (! data->file.open(QIODevice::ReadWrite)) {
-			PWARN("Couldn't open peak file for writing! (%s)", data->fileName.toLatin1().data());
+            PWARN(QString("Couldn't open peak file for writing! (%1)").arg(data->fileName).toLatin1().data());
 			m_permanentFailure  = true;
 			return -1;
 		}
@@ -394,7 +394,7 @@ int Peak::prepare_processing(int rate)
 		data->normFile.setFileName(data->normFileName);
 		
 		if (! data->normFile.open(QIODevice::ReadWrite)) {
-			PWARN("Couldn't open normalization data file for writing! (%s)", data->normFileName.toLatin1().data());
+            PWARN(QString("Couldn't open normalization data file for writing! (%1)").arg(data->normFileName).toLatin1().data());
 			m_permanentFailure  = true;
 			return -1;
 		}
@@ -456,7 +456,7 @@ int Peak::finish_processing()
 		int read = data->file.read((char*)saveBuffer, sizeof(peak_data_t) * data->pd->processBufferSize) / sizeof(peak_data_t);
 		
 		if (read != data->pd->processBufferSize) {
-			PERROR("couldn't read in all saved data?? (%d read)", read);
+//			PERROR("couldn't read in all saved data?? (%d read)", read);
 		}
 		
 		
@@ -491,7 +491,7 @@ int Peak::finish_processing()
 		int written = data->file.write((char*)saveBuffer, sizeof(peak_data_t) * totalBufferSize) / sizeof(peak_data_t);
 		
 		if (written != totalBufferSize) {
-			PERROR("could not write complete buffer! (only %d)", written);
+//			PERROR("could not write complete buffer! (only %d)", written);
 	// 		return -1;
 		}
 		
@@ -500,7 +500,7 @@ int Peak::finish_processing()
 		read = data->normFile.read((char*)saveBuffer, sizeof(audio_sample_t) * data->pd->normDataCount) / sizeof(audio_sample_t);
 		
 		if (read != data->pd->normDataCount) {
-			PERROR("Could not read in all (%d) norm. data, only %d", data->pd->normDataCount, read);
+//			PERROR("Could not read in all (%d) norm. data, only %d", data->pd->normDataCount, read);
 		}
 		
 		data->headerdata.normValuesDataOffset = data->headerdata.headerSize + totalBufferSize * sizeof(peak_data_t);
@@ -508,7 +508,7 @@ int Peak::finish_processing()
 		data->normFile.close();
 		
 		if (!QFile::remove(data->normFileName)) {
-			PERROR("Failed to remove temp. norm. data file! (%s)", data->normFileName.toLatin1().data()); 
+//			PERROR("Failed to remove temp. norm. data file! (%s)", data->normFileName.toLatin1().data());
 		}
 		
 		written = data->file.write((char*)saveBuffer, sizeof(audio_sample_t) * read) / sizeof(audio_sample_t);
@@ -561,7 +561,7 @@ void Peak::process(uint channel, audio_sample_t* buffer, nframes_t nframes)
 			int written = data->file.write((char*)peakbuffer, sizeof(peak_data_t) * 2) / sizeof(peak_data_t);
 			
 			if (written != 2) {
-				PWARN("couldnt write peak data, only (%d)", written);
+                PWARN(QString("couldnt write peak data, only (%1)").arg(written).toLatin1().data());
 			}
 
 			pd->peakUpperValue = -10.0;
@@ -575,7 +575,7 @@ void Peak::process(uint channel, audio_sample_t* buffer, nframes_t nframes)
 			int written = data->normFile.write((char*)&pd->normValue, sizeof(audio_sample_t)) / sizeof(audio_sample_t);
 			
 			if (written != 1) {
-				PWARN("couldnt write norm data, only (%d)", written);
+                PWARN(QString("couldnt write norm data, only (%1)").arg(written).toLatin1().data());
 			}
  
 			pd->normValue = 0.0;

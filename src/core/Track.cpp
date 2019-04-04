@@ -502,7 +502,7 @@ bool Track::connect_to_jack(bool inports, bool outports)
 
         QString driver = audiodevice().get_driver_type();
         if (driver != "Jack") {
-                PERROR("Can't connect this Track (%s) to jack if jack isn't used as driver", QS_C(m_name));
+//                PERROR("Can't connect this Track (%s) to jack if jack isn't used as driver", QS_C(m_name));
                 return false;
         }
 

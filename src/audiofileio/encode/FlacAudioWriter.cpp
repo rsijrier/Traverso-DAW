@@ -143,7 +143,7 @@ bool FlacAudioWriter::open_private()
 		FLAC__StreamEncoderInitStatus init_status;
 		init_status = FLAC__stream_encoder_init_file(d->encoder, QS_C(m_fileName), NULL, /*client_data=*/NULL);
 		if (init_status != FLAC__STREAM_ENCODER_INIT_STATUS_OK) {
-			PERROR("ERROR: initializing encoder: %s", FLAC__StreamEncoderInitStatusString[init_status]);
+//			PERROR("ERROR: initializing encoder: %s", FLAC__StreamEncoderInitStatusString[init_status]);
 			ok = false;
 		}
 #endif

@@ -232,7 +232,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
         }
 
         if (!peak) {
-                PERROR("No Peak object available for clip %s", QS_C(m_clip->get_name()));
+//                PERROR("No Peak object available for clip %s", QS_C(m_clip->get_name()));
                 return;
         }
 

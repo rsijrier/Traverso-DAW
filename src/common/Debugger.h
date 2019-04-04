@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006 Remon Sijrier 
+    Copyright (C) 2005-2006 Remon Sijrier
 
     This file is part of Traverso
 
@@ -25,49 +25,50 @@
 
 #include <QString>
 #include <cstdio>
+#include <iostream>
 
 
 //Debugging Macros
-#define CHANGE_COLOR_BLACK   printf("%c[0;31m",27)
-#define CHANGE_COLOR_RED     printf("%c[0;31m",27)
-#define CHANGE_COLOR_GREEN   printf("%c[0;32m",27)
-#define CHANGE_COLOR_ORANGE  printf("%c[0;33m",27)
-#define CHANGE_COLOR_BLUE    printf("%c[0;34m",27)
-#define CHANGE_COLOR_MAGENTA printf("%c[0;35m",27)
-#define CHANGE_COLOR_CYAN    printf("%c[0;36m",27)
-#define CHANGE_COLOR_WHITE   printf("%c[0;37m",27)
-#define CHANGE_COLOR_YELLOW  printf("%c[0;33m",27)
+#define CHANGE_COLOR_BLACK   std::cout << "\033[0;31m\n"
+#define CHANGE_COLOR_RED     std::cout << "\033[0;31m\n"
+#define CHANGE_COLOR_GREEN   std::cout << "\033[0;32m\n"
+#define CHANGE_COLOR_ORANGE  std::cout << "\033[0;33m\n"
+#define CHANGE_COLOR_BLUE    std::cout << "\033[0;34m\n"
+#define CHANGE_COLOR_MAGENTA std::cout << "\033[0;35m\n"
+#define CHANGE_COLOR_CYAN    std::cout << "\033[0;36m\n"
+#define CHANGE_COLOR_WHITE   std::cout << "\033[0;37m\n"
+#define CHANGE_COLOR_YELLOW  std::cout << "\033[0;33m\n"
 
 #ifdef USE_DEBUGGER
 
 class FunctionEnter
 {
-	const char* 	m_file;
-	const char* 	m_function;
-	int 			lvl;
+    const char* 	m_file;
+    const char* 	m_function;
+    int 			lvl;
 public:
-	FunctionEnter(int level, const char* file, const char* function);
-	~FunctionEnter();
+    FunctionEnter(int level, const char* file, const char* function);
+    ~FunctionEnter();
 };
 
 class ConstructorEnter
 {
-	const char* 	m_file;
-	const char* 	m_function;
-	int 			lvl;
+    const char* 	m_file;
+    const char* 	m_function;
+    int 			lvl;
 public:
-	ConstructorEnter(int level, const char* file, const char* function);
-	~ConstructorEnter();
+    ConstructorEnter(int level, const char* file, const char* function);
+    ~ConstructorEnter();
 };
 
 class DestructorEnter
 {
-	const char* 	m_file;
-	const char* 	m_function;
-	int 			lvl;
+    const char* 	m_file;
+    const char* 	m_function;
+    int 			lvl;
 public:
-	DestructorEnter(int level, const char* file, const char* function);
-	~DestructorEnter();
+    DestructorEnter(int level, const char* file, const char* function);
+    ~DestructorEnter();
 };
 
 #define PMESG(args...)          { using namespace TraversoDebugger; if (get_debug_level()>=BASIC)       { if (is_logging())  { QString x; x.sprintf(args); QString output = get_tabs() + "[ " + x + " ]\n"; log(output); } else { fill_tabs(); CHANGE_COLOR_MAGENTA; printf("[ "); printf(args); printf(" ]"); CHANGE_COLOR_WHITE; printf("\n"); } } }
@@ -76,25 +77,25 @@ public:
 #define PMESG4(args...)         { using namespace TraversoDebugger; if (get_debug_level()>=ALL)         { if (is_logging())  { QString x; x.sprintf(args); QString output = get_tabs() + "[ " + x + " ]\n"; log(output); } else { fill_tabs(); CHANGE_COLOR_MAGENTA; printf("[ "); printf(args); printf(" ]"); CHANGE_COLOR_WHITE; printf("\n"); } } }
 
 #define PDEBUG(args...)         { using namespace TraversoDebugger; if (is_logging()) { QString x; x.sprintf(args); QString output = "DEBUG : " + QString(__FILE__) + "::" + QString(__FUNCTION__) + ":" + x + "\n"; log(output); } else { CHANGE_COLOR_GREEN; printf("DEBUG : ");printf("%s",__FILE__); printf("::"); printf("%s",__FUNCTION__); printf(":"); printf(args); CHANGE_COLOR_WHITE; printf("\n"); } }
-#define PERROR(args...)         { using namespace TraversoDebugger; if (is_logging()) { QString x; x.sprintf(args); QString output = "\n *** Error in " + QString(__PRETTY_FUNCTION__) + "\n" + x + "\n\n"; } else {  printf("\n"); CHANGE_COLOR_RED; printf("*** Error in "); printf("%s",__PRETTY_FUNCTION__); printf("\n"); printf(args); CHANGE_COLOR_WHITE; printf("\n\n"); } }
+#define PERROR(args)         { using namespace TraversoDebugger; QString x(args); if (is_logging()) { QString output = "\n *** Error in " + QString(__PRETTY_FUNCTION__) + "\n" + x + "\n\n"; } else { std::cout << &std::endl; CHANGE_COLOR_RED; std::cout << "*** Error in "; std::cout << __PRETTY_FUNCTION__ << &std::endl; std::cout << x.toLatin1().data(); CHANGE_COLOR_WHITE; std::cout << &std::endl << &std::endl; } }
 #define PERROR2(args...)        { using namespace TraversoDebugger; if (is_logging()) { QString x; x.sprintf(args); QString output = "\n *** Error in " + QString(__PRETTY_FUNCTION__) + "\n" + x + "\n\n"; } else if (get_debug_level()>=FLOOD) {  printf("\n"); CHANGE_COLOR_RED; printf("*** Error in "); printf("%s",__PRETTY_FUNCTION__); printf("\n"); printf(args); CHANGE_COLOR_WHITE; printf("\n\n"); } }
-#define PWARN(args...)          { using namespace TraversoDebugger; if (is_logging()) { QString x; x.sprintf(args); QString output = "WARNING: " + x + "\n"; log(output); } else { CHANGE_COLOR_YELLOW; printf("WARNING: "); printf(args); CHANGE_COLOR_WHITE; printf("\n"); } }
+#define PWARN(args)             { using namespace TraversoDebugger; if (is_logging()) { QString x(args); QString output = "WARNING: " + x + "\n"; log(output); } else {CHANGE_COLOR_YELLOW; printf("WARNING: "); std::cout << args; CHANGE_COLOR_WHITE; std::cout << &std::endl; } }
 #define PWARN2(args...)         { using namespace TraversoDebugger; if (get_debug_level()>=FLOOD) { if (is_logging()) { QString x; x.sprintf(args); QString output = "WARNING: " + x + "\n"; log(output); } else { CHANGE_COLOR_YELLOW; printf("WARNING: "); printf(args); CHANGE_COLOR_WHITE; printf("\n"); } } }
 
 
-#define PENTER			FunctionEnter enter(TraversoDebugger::BASIC, __FILE__, __FUNCTION__)
-#define PENTER2			FunctionEnter enter(TraversoDebugger::FLOOD, __FILE__, __FUNCTION__)
-#define PENTER3			FunctionEnter enter(TraversoDebugger::SUPER_FLOOD, __FILE__, __FUNCTION__)
-#define PENTER4			FunctionEnter enter(TraversoDebugger::ALL, __FILE__, __FUNCTION__)
+#define PENTER			FunctionEnter enter(TraversoDebugger::BASIC, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__));
+#define PENTER2			FunctionEnter enter(TraversoDebugger::FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__));
+#define PENTER3			FunctionEnter enter(TraversoDebugger::SUPER_FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__));
+#define PENTER4			FunctionEnter enter(TraversoDebugger::ALL, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__));
 
-#define PENTERCONS              ConstructorEnter enter(TraversoDebugger::BASIC, __FILE__, __FUNCTION__)
-#define PENTERDES                 DestructorEnter enter(TraversoDebugger::BASIC, __FILE__, __FUNCTION__)
-#define PENTERCONS2            ConstructorEnter enter(TraversoDebugger::FLOOD, __FILE__, __FUNCTION__)
-#define PENTERDES2               DestructorEnter enter(TraversoDebugger::FLOOD, __FILE__, __FUNCTION__)
-#define PENTERCONS3            ConstructorEnter enter(TraversoDebugger::SUPER_FLOOD, __FILE__, __FUNCTION__)
-#define PENTERDES3               DestructorEnter enter(TraversoDebugger::SUPER_FLOOD, __FILE__, __FUNCTION__)
-#define PENTERCONS4            ConstructorEnter enter(TraversoDebugger::ALL, __FILE__, __FUNCTION__)
-#define PENTERDES4               DestructorEnter enter(TraversoDebugger::ALL, __FILE__, __FUNCTION__)
+#define PENTERCONS              ConstructorEnter enter(TraversoDebugger::BASIC, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERDES                 DestructorEnter enter(TraversoDebugger::BASIC, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERCONS2            ConstructorEnter enter(TraversoDebugger::FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERDES2               DestructorEnter enter(TraversoDebugger::FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERCONS3            ConstructorEnter enter(TraversoDebugger::SUPER_FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERDES3               DestructorEnter enter(TraversoDebugger::SUPER_FLOOD, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERCONS4            ConstructorEnter enter(TraversoDebugger::ALL, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
+#define PENTERDES4               DestructorEnter enter(TraversoDebugger::ALL, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__))
 
 #else
 
@@ -152,45 +153,45 @@ public:
  */
 
 namespace TraversoDebugger
-        {
-        static const int OFF = 0;         //< no debug output at all
-        static const int BASIC = 1;       //< only level 1 calls
-        static const int FLOOD = 2;       //< level 1 , level 2 and constructors/destructor calls
-        static const int SUPER_FLOOD = 3; //< all previous plus low level JMB messages
-        static const int ALL = 4;         //< all messages (including in timer loops)
+{
+static const int OFF = 0;         //< no debug output at all
+static const int BASIC = 1;       //< only level 1 calls
+static const int FLOOD = 2;       //< level 1 , level 2 and constructors/destructor calls
+static const int SUPER_FLOOD = 3; //< all previous plus low level JMB messages
+static const int ALL = 4;         //< all messages (including in timer loops)
 
-        //! Used internally by TraversoDebugger. Align the output with the level of execution in a given moment
-        void fill_tabs();
+//! Used internally by TraversoDebugger. Align the output with the level of execution in a given moment
+void fill_tabs();
 
-        //! Used internally by TraversoDebugger. Get a " " (space) sequence whch aligns the output with the level of execution in a given moment,
-        QString get_tabs();
+//! Used internally by TraversoDebugger. Get a " " (space) sequence whch aligns the output with the level of execution in a given moment,
+QString get_tabs();
 
 
-        //! Used internally by TraversoDebugger. Increase one level of execution in output messages
-        void more_tabs();
+//! Used internally by TraversoDebugger. Increase one level of execution in output messages
+void more_tabs();
 
-        //! Used internally by TraversoDebugger. Decrease one level of execution in output messages
-        void less_tabs();
+//! Used internally by TraversoDebugger. Decrease one level of execution in output messages
+void less_tabs();
 
-        //! Set the debug level
-        void set_debug_level(int l);
+//! Set the debug level
+void set_debug_level(int l);
 
-        //! Used internally by TraversoDebugger. Returns true if debugOn flag is true.
-        int get_debug_level();
+//! Used internally by TraversoDebugger. Returns true if debugOn flag is true.
+int get_debug_level();
 
-        //! create a log file "fn" under home dir and enable copy of all debugging messagem to this file.
-        void create_log(QString fn);
+//! create a log file "fn" under home dir and enable copy of all debugging messagem to this file.
+void create_log(QString fn);
 
-        //! close the log file
-        void close_log();
+//! close the log file
+void close_log();
 
-        //! Used internally by TraversoDebugger. Feed the log file.
-        void log(QString msg);
+//! Used internally by TraversoDebugger. Feed the log file.
+void log(QString msg);
 
-        //! Used internally to check if output is stdout or a log file
-        bool is_logging();
-        }
-        
+//! Used internally to check if output is stdout or a log file
+bool is_logging();
+}
+
 
 #endif // DEBUGGER_H ///:~
 

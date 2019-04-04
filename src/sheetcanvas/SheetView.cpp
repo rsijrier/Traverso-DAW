@@ -189,7 +189,7 @@ void SheetView::scale_factor_changed( )
 {
 	qreal zoom = m_session->get_hzoom();
     if (qFuzzyCompare(zoom, 0.0)) {
-		PERROR("Session %s return 0 hzoom factor!", m_session->get_name().toLatin1().data());
+//		PERROR("Session %s return 0 hzoom factor!", m_session->get_name().toLatin1().data());
 		// Woopsy, zoom can't be zero, if we allow that, timeref_scalefactor
 		// will be zero too, and we use timeref_scalefactor as a divider so...:
 		zoom = config().get_property("Sheet", "hzoomLevel", 8192).toInt();

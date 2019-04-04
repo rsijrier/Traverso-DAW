@@ -78,7 +78,7 @@ void TraversoDebugger::create_log(QString fn)
         logFileName = QString(getenv("HOME")) + "/" + fn;
         logFile = fopen(logFileName.toLatin1(),"a+");
         if (!logFile) {
-                PERROR("Cannot create TraversoDebugger Log file (%s)",fn.toLatin1().data());
+//                PERROR("Cannot create TraversoDebugger Log file (%s)",fn.toLatin1().data());
                 logging=false;
         } else {
                 fclose(logFile);
@@ -124,9 +124,9 @@ static void print_enter(int lvl, const char* file, const char* function)
                 } else {
                         fill_tabs();
                         CHANGE_COLOR_GREEN;
-                        printf("ENTERING ");
+                        std::cout << "ENTERING ";
                         CHANGE_COLOR_WHITE;
-                        printf("%s::%s\n", file, function);
+                        std::cout << QString("%1::%2").arg(file).arg(function).toLatin1().data() << &std::endl;
                         more_tabs();
                 }
         }

@@ -123,7 +123,7 @@ int WriteSource::process (nframes_t nframes)
 			++cnt;
 
 			if ((err = src_process (m_src_state, &m_src_data)) != 0) {
-				PWARN(("an error occured during sample rate conversion: %s"), src_strerror (err));
+                PWARN((QString("an error occured during sample rate conversion: %1").arg(src_strerror(err)).toLatin1().data()));
 				return -1;
 			}
 
@@ -273,7 +273,7 @@ int WriteSource::prepare_export()
 		int err;
 
 		if ((m_src_state = src_new (m_spec->src_quality, m_channelCount, &err)) == 0) {
-			PWARN("cannot initialize sample rate conversion: %s", src_strerror (err));
+            PWARN(QString("cannot initialize sample rate conversion: %1").arg(src_strerror(err)).toLatin1().data());
 			return -1;
 		}
 

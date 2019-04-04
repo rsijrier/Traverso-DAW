@@ -107,9 +107,9 @@ bool SFAudioWriter::open_private()
 	
 	m_sf = sf_open_fd(m_file.handle(), SFM_WRITE, &m_sfinfo, false);
 	
-	if (m_sf == 0) {
-		sf_error_str (0, errbuf, sizeof (errbuf) - 1);
-		PWARN("Export: cannot open output file \"%s\" (%s)", QS_C(m_fileName), errbuf);
+    if (m_sf == nullptr) {
+        sf_error_str (nullptr, errbuf, sizeof (errbuf) - 1);
+        PWARN(QString("Export: cannot open output file \"%1\" (%2)").arg(m_fileName).arg(errbuf).toLatin1().data());
 		return false;
 	}
 	
@@ -143,7 +143,7 @@ nframes_t SFAudioWriter::write_private(void* buffer, nframes_t frameCount)
 	
 	if ((nframes_t) written != frameCount) {
 		sf_error_str (m_sf, errbuf, sizeof (errbuf) - 1);
-		PERROR("Export: could not write data to output file (%s)\n", errbuf);
+//		PERROR("Export: could not write data to output file (%s)\n", errbuf);
 		return -1;
 	}
 	

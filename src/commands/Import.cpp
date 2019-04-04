@@ -131,7 +131,7 @@ int Import::create_readsource()
 	
 	m_source = resources_manager()->import_source(dir, m_name);
 	if (! m_source) {
-		PERROR("Can't import audiofile %s", QS_C(m_fileName));
+//		PERROR("Can't import audiofile %s", QS_C(m_fileName));
 		return -1;
 	}
 	

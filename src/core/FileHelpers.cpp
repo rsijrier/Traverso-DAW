@@ -43,19 +43,19 @@ int FileHelper::remove_recursively(const QString& pName)
 	QFileInfo fileInfo(name);
 
 	if (!fileInfo.exists()) {
-		PERROR("File does not exist! %s", QS_C(name));
+//		PERROR("File does not exist! %s", QS_C(name));
 		return -1;
 	}
 
 	if (!fileInfo.isWritable()) {
-		PERROR("failed to remove %s: you don't have write access to it\n", name.toLatin1().data());
+//		PERROR("failed to remove %s: you don't have write access to it\n", name.toLatin1().data());
 		return -1;
 	}
 
 	if(fileInfo.isFile()) {
 		QFile file(name);
 		if (!file.remove()) {
-			PERROR("failed to remove file %s\n", name.toLatin1().data());
+//			PERROR("failed to remove file %s\n", name.toLatin1().data());
 			return -1;
 		}
 		return 1;
@@ -69,14 +69,14 @@ int FileHelper::remove_recursively(const QString& pName)
 			if ((fi.fileName() != ".") && (fi.fileName() != "..")) {
 				QString nextFileName = pName + "/" + fi.fileName();
 				if (remove_recursively(nextFileName) < 0) {
-					PERROR("failed to remove directory %s\n", nextFileName.toLatin1().data());
+//					PERROR("failed to remove directory %s\n", nextFileName.toLatin1().data());
 					return -1;
 				}
 			}
 		}
 
 		if (!dir.rmdir(name)) {
-			PERROR("failed to remove directory %s\n", name.toLatin1().data());
+//			PERROR("failed to remove directory %s\n", name.toLatin1().data());
 			return -1;
 		}
 

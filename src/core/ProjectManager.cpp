@@ -206,7 +206,7 @@ int ProjectManager::load_project(const QString& projectName)
 	PENTER;
 
 	if( ! project_exists(projectName) ) {
-		PERROR("project %s doesn't exist!", projectName.toLatin1().data());
+//		PERROR("project %s doesn't exist!", projectName.toLatin1().data());
 		return -1;
 	}
 
@@ -578,7 +578,7 @@ int ProjectManager::restore_project_from_backup(const QString& projectname, uint
 	
 	QFile writer(fileName);
 	if (!writer.open( QIODevice::WriteOnly | QIODevice::Text) ) {
-		PERROR("Could not open %s for writing!", QS_C(fileName));
+//		PERROR("Could not open %s for writing!", QS_C(fileName));
 		writer.close();
 		return -1;
 	}
@@ -636,8 +636,8 @@ int ProjectManager::create_projectfilebackup_dir(const QString& rootDir)
 
 TCommand* ProjectManager::close_current_project()
 {
-        set_current_project(0);
-        return 0;
+        set_current_project(nullptr);
+        return nullptr;
 }
 
 QStringList ProjectManager::get_projects_list()
@@ -653,7 +653,7 @@ QStringList ProjectManager::get_projects_list()
                 QFile file(fileToOpen);
 
                 if (!file.open(QIODevice::ReadOnly)) {
-                        PWARN("ProjectManager:: Cannot open project properties file (%s)", fileToOpen.toUtf8().data());
+                        PWARN(QString("ProjectManager:: Cannot open project properties file (%1)").arg(fileToOpen).toLatin1().data());
                         continue;
                 }
 

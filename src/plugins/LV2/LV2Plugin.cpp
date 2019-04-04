@@ -197,12 +197,12 @@ int LV2Plugin::init()
 	lilv_instance_activate(m_instance);
 	
 	if (m_audioInputPorts.size() == 0) {
-		PERROR("Plugin %s has no audio input ports set!!", QS_C(get_name()));
+//		PERROR("Plugin %s has no audio input ports set!!", QS_C(get_name()));
 		return -1;
 	}
 
 	if (m_audioOutputPorts.size() == 0) {
-		PERROR("Plugin %s has no audio output ports set!!", QS_C(get_name()));
+//		PERROR("Plugin %s has no audio output ports set!!", QS_C(get_name()));
 		return -1;
 	}
 	

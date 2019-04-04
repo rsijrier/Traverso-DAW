@@ -99,7 +99,7 @@ void Plugin::automate_port(int index, bool automate)
 {
 	PluginControlPort* port = get_control_port_by_index(index);
 	if (!port) {
-		PERROR("ControlPort with index %d does not exist", index);
+//		PERROR("ControlPort with index %d does not exist", index);
 		return;
 	}
 	port->set_use_automation(automate);

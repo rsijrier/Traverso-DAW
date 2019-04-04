@@ -232,7 +232,7 @@ int ReadSource::init( )
 	m_audioReader = new ResampleAudioReader(m_fileName, m_decodertype);
 	
 	if (!m_audioReader->is_valid()) {
-		PERROR("ReadSource:: audio reader is not valid! (reader channel count: %d, nframes: %d", m_audioReader->get_num_channels(), m_audioReader->get_nframes());
+//		PERROR("ReadSource:: audio reader is not valid! (reader channel count: %d, nframes: %d", m_audioReader->get_num_channels(), m_audioReader->get_nframes());
 		delete m_audioReader;
 		m_audioReader = 0;
 		return (m_error = COULD_NOT_OPEN_FILE);
@@ -257,7 +257,7 @@ int ReadSource::init( )
 
 	// Never reached, it's allready checked in AbstractAudioReader::is_valid() which was allready called!
 	if (m_channelCount == 0) {
-		PERROR("ReadAudioSource: not a valid channel count: %d", m_channelCount);
+//		PERROR("ReadAudioSource: not a valid channel count: %d", m_channelCount);
 		delete m_audioReader;
 		m_audioReader = 0;
 		return (m_error = ZERO_CHANNELS);

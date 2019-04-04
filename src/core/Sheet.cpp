@@ -1143,7 +1143,7 @@ void Sheet::prepare_recording()
 void Sheet::clip_finished_recording(AudioClip * clip)
 {
 	if (!m_recordingClips.removeAll(clip)) {
-		PERROR("clip %s was not in recording clip list, cannot remove it!", QS_C(clip->get_name()));
+//		PERROR("clip %s was not in recording clip list, cannot remove it!", QS_C(clip->get_name()));
 	}
 	
 	if (m_recordingClips.isEmpty()) {

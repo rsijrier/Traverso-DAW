@@ -108,7 +108,7 @@ bool SFAudioReader::seek_private(nframes_t start)
 	if (sf_seek (m_sf, (off_t) start, SEEK_SET) < 0) {
 		char errbuf[256];
 		sf_error_str (0, errbuf, sizeof (errbuf) - 1);
-		PERROR("ReadAudioSource: could not seek to frame %d within %s (%s)", start, QS_C(m_fileName), errbuf);
+//		PERROR("ReadAudioSource: could not seek to frame %d within %s (%s)", start, QS_C(m_fileName), errbuf);
 		return false;
 	}
 	

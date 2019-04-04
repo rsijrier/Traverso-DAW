@@ -90,7 +90,7 @@ bool WPAudioReader::seek_private(nframes_t start)
 	}
 	
 	if (!WavpackSeekSample(m_wp, start)) {
-		PERROR("could not seek to frame %d within %s", start, QS_C(m_fileName));
+//		PERROR("could not seek to frame %d within %s", start, QS_C(m_fileName));
 		return false;
 	}
 	

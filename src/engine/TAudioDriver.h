@@ -87,6 +87,9 @@ protected:
         nframes_t                capture_frame_latency;
         nframes_t                playback_frame_latency;
 
+signals:
+        void errorMessage(const QString& message);
+
 };
 
 

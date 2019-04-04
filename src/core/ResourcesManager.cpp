@@ -216,8 +216,8 @@ ReadSource * ResourcesManager::get_readsource(qint64 id)
 	SourceData* data = m_sources.value(id);
 	
 	if (!data) {
-		PWARN("ResourcesManager::get_readsource(): ReadSource with id %lld is not in my database!", id);
-		return 0;
+        PWARN(QString("ResourcesManager::get_readsource(): ReadSource with id %1 is not in my database!").arg(id).toLatin1().data());
+        return nullptr;
 	}
 	
 	ReadSource* source = data->source;
@@ -328,14 +328,14 @@ void ResourcesManager::mark_clip_removed(AudioClip * clip)
 {
 	ClipData* data = m_clips.value(clip->get_id());
 	if (!data) {
-		PERROR("Clip with id %lld is not in my database!", clip->get_id());
+//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	data->removed = true;
 	
 	SourceData* sourcedata = m_sources.value(clip->get_readsource_id());
 	if (!sourcedata) {
-		PERROR("Source %lld not in database", clip->get_readsource_id());
+//		PERROR("Source %lld not in database", clip->get_readsource_id());
 	} else {
 		sourcedata->clipCount--;
 	}
@@ -347,14 +347,14 @@ void ResourcesManager::mark_clip_added(AudioClip * clip)
 {
 	ClipData* clipdata = m_clips.value(clip->get_id());
 	if (!clipdata) {
-		PERROR("Clip with id %lld is not in my database!", clip->get_id());
+//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	clipdata->removed = false;
 	
 	SourceData* sourcedata = m_sources.value(clip->get_readsource_id());
 	if (!sourcedata) {
-		PERROR("Source %lld not in database", clip->get_readsource_id());
+//		PERROR("Source %lld not in database", clip->get_readsource_id());
 	} else {
 		sourcedata->clipCount++;
 	}
@@ -367,7 +367,7 @@ bool ResourcesManager::is_clip_in_use(qint64 id) const
 {
 	ClipData* data = m_clips.value(id);
 	if (!data) {
-		PERROR("Clip with id %lld is not in my database!", id);
+//		PERROR("Clip with id %lld is not in my database!", id);
 		return false;
 	}
 	return data->inUse && !data->removed;
@@ -377,7 +377,7 @@ bool ResourcesManager::is_source_in_use(qint64 id) const
 {
 	SourceData* data = m_sources.value(id);
 	if (!data) {
-		PERROR("Source with id %lld is not in my database!", id);
+//		PERROR("Source with id %lld is not in my database!", id);
 		return false;
 	}
 	
@@ -407,7 +407,7 @@ void ResourcesManager::destroy_clip(AudioClip * clip)
 {
 	ClipData* data = m_clips.value(clip->get_id());
 	if (!data) {
-		PERROR("Clip with id %lld not in database", clip->get_id());
+//		PERROR("Clip with id %lld not in database", clip->get_id());
 	} else {
 		m_clips.remove(clip->get_id());
 		delete data;

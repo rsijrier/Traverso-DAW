@@ -46,7 +46,7 @@ void Information::warning( const QString & mes )
         InfoStruct s;
         s.message = mes;
         s.type = WARNING;
-	PWARN("Information::warning %s", QS_C(mes));
+        PWARN(QString("Information::warning %1").arg(mes).toLatin1().data());
         emit message(s);
 }
 
@@ -56,7 +56,7 @@ void Information::critical( const QString & mes )
         InfoStruct s;
         s.message = mes;
         s.type = CRITICAL;
-	PERROR("Information::critical %s", QS_C(mes));
+//	PERROR("Information::critical %s", QS_C(mes));
 	emit message(s);
 }
 

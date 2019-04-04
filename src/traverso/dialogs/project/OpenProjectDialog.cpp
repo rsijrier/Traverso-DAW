@@ -82,14 +82,14 @@ void OpenProjectDialog::update_projects_list()
 		QFile file(fileToOpen);
 
 		if (!file.open(QIODevice::ReadOnly)) {
-			PWARN("OpenProjectDialog:: Cannot open project properties file (%s)", fileToOpen.toLatin1().data());
+            PWARN(QString("OpenProjectDialog:: Cannot open project properties file (%1)").arg(fileToOpen).toLatin1().data());
 			continue;
 		}
 
 		QString errorMsg;
 		if (!doc.setContent(&file, &errorMsg)) {
 			file.close();
-			PWARN("OpenProjectDialog:: Cannot set content of XML file (%s)", errorMsg.toLatin1().data());
+            PWARN(QString("OpenProjectDialog:: Cannot set content of XML file (%1)").arg(errorMsg).toLatin1().data());
 			continue;
 		}
 
@@ -195,7 +195,7 @@ void OpenProjectDialog::on_loadProjectButton_clicked( )
 	}
 	
 	if (pm().load_project(title)<0) {
-		PERROR("Could not load project %s", title.toLatin1().data());
+//		PERROR("Could not load project %s", title.toLatin1().data());
 	}
 	
         hide();
