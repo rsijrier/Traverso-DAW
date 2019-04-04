@@ -105,7 +105,7 @@ Plugin* PluginManager::get_plugin(const  QDomNode node )
 			return plugin;
 		} else {
 			delete plugin;
-			plugin = 0;
+            plugin = nullptr;
 		}
 	} else {
 //		PERROR("PluginManager couldn't create Plugin ???? (%s)", QS_C(type));
@@ -129,7 +129,7 @@ Plugin* PluginManager::create_lv2_plugin(const QString& uri)
 	if (plugin->init() < 0) {
 		info().warning(QObject::tr("Plugin %1 initialization failed!").arg(uri));
 		delete plugin;
-		plugin = 0;
+        plugin = nullptr;
 	}
 	
 	return plugin;

@@ -200,13 +200,13 @@ void ExportDialog::set_project(Project * project)
 		setEnabled(false);
 		if (m_exportSpec) {
 			delete m_exportSpec;
-			m_exportSpec = 0;
+            m_exportSpec = nullptr;
 		}
 	} else {
 		setEnabled(true);
 		if (m_exportSpec) {
 			delete m_exportSpec;
-			m_exportSpec = 0;
+            m_exportSpec = nullptr;
 		}
 		m_exportSpec = new ExportSpecification;
 		m_exportSpec->exportdir = m_project->get_root_dir() + "/Export/";

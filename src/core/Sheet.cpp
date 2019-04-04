@@ -448,6 +448,7 @@ int Sheet::prepare_export(ExportSpecification* spec)
 int Sheet::finish_audio_export()
 {
         delete renderDecodeBuffer;
+    renderDecodeBuffer = nullptr;
         resize_buffer(audiodevice().get_buffer_size());
         m_rendering = false;
         return 0;
@@ -478,6 +479,7 @@ int Sheet::start_export(ExportSpecification* spec)
 
                         if (m_exportSource->prepare_export() == -1) {
                                 delete m_exportSource;
+                                m_exportSource = nullptr;
                                 return -1;
                         }
 
@@ -497,6 +499,7 @@ int Sheet::start_export(ExportSpecification* spec)
                 if (spec->renderpass == ExportSpecification::WRITE_TO_HARDDISK) {
                         m_exportSource->finish_export();
                         delete m_exportSource;
+                        m_exportSource = nullptr;
                 }
         }
 

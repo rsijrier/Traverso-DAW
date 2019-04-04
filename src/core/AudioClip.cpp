@@ -620,6 +620,7 @@ int AudioClip::init_recording()
     m_writer = new WriteSource(spec);
     if (m_writer->prepare_export() == -1) {
         delete m_writer;
+        m_writer = nullptr;
         delete spec;
         spec = nullptr;
         return -1;

@@ -152,7 +152,7 @@ void K3bMad::clearInputBuffer()
 {
 	if (m_inputBuffer) {
 		delete [] m_inputBuffer;
-		m_inputBuffer = 0;
+        m_inputBuffer = nullptr;
 	}
 }
 
@@ -527,14 +527,14 @@ MadAudioReader::MadAudioReader(QString filename)
 		d->handle->cleanup();
 		delete d->handle;
 		delete d;
-		d = 0;
+        d = nullptr;
 		return;
 	}
 	
 	m_rate = d->firstHeader.samplerate;
 	m_length = TimeRef(m_nframes, m_rate);
 	
-	d->overflowBuffers = 0;
+    d->overflowBuffers = nullptr;
 	
 	seek_private(0);
 	clear_buffers();
@@ -570,7 +570,7 @@ void MadAudioReader::clear_buffers()
 			delete [] d->overflowBuffers[chan];
 		}
 		delete [] d->overflowBuffers;
-		d->overflowBuffers = 0;
+        d->overflowBuffers = nullptr;
 		d->overflowStart = 0;
 		d->overflowSize = 0;
 	}

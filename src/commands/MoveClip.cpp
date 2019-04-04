@@ -228,7 +228,7 @@ int MoveClip::prepare_actions()
 		delete d->zoom;
 	}
 	delete d;
-	d = 0;
+    d = nullptr;
 	
 	if (m_actionType == COPY) {
 		m_group.remove_all_clips_from_tracks();

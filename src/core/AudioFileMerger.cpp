@@ -94,8 +94,11 @@ void AudioFileMerger::process_task(MergeTask task)
 	WriteSource* writesource = new WriteSource(spec);
 	if (writesource->prepare_export() == -1) {
 		delete writesource;
+        writesource = nullptr;
 		delete [] spec->dataF;
+        spec->dataF = nullptr;
 		delete spec;
+        spec = nullptr;
 		return;
 	}
 	// Enable on the fly generation of peak data to speedup conversion 

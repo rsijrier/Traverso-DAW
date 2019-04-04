@@ -105,6 +105,7 @@ int CropClip::begin_hold()
 int CropClip::finish_hold()
 {
 	delete m_selection;
+    m_selection = nullptr;
 	return 1;
 }
 

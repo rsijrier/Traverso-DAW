@@ -81,12 +81,14 @@ int MoveCurveNode::prepare_actions()
 int MoveCurveNode::finish_hold()
 {
         delete d;
+    d = nullptr;
         return 1;
 }
 
 void MoveCurveNode::cancel_action()
 {
         delete d;
+    d = nullptr;
         undo_action();
 }
 

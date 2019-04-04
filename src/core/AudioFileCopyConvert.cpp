@@ -170,6 +170,7 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 		writesource->finish_export();
 	}
 	delete writesource;
+    writesource = nullptr;
 	delete [] task.spec->dataF;
 	resources_manager()->remove_source(task.readsource);
 	

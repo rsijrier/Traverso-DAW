@@ -466,7 +466,7 @@ void TMainWindow::remove_session(TSession* session)
 		m_sheetWidgets.remove(session);
 		m_centerAreaWidget->removeWidget(sw);
 		if (m_currentSheetWidget == sw) {
-			m_currentSheetWidget = 0;
+            m_currentSheetWidget = nullptr;
 		}
 		delete sw;
 

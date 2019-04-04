@@ -783,7 +783,7 @@ void PeakProcessor::start_task()
 	if (m_runningPeak->m_interuptPeakBuild) {
 		PMESG("PeakProcessor:: Deleting interrupted Peak!");
 		delete m_runningPeak;
-		m_runningPeak = 0;
+        m_runningPeak = nullptr;
 		m_wait.wakeAll();
 		return;
 	}

@@ -144,7 +144,7 @@ class FlacPrivate
 		{
 			if (internalBuffer) {
 				delete [] internalBuffer;
-				internalBuffer = 0;
+                internalBuffer = nullptr;
 			}
 		}
 		

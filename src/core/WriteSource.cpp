@@ -326,27 +326,31 @@ int WriteSource::finish_export( )
 	if (m_writer) {
 		m_writer->close();
 		delete m_writer;
-		m_writer = 0;
+        m_writer = nullptr;
 	}
 	
-	if (m_dataF2)
-                delete [] m_dataF2;
-	if (m_leftoverF)
-                delete [] m_leftoverF;
+    if (m_dataF2) {
+        delete [] m_dataF2;
+        m_dataF2 = nullptr;
+    }
+    if (m_leftoverF) {
+        delete [] m_leftoverF;
+        m_leftoverF = nullptr;
+    }
 
 	if (m_dither) {
 		gdither_free (m_dither);
-		m_dither = 0;
+        m_dither = nullptr;
 	}
 
 	if (m_output_data) {
 		free (m_output_data);
-		m_output_data = 0;
+        m_output_data = nullptr;
 	}
 
 	if (m_src_state) {
 		src_delete (m_src_state);
-		m_src_state = 0;
+        m_src_state = nullptr;
 	}
 
 	if (m_peak && m_peak->finish_processing() < 0) {
@@ -397,7 +401,7 @@ void WriteSource::set_process_peaks( bool process )
 		PERROR("Cannot process peaks realtime");
 		m_processPeaks = false;
 		delete m_peak;
-		m_peak = 0;
+        m_peak = nullptr;
 		
 		return;
 	}
@@ -440,6 +444,7 @@ int WriteSource::rb_file_write(nframes_t cnt)
 	
 	for (chan=0; chan<m_channelCount; ++chan) {
 		delete [] readbuffer[chan];
+        readbuffer[chan] = nullptr;
 	}
 	
 	return read;

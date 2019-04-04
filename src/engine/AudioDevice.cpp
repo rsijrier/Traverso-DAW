@@ -525,7 +525,7 @@ int AudioDevice::shutdown( )
                 }
 
                 delete m_driver;
-                m_driver = 0;
+                m_driver = nullptr;
 	}
 	
 	return r;
@@ -852,7 +852,7 @@ void AudioDevice::check_jack_shutdown()
 				printf("jack shutdown detected\n");
 				message(tr("The Jack server has been shutdown!"), CRITICAL);
                                 delete m_driver;
-                                m_driver = 0;
+                                m_driver = nullptr;
                                 set_parameters(m_fallBackSetup);
 			}
 		}

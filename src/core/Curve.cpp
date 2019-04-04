@@ -644,7 +644,8 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
 		if (node->when == cn->when && node->value == cn->value) {
 			info().warning(tr("There is allready a node at this exact position, not adding a new node"));
 			delete node;
-			return 0;
+            node = nullptr;
+            return nullptr;
 		}
 	}
 

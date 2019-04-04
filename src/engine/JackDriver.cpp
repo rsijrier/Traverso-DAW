@@ -327,6 +327,7 @@ void JackDriver::cleanup_removed_port_channel_pair(PortChannelPair* pcpair)
 
         device->delete_channel(pcpair->channel);
         delete pcpair;
+        pcpair = nullptr;
 }
 
 

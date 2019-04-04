@@ -120,6 +120,7 @@ int SplitClip::begin_hold()
 int SplitClip::finish_hold()
 {
 	delete m_splitcursor;
+    m_splitcursor = nullptr;
 	m_cv->update();
 	m_sv->start_shuttle(false);
 	return 1;

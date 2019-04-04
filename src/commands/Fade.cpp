@@ -89,6 +89,7 @@ int FadeRange::begin_hold()
 int FadeRange::finish_hold()
 {
 	delete d;
+    d = nullptr;
 	return 1;
 }
 

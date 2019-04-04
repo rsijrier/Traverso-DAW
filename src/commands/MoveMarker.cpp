@@ -60,6 +60,7 @@ int MoveMarker::finish_hold()
 	d->view->get_sheetview()->start_shuttle(false);
 	d->view->set_dragging(false);
 	delete d;
+    d = nullptr;
 
 	return 1;
 }

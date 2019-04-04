@@ -62,6 +62,7 @@ void ProjectConverter::set_project(const QString & rootdir, const QString & name
 	m_filesMerged = 0;
 	if (m_merger) {
 		delete m_merger;
+        m_merger = nullptr;
 	}
 	m_document.clear();
 	
