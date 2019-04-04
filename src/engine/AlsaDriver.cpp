@@ -1578,27 +1578,22 @@ int AlsaDriver::_run_cycle()
 
 int AlsaDriver::attach()
 {
-	char buf[32];
 	channel_t chn;
 	AudioChannel* chan;
 
 	device->set_buffer_size (frames_per_cycle);
 	device->set_sample_rate (frame_rate);
 
+
 	for (chn = 0; chn < capture_nchannels; chn++) {
-
-		snprintf (buf, sizeof(buf) - 1, "capture_%lu", chn+1);
-
-                chan = add_capture_channel(buf);
-		chan->set_latency( frames_per_cycle + capture_frame_latency );
-
+        QString channelName = QString("capture_%1").arg(chn+1);
+        chan = add_capture_channel(channelName.toLatin1().data());
+        chan->set_latency( frames_per_cycle + capture_frame_latency );
 	}
 
 	for (chn = 0; chn < playback_nchannels; chn++) {
-
-		snprintf (buf, sizeof(buf) - 1, "playback_%lu", chn+1);
-
-                chan = add_playback_channel(buf);
+        QString channelName = QString("playback_%1").arg(chn+1);
+        chan = add_playback_channel(channelName.toLatin1().data());
 		chan->set_latency( frames_per_cycle + capture_frame_latency );
 	}
 
@@ -1625,13 +1620,12 @@ QString AlsaDriver::alsa_device_name(bool longname, int devicenumber)
 {
 	snd_ctl_card_info_t *info;
 	snd_ctl_t *handle;
-	char name[32];
-	sprintf(name, "hw:%d", devicenumber);
+    QString deviceName = QString("hw:%1").arg(devicenumber);
 	int err = 0;
 
 	snd_ctl_card_info_alloca(&info);
 
-	if ((err = snd_ctl_open(&handle, name, devicenumber)) < 0) {
+    if ((err = snd_ctl_open(&handle, deviceName.toLatin1().data(), devicenumber)) < 0) {
 		PMESG("AlsaDriver::alsa_device_name: Control open (device %i): %s", devicenumber, snd_strerror(err));
 		return "";
 	}
