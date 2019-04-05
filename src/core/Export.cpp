@@ -48,18 +48,18 @@ void ExportThread::run( )
 
 ExportSpecification::ExportSpecification()
 {
-	sample_rate = -1;
+    sample_rate = 0;
 	
 	src_quality = SRC_SINC_MEDIUM_QUALITY;
-	channels = -1;
+    channels = 0;
 	startLocation = qint64(-1);
 	endLocation = qint64(-1);
-        cdTrackStart = qint64(-1);
-        cdTrackEnd = qint64(-1);
-        dither_type = GDitherTri;
-	
-	dataF = 0;
-	blocksize = -1;
+    cdTrackStart = qint64(-1);
+    cdTrackEnd = qint64(-1);
+    dither_type = GDitherShaped;
+
+    dataF = nullptr;
+    blocksize = 0;
 	data_width = -1;
 	
 	totalTime = qint64(-1);
@@ -83,12 +83,12 @@ ExportSpecification::ExportSpecification()
 int ExportSpecification::is_valid()
 {
 
-	if (sample_rate == -1) {
+    if (sample_rate == 0) {
 		printf("ExportSpecification: No samplerate configured!\n");
 		return -1;
 	}
 	
-	if (channels == -1) {
+    if (channels == 0) {
 		printf("ExportSpecification: No channels configured!\n");
 		return -1;
 	}
@@ -108,7 +108,7 @@ int ExportSpecification::is_valid()
 		return -1;
 	}
 
-	if (blocksize == -1) {
+    if (blocksize == 0) {
 		printf("ExportSpecification: No blocksize configured!\n");
 		return -1;
 	}
