@@ -55,7 +55,7 @@ AbstractAudioWriter::~AbstractAudioWriter()
 }
 
 
-void AbstractAudioWriter::set_num_channels(int channels)
+void AbstractAudioWriter::set_num_channels(uint channels)
 {
 	m_channels = channels;
 }
@@ -67,7 +67,7 @@ void AbstractAudioWriter::set_bits_per_sample(int bits)
 }
 
 
-void AbstractAudioWriter::set_rate(int rate)
+void AbstractAudioWriter::set_rate(uint rate)
 {
 	m_rate = rate;
 }
@@ -152,5 +152,5 @@ AbstractAudioWriter* AbstractAudioWriter::create_audio_writer(const QString& typ
 		return new FlacAudioWriter();
 	}
 	
-	return 0;
+    return nullptr;
 }

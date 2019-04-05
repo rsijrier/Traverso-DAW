@@ -35,9 +35,9 @@ public:
 	
 	virtual const char* get_extension() = 0;
 	
-	void set_num_channels(int channels);
+    void set_num_channels(uint channels);
 	void set_bits_per_sample(int bits);
-	void set_rate(int rate);
+    void set_rate(uint rate);
 	virtual bool set_format_attribute(const QString& key, const QString& value);
 	nframes_t pos();
 	
@@ -56,8 +56,8 @@ protected:
 	bool		m_isOpen;
 	int		m_sampleWidth;
 	nframes_t	m_writePos;
-	int		m_channels;
-	int		m_rate;
+    uint		m_channels;
+    uint		m_rate;
 };
 
 #endif

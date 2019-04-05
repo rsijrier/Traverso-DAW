@@ -59,7 +59,7 @@ protected:
 	uint		m_bufferSize;
 	uint		m_chunkSize;
 	
-	int		m_channelCount;
+    uint		m_channelCount;
 	qint64		m_origSheetId;
 	QString 	m_dir;
 	qint64		m_id;
