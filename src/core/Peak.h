@@ -112,7 +112,7 @@ public:
 	};
 		
 	void process(uint channel, audio_sample_t* buffer, nframes_t frames);
-	int prepare_processing(int rate);
+    int prepare_processing(uint rate);
 	int finish_processing();
 	int calculate_peaks(int chan, float** buffer, TimeRef startlocation, int peakDataCount, qreal framesPerPeak);
 

@@ -372,7 +372,7 @@ int Peak::calculate_peaks(
 }
 
 
-int Peak::prepare_processing(int rate)
+int Peak::prepare_processing(uint rate)
 {
 	PENTER;
 	

@@ -55,9 +55,9 @@ public :
 	int prepare_export();
 	int finish_export();
 	void set_process_peaks(bool process);
-	void set_recording(int rec);
+    void set_recording(bool rec);
 
-	size_t is_recording() const;
+    bool is_recording() const;
 
 	void set_diskio(DiskIO* io );
 
@@ -69,7 +69,7 @@ private:
 	DiskIO*		m_diskio;
 	GDither         m_dither;
 	bool		m_processPeaks;
-	size_t		m_isRecording;
+    bool            m_isRecording;
 	nframes_t       m_sampleRate;
 	uint32_t        m_sample_bytes;
 	
@@ -96,7 +96,7 @@ inline int WriteSource::get_processable_buffer_space( ) const
 	return m_buffers.at(0)->read_space();
 }
 
-inline size_t WriteSource::is_recording( ) const
+inline bool WriteSource::is_recording( ) const
 {
 	return m_isRecording;
 }

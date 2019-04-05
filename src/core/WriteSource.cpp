@@ -41,9 +41,9 @@ WriteSource::WriteSource( ExportSpecification* specification )
 	: AudioSource(specification->exportdir, specification->name)
 	, m_spec(specification)
 {
-	m_diskio = 0;
-	m_writer = 0;
-	m_peak = 0;
+    m_diskio = nullptr;
+    m_writer = nullptr;
+    m_peak = nullptr;
 }
 
 WriteSource::~WriteSource()
@@ -67,8 +67,8 @@ WriteSource::~WriteSource()
 
 int WriteSource::process (nframes_t nframes)
 {
-	float* float_buffer = 0;
-	int chn;
+    float* float_buffer = nullptr;
+    uint chn;
 	uint32_t x;
 	uint32_t i;
 	nframes_t written;
@@ -83,12 +83,12 @@ int WriteSource::process (nframes_t nframes)
 
 		/* now do sample rate conversion */
 
-		if (m_sampleRate != (uint)m_spec->sample_rate) {
+        if (m_sampleRate != m_spec->sample_rate) {
 
 			int err;
 
 			m_src_data.output_frames = m_out_samples_max / m_channelCount;
-			int rate = audiodevice().get_sample_rate();
+            uint rate = audiodevice().get_sample_rate();
 			m_src_data.end_of_input = (m_spec->pos + TimeRef(nframes, rate)) >= m_spec->endLocation;
 			m_src_data.data_out = m_dataF2;
 
@@ -127,8 +127,8 @@ int WriteSource::process (nframes_t nframes)
 				return -1;
 			}
 
-			to_write = m_src_data.output_frames_gen;
-			m_leftover_frames = m_src_data.input_frames - m_src_data.input_frames_used;
+            to_write = nframes_t(m_src_data.output_frames_gen);
+            m_leftover_frames = nframes_t(m_src_data.input_frames - m_src_data.input_frames_used);
 
 			if (m_leftover_frames > 0) {
 				if (m_leftover_frames > m_max_leftover_frames) {
@@ -168,9 +168,9 @@ int WriteSource::process (nframes_t nframes)
 		case 32:
 			for (chn = 0; chn < m_channelCount; ++chn) {
 
-				int *ob = (int *) m_output_data;
-				const double int_max = (float) INT_MAX;
-				const double int_min = (float) INT_MIN;
+                int *ob = static_cast<int *>(m_output_data);
+                const double int_max = double(INT_MAX);
+                const double int_min = double(INT_MIN);
 
 				for (x = 0; x < to_write; ++x) {
 					i = chn + (x * m_channelCount);
@@ -268,17 +268,17 @@ int WriteSource::prepare_export()
 		return -1;
 	}
 	
-	if ((uint)m_spec->sample_rate != m_sampleRate) {
+    if (m_spec->sample_rate != m_sampleRate) {
 		qDebug("Doing samplerate conversion");
 		int err;
 
-		if ((m_src_state = src_new (m_spec->src_quality, m_channelCount, &err)) == 0) {
+        if ((m_src_state = src_new (m_spec->src_quality, int(m_channelCount), &err)) == nullptr) {
             PWARN(QString("cannot initialize sample rate conversion: %1").arg(src_strerror(err)).toLatin1().data());
 			return -1;
 		}
 
-		m_src_data.src_ratio = m_spec->sample_rate / (double) m_sampleRate;
-		m_out_samples_max = (nframes_t) ceil (m_spec->blocksize * m_src_data.src_ratio * m_channelCount);
+        m_src_data.src_ratio = m_spec->sample_rate / double(m_sampleRate);
+        m_out_samples_max = nframes_t(ceil (m_spec->blocksize * m_src_data.src_ratio * m_channelCount));
 		m_dataF2 = new audio_sample_t[m_out_samples_max];
 
 		m_max_leftover_frames = 4 * m_spec->blocksize;
@@ -312,7 +312,7 @@ int WriteSource::prepare_export()
 	}
 
 	if (m_sample_bytes) {
-		m_output_data = (void*) malloc (m_sample_bytes * m_out_samples_max);
+        m_output_data = static_cast<void*>(malloc (m_sample_bytes * m_out_samples_max));
 	}
 
 	return 0;
@@ -375,8 +375,8 @@ int WriteSource::rb_write(AudioBus* bus, nframes_t nframes)
 
 	int written = 0;
 	
-        for (int i=m_channelCount-1; i>=0; --i) {
-                AudioChannel* chan = bus->get_channel(i);
+        for (int i= int(m_channelCount-1); i>=0; --i) {
+                AudioChannel* chan = bus->get_channel(uint(i));
                 if (chan) {
                         written = m_buffers.at(i)->write(chan->get_buffer(nframes), nframes);
                 }
@@ -410,9 +410,10 @@ void WriteSource::set_process_peaks( bool process )
 int WriteSource::rb_file_write(nframes_t cnt)
 {
 	uint read = 0;
-	int chan;
+    uint chan;
 	
-	audio_sample_t* readbuffer[m_channelCount];
+    // FIXME make it support any channel count, not just some high enough number?
+    audio_sample_t* readbuffer[6];
 	
 	for (chan=0; chan<m_channelCount; ++chan) {
 		
@@ -447,10 +448,10 @@ int WriteSource::rb_file_write(nframes_t cnt)
         readbuffer[chan] = nullptr;
 	}
 	
-	return read;
+    return int(read);
 }
 
-void WriteSource::set_recording( int rec )
+void WriteSource::set_recording(bool rec )
 {
 	m_isRecording = rec;
 }
