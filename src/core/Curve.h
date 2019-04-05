@@ -59,7 +59,7 @@ public:
 	
 	// Get functions
 	double get_range() const;
-	void get_vector (double x0, double x1, float *arg, int32_t veclen);
+    void get_vector (double x0, double x1, float *arg, nframes_t veclen);
 	APILinkedList& get_nodes() {return m_nodes;}
         TSession* get_sheet() const {return m_session;}
 

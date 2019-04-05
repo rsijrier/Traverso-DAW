@@ -61,7 +61,7 @@ Curve::~Curve()
 {
 	APILinkedListNode* node = m_nodes.first();
 	while (node) {
-		CurveNode* q = (CurveNode*)node;
+        CurveNode* q = static_cast<CurveNode*>(node);
 		node = node->next;
 		delete q;
 	}
@@ -73,8 +73,8 @@ void Curve::init( )
 	QObject::tr("CurveNode");
 	m_changed = true;
 	m_lookup_cache.left = -1;
-	m_defaultValue = 1.0f;
-        m_session = 0;
+    m_defaultValue = 1.0;
+    m_session = nullptr;
 	
 	connect(this, SIGNAL(nodePositionChanged()), this, SLOT(set_changed()));
 }
@@ -191,8 +191,8 @@ void Curve::solve ()
 
 		CurveNode* cn;
 		i = 0;
-		for(APILinkedListNode* node = m_nodes.first(); node!=0; node = node->next, ++i) {
-			cn = (CurveNode*)node;
+        for(APILinkedListNode* node = m_nodes.first(); node!=nullptr; node = node->next, ++i) {
+            cn = static_cast<CurveNode*>(node);
 			x[i] = cn->when;
 			y[i] = cn->value;
 		}
@@ -211,11 +211,11 @@ void Curve::solve ()
 		double fplast = 0;
 
 		i = 0;
-		for(APILinkedListNode* node = m_nodes.first(); node!=0; node = node->next, ++i) {
+        for(APILinkedListNode* node = m_nodes.first(); node!=nullptr; node = node->next, ++i) {
 			
-            cn = (CurveNode*)node;
+            cn = static_cast<CurveNode*>(node);
 			
-			if (cn == 0) {
+            if (cn == nullptr) {
 /*				qCritical  << _("programming error: ")
 				<< X_("non-CurvePoint event found in event list for a Curve")
 				<< endmsg;*/
@@ -305,24 +305,24 @@ void Curve::solve ()
 }
 
 
-void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
+void Curve::get_vector (double x0, double x1, float *vec, nframes_t veclen)
 {
 	double rx, dx, lx, hx, max_x, min_x;
-	int32_t i;
-	int32_t original_veclen;
+    nframes_t i;
+    nframes_t original_veclen;
 	int32_t npoints;
 	
 	if ((npoints = m_nodes.size()) == 0) {
 		for (i = 0; i < veclen; ++i) {
-			vec[i] = m_defaultValue;
+            vec[i] = float(m_defaultValue);
 		}
 		return;
 	}
 
 	/* nodes is now known not to be empty */
 	
-	CurveNode* lastnode = (CurveNode*)m_nodes.last();
-	CurveNode* firstnode = (CurveNode*)m_nodes.first();
+    CurveNode* lastnode = static_cast<CurveNode*>(m_nodes.last());
+    CurveNode* firstnode = static_cast<CurveNode*>(m_nodes.first());
 
 	max_x = lastnode->when;
 	min_x = firstnode->when;
@@ -345,14 +345,14 @@ void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
 		*/
 
 		double frac = (min_x - x0) / (x1 - x0);
-		int32_t subveclen = (int32_t) floor (veclen * frac);
+        nframes_t subveclen = nframes_t(floor (veclen * frac));
 		
 		subveclen = min (subveclen, veclen);
 
 //                printf("filling first %d samples %f\n", subveclen, firstnode->value);
 
 		for (i = 0; i < subveclen; ++i) {
-			vec[i] = firstnode->value;
+            vec[i] = float(firstnode->value);
 		}
 
 		veclen -= subveclen;
@@ -365,13 +365,13 @@ void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
 
 		double frac = (x1 - max_x) / (x1 - x0);
 
-		int32_t subveclen = (int32_t) floor (original_veclen * frac);
+        nframes_t subveclen = nframes_t(floor (original_veclen * frac));
 
 		float val;
 		
 		subveclen = min (subveclen, veclen);
 
-		val = lastnode->value;
+        val = float(lastnode->value);
 
 		i = veclen - subveclen;
 
@@ -391,7 +391,7 @@ void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
 	if (npoints == 1 ) {
 	
 		for (i = 0; i < veclen; ++i) {
-			vec[i] = firstnode->value;
+            vec[i] = float(firstnode->value);
 		}
 		return;
 	}
@@ -416,10 +416,10 @@ void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
 			(lastnode->when - firstnode->when );
 		double yfrac = dx*slope;
 
-		vec[0] = firstnode->value + slope * (lx - firstnode->when);
+        vec[0] = float(firstnode->value + slope * (lx - firstnode->when));
 
 		for (i = 1; i < veclen; ++i) {
-			vec[i] = vec[i-1] + yfrac;
+            vec[i] = float(vec[i-1] + float(yfrac));
 		}
 
 		return;
@@ -436,7 +436,7 @@ void Curve::get_vector (double x0, double x1, float *vec, int32_t veclen)
 		dx = (hx - lx) / veclen;
 
 		for (i = 0; i < veclen; ++i, rx += dx) {
-			vec[i] = multipoint_eval (rx);
+            vec[i] = float(multipoint_eval (rx));
 		}
 	}
 }
@@ -464,11 +464,11 @@ double Curve::multipoint_eval(double x)
 				middle = middle->next;
 			}
 			//start compare
-			if (((CurveNode*)middle)->when < cn.when) {
+            if (static_cast<CurveNode*>(middle)->when < cn.when) {
 				first = middle;
 				first = first->next;
 				len = len - half - 1;
-			} else if (cn.when < ((CurveNode*)middle)->when) {
+            } else if (cn.when < static_cast<CurveNode*>(middle)->when) {
 				len = half;
 			} else {
 				// lower bound (using first/middle)
