@@ -52,7 +52,7 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 	m_guicurve->set_sheet(m_sv->get_sheet());
 	
 	
-	apill_foreach(CurveNode* node, CurveNode, m_fadeCurve->get_nodes()) {
+    apill_foreach(CurveNode* node, CurveNode*, m_fadeCurve->get_nodes()) {
 		CurveNode* guinode = new CurveNode(m_guicurve, 
 				node->get_when() / m_sv->timeref_scalefactor,
 				node->get_value());

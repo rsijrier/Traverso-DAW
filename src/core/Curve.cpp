@@ -87,7 +87,7 @@ QDomNode Curve::get_state(QDomDocument doc, const QString& name)
 	
 	QStringList nodesList;
 	
-	apill_foreach(CurveNode* cn, CurveNode, m_nodes) {
+    apill_foreach(CurveNode* cn, CurveNode*, m_nodes) {
 		nodesList << QString::number(cn->when, 'g', 24).append(",").append(QString::number(cn->value));
 	}
 	
@@ -609,7 +609,7 @@ void Curve::x_scale(double factor)
 {
 	Q_ASSERT(factor != 0.0);
 	
-	apill_foreach(CurveNode* node, CurveNode, m_nodes) {
+    apill_foreach(CurveNode* node, CurveNode*, m_nodes) {
 		node->set_when(node->when * factor);
 	}
 }
@@ -640,7 +640,7 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
 {
 	PENTER2;
 	
-	apill_foreach(CurveNode* cn, CurveNode, m_nodes) {
+    apill_foreach(CurveNode* cn, CurveNode*, m_nodes) {
 		if (node->when == cn->when && node->value == cn->value) {
 			info().warning(tr("There is allready a node at this exact position, not adding a new node"));
 			delete node;

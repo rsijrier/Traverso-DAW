@@ -143,7 +143,7 @@ void Sheet::init()
 
 	m_diskio = new DiskIO(this);
 	m_currentSampleRate = audiodevice().get_sample_rate();
-    m_diskio->output_rate_changed(int(m_currentSampleRate));
+    m_diskio->output_rate_changed(m_currentSampleRate);
 	int converter_type = config().get_property("Conversion", "RTResamplingConverterType", DEFAULT_RESAMPLE_QUALITY).toInt();
 	m_diskio->set_resample_quality(converter_type);
 
@@ -732,7 +732,7 @@ int Sheet::process( nframes_t nframes )
 
 	// zero the m_masterOut buffers
         m_masterOut->get_process_bus()->silence_buffers(nframes);
-        apill_foreach(TBusTrack* busTrack, TBusTrack, m_rtBusTracks) {
+        apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->get_process_bus()->silence_buffers(nframes);
         }
 
@@ -741,11 +741,11 @@ int Sheet::process( nframes_t nframes )
 
 
 	// Process all Tracks.
-        apill_foreach(AudioTrack* track, AudioTrack, m_rtAudioTracks) {
+        apill_foreach(AudioTrack* track, AudioTrack*, m_rtAudioTracks) {
 		processResult |= track->process(nframes);
 	}
 
-        apill_foreach(TBusTrack* busTrack, TBusTrack, m_rtBusTracks) {
+        apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->process(nframes);
         }
 
@@ -766,18 +766,18 @@ int Sheet::process_export( nframes_t nframes )
 {
 	// Get the masterout buffers, and fill with zero's
         m_masterOut->get_process_bus()->silence_buffers(nframes);
-        apill_foreach(TBusTrack* busTrack, TBusTrack, m_rtBusTracks) {
+        apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->get_process_bus()->silence_buffers(nframes);
         }
 
         memset (mixdown, 0, sizeof (audio_sample_t) * nframes);
 
 	// Process all Tracks.
-        apill_foreach(AudioTrack* track, AudioTrack, m_rtAudioTracks) {
+        apill_foreach(AudioTrack* track, AudioTrack*, m_rtAudioTracks) {
 		track->process(nframes);
 	}
 
-	apill_foreach(TBusTrack* busTrack, TBusTrack, m_rtBusTracks) {
+    apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
 		busTrack->process(nframes);
 	}
 

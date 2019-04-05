@@ -117,7 +117,7 @@ void AudioChannel::process_monitoring(VUMonitor* monitor)
                 monitor->process(peakValue);
         }
 
-        apill_foreach(VUMonitor* internalmonitor, VUMonitor, m_monitors) {
+        apill_foreach(VUMonitor* internalmonitor, VUMonitor*, m_monitors) {
                 internalmonitor->process(peakValue);
         }
 }

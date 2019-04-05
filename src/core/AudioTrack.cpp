@@ -96,7 +96,7 @@ QDomNode AudioTrack::get_state( QDomDocument doc, bool istemplate)
         if (! istemplate ) {
                 QDomNode clips = doc.createElement("Clips");
 
-                apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+                apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                         if (clip->get_length() == qint64(0)) {
                                 PERROR("Clip length is 0! This shouldn't happen!!!!");
                                 continue;
@@ -260,7 +260,7 @@ int AudioTrack::process( nframes_t nframes )
         float panFactor;
 
         // Read in clip data into process bus.
-        apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                 if (m_isArmed && clip->recording_state() == AudioClip::NO_RECORDING) {
                         if (m_isMuted || m_mutedBySolo) {
                                 continue;
@@ -356,7 +356,7 @@ void AudioTrack::get_render_range(TimeRef& startlocation, TimeRef& endlocation )
         endlocation = TimeRef();
         startlocation = LLONG_MAX;
 
-        apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                 if (! clip->is_muted() ) {
                         if (clip->get_track_end_location() > endlocation) {
                                 endlocation = clip->get_track_end_location();
@@ -380,7 +380,7 @@ void AudioTrack::clip_position_changed(AudioClip * clip)
 QList< AudioClip * > AudioTrack::get_cliplist() const
 {
         QList<AudioClip*> list;
-        apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                 list.append(clip);
         }
         return list;
@@ -389,7 +389,7 @@ QList< AudioClip * > AudioTrack::get_cliplist() const
 
 AudioClip* AudioTrack::get_clip_after(const TimeRef& pos)
 {
-        apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                 if (clip->get_track_start_location() > pos) {
                         return clip;
                 }
@@ -402,7 +402,7 @@ AudioClip* AudioTrack::get_clip_before(const TimeRef& pos)
         TimeRef shortestDistance(LONG_LONG_MAX);
         AudioClip* nearest = nullptr;
 
-        apill_foreach(AudioClip* clip, AudioClip, m_clips) {
+        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
                 if (clip->get_track_start_location() < pos) {
                         TimeRef diff = pos - clip->get_track_start_location();
                         if (diff < shortestDistance) {

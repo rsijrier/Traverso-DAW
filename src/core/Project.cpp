@@ -97,7 +97,6 @@ Project::Project(const QString& title)
         m_audiodeviceClient->set_transport_control_callback( MakeDelegate(this, &Project::transport_control) );
 
         m_masterOut = new MasterOutSubGroup(this, "");
-        m_masterOut->set_gain(0.5);
         // FIXME: m_masterOut is a Track, but at this point in time, Track can't
         // get a reference to us via pm().get_project();
         connect(m_masterOut, SIGNAL(routingConfigurationChanged()), this, SLOT(track_property_changed()));
@@ -162,8 +161,8 @@ int Project::create(int sheetcount, int numtracks)
 	
 	for (int i=0; i< sheetcount; i++) {
 		Sheet* sheet = new Sheet(this, numtracks);
-                m_RtSheets.append(sheet);
-		m_sheets.append(sheet);
+        m_RtSheets.append(sheet);
+        m_sheets.append(sheet);
 	}
 
 	if (m_sheets.size()) {
@@ -866,21 +865,10 @@ AudioBus* Project::create_software_audio_bus(const BusConfig& conf)
 
 void Project::remove_software_audio_bus(AudioBus *bus)
 {
-        for(int i=0; i<bus->get_channel_count(); ++i) {
+        for(uint i=0; i<bus->get_channel_count(); ++i) {
                 AudioChannel* chan = bus->get_channel(i);
                 audiodevice().remove_jack_channel(chan);
         }
-}
-
-qint64 Project::get_bus_id_for(const QString &busName)
-{
-        // if busName == Sheet Master, Master or Master Out,
-        // then return our Master bus to keep things simple.
-        if (busName == "Sheet Master" || busName == "Master Out" || busName == "Master") {
-                return m_masterOut->get_id();
-        }
-
-        return 0;
 }
 
 QList<TSend*> Project::get_inputs_for_bus_track(TBusTrack *busTrack) const
@@ -1737,12 +1725,12 @@ int Project::process( nframes_t nframes )
 {
         int result = 0;
 
-        apill_foreach(Sheet* sheet, Sheet, m_RtSheets) {
+        apill_foreach(Sheet* sheet, Sheet*, m_RtSheets) {
                 result |= sheet->process(nframes);
         }
 
 
-        apill_foreach(TBusTrack* busTrack, TBusTrack, m_rtBusTracks) {
+        apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->process(nframes);
         }
 
@@ -1764,7 +1752,7 @@ int Project::transport_control(transport_state_t state)
 {
         bool result = true;
 
-        apill_foreach(Sheet* sheet, Sheet, m_RtSheets) {
+        apill_foreach(Sheet* sheet, Sheet*, m_RtSheets) {
                 result = sheet->transport_control(state);
         }
 

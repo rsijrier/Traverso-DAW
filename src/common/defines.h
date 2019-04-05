@@ -170,7 +170,7 @@ struct TimeRef {
 	}
 	
 	friend qreal operator/(const TimeRef& left, double right) {
-		Q_ASSERT(right != 0);
+        Q_ASSERT(!qFuzzyCompare(right, 0.0));
         return qreal(left.m_position) / qint64(right);
 	}
 	

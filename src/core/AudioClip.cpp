@@ -519,7 +519,7 @@ int AudioClip::process(nframes_t nframes)
     }
 
 
-    apill_foreach(FadeCurve* fade, FadeCurve, m_fades) {
+    apill_foreach(FadeCurve* fade, FadeCurve*, m_fades) {
         fade->process(bus, nframes);
     }
 

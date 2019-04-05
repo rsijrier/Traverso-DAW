@@ -281,7 +281,7 @@ int AudioDevice::run_one_cycle( nframes_t nframes, float  )
 		return -1;
 	}
 
-        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient, m_clients) {
+        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient*, m_clients) {
 		client->process(nframes);
 	}
 	
@@ -770,7 +770,7 @@ void AudioDevice::post_process( )
 {
 	tsar().process_events();
 
-        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient, m_clients) {
+        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient*, m_clients) {
                 if (client->wants_to_be_disconnected_from_audiodevice()) {
                         private_remove_client(client);
                 }
@@ -879,7 +879,7 @@ int AudioDevice::transport_control(transport_state_t state)
 
 	int result = 0;
 	
-        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient, m_clients) {
+        apill_foreach(TAudioDeviceClient* client, TAudioDeviceClient*, m_clients) {
 		result = client->transport_control(state);
 	}
 	
