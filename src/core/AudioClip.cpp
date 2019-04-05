@@ -449,11 +449,12 @@ int AudioClip::process(nframes_t nframes)
     bus->silence_buffers(nframes);
 
     TimeRef mix_pos;
-    int channelcount = get_channel_count();
-    // not supported by C++ although correct, but this way it is a variable lenght array
-    //	audio_sample_t* mixdown[channelcount];
+    uint channelcount = get_channel_count();
+
     // since we only use 2 channels, this will do for now
-    audio_sample_t* mixdown[2];
+    // FIXME make it future proof so it can deal with any amount of channels?
+    audio_sample_t* mixdown[6];
+
     uint framesToProcess = nframes;
 
 
@@ -471,7 +472,7 @@ int AudioClip::process(nframes_t nframes)
             mix_pos = m_sourceStartLocation;
             // 			printf("offset %d\n", offset);
 
-            for (int chan=0; chan<bus->get_channel_count(); ++chan) {
+            for (uint chan=0; chan<bus->get_channel_count(); ++chan) {
                 audio_sample_t* buf = bus->get_buffer(chan, framesToProcess);
                 mixdown[chan] = buf + offset;
             }
@@ -480,7 +481,7 @@ int AudioClip::process(nframes_t nframes)
             mix_pos = (transportLocation - m_trackStartLocation + m_sourceStartLocation);
             // 			printf("else: Setting mix pos to start location %d\n", mix_pos.to_frame(96000));
 
-            for (int chan=0; chan<bus->get_channel_count(); ++chan) {
+            for (uint chan=0; chan<bus->get_channel_count(); ++chan) {
                 mixdown[chan] = bus->get_buffer(chan, framesToProcess);
             }
         }
@@ -502,7 +503,7 @@ int AudioClip::process(nframes_t nframes)
     } else {
         read_frames = uint(m_readSource->file_read(m_sheet->renderDecodeBuffer, mix_pos, framesToProcess));
         if (read_frames > 0) {
-            for (int chan=0; chan<channelcount; ++chan) {
+            for (uint chan=0; chan<channelcount; ++chan) {
                 memcpy(mixdown[chan], m_sheet->renderDecodeBuffer->destination[chan], read_frames * sizeof(audio_sample_t));
             }
         }
@@ -551,7 +552,7 @@ void AudioClip::process_capture(nframes_t nframes)
         return;
     }
 
-    nframes_t written = m_writer->rb_write(bus, nframes);
+    nframes_t written = nframes_t(m_writer->rb_write(bus, nframes));
 
     m_length.add_frames(written, get_rate());
 
@@ -566,7 +567,7 @@ int AudioClip::init_recording()
     Q_ASSERT(m_track);
 
     AudioBus* bus = m_track->get_input_bus();
-    int channelcount = bus->get_channel_count();
+    uint channelcount = bus->get_channel_count();
 
     if (channelcount == 0) {
         // Can't record from a Bus with no channels!
@@ -845,7 +846,7 @@ bool AudioClip::is_take( ) const
     return m_isTake;
 }
 
-int AudioClip::get_bitdepth( ) const
+uint AudioClip::get_bitdepth( ) const
 {
     if (m_readSource) {
         return m_readSource->get_bit_depth();

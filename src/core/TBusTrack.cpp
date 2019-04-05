@@ -130,8 +130,11 @@ int TBusTrack::process(nframes_t nframes)
 
 	// gain automation curve only understands audio_sample_t** atm
 	// so wrap the process buffers into a audio_sample_t**
-	audio_sample_t* mixdown[m_processBus->get_channel_count()];
-	for(int chan=0; chan<m_processBus->get_channel_count(); chan++) {
+
+        // FIXME make it future proof so it can deal with any amount of channels?
+        audio_sample_t* mixdown[6];
+
+    for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
 		mixdown[chan] = m_processBus->get_buffer(chan, nframes);
 	}
 

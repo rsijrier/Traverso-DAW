@@ -89,7 +89,7 @@ public:
 	
     uint get_channel_count() const;
     uint get_rate() const;
-	int get_bitdepth() const;
+    uint get_bitdepth() const;
 	qint64 get_readsource_id() const;
 	qint64 get_sheet_id() const {return m_sheetId;}
 	ReadSource* get_readsource() const;

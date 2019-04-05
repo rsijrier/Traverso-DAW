@@ -121,7 +121,7 @@ int AudioTrack::set_state( const QDomNode & node )
         Track::set_state(node);
 
         m_numtakes = e.attribute( "numtakes", "").toInt();
-	m_showClipVolumeAutomation = e.attribute("showclipvolumeautomation", 0).toInt();
+    m_showClipVolumeAutomation = e.attribute("showclipvolumeautomation", nullptr).toInt();
 
         QDomElement ClipsNode = node.firstChildElement("Clips");
         if (!ClipsNode.isNull()) {
@@ -178,14 +178,14 @@ AudioClip* AudioTrack::init_recording()
         PENTER2;
 
         if(!m_isArmed) {
-                return 0;
+                return nullptr;
         }
 
         if (!m_inputBus) {
                 info().critical(tr("Unable to Record to AudioTrack"));
                 info().warning(tr("AudioDevice doesn't have this Capture Bus: %1 (Track %2)").
                                 arg(m_busInName).arg(get_id()) );
-                return 0;
+                return nullptr;
         }
 
         QString name = 	m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(++m_numtakes);
@@ -198,7 +198,7 @@ AudioClip* AudioTrack::init_recording()
         if (clip->init_recording() < 0) {
                 PERROR("Could not create AudioClip to record to!");
                 resources_manager()->destroy_clip(clip);
-                return 0;
+                return nullptr;
         }
 
         return clip;
@@ -299,8 +299,11 @@ int AudioTrack::process( nframes_t nframes )
 
         // gain automation curve only understands audio_sample_t** atm
         // so wrap the process buffers into a audio_sample_t**
-        audio_sample_t* mixdown[m_processBus->get_channel_count()];
-        for(int chan=0; chan<m_processBus->get_channel_count(); chan++) {
+
+        // FIXME make it future proof so it can deal with any amount of channels?
+        audio_sample_t* mixdown[6];
+
+        for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
                 mixdown[chan] = m_processBus->get_buffer(chan, nframes);
         }
 
@@ -334,7 +337,7 @@ TCommand* AudioTrack::toggle_arm()
         } else {
                 arm();
         }
-        return (TCommand*) 0;
+        return nullptr;
 }
 
 
@@ -391,13 +394,13 @@ AudioClip* AudioTrack::get_clip_after(const TimeRef& pos)
                         return clip;
                 }
         }
-        return (AudioClip*) 0;
+        return nullptr;
 }
 
 AudioClip* AudioTrack::get_clip_before(const TimeRef& pos)
 {
         TimeRef shortestDistance(LONG_LONG_MAX);
-        AudioClip* nearest = 0;
+        AudioClip* nearest = nullptr;
 
         apill_foreach(AudioClip* clip, AudioClip, m_clips) {
                 if (clip->get_track_start_location() < pos) {
@@ -462,5 +465,5 @@ TCommand* AudioTrack::toggle_show_clip_volume_automation()
 	m_showClipVolumeAutomation = !m_showClipVolumeAutomation;
 	emit automationVisibilityChanged();
 
-	return (TCommand*) 0;
+    return nullptr;
 }

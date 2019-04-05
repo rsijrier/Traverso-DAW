@@ -175,8 +175,10 @@ void FadeCurve::process(AudioBus *bus, nframes_t nframes)
 	}
 	
 	
-        audio_sample_t* mixdown[bus->get_channel_count()];
-        int outputRate = audiodevice().get_sample_rate();
+        // FIXME make it future proof so it can deal with any amount of channels?
+        audio_sample_t* mixdown[6];
+
+        uint outputRate = audiodevice().get_sample_rate();
         uint framesToProcess = nframes;
 
         TimeRef trackStartLocation, trackEndLocation, mix_pos;
