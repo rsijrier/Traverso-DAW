@@ -33,7 +33,7 @@ class JackDriver : public TAudioDriver
 {
 	Q_OBJECT
 public:
-        JackDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
+        JackDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
         ~JackDriver();
 
         int  process_callback (nframes_t nframes);
@@ -61,8 +61,8 @@ public:
 private:
         struct PortChannelPair {
                 PortChannelPair() {
-                        jackport = 0;
-                        channel = 0;
+                        jackport = nullptr;
+                        channel = nullptr;
                         unregister = false;
                 }
 

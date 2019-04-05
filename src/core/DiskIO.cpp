@@ -147,7 +147,8 @@ DiskIO::DiskIO(Sheet* sheet)
 {
     m_diskThread = new DiskIOThread(this);
     m_lastdoWorkReadTime = get_microseconds();
-    m_stopWork = m_seeking = m_sampleRateChanged = 0;
+    m_stopWork = m_seeking = 0;
+    m_sampleRateChanged = false;
     m_resampleQuality = config().get_property("Conversion", "RTResamplingConverterType", DEFAULT_RESAMPLE_QUALITY).toInt();
     m_readBufferFillStatus = m_writeBufferFillStatus = 0;
     m_hardDiskOverLoadCounter = 0;
@@ -219,7 +220,7 @@ void DiskIO::seek()
 }
 
 
-void DiskIO::output_rate_changed(int rate)
+void DiskIO::output_rate_changed(uint rate)
 {
     m_sampleRateChanged = true;
     m_outputRate = rate;

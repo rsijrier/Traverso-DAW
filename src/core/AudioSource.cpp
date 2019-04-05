@@ -80,7 +80,7 @@ void AudioSource::set_dir(const QString& dir)
 }
 
 
-int AudioSource::get_rate( ) const
+uint AudioSource::get_rate( ) const
 {
 	return m_rate;
 }
@@ -110,7 +110,7 @@ QString AudioSource::get_name( ) const
 	return m_name;
 }
 
-int AudioSource::get_bit_depth( ) const
+uint AudioSource::get_bit_depth( ) const
 {
 	return m_origBitDepth;
 }

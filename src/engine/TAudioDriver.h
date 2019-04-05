@@ -41,7 +41,7 @@ class TAudioDriver : public QObject
     Q_OBJECT
 
 public:
-        TAudioDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
+        TAudioDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
         virtual ~TAudioDriver();
 
         virtual int _run_cycle();

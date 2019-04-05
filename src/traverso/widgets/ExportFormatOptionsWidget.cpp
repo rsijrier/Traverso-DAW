@@ -326,8 +326,8 @@ void ExportFormatOptionsWidget::get_format_options(ExportSpecification * spec)
 	}
 	
 	spec->data_width = bitdepthComboBox->itemData(bitdepthComboBox->currentIndex()).toInt();
-	spec->channels = channelComboBox->itemData(channelComboBox->currentIndex()).toInt();
-	spec->sample_rate = sampleRateComboBox->itemData(sampleRateComboBox->currentIndex()).toInt();
+    spec->channels = channelComboBox->itemData(channelComboBox->currentIndex()).toUInt();
+    spec->sample_rate = sampleRateComboBox->itemData(sampleRateComboBox->currentIndex()).toUInt();
 	spec->src_quality = resampleQualityComboBox->itemData(resampleQualityComboBox->currentIndex()).toInt();
 
 

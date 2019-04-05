@@ -31,7 +31,7 @@ class PulseAudioDriver : public TAudioDriver
     Q_OBJECT
 
 public:
-	PulseAudioDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
+    PulseAudioDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
 	~PulseAudioDriver();
 
 	int  process_callback (nframes_t nframes);

@@ -139,7 +139,7 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 		task.readsource->file_read(&decodebuffer, task.spec->pos, nframes);
 			
 		for (uint x = 0; x < nframes; ++x) {
-			for (int y = 0; y < task.spec->channels; ++y) {
+            for (uint y = 0; y < task.spec->channels; ++y) {
 				task.spec->dataF[y + x*task.spec->channels] = decodebuffer.destination[y][x];
 			}
 		}
@@ -147,7 +147,7 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 		// due the fact peak generating does _not_ happen in writesource->process
 		// but in a function used by DiskIO, we have to hack the peak processing 
 		// in here.
-		for (int y = 0; y < task.spec->channels; ++y) {
+        for (uint y = 0; y < task.spec->channels; ++y) {
 			writesource->get_peak()->process(y, decodebuffer.destination[y], nframes);
 		}
 		

@@ -30,7 +30,7 @@
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-PulseAudioDriver::PulseAudioDriver( AudioDevice * dev , int rate, nframes_t bufferSize)
+PulseAudioDriver::PulseAudioDriver(AudioDevice * dev , uint rate, nframes_t bufferSize)
     : TAudioDriver(dev, rate, bufferSize)
 {
 	read = MakeDelegate(this, &PulseAudioDriver::_read);
@@ -117,7 +117,7 @@ int PulseAudioDriver::attach( )
 {
 	PENTER;
     AudioChannel* audiochannel;
-    int port_flags;
+//    int port_flags;
     char buf[32];
 
     // TODO use the found maxchannel count for the playback stream, instead of assuming 2 !!

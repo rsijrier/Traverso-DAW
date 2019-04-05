@@ -37,7 +37,7 @@
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-JackDriver::JackDriver( AudioDevice * dev , int rate, nframes_t bufferSize)
+JackDriver::JackDriver(AudioDevice * dev , uint rate, nframes_t bufferSize)
                 : TAudioDriver(dev, rate, bufferSize)
 {
         read = MakeDelegate(this, &JackDriver::_read);

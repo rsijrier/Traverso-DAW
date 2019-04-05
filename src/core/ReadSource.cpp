@@ -87,7 +87,7 @@ ReadSource::ReadSource(const QString& dir, const QString& name)
 
 
 // Constructor for recorded audio.
-ReadSource::ReadSource(const QString& dir, const QString& name, int channelCount)
+ReadSource::ReadSource(const QString& dir, const QString& name, uint channelCount)
 	: AudioSource(dir, name)
 {
 	private_init();
@@ -704,7 +704,6 @@ QString ReadSource::get_error_string() const
 		case INVALID_CHANNEL_COUNT: return tr("Invalid channel count");
 		case ZERO_CHANNELS: return tr("File has zero channels");
 		case FILE_DOES_NOT_EXIST: return tr("The file does not exist!");
-		default: return tr("No ReadSource error set");
 	}
 	return tr("No ReadSource error set");
 }

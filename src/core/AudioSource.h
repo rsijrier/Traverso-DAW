@@ -49,9 +49,9 @@ public :
 	QString get_short_name() const;
 	qint64 get_id() const;
 	qint64 get_orig_sheet_id() const {return m_origSheetId;}
-	int get_rate() const;
+    uint get_rate() const;
 	uint get_channel_count() const;
-	int get_bit_depth() const;
+    uint get_bit_depth() const;
 	
 protected:
 	QList<RingBufferNPT<audio_sample_t>*> 	m_buffers;

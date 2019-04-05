@@ -633,7 +633,7 @@ void AudioDevice::send_to_master_out(AudioChannel* channel, nframes_t nframes)
 AudioChannel* AudioDevice::get_capture_channel_by_name(const QString &name)
 {
         if (!m_driver) {
-                return 0;
+                return nullptr;
         }
         return m_driver->get_capture_channel_by_name(name);
 }
@@ -642,12 +642,12 @@ AudioChannel* AudioDevice::get_capture_channel_by_name(const QString &name)
 AudioChannel* AudioDevice::get_playback_channel_by_name(const QString &name)
 {
         if (!m_driver) {
-                return 0;
+                return nullptr;
         }
         return m_driver->get_playback_channel_by_name(name);
 }
 
-AudioChannel* AudioDevice::create_channel(const QString& name, int channelNumber, int type)
+AudioChannel* AudioDevice::create_channel(const QString& name, uint channelNumber, int type)
 {
         AudioChannel* chan = new AudioChannel(name, channelNumber, type);
         chan->set_buffer_size(m_bufferSize);
@@ -740,7 +740,7 @@ trav_time_t AudioDevice::get_cpu_time( )
 #if defined (JACK_SUPPORT)
 	if (libjack_is_present)
                 if (m_driver && m_driverType == "Jack")
-                        return ((JackDriver*)m_driver)->get_cpu_load();
+                        return qobject_cast<JackDriver*>(m_driver)->get_cpu_load();
 #endif
 	
 #if defined (PORTAUDIO_SUPPORT)

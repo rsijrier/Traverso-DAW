@@ -39,7 +39,7 @@ class ReadSource : public AudioSource
 public :
 	ReadSource(const QDomNode node);
 	ReadSource(const QString& dir, const QString& name);
-	ReadSource(const QString& dir, const QString& name, int channelCount);
+    ReadSource(const QString& dir, const QString& name, uint channelCount);
 	ReadSource();  // For creating a 0-channel, silent ReadSource
 	~ReadSource();
 	

@@ -825,10 +825,10 @@ void Sheet::audiodevice_params_changed()
 	if (m_currentSampleRate != audiodevice().get_sample_rate()) {
 		m_currentSampleRate = audiodevice().get_sample_rate();
 		
-        m_diskio->output_rate_changed(int(m_currentSampleRate));
+        m_diskio->output_rate_changed(m_currentSampleRate);
 		
 		TimeRef location = m_transportLocation;
-        location.add_frames(1, int(audiodevice().get_sample_rate()));
+        location.add_frames(1, audiodevice().get_sample_rate());
 	
 		set_transport_pos(location);
 	}

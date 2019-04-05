@@ -55,7 +55,7 @@ public:
 	static const int bufferdividefactor = 5;
 
 	void prepare_for_seek();
-	void output_rate_changed(int rate);
+    void output_rate_changed(uint rate);
 
 	void register_read_source(ReadSource* source);
 	void register_write_source(WriteSource* source);
@@ -97,7 +97,7 @@ private:
 	audio_sample_t*		m_readbuffer;
 	DecodeBuffer*		m_decodebuffer;
 	DecodeBuffer*		m_resampleDecodeBuffer;
-	int			m_outputRate;
+    uint			m_outputRate;
 
 	
 	void update_time_usage();

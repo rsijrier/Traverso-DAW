@@ -76,7 +76,7 @@ public:
 
         AudioDeviceSetup get_device_setup() {return m_setup;}
 
-        AudioChannel* create_channel(const QString& name, int channelNumber, int type);
+        AudioChannel* create_channel(const QString& name, uint channelNumber, int type);
         AudioChannel* get_playback_channel_by_name(const QString& name);
         AudioChannel* get_capture_channel_by_name(const QString& name);
 

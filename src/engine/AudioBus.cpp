@@ -63,7 +63,7 @@ AudioBus::AudioBus(const BusConfig& config)
         } else if (config.bustype == "software") {
                 m_busType = BusIsSoftware;
         } else {
-                Q_ASSERT("bustype != hardware or software");
+                qFatal("bustype != hardware or software");
         }
 
         m_id = config.id;
@@ -78,7 +78,7 @@ AudioBus::AudioBus(const BusConfig& config)
         // This bus is an internal Bus, not a Bus used to wrap AudioChannel's from a Driver
         // so we have to create AudioChannel's to make the Bus useful for internal routing.
         if (m_isInternalBus) {
-                for(int channelNumber=0; channelNumber < config.channelcount; ++channelNumber) {
+                for(uint channelNumber=0; channelNumber < uint(config.channelcount); ++channelNumber) {
                         AudioChannel* chan = audiodevice().create_channel(m_name, channelNumber, m_type);
                         add_channel(chan);
                 }
@@ -109,7 +109,7 @@ void AudioBus::add_channel(const QString &channel)
         m_channelNames.append(channel);
 }
 
-int AudioBus::get_channel_count() const
+uint AudioBus::get_channel_count() const
 {
         return m_channelCount;
 }

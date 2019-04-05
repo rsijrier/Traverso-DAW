@@ -43,11 +43,11 @@ public:
 	void add_channel(AudioChannel* chan);
         void add_channel(const QString& channel);
         void audiodevice_params_changed();
-        int get_channel_count() const;
+        uint get_channel_count() const;
         QStringList get_channel_names() const;
         QString get_name() {return m_name;}
 	
-	AudioChannel* get_channel(int channelNumber);
+    AudioChannel* get_channel(uint channelNumber);
         QList<qint64> get_channel_ids() const;
 
 	/**
@@ -56,8 +56,8 @@ public:
 	 * @param nframes The buffer size to get
 	 * @return 
 	 */
-        audio_sample_t* get_buffer(int channel, nframes_t nframes) {
-                return m_channels.at(channel)->get_buffer(nframes);
+        audio_sample_t* get_buffer(uint channel, nframes_t nframes) {
+                return m_channels.at(int(channel))->get_buffer(nframes);
 	}
 
         void set_monitoring(bool monitor);
@@ -93,16 +93,16 @@ public:
 		}
 	}
 
-        bool is_smaller_then(APILinkedListNode* node) {return true;}
+        bool is_smaller_then(APILinkedListNode* /*node*/) {return true;}
 
 private:
         QList<AudioChannel* >	m_channels;
         QStringList             m_channelNames;
 	QString			m_name;
 	
-        bool			m_isMonitoring;
+        bool            		m_isMonitoring;
         bool                    m_isInternalBus;
-        int 			m_channelCount;
+        uint         			m_channelCount;
         int                     m_type;
         int                     m_busType;
         qint64                  m_id;
@@ -119,7 +119,7 @@ signals:
  * @param channelNumber The channelNumber associated with this AudioBus's AudioChannel 
  * @return The AudioChannel on succes, 0 on failure
  */
-inline AudioChannel * AudioBus::get_channel( int channelNumber )
+inline AudioChannel * AudioBus::get_channel( uint channelNumber )
 {
         if (channelNumber < m_channelCount) {
                 return m_channels.at(channelNumber);

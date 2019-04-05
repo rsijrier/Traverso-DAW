@@ -47,7 +47,7 @@ class AlsaDriver : public TAudioDriver
 {
         Q_OBJECT
 public:
-	AlsaDriver(AudioDevice* dev, int rate, nframes_t bufferSize);
+    AlsaDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
 	~AlsaDriver();
 
 	int start();

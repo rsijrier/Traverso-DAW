@@ -29,7 +29,7 @@ $Id: Driver.cpp,v 1.6 2007/03/19 11:18:57 r_sijrier Exp $
 #include "Debugger.h"
 
 
-TAudioDriver::TAudioDriver( AudioDevice* dev , int rate, nframes_t bufferSize)
+TAudioDriver::TAudioDriver(AudioDevice* dev , uint rate, nframes_t bufferSize)
 {
 	device = dev;
 	frame_rate = rate;
