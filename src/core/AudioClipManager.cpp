@@ -46,7 +46,7 @@ AudioClipManager::~ AudioClipManager( )
 }
 
 
-QDomNode AudioClipManager::get_state(QDomDocument doc, bool istemplate)
+QDomNode AudioClipManager::get_state(QDomDocument doc, bool /*istemplate*/)
 {
 	QDomElement managerNode = doc.createElement("ClipManager");
 	QDomElement globalSelection = doc.createElement("GlobalSelection");

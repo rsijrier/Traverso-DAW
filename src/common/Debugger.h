@@ -53,7 +53,6 @@ public:
 
 class ConstructorEnter
 {
-    const char* 	m_file;
     const char* 	m_function;
     int 			lvl;
 public:
@@ -63,7 +62,6 @@ public:
 
 class DestructorEnter
 {
-    const char* 	m_file;
     const char* 	m_function;
     int 			lvl;
 public:

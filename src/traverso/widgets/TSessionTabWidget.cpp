@@ -45,7 +45,7 @@ static const int TAB_WIDTH = 110;
 // to another area crashes T when closing a project when adding a parent widget
 // to the QPushButton constructor!!
 TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
-        : QPushButton(0)
+        : QPushButton(nullptr)
 {
         m_toolBar = toolBar;
         m_session = session;
@@ -318,7 +318,7 @@ void TSessionTabWidget::leaveEvent( QEvent * )
         m_arrowButton->setStyleSheet("background-color: none; border: none;");
 }
 
-void TSessionTabWidget::enterEvent( QEvent * e)
+void TSessionTabWidget::enterEvent( QEvent * /*e*/)
 {
         if (pm().get_project()->get_current_session() == m_session) {
                 m_arrowButton->setStyleSheet("background-color: lightblue; margin: 0; margin-right: 2;");

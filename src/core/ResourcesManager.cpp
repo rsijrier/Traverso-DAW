@@ -43,7 +43,7 @@ ResourcesManager::ResourcesManager(Project* project)
 	, m_project(project)
 {
 	PENTERCONS;
-	m_silentReadSource = 0;
+    m_silentReadSource = nullptr;
 }
 
 
@@ -162,7 +162,7 @@ ReadSource* ResourcesManager::import_source(const QString& dir, const QString& n
 	if (source->get_error() < 0) {
 		m_sources.remove(source->get_id());
 		delete source;
-		return 0;
+        return nullptr;
 	}
 	
 	emit sourceAdded(source);
@@ -174,7 +174,7 @@ ReadSource* ResourcesManager::import_source(const QString& dir, const QString& n
 ReadSource* ResourcesManager::create_recording_source(
 	const QString& dir,
 	const QString& name,
-	int channelCount,
+    uint channelCount,
  	qint64 sheetId)
 {
 	PENTER;
@@ -258,7 +258,7 @@ AudioClip* ResourcesManager::get_clip(qint64 id)
 	ClipData* data = m_clips.value(id);
 	 
 	if (!data) {
-		return 0;
+        return nullptr;
 	}
 	
 	AudioClip* clip = data->clip;
@@ -391,13 +391,13 @@ void ResourcesManager::set_source_for_clip(AudioClip * clip, ReadSource * source
 
 ResourcesManager::SourceData::SourceData()
 {
-	source = 0;
+    source = nullptr;
 	clipCount = 0;
 }
 
 ResourcesManager::ClipData::ClipData()
 {
-	clip = 0;
+    clip = nullptr;
 	inUse = false;
 	isCopy = false;
 	removed = false;

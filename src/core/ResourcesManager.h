@@ -47,7 +47,7 @@ public:
 	
 	ReadSource* create_recording_source(const QString& dir,
 				const QString& name,
-				int channelCount,
+				uint channelCount,
 				qint64 sheetId);
 	
 	ReadSource* import_source(const QString& dir, const QString& name);

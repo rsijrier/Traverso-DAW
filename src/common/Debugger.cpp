@@ -163,8 +163,8 @@ FunctionEnter::~ FunctionEnter( )
         print_exit(lvl, m_file, m_function);
 }
 
-ConstructorEnter::ConstructorEnter(int level, const char* file, const char* function)
-                : m_file(file), m_function(function), lvl(level)
+ConstructorEnter::ConstructorEnter(int level, const char* /*file*/, const char* function)
+                : m_function(function), lvl(level)
 {
         using namespace TraversoDebugger;
         if (get_debug_level()>=lvl) {
@@ -210,8 +210,8 @@ ConstructorEnter::~ ConstructorEnter( )
         }
 }
 
-DestructorEnter::DestructorEnter(int level, const char* file, const char* function)
-                : m_file(file), m_function(function), lvl(level)
+DestructorEnter::DestructorEnter(int level, const char* /*file*/, const char* function)
+                : m_function(function), lvl(level)
 {
         using namespace TraversoDebugger;
         if (get_debug_level()>=lvl) {

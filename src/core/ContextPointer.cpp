@@ -69,8 +69,8 @@ ContextPointer::ContextPointer()
 	m_x = 0;
 	m_y = 0;
 	m_jogEvent = false;
-	m_port = 0;
-	m_currentContext = 0;
+    m_port = nullptr;
+    m_currentContext = nullptr;
 	m_keyboardOnlyInput = false;
 
 	m_mouseLeftClickBypassesJog = config().get_property("InputEventDispatcher", "mouseclicktakesoverkeyboardnavigation", false).toBool();
@@ -308,7 +308,7 @@ void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 	{
 		if (m_currentContext)
 		{
-			m_currentContext = 0;
+            m_currentContext = nullptr;
 			emit contextChanged();
 		}
 	}
