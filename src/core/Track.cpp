@@ -88,10 +88,10 @@ void Track::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
 
         QDomNode sendsNode = doc.createElement("Sends");
 
-        apill_foreach(TSend* send, TSend, m_postSends) {
+        apill_foreach(TSend* send, TSend*, m_postSends) {
                 sendsNode.appendChild(send->get_state(node.toDocument()));
         }
-        apill_foreach(TSend* send, TSend, m_preSends) {
+        apill_foreach(TSend* send, TSend*, m_preSends) {
                 sendsNode.appendChild(send->get_state(node.toDocument()));
         }
 
@@ -151,14 +151,20 @@ int Track::set_state( const QDomNode & node )
 
         // Keep old project files up to 0.49.x working, at least, try our best...
         // TODO: remove this at some point in future where everybody uses > 0.49.x
+        // NOTE: it is also called on a newly created project so at this point it does
+        // add default post send to a Track. In other words, this is very much needed
+        // for newly created tracks
+        // What about reviewing the whole create_project() and then load_project() scheme?
         if (m_postSends.isEmpty() && ! m_session->is_project_session()) {
                 QString busOutName = e.attribute( "OutputBus", tr("Sheet Master"));
                 Project* project = pm().get_project();
-                if (project) {
-                        qint64 id = project->get_bus_id_for(busOutName);
-                        if (id) {
-                                add_post_send(id);
-                        }
+                if (m_session && project) {
+                    if (m_name == "Sheet Master") {
+                        add_post_send(project->get_master_out()->get_id());
+                    } else {
+                        add_post_send(m_session->get_master_out()->get_id());
+
+                    }
                 }
         }
 
@@ -273,7 +279,7 @@ void Track::add_input_bus(qint64 busId)
 
 void Track::add_post_send(qint64 busId)
 {
-        apill_foreach(TSend* send, TSend, m_postSends) {
+        apill_foreach(TSend* send, TSend*, m_postSends) {
                 if (send->get_bus_id() == busId) {
                         printf("Track %s already has this bus (bus id: %lld) as Post Send\n", m_name.toLatin1().data(), busId);
                         return;
@@ -302,7 +308,7 @@ void Track::add_post_send(qint64 busId)
 
 void Track::add_pre_send(qint64 busId)
 {
-        apill_foreach(TSend* send, TSend, m_preSends) {
+        apill_foreach(TSend* send, TSend*, m_preSends) {
                 if (send->get_bus_id() == busId) {
                         printf("Track %s already has this bus (bus id: %lld) as Pre Send\n", m_name.toLatin1().data(), busId);
                         return;
@@ -332,7 +338,7 @@ void Track::remove_post_sends(QList<qint64> sendIds)
 {
         QList<TSend*> sendsToBeRemoved;
         foreach(qint64 id, sendIds) {
-                apill_foreach(TSend* send, TSend, m_postSends) {
+                apill_foreach(TSend* send, TSend*, m_postSends) {
                         if (send->get_id() == id) {
                                 sendsToBeRemoved.append(send);
                         }
@@ -353,7 +359,7 @@ void Track::remove_pre_sends(QList<qint64> sendIds)
 {
         QList<TSend*> sendsToBeRemoved;
         foreach(qint64 id, sendIds) {
-                apill_foreach(TSend* send, TSend, m_preSends) {
+                apill_foreach(TSend* send, TSend*, m_preSends) {
                         if (send->get_id() == id) {
                                 sendsToBeRemoved.append(send);
                         }
@@ -415,14 +421,14 @@ void Track::add_input_bus(const QString &name)
 
 void Track::process_post_sends(nframes_t nframes)
 {
-        apill_foreach(TSend* postSend, TSend, m_postSends) {
+        apill_foreach(TSend* postSend, TSend*, m_postSends) {
                 process_send(postSend, nframes);
         }
 }
 
 void Track::process_pre_sends(nframes_t nframes)
 {
-        apill_foreach(TSend* preSend, TSend, m_preSends) {
+        apill_foreach(TSend* preSend, TSend*, m_preSends) {
                 process_send(preSend, nframes);
         }
 }
@@ -465,7 +471,7 @@ QList<TSend* > Track::get_post_sends() const
 {
         QList<TSend*> sends;
 
-        apill_foreach(TSend* postSend, TSend, m_postSends) {
+        apill_foreach(TSend* postSend, TSend*, m_postSends) {
                 sends.append(postSend);
         }
         return sends;
@@ -475,7 +481,7 @@ QList<TSend* > Track::get_pre_sends() const
 {
         QList<TSend*> sends;
 
-        apill_foreach(TSend* preSend, TSend, m_preSends) {
+        apill_foreach(TSend* preSend, TSend*, m_preSends) {
                 sends.append(preSend);
         }
         return sends;
@@ -483,12 +489,12 @@ QList<TSend* > Track::get_pre_sends() const
 
 TSend* Track::get_send(qint64 sendId)
 {
-        apill_foreach(TSend* postSend, TSend, m_postSends) {
+        apill_foreach(TSend* postSend, TSend*, m_postSends) {
                 if (postSend->get_id() == sendId) {
                         return postSend;
                 }
         }
-        apill_foreach(TSend* preSend, TSend, m_preSends) {
+        apill_foreach(TSend* preSend, TSend*, m_preSends) {
                 if (preSend->get_id() == sendId) {
                         return preSend;
                 }
@@ -560,7 +566,7 @@ bool Track::disconnect_from_jack(bool inports, bool outports)
 
         if (outports) {
                 QList<qint64> jackSends;
-                apill_foreach(TSend* send, TSend, m_postSends) {
+                apill_foreach(TSend* send, TSend*, m_postSends) {
                         if (send->get_bus()->get_bus_type() == BusIsSoftware) {
                                 jackSends.append(send->get_id());
                                 project->remove_software_audio_bus(send->get_bus());
