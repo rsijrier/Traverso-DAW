@@ -221,11 +221,11 @@ int WriteSource::prepare_export()
 	m_sampleRate = audiodevice().get_sample_rate();
 	m_channelCount = m_spec->channels;
 	m_processPeaks = false;
-	m_diskio = 0;
-	m_dataF2 = m_leftoverF = 0;
-	m_dither = 0;
-	m_output_data = 0;
-	m_src_state = 0;
+    m_diskio = nullptr;
+    m_dataF2 = m_leftoverF = nullptr;
+    m_dither = nullptr;
+    m_output_data = nullptr;
+    m_src_state = nullptr;
 	
 
 	switch (m_spec->data_width) {
