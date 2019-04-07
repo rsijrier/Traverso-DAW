@@ -45,15 +45,17 @@ public:
 	double max_value() const {return m_maxValue;}
 	double min_value() const {return m_minValue;}
 
-	virtual double get_value() const = 0;
+    double get_value() {return m_value;}
 
 protected:
+    void set_value(double value);
 
 private:
 	double		m_angle;
 	double		m_nTurns;
 	double		m_minValue;
 	double		m_maxValue;
+    double      m_value;
 	double		m_totalAngle;
 	QLinearGradient	m_gradient2D;
 };
@@ -65,7 +67,6 @@ class TPanKnobView : public TKnobView
 public:
 	TPanKnobView(ViewItem* parent, Track* track);
 
-	double get_value() const;
 	Track* get_track() const {return m_track;}
 
 private:

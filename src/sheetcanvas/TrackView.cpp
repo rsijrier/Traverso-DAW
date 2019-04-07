@@ -190,7 +190,7 @@ void TrackView::move_to( int x, int y )
 {
 	Q_UNUSED(x);
 	setPos(0, y);
-	m_panel->setPos(-200, y);
+    m_panel->setPos(-m_sv->get_trackpanel_view_port()->width(), y);
 }
 
 void TrackView::layout_lanes()

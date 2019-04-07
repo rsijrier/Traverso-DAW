@@ -72,6 +72,8 @@ void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	center.setY(m_boundingRect.height() / 2);
 	painter->drawEllipse(center, radius, radius);
 
+    pen.setColor(QColor(170, 170, 170, 200));
+    painter->setPen(pen);
 	painter->drawLine(xm - int(rint(sa * rb)),
 			ym - int(rint(ca * rb)),
 			xm - int(rint(sa * re)),
@@ -80,11 +82,11 @@ void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	QFont font = themer()->get_font("TrackPanel:fontscale:name");
 	font.setPixelSize(8);
 	painter->setFont(font);
-	painter->drawText(m_boundingRect.width() / 2 - 3, -1, "0");
+    painter->drawText(0, -10, int(m_boundingRect.width()), 10, Qt::AlignHCenter, QString::number(m_value, 'f', 1));
 	font.setPixelSize(7);
 	painter->setFont(font);
-	painter->drawText(0, m_boundingRect.height() + 3, "L");
-	painter->drawText(m_boundingRect.width() - 3, m_boundingRect.height() + 3, "R");
+    painter->drawText(-3, int(m_boundingRect.height()), "L");
+    painter->drawText(int(m_boundingRect.width() - 2), int(m_boundingRect.height()), "R");
 
 }
 
@@ -106,31 +108,30 @@ void TKnobView::load_theme_data()
 
 void TKnobView::update_angle()
 {
-	m_angle = (get_value() - 0.5 * (min_value() + max_value()))
+    m_angle = (m_value - 0.5 * (min_value() + max_value()))
 			/ (max_value() - min_value()) * m_totalAngle;
 	m_nTurns = floor((m_angle + 180.0) / 360.0);
-	m_angle = m_angle - m_nTurns * 360.0;
-
+    m_angle = m_angle - m_nTurns * 360.0;
 }
 
+void TKnobView::set_value(double value)
+ {
+    m_value = value;
+    update_angle();
+    m_parentViewItem->update();
+ }
 
 TPanKnobView::TPanKnobView(ViewItem* parent, Track* track)
 	: TKnobView(parent)
 	, m_track(track)
 {
 	connect(m_track, SIGNAL(panChanged()), this, SLOT(track_pan_changed()));
-	update_angle();
-}
-
-double TPanKnobView::get_value() const
-{
-	return m_track->get_pan();
+    track_pan_changed();
 }
 
 void TPanKnobView::track_pan_changed()
 {
-	update_angle();
-	update();
+    set_value(double(m_track->get_pan()));
 }
 
 TCommand* TPanKnobView::pan_left()

@@ -47,7 +47,7 @@ SheetPanelView::SheetPanelView(QGraphicsScene* scene, TSession* sheet)
 	, m_sheet(sheet)
 {
         scene->addItem(this);
-        m_boundingRect = QRectF(0, 0, 200, TIMELINE_HEIGHT);
+        m_boundingRect = QRectF(0, 0, 230, TIMELINE_HEIGHT);
 }
 
 
@@ -59,8 +59,8 @@ void SheetPanelView::paint(QPainter * painter, const QStyleOptionGraphicsItem * 
 SheetPanelViewPort::SheetPanelViewPort(QGraphicsScene * scene, SheetWidget * sw)
 	: ViewPort(scene, sw)
 {
-        setSceneRect(-200, -TIMELINE_HEIGHT, 200, 0);
-        setFixedSize(200, TIMELINE_HEIGHT);
+        setSceneRect(-230, -TIMELINE_HEIGHT, 230, 0);
+        setFixedSize(230, TIMELINE_HEIGHT);
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 

@@ -36,6 +36,7 @@ class AudioTrackPanelView;
 class TBusTrackView;
 class VUMeterView;
 class TPanKnobView;
+class TTextView;
 
 class TrackPanelGain : public ViewItem
 {
@@ -104,13 +105,21 @@ protected:
 	TrackPanelLed*          m_portLed;
 	TrackPanelLed*          m_preLedButton;
 	TPanKnobView*	        m_panKnob;
+    TTextView*              m_trackNameView;
+    int LED_WIDTH;
+    int LED_HEIGHT;
+    int LED_Y_POS;
+    int VU_WIDTH;
+    int GAIN_Y_POS;
+    int VUMETER_Y_POS;
+    int INDENT;
+    int PANEL_ITEM_SPACING;
 
 
         VUMeterView*            m_vuMeterView;
 
 	QMap<int, ViewItem*>	m_ledViews;
 
-	void draw_panel_name(QPainter* painter);
         virtual void layout_panel_items();
 
 private slots:

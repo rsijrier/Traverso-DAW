@@ -96,7 +96,7 @@ void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*opt
 	painter->setRenderHint(QPainter::Antialiasing);
 	painter->setBrush(QColor(0, 0, 0, 250));
 	painter->setPen(Qt::NoPen);
-	painter->drawRoundedRect(m_boundingRect, 5, 5);
+    painter->drawRect(m_boundingRect);
 }
 
 void VUMeterView::calculate_bounding_rect()
@@ -109,7 +109,7 @@ void VUMeterView::set_bounding_rect(QRectF rect)
         m_boundingRect = rect;
         int vertPos = 0;
         int horizontalPos = 0;
-	m_vulevelspacing = 3;
+    m_vulevelspacing = 2;
         foreach(VUMeterLevelView* level, m_levels) {
                 if (m_orientation == Qt::Vertical) {
                         level->set_bounding_rect(QRectF(0, 0, m_boundingRect.width() / m_levels.size(), m_boundingRect.height()));

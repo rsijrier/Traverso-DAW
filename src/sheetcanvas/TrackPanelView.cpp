@@ -50,38 +50,38 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TMainWindow.h"
 #include "VUMeterView.h"
 #include "TKnobView.h"
+#include "TTextView.h"
 		
 #include <Debugger.h>
 
 #define MICRO_HEIGHT 35
 #define SMALL_HEIGHT 65
 
-const int LED_WIDTH = 16;
-const int LED_HEIGHT = 16;
-const int LED_Y_POS = 24;
-const int VU_WIDTH = 8;
-const int GAIN_Y_POS = 48;
-const int INDENT = 10;
 
 
 TrackPanelView::TrackPanelView(TrackView* view)
         : ViewItem(nullptr, view)
 {
-        PENTERCONS;
 
-        m_sv = view->get_sheetview();
+    PENTERCONS;
+    m_sv = view->get_sheetview();
 
-        m_trackView = view;
+    m_trackView = view;
 	m_viewPort = m_sv->get_trackpanel_view_port();
-        m_track = m_trackView->get_track();
+    m_track = m_trackView->get_track();
 
 	m_infoLed = new TrackPanelLed(this, view, "I", "edit_properties");
 	m_soloLed = new TrackPanelLed(this, m_track, "S", "solo");
 	m_muteLed = new TrackPanelLed(this, m_track, "M", "mute");
 	m_preLedButton = new TrackPanelLed(this, m_track, "P", "toggle_presend");
 	m_panKnob = new TPanKnobView(this, m_track);
+    m_trackNameView = new TTextView(this);
+    m_trackNameView->setText(m_track->get_name());
 
-	m_infoLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
+    LED_WIDTH = 22;
+    LED_HEIGHT = 16;
+
+    m_infoLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_muteLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_soloLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_preLedButton->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
@@ -90,30 +90,36 @@ TrackPanelView::TrackPanelView(TrackView* view)
 	m_ledViews.insert(11, m_soloLed);
 	m_ledViews.insert(1, m_infoLed);
 
-        if (m_track->is_solo()) {
-                m_soloLed->ison_changed(true);
-        }
-        if (m_track->is_muted()) {
-                m_muteLed->ison_changed(true);
-        }
-	if (m_track->presend_on()) {
+    if (m_track->is_solo()) {
+        m_soloLed->ison_changed(true);
+    }
+    if (m_track->is_muted()) {
+        m_muteLed->ison_changed(true);
+    }
+    if (m_track->presend_on()) {
 		m_preLedButton->ison_changed(true);
 	}
 
-        m_vuMeterView = new VUMeterView(this, m_track);
+    m_vuMeterView = new VUMeterView(this, m_track);
 
-        m_viewPort->scene()->addItem(this);
+    m_viewPort->scene()->addItem(this);
 
-        connect(m_track, SIGNAL(soloChanged(bool)), m_soloLed, SLOT(ison_changed(bool)));
-        connect(m_track, SIGNAL(muteChanged(bool)), m_muteLed, SLOT(ison_changed(bool)));
-	connect(m_track, SIGNAL(preSendChanged(bool)), m_preLedButton, SLOT(ison_changed(bool)));
+    INDENT = 10;
+    PANEL_ITEM_SPACING = 16;
+    VU_WIDTH = 8;
+    LED_Y_POS = int(m_trackNameView->boundingRect().height()) + PANEL_ITEM_SPACING;
+    VUMETER_Y_POS = LED_Y_POS + LED_HEIGHT + PANEL_ITEM_SPACING;
 
-        connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_gain()));
+    connect(m_track, SIGNAL(soloChanged(bool)), m_soloLed, SLOT(ison_changed(bool)));
+    connect(m_track, SIGNAL(muteChanged(bool)), m_muteLed, SLOT(ison_changed(bool)));
+    connect(m_track, SIGNAL(preSendChanged(bool)), m_preLedButton, SLOT(ison_changed(bool)));
 
-        connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_name()));
-        connect(m_track, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
+    connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_gain()));
 
-        connect(themer(), SIGNAL(themeLoaded()), this, SLOT(theme_config_changed()));
+    connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_name()));
+    connect(m_track, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
+
+    connect(themer(), SIGNAL(themeLoaded()), this, SLOT(theme_config_changed()));
 }
 
 TrackPanelView::~TrackPanelView( )
@@ -156,16 +162,12 @@ void TrackPanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
 		painter->fillRect(xstart, m_trackView->get_total_height() - m_trackView->m_bottomborderwidth, pixelcount, m_trackView->m_bottomborderwidth, color);
         }
 
-	painter->fillRect(m_viewPort->width() - 3, 0, 3, m_trackView->get_total_height() - 1, themer()->get_color("TrackPanel:trackseparation"));
-
-        if (xstart < 180) {
-                draw_panel_name(painter);
-        }
+        painter->fillRect(m_viewPort->width() - 3, 0, 3, m_trackView->get_total_height() - 1, themer()->get_color("TrackPanel:trackseparation"));
 }
 
 void TrackPanelView::update_name()
 {
-        update();
+        m_trackNameView->setText(m_track->get_name());
 }
 
 void TrackPanelView::update_gain()
@@ -173,68 +175,48 @@ void TrackPanelView::update_gain()
 //        m_gainView->update();
 }
 
-
-void TrackPanelView::draw_panel_name(QPainter* painter)
-{
-	painter->save();
-	painter->setRenderHint(QPainter::Antialiasing);
-
-	QColor color = themer()->get_color("TrackPanel:header:background");
-	painter->setPen(color.darker(180));
-	painter->setBrush(color);
-	int corner = 5;
-	painter->drawRoundedRect(INDENT, 3, 175, 15, corner, corner);
-
-        painter->setPen(themer()->get_color("TrackPanel:text"));
-        painter->setFont(themer()->get_font("TrackPanel:fontscale:name"));
-	painter->drawText(INDENT + 8, 14, m_track->get_name());
-
-	painter->restore();
-}
-
-
 void TrackPanelView::calculate_bounding_rect()
 {
         prepareGeometryChange();
-	m_boundingRect = QRectF(0, 0, 200, m_trackView->get_total_height());
+    m_boundingRect = QRectF(0, 0, m_viewPort->width(), m_trackView->get_total_height());
         layout_panel_items();
 }
 
 void TrackPanelView::layout_panel_items()
 {
-        int height =  m_sv->get_track_height(m_track);
-        int adjust = 0;
-        // FIXME adjust is not actualy used
+    int height =  m_sv->get_track_height(m_track);
+    int adjust = 0;
+    // FIXME adjust is not actualy used
 
-        Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
-        if (orientation == Qt::Vertical) {
-                m_vuMeterView->set_bounding_rect(QRectF(0, 0, VU_WIDTH, height - 4));
-                m_vuMeterView->setPos(m_boundingRect.width() - VU_WIDTH - 5, 2);
-        } else {
-                adjust = 14;
-		m_vuMeterView->set_bounding_rect(QRectF(0, 0, 140, 16));
-		m_vuMeterView->setPos(10, GAIN_Y_POS);
-        }
+    Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
+    if (orientation == Qt::Vertical) {
+        m_vuMeterView->set_bounding_rect(QRectF(0, 0, VU_WIDTH, height - 4));
+        m_vuMeterView->setPos(m_boundingRect.width() - VU_WIDTH - 5, 2);
+    } else {
+        adjust = 14;
+        m_vuMeterView->set_bounding_rect(QRectF(0, 0, m_boundingRect.width() - INDENT * 2 - 3, 16));
+        m_vuMeterView->setPos(INDENT, VUMETER_Y_POS);
+    }
 
-	m_panKnob->setPos(165, GAIN_Y_POS - 2);
+    m_panKnob->setPos(m_preLedButton->pos().x() + m_preLedButton->boundingRect().width() + PANEL_ITEM_SPACING * 2, LED_Y_POS - 2);
 
-	int ledViewXPos = INDENT;
-	int ledSpacing = 8;
-	foreach(ViewItem* ledView, m_ledViews) {
-		ledView->setPos(ledViewXPos, LED_Y_POS);
-		ledViewXPos += ledView->boundingRect().width() + ledSpacing;
-	}
+    int ledViewXPos = INDENT;
+    int ledSpacing = 8;
+    foreach(ViewItem* ledView, m_ledViews) {
+        ledView->setPos(ledViewXPos, LED_Y_POS);
+        ledViewXPos += ledView->boundingRect().width() + ledSpacing;
+    }
 
-	int preLedXPos = 135;
-	m_preLedButton->setPos(preLedXPos, LED_Y_POS);
+    int preLedXPos = 135;
+    m_preLedButton->setPos(preLedXPos, LED_Y_POS);
 
-        if ( (m_vuMeterView->pos().y() + m_vuMeterView->boundingRect().height()) >= height) {
-                m_vuMeterView->hide();
-		m_panKnob->hide();
-        } else {
-                m_vuMeterView->show();
-		m_panKnob->show();
-        }
+    if ( (m_vuMeterView->pos().y() + m_vuMeterView->boundingRect().height()) >= height) {
+        m_vuMeterView->hide();
+        m_panKnob->hide();
+    } else {
+        m_vuMeterView->show();
+        m_panKnob->show();
+    }
 }
 
 void TrackPanelView::theme_config_changed()
@@ -494,7 +476,7 @@ void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*
 		
 		painter->setPen(color);
 		painter->setBrush(background);
-		painter->drawEllipse(m_boundingRect);
+        painter->drawRect(m_boundingRect);
 
 		painter->setFont(themer()->get_font("TrackPanel:fontscale:led"));
 		
@@ -508,7 +490,7 @@ void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*
 		
 		painter->setPen(themer()->get_color("TrackPanel:led:margin:inactive"));
 		painter->setBrush(color);
-		painter->drawEllipse(m_boundingRect);
+        painter->drawRect(m_boundingRect);
 		
 		painter->setFont(themer()->get_font("TrackPanel:fontscale:led"));
 		painter->setPen(themer()->get_color("TrackPanel:led:font:inactive"));
@@ -516,7 +498,7 @@ void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*
 		if (m_name == "I") {
 			painter->setPen(themer()->get_color("TrackPanel:led:margin:inactive"));
 			painter->setBrush(QColor(255, 255, 255, 50));
-			painter->drawEllipse(m_boundingRect);
+            painter->drawRect(m_boundingRect);
 			painter->setPen(themer()->get_color("TrackPanel:led:font:inactive"));
 			painter->drawText(m_boundingRect, Qt::AlignCenter, m_name);
 		} else {
