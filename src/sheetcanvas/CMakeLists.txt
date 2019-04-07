@@ -40,6 +40,7 @@ dialogs/TTrackManagerDialog.cpp
 VUMeterView.cpp
 TCanvasCursor.cpp
 TKnobView.cpp
+TTextView.cpp
 )
 
 
