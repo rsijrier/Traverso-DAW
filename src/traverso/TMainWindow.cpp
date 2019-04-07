@@ -642,7 +642,7 @@ bool TMainWindow::eventFilter(QObject * obj, QEvent * event)
 //			if (vp && !ie().is_holding()) {
 //				vp->mouseMoveEvent(mouseEvent);
 //			}
-		} else {
+        } else {
 			return false;
 		}
 	}

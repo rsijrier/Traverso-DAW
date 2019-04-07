@@ -58,8 +58,6 @@ public:
 	~Sheet();
 	
 	// Get functions
-	int get_rate();
-	int get_bitdepth();
         int get_numtracks() const {return m_audioTracks.size();}
 
         QString get_artists() const {return m_artists;}

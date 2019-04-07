@@ -176,7 +176,7 @@ Marker* TimeLine::get_end_marker()
 		}
 	}
 
-	return (Marker*)0;
+    return nullptr;
 }
 
 void TimeLine::marker_position_changed()

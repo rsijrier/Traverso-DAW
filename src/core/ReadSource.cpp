@@ -117,9 +117,9 @@ void ReadSource::private_init()
 {
 	m_refcount = 0;
 	m_error = 0;
-	m_clip = 0;
-	m_audioReader = 0;
-	m_bufferstatus = 0;
+    m_clip = nullptr;
+    m_audioReader = nullptr;
+    m_bufferstatus = nullptr;
 }
 
 
@@ -162,14 +162,14 @@ int ReadSource::set_state( const QDomNode & node )
 	PENTER;
 	
 	QDomElement e = node.toElement();
-	m_channelCount = e.attribute("channelcount", "0").toInt();
+    m_channelCount = e.attribute("channelcount", "0").toUInt();
 	m_origSheetId = e.attribute("origsheetid", "0").toLongLong();
 	set_dir( e.attribute("dir", "" ));
 	m_id = e.attribute("id", "").toLongLong();
 	m_rate = m_outputRate = e.attribute("rate", "0").toUInt();
 	bool ok;
 	m_length = TimeRef(e.attribute("length", "0").toLongLong(&ok));
-	m_origBitDepth = e.attribute("origbitdepth", "0").toInt();
+    m_origBitDepth = e.attribute("origbitdepth", "0").toUInt();
 	m_wasRecording = e.attribute("wasrecording", "0").toInt();
 	m_decodertype = e.attribute("decoder", "");
 	

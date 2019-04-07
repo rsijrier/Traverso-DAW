@@ -65,7 +65,7 @@ nframes_t AbstractAudioReader::read_from(DecodeBuffer* buffer, nframes_t start, 
 }
 
 
-int AbstractAudioReader::get_num_channels()
+uint AbstractAudioReader::get_num_channels()
 {
     return m_channels;
 }
@@ -173,7 +173,7 @@ AbstractAudioReader* AbstractAudioReader::create_audio_reader(const QString& fil
     if (newReader && !newReader->is_valid()) {
 //        PERROR("new %s reader is invalid! (channels: %d, frames: %d)", QS_C(newReader->decoder_type()), newReader->get_num_channels(), newReader->get_nframes());
         delete newReader;
-        newReader = 0;
+        newReader = nullptr;
     }
 
     return newReader;
@@ -181,8 +181,8 @@ AbstractAudioReader* AbstractAudioReader::create_audio_reader(const QString& fil
 
 DecodeBuffer::DecodeBuffer()
 {
-    destination = 0;
-    readBuffer = 0;
+    destination = nullptr;
+    readBuffer = nullptr;
     m_channels = destinationBufferSize = readBufferSize = 0;
     m_bufferSizeCheckCounter = m_totalCheckSize = m_smallerReadCounter = 0;
 }

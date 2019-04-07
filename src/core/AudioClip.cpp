@@ -745,7 +745,7 @@ void AudioClip::set_audio_source(ReadSource* rs)
 
 void AudioClip::finish_write_source()
 {
-    FunctionEnter enter(TraversoDebugger::BASIC, static_cast<const char*>(__FILE__), static_cast<const char*>(__FUNCTION__));
+    PENTER;
 
 Q_ASSERT(m_readSource);
 

@@ -834,16 +834,6 @@ void Sheet::audiodevice_params_changed()
 	}
 }
 
-int Sheet::get_bitdepth( )
-{
-	return m_project->get_bitdepth();
-}
-
-int Sheet::get_rate( )
-{
-	return m_project->get_rate();
-}
-
 DiskIO * Sheet::get_diskio( ) const
 {
 	return m_diskio;

@@ -61,7 +61,7 @@ public:
 	AbstractAudioReader(const QString& filename);
 	virtual ~AbstractAudioReader();
 	
-	int get_num_channels();
+    uint get_num_channels();
 	const TimeRef& get_length() const {return m_length;}
 	nframes_t get_nframes() const {return m_nframes;}
     uint get_file_rate();
@@ -85,7 +85,7 @@ protected:
 	QString		m_fileName;
 
 	nframes_t	m_readPos;
-	int		m_channels;
+    uint		m_channels;
 	TimeRef		m_length;
 	nframes_t	m_nframes;
     uint		m_rate;

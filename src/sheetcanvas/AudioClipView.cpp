@@ -238,9 +238,10 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
 
         bool microView = m_sheet->get_hzoom() < 64 ? 1 : 0;
         TimeRef clipstartoffset = m_clip->get_source_start_location();
-        int channels = m_clip->get_channel_count();
+        uint channels = m_clip->get_channel_count();
         int peakdatacount = microView ? pixelcount : pixelcount * 2;
-        float* pixeldata[channels];
+        // FIXME: make it so it supports any channel count
+        float* pixeldata[6];
         float curveDefaultValue = 1.0;
 	int mixCurveData = 0;
 	int mixAudioClipCurveData = 0;

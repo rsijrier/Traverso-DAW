@@ -199,7 +199,7 @@ TCommand* AudioClipManager::select_all_clips()
 {
 	PENTER;
 	
-	if (m_clipselection.size()) {
+    if (!m_clipselection.empty()) {
 		return new ClipSelection(m_clips, this, "remove_from_selection", tr("Selection: Remove Clip"));
 	}
 		
