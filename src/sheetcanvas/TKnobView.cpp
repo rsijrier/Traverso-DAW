@@ -25,21 +25,22 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Track.h"
 #include "math.h"
 
-TKnobView::TKnobView(ViewItem *parent)
-	: ViewItem(parent, 0)
-{
-	m_boundingRect = QRectF(0, 0, 22, 22);
+#include <Utils.h>
+#include <Mixer.h>
 
-	m_minValue = -1.0f;
-	m_maxValue = 1.0f;
+TKnobView::TKnobView(ViewItem *parent)
+    : ViewItem(parent, nullptr)
+{
+    m_minValue = -1.0;
+    m_maxValue = 1.0;
 	m_totalAngle = 270;
 }
 
-void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget )
+void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * /*option*/, QWidget * widget )
 {
 	Q_UNUSED(widget);
 
-	int borderWidth = 3;
+    int borderWidth = 2;
 
 	painter->setRenderHint(QPainter::Antialiasing);
 
@@ -82,17 +83,12 @@ void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	QFont font = themer()->get_font("TrackPanel:fontscale:name");
 	font.setPixelSize(8);
 	painter->setFont(font);
-    painter->drawText(0, -10, int(m_boundingRect.width()), 10, Qt::AlignHCenter, QString::number(m_value, 'f', 1));
-	font.setPixelSize(7);
-	painter->setFont(font);
-    painter->drawText(-3, int(m_boundingRect.height()), "L");
-    painter->drawText(int(m_boundingRect.width() - 2), int(m_boundingRect.height()), "R");
-
+    painter->drawText(0, -10, int(m_boundingRect.width()), 10, Qt::AlignHCenter, m_title);
 }
 
 void TKnobView::set_width(int width)
 {
-	m_boundingRect = QRectF(0, 0, width, 9);
+    m_boundingRect = QRectF(0, 0, width, width);
 	load_theme_data();
 }
 
@@ -116,16 +112,39 @@ void TKnobView::update_angle()
 
 void TKnobView::set_value(double value)
  {
+    if (value > m_maxValue) {
+        value = m_maxValue;
+    }
+    if (value < m_minValue) {
+        value = m_minValue;
+    }
     m_value = value;
     update_angle();
     m_parentViewItem->update();
- }
+}
+
+void TKnobView::set_min_value(double value)
+{
+    m_minValue = value;
+}
+
+void TKnobView::set_max_value(double value)
+{
+    m_maxValue = value;
+}
+
+void TKnobView::set_title(const QString &title)
+{
+    m_title = title;
+    m_parentViewItem->update();
+}
 
 TPanKnobView::TPanKnobView(ViewItem* parent, Track* track)
 	: TKnobView(parent)
 	, m_track(track)
 {
 	connect(m_track, SIGNAL(panChanged()), this, SLOT(track_pan_changed()));
+    set_title("PAN");
     track_pan_changed();
 }
 
@@ -145,3 +164,22 @@ TCommand* TPanKnobView::pan_right()
     m_track->set_pan(m_track->get_pan() + 0.05f);
     return nullptr;
 }
+
+
+TGainKnobView::TGainKnobView(ViewItem* parent, Track* track)
+    : TKnobView(parent)
+    , m_track(track)
+{
+    connect(m_track, SIGNAL(stateChanged()), this, SLOT(track_gain_changed()));
+    set_title("GAIN");
+    set_min_value(0);
+    set_max_value(2);
+    track_gain_changed();
+}
+
+void TGainKnobView::track_gain_changed()
+{
+    float db = coefficient_to_dB(m_track->get_gain());
+    set_value(m_track->get_gain());
+}
+

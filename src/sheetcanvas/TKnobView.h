@@ -49,6 +49,9 @@ public:
 
 protected:
     void set_value(double value);
+    void set_min_value(double value);
+    void set_max_value(double value);
+    void set_title(const QString &title);
 
 private:
 	double		m_angle;
@@ -56,6 +59,7 @@ private:
 	double		m_minValue;
 	double		m_maxValue;
     double      m_value;
+    QString     m_title;
 	double		m_totalAngle;
 	QLinearGradient	m_gradient2D;
 };
@@ -78,6 +82,25 @@ public slots:
 
 private slots:
 	void track_pan_changed();
+};
+
+
+class TGainKnobView : public TKnobView
+{
+    Q_OBJECT
+
+public:
+    TGainKnobView(ViewItem* parent, Track* track);
+
+    Track* get_track() const {return m_track;}
+
+private:
+    Track*		m_track;
+
+public slots:
+
+private slots:
+    void track_gain_changed();
 };
 
 #endif // TKNOBVIEW_H
