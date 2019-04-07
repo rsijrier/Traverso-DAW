@@ -887,8 +887,8 @@ int SheetView::vscrollbar_value() const
 void SheetView::load_theme_data()
 {
 	m_trackSeperatingHeight = themer()->get_property("Sheet:track:seperatingheight", 0).toInt();
-	m_trackMinimumHeight = 40;
-	m_trackMaximumHeight = 1600;
+    m_trackMinimumHeight = 55;
+    m_trackMaximumHeight = 1024;
 	m_trackTopIndent = themer()->get_property("Sheet:track:topindent", 6).toInt();
 
 	m_clipsViewPort->setBackgroundBrush(themer()->get_color("Sheet:background"));
@@ -1441,17 +1441,31 @@ void SheetView::context_changed()
 	ItemBrowserData data;
 	collect_item_browser_data(data);
 
-	QString shape = cursor_dict()->value(data.currentContext, "");
-	set_cursor_shape(shape, Qt::AlignTop | Qt::AlignHCenter);
+    QList<ContextItem*> items = cpointer().get_active_context_items();
+
+    if (!items.isEmpty()) {
+        foreach(ContextItem * item, items) {
+            QString cursorShape = cursor_dict()->value(item->metaObject()->className(), "");
+            if (!cursorShape.isEmpty()) {
+                set_cursor_shape(cursorShape, Qt::AlignTop | Qt::AlignHCenter);
+                break;
+            }
+        }
+    }
 }
 
 void SheetView::calculate_cursor_dict()
 {
 	m_cursorsDict.insert("AudioClipView", "C");
-	m_cursorsDict.insert("AudioTrackView", "T");
-	m_cursorsDict.insert("TBusTrackView", "B");
-	m_cursorsDict.insert("PluginView", "P");
+    m_cursorsDict.insert("AudioTrackView", "T");
+    m_cursorsDict.insert("AudioTrackPanelView", "T");
+    m_cursorsDict.insert("TBusTrackView", "B");
+    m_cursorsDict.insert("TBusTrackPanelView", "B");
+    m_cursorsDict.insert("PluginView", "P");
 	m_cursorsDict.insert("FadeCurveView", "F");
 	m_cursorsDict.insert("CurveView", "~");
-	m_cursorsDict.insert("CurveNodeView", "N");
+    m_cursorsDict.insert("CurveNodeView", "N");
+    m_cursorsDict.insert("SheetView", "S");
+    m_cursorsDict.insert("MarkerView", "M");
+    m_cursorsDict.insert("TrackPanelView", "T");
 }
