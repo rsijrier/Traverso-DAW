@@ -38,7 +38,7 @@ public:
 	~FadeCurveView();
 	
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-	int get_vector(int xstart, int pixelcount, float * arg);
+    int get_vector(qreal xstart, int pixelcount, float * arg);
 	void calculate_bounding_rect();
 	void set_holding(bool hold);
 	

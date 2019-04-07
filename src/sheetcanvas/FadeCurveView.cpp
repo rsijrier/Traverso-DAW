@@ -87,12 +87,14 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 	if (pixelcount == 0) {
 		return;
 	}
-	
-	pixelcount += 1;
-	
+
 	QPolygonF polygon;
 	int xstart = (int)option->exposedRect.x();
-	int vector_start = xstart;
+    if (xstart > 0) {
+            xstart -= 1;
+            pixelcount += 2;
+    }
+    int vector_start = xstart;
 	int height = (int)m_boundingRect.height();
 	float vector[pixelcount];
 	
@@ -162,7 +164,7 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 	painter->restore();
 }
 
-int FadeCurveView::get_vector(int xstart, int pixelcount, float * arg)
+int FadeCurveView::get_vector(qreal xstart, int pixelcount, float * arg)
 {
 	// If boundingrect width is smaller then a pixel, don't even try
 	if (m_boundingRect.width() < 1.0) {
@@ -174,12 +176,12 @@ int FadeCurveView::get_vector(int xstart, int pixelcount, float * arg)
 		// If the fade widt is larger the the clipview, add the difference,
 		// since the 'start' of the FadeCurveView lies beyond the left edge of the clip!
 		if (m_boundingRect.width() > m_parentViewItem->boundingRect().width()) {
-			xstart += (int)(m_boundingRect.width() - m_parentViewItem->boundingRect().width());
+            xstart += m_boundingRect.width() - m_parentViewItem->boundingRect().width();
 		}
 		
 		// map the xstart position to the FadeCurveViews x position
-		int mappedx = (int)mapFromParent(QPoint(xstart, 0)).x();
-		int x = mappedx;
+        qreal mappedx = mapFromParent(QPointF(xstart, 0)).x();
+        qreal x = mappedx;
 		float* p = arg;
 		
 		// check if the xstart lies before 'our' first pixel
@@ -189,7 +191,7 @@ int FadeCurveView::get_vector(int xstart, int pixelcount, float * arg)
 			pixelcount += mappedx;
 			
 			// point to the mapped location of the buffer.
-			p = arg - mappedx;
+            p = arg - int(mappedx);
 			
 			// and if pixelcount is 0, there is nothing to do!
 			if (pixelcount <= 0) {
@@ -203,13 +205,13 @@ int FadeCurveView::get_vector(int xstart, int pixelcount, float * arg)
 			}
 		}
 
-		m_guicurve->get_vector(x, x + pixelcount, p, pixelcount);
+        m_guicurve->get_vector(x, x + pixelcount, p, nframes_t(pixelcount));
 		
 		return 1;
 	}
 	
 	if (xstart < m_boundingRect.width()) {
-		m_guicurve->get_vector(xstart, xstart + pixelcount, arg, pixelcount);
+        m_guicurve->get_vector(xstart, xstart + pixelcount, arg, nframes_t(pixelcount));
 		return 1;
 	}
 	
