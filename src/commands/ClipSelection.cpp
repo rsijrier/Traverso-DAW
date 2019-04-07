@@ -60,41 +60,11 @@ ClipSelection::~ClipSelection()
 
 int ClipSelection::begin_hold()
 {
-	return -1;
-}
+    foreach(AudioClip* clip, m_clips) {
+        if ( ! QMetaObject::invokeMethod(m_acmanager, m_slot, Q_ARG(AudioClip*, clip))) {
+            PERROR(QString("AudioClip::%1 failed for %2").arg(m_slot).arg(clip->get_name()));
+        }
+    }
 
-int ClipSelection::finish_hold()
-{
-	return -1;
-}
-
-int ClipSelection::prepare_actions()
-{
-	return 1;
-}
-
-int ClipSelection::do_action()
-{
-	foreach(AudioClip* clip, m_clips) {
-		if ( ! QMetaObject::invokeMethod(m_acmanager, m_slot, Q_ARG(AudioClip*, clip))) {
-//			PERROR("AudioClip::%s failed for %s", m_slot, QS_C(clip->get_name()));
-		}
-	}
-	
-	return 1;
-}
-
-int ClipSelection::undo_action()
-{
-	return 1;
-}
-
-void ClipSelection::cancel_action()
-{
-	undo_action();
-}
-
-int ClipSelection::jog()
-{
-	return -1;
+    return 1;
 }

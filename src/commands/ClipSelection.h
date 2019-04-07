@@ -40,13 +40,6 @@ public :
 	~ClipSelection();
 
 	int begin_hold();
-	int finish_hold();
-	int prepare_actions();
-	int do_action();
-	int undo_action();
-	void cancel_action();
-
-	int jog();
 
 private :
 	QList<AudioClip* >	m_clips;
