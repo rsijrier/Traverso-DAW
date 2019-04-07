@@ -36,6 +36,7 @@ class AudioTrackPanelView;
 class TBusTrackView;
 class VUMeterView;
 class TPanKnobView;
+class TGainKnobView;
 class TTextView;
 
 class TrackPanelGain : public ViewItem
@@ -105,6 +106,7 @@ protected:
 	TrackPanelLed*          m_portLed;
 	TrackPanelLed*          m_preLedButton;
 	TPanKnobView*	        m_panKnob;
+    TGainKnobView*          m_gainKnob;
     TTextView*              m_trackNameView;
     int LED_WIDTH;
     int LED_HEIGHT;
@@ -114,6 +116,7 @@ protected:
     int VUMETER_Y_POS;
     int INDENT;
     int PANEL_ITEM_SPACING;
+    int LED_SPACING;
 
 
         VUMeterView*            m_vuMeterView;
@@ -123,7 +126,6 @@ protected:
         virtual void layout_panel_items();
 
 private slots:
-        void update_gain();
         void update_name();
         void theme_config_changed();
         void active_context_changed() {update();}

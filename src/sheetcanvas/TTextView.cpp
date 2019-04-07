@@ -28,7 +28,7 @@ const int INDENT = 10;
 TTextView::TTextView(ViewItem *parent)
     :ViewItem (parent)
 {
-    m_boundingRect = QRectF(0, 0, 226, 18);
+    m_boundingRect = QRectF(0, 0, 226, 20);
 }
 
 TTextView::~TTextView()

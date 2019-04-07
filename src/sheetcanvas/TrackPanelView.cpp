@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "AudioBus.h"
 #include "AudioDevice.h"
+#include "CurveView.h"
 #include "TConfig.h"
 #include "TrackPanelView.h"
 #include "TTrackLaneView.h"
@@ -70,25 +71,30 @@ TrackPanelView::TrackPanelView(TrackView* view)
 	m_viewPort = m_sv->get_trackpanel_view_port();
     m_track = m_trackView->get_track();
 
-	m_infoLed = new TrackPanelLed(this, view, "I", "edit_properties");
+    m_infoLed = new TrackPanelLed(this, view, "E", "edit_properties");
 	m_soloLed = new TrackPanelLed(this, m_track, "S", "solo");
 	m_muteLed = new TrackPanelLed(this, m_track, "M", "mute");
 	m_preLedButton = new TrackPanelLed(this, m_track, "P", "toggle_presend");
 	m_panKnob = new TPanKnobView(this, m_track);
+    m_gainKnob = new TGainKnobView(this, m_track);
     m_trackNameView = new TTextView(this);
     m_trackNameView->setText(m_track->get_name());
 
-    LED_WIDTH = 22;
+    LED_WIDTH = 20;
     LED_HEIGHT = 16;
+    LED_SPACING = 8;
 
     m_infoLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_muteLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_soloLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 	m_preLedButton->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
+    m_panKnob->set_width(LED_WIDTH);
+    m_gainKnob->set_width(LED_WIDTH);
 
-	m_ledViews.insert(10, m_muteLed);
-	m_ledViews.insert(11, m_soloLed);
 	m_ledViews.insert(1, m_infoLed);
+    m_ledViews.insert(2, m_muteLed);
+    m_ledViews.insert(3, m_soloLed);
+    m_ledViews.insert(5, m_preLedButton);
 
     if (m_track->is_solo()) {
         m_soloLed->ison_changed(true);
@@ -113,8 +119,6 @@ TrackPanelView::TrackPanelView(TrackView* view)
     connect(m_track, SIGNAL(soloChanged(bool)), m_soloLed, SLOT(ison_changed(bool)));
     connect(m_track, SIGNAL(muteChanged(bool)), m_muteLed, SLOT(ison_changed(bool)));
     connect(m_track, SIGNAL(preSendChanged(bool)), m_preLedButton, SLOT(ison_changed(bool)));
-
-    connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_gain()));
 
     connect(m_track, SIGNAL(stateChanged()), this, SLOT(update_name()));
     connect(m_track, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
@@ -170,52 +174,40 @@ void TrackPanelView::update_name()
         m_trackNameView->setText(m_track->get_name());
 }
 
-void TrackPanelView::update_gain()
-{
-//        m_gainView->update();
-}
-
 void TrackPanelView::calculate_bounding_rect()
 {
-        prepareGeometryChange();
+    prepareGeometryChange();
     m_boundingRect = QRectF(0, 0, m_viewPort->width(), m_trackView->get_total_height());
-        layout_panel_items();
+    layout_panel_items();
 }
 
 void TrackPanelView::layout_panel_items()
 {
-    int height =  m_sv->get_track_height(m_track);
-    int adjust = 0;
-    // FIXME adjust is not actualy used
+    qreal height =  m_boundingRect.height();
 
     Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
     if (orientation == Qt::Vertical) {
         m_vuMeterView->set_bounding_rect(QRectF(0, 0, VU_WIDTH, height - 4));
         m_vuMeterView->setPos(m_boundingRect.width() - VU_WIDTH - 5, 2);
     } else {
-        adjust = 14;
         m_vuMeterView->set_bounding_rect(QRectF(0, 0, m_boundingRect.width() - INDENT * 2 - 3, 16));
         m_vuMeterView->setPos(INDENT, VUMETER_Y_POS);
     }
 
-    m_panKnob->setPos(m_preLedButton->pos().x() + m_preLedButton->boundingRect().width() + PANEL_ITEM_SPACING * 2, LED_Y_POS - 2);
-
     int ledViewXPos = INDENT;
-    int ledSpacing = 8;
     foreach(ViewItem* ledView, m_ledViews) {
         ledView->setPos(ledViewXPos, LED_Y_POS);
-        ledViewXPos += ledView->boundingRect().width() + ledSpacing;
+        ledViewXPos += ledView->boundingRect().width() + LED_SPACING;
     }
 
-    int preLedXPos = 135;
-    m_preLedButton->setPos(preLedXPos, LED_Y_POS);
+    m_panKnob->setPos(ledViewXPos + PANEL_ITEM_SPACING - LED_SPACING, LED_Y_POS - 2);
+    m_gainKnob->setPos(m_panKnob->pos().x() + m_panKnob->boundingRect().width() + LED_SPACING, LED_Y_POS - 2);
+
 
     if ( (m_vuMeterView->pos().y() + m_vuMeterView->boundingRect().height()) >= height) {
         m_vuMeterView->hide();
-        m_panKnob->hide();
     } else {
         m_vuMeterView->show();
-        m_panKnob->show();
     }
 }
 
@@ -238,7 +230,7 @@ AudioTrackPanelView::AudioTrackPanelView(AudioTrackView* trackView)
 	m_recLed = new TrackPanelLed(this, m_track, "R", "toggle_arm");
         m_recLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 
-	m_ledViews.insert(12, m_recLed);
+    m_ledViews.insert(4, m_recLed);
 
         if (m_tv->get_track()->armed()) {
                 m_recLed->ison_changed(true);
@@ -311,7 +303,6 @@ TTrackLanePanelView::~TTrackLanePanelView( )
 	PENTERDES;
 }
 
-#include "CurveView.h"
 
 void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
