@@ -1202,15 +1202,15 @@ TCommand* SheetView::browse_to_context_item_above()
 		while (data.atv) {
 			int index = get_track_views().indexOf(data.atv);
 			if (index >= 1) {
-				data.atv = (AudioTrackView*)get_track_views().at(index -1);
-				AudioClipView* nearestClipView = data.atv->get_nearest_audioclip_view(m_session->get_work_location());
-				if (nearestClipView) {
-					browse_to_audio_clip_view(nearestClipView);
-					return 0;
-				}
-			} else {
-				data.atv = 0;
-			}
+                data.atv = qobject_cast<AudioTrackView*>(get_track_views().at(index -1));
+                if (data.atv) {
+                    AudioClipView* nearestClipView = data.atv->get_nearest_audioclip_view(m_session->get_work_location());
+                    if (nearestClipView) {
+                        browse_to_audio_clip_view(nearestClipView);
+                        return nullptr;
+                    }
+                }
+            }
 		}
 
 
