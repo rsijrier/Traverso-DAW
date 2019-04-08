@@ -78,14 +78,14 @@ protected:
         AudioDevice* device;
         QList<AudioChannel* >		m_captureChannels;
         QList<AudioChannel* >		m_playbackChannels;
-        int             		dither;
-        dither_state_t*			dither_state;
-        trav_time_t 			period_usecs;
-        trav_time_t 			last_wait_ust;
+        int             		dither{};
+        dither_state_t*			dither_state{};
+        trav_time_t 			period_usecs{};
+        trav_time_t 			last_wait_ust{};
         nframes_t                frame_rate;
         nframes_t                frames_per_cycle;
-        nframes_t                capture_frame_latency;
-        nframes_t                playback_frame_latency;
+        nframes_t                capture_frame_latency{};
+        nframes_t                playback_frame_latency{};
 
 signals:
         void errorMessage(const QString& message);

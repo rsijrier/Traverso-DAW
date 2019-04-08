@@ -136,7 +136,7 @@ AudioChannel* TAudioDriver::get_capture_channel_by_name(const QString& name)
                         return chan;
                 }
         }
-        return 0;
+        return nullptr;
 }
 
 
@@ -147,7 +147,7 @@ AudioChannel* TAudioDriver::get_playback_channel_by_name(const QString& name)
                         return chan;
                 }
         }
-        return 0;
+        return nullptr;
 }
 
 
