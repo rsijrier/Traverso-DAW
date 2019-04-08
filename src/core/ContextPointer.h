@@ -103,6 +103,7 @@ public:
 	 */
 	void store_mouse_cursor_position(int x, int y);
 	void store_canvas_cursor_position(int x, int y);
+    void store_global_mouse_cursor_position(QPoint position);
 	
 	/**
 	 *        Returns the ViewPort x coordinate on first input event.
@@ -204,7 +205,8 @@ private:
         int m_jogBypassDistance;
 
         QTimer m_jogTimer;
-        QPoint  m_globalMousePos;
+        QPoint  m_jogStartGlobalMousePos;
+        QPoint m_globalMousePos;
 
         bool    m_keyboardOnlyInput;
         bool    m_jogEvent;

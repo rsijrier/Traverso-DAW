@@ -136,6 +136,10 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
     // scene position in their jog function from cpointer, or view items that
     // accept mouse hover move 'events'
     cpointer().store_mouse_cursor_position(event->x(), event->y());
+    // TODO: use global mouse cursor position to updated viewports cursor
+    // now when mouse cursor leaves viewport we get bouncy viewport cursor
+    // so grabbing the mouse did still something after all ;)
+    cpointer().store_global_mouse_cursor_position(event->globalPos());
 
     if (cpointer().keyboard_only_input()) {
         event->accept();

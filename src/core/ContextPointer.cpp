@@ -146,7 +146,7 @@ void ContextPointer::remove_contextitem(QObject* item)
 
 void ContextPointer::jog_start()
 {
-	m_globalMousePos = QCursor::pos();
+    m_jogStartGlobalMousePos = QCursor::pos();
 
 	m_jogEvent = true;
 	int interval = config().get_property("InputEventDispatcher", "jogupdateinterval", 33).toInt();
@@ -242,7 +242,7 @@ void ContextPointer::setCursorPos(QPointF pos)
 
 	if (ied().get_holding_command() && ied().get_holding_command()->restoreCursorPosition())
 	{
-		QCursor::setPos(m_globalMousePos);
+        QCursor::setPos(m_jogStartGlobalMousePos);
 	}
 
 	m_port->set_holdcursor_pos(pos);
@@ -251,7 +251,12 @@ void ContextPointer::setCursorPos(QPointF pos)
 void ContextPointer::store_canvas_cursor_position(int x, int y)
 {
 	m_x = x;
-	m_y = y;
+    m_y = y;
+}
+
+void ContextPointer::store_global_mouse_cursor_position(QPoint position)
+{
+    m_globalMousePos = position;
 }
 
 void ContextPointer::store_mouse_cursor_position(int x, int y)
@@ -262,7 +267,7 @@ void ContextPointer::store_mouse_cursor_position(int x, int y)
 
 	if (m_keyboardOnlyInput && !m_mouseLeftClickBypassesJog)
 	{
-		QPoint diff = m_globalMousePos - QCursor::pos();
+        QPoint diff = m_jogStartGlobalMousePos - QCursor::pos();
 		if (diff.manhattanLength() > m_jogBypassDistance)
 		{
 			set_keyboard_only_input(false);
@@ -278,7 +283,7 @@ void ContextPointer::set_active_context_items_by_mouse_movement(const QList<Cont
 void ContextPointer::set_active_context_items_by_keyboard_input(const QList<ContextItem *> &items)
 {
 	set_keyboard_only_input(true);
-	m_globalMousePos = QCursor::pos();
+    m_jogStartGlobalMousePos = QCursor::pos();
 
 	set_active_context_items(items);
 }
@@ -340,6 +345,6 @@ void ContextPointer::set_keyboard_only_input(bool keyboardOnly)
 	// from the edit point :)
 	if (!keyboardOnly)
 	{
-		QCursor::setPos(m_globalMousePos);
+        QCursor::setPos(m_jogStartGlobalMousePos);
 	}
 }
