@@ -148,7 +148,7 @@ void TContextHelpWidget::context_changed()
 		{
 			return;
 		}
-		m_textEdit->setHtml(create_html_for_object(items.first()));
+        m_textEdit->setHtml(get_html_for_object(items.first()));
 		m_currentClassName = newClassName;
         }
 }
@@ -161,12 +161,12 @@ void TContextHelpWidget::jog_started()
 
         TCommand* hold = ied().get_holding_command();
         if (hold) {
-                m_textEdit->setHtml(create_html_for_object(hold));
+                m_textEdit->setHtml(get_html_for_object(hold));
 		m_currentClassName = hold->metaObject()->className();
         }
 }
 
-QString TContextHelpWidget::create_html_for_object(QObject *obj)
+QString TContextHelpWidget::get_html_for_object(QObject *obj)
 {
         const QMetaObject* mo = obj->metaObject();
 

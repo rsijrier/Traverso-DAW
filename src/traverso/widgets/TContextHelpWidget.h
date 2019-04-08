@@ -36,7 +36,7 @@ public:
         ~TContextHelpWidget();
 
 private:
-        QString create_html_for_object(QObject* obj);
+        QString get_html_for_object(QObject* obj);
 
         QHash<QString, QString> m_help;
         QTextEdit*              m_textEdit;
