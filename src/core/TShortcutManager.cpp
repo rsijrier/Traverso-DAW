@@ -84,7 +84,7 @@ QString TFunction::getKeySequence()
 		sequenceList << (modifiersString + keyString);
 	}
 
-	sequence = sequenceList.join(" , ");
+    sequence = sequenceList.join(" , ");
 
 	TShortcutManager::makeShortcutKeyHumanReadable(sequence);
 

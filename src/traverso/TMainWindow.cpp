@@ -946,7 +946,7 @@ void TMainWindow::create_menus( )
 	action = menu->addAction(tr("&About Traverso"));
 	connect(action, SIGNAL(triggered(bool)), this, SLOT(about_traverso()));
 
-	set_project_actions_enabled(false);
+    set_project_actions_enabled(false);
 }
 
 void TMainWindow::set_project_actions_enabled(bool enable)
@@ -1065,7 +1065,7 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 
 	if (list.size() == 0) {
 		// Empty menu!
-		return 0;
+        return nullptr;
 	}
 
 	QString name;
@@ -1073,7 +1073,7 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 		name = tShortCutManager().get_translation_for(QString(item->metaObject()->className()));
 	}
 
-	QMenu* menu = new QMenu(this);
+    QMenu* menu = new QMenu(this);
 	menu->installEventFilter(this);
 
 	QAction* menuAction = menu->addAction(name);
@@ -1092,22 +1092,16 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 		// If this MenuData item is a submenu, add to the
 		// list of submenus, which will be processed lateron
 		// Else, add the MenuData item as action in the Menu
-		if ( ! function->submenu.isEmpty() ) {
-			QList<TFunction*>* list;
-			if ( ! submenus.contains(function->submenu)) {
-				submenus.insert(function->submenu, new QList<TFunction*>());
-			}
-			list = submenus.value(function->submenu);
-			list->append(function);
+        if (function->submenu.isEmpty()) {
+            add_function_to_menu(function, menu);
 		} else {
-			QAction* action = new QAction(menu);
-			action->setText(function->getDescription());
-			QKeySequence sequence(function->getKeySequence().remove(" "));
-			action->setShortcut(sequence);
-			QVariant v = qVariantFromValue((void*) function);
-			action->setData(v);
-			menu->addAction(action);
-		}
+            QList<TFunction*>* list;
+            if ( ! submenus.contains(function->submenu)) {
+                submenus.insert(function->submenu, new QList<TFunction*>());
+            }
+            list = submenus.value(function->submenu);
+            list->append(function);
+        }
 	}
 
 	// For all submenus, create the Menu, and add
@@ -1126,23 +1120,26 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 		font.setBold(true);
 		subMenu->menuAction()->setFont(font);
 
-		QAction* action = menu->insertMenu(0, subMenu);
+        QAction* action = menu->insertMenu(nullptr, subMenu);
 		action->setText(tShortCutManager().get_translation_for(key));
 		foreach(TFunction* function, *list) {
-			QAction* action = new QAction(menu);
-			action->setText(function->getDescription());
-			QKeySequence sequence(function->getKeySequence().remove(" "));
-			action->setShortcut(sequence);
-			QVariant v = qVariantFromValue((void*) function);
-			action->setData(v);
-			subMenu->addAction(action);
+            add_function_to_menu(function, subMenu);
 		}
-
-		delete list;
 	}
 
 	return menu;
 }
+
+void TMainWindow::add_function_to_menu(TFunction *function, QMenu *menu)
+{
+    QAction* action = menu->addAction(function->getDescription());
+    QKeySequence sequence(function->getKeySequence().remove(" "));
+    action->setShortcut(sequence);
+    action->setShortcutVisibleInContextMenu(true);
+    QVariant v = qVariantFromValue(static_cast<void*>(function));
+    action->setData(v);
+}
+
 
 void TMainWindow::set_insertsilence_track(AudioTrack* track)
 {

@@ -183,6 +183,7 @@ private:
 
 	
 	void create_menus();
+    void add_function_to_menu(TFunction* function, QMenu* menu);
         void set_project_actions_enabled(bool enable);
 	void save_config_and_emit_message(const QString& message);
         void track_finder_show_initial_text();
