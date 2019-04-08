@@ -122,14 +122,14 @@ void AudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *opt
     qreal xstart = option->exposedRect.x();
     qreal pixelcount = option->exposedRect.width();
 	if (pixelcount < 0.5) {
-                PWARN("AudioClipView::paint : Exposed rectangle has 0 width ????");
-                return;
-        }
+        // apparently this function can be called with no pixelcount to go with
+        // so return here nothing to be done
+        return;
+    }
+    painter->save();
+    painter->setClipRect(m_boundingRect);
 
-        painter->save();
-	painter->setClipRect(m_boundingRect);
-
-	QRectF fillRect = QRectF(xstart, 0.0f, pixelcount, float(m_height));
+    QRectF fillRect = QRectF(xstart, 0.0, pixelcount, qreal(m_height));
 
         if (m_clip->is_readsource_invalid()) {
 		painter->fillRect(fillRect, themer()->get_color("AudioClip:invalidreadsource"));
