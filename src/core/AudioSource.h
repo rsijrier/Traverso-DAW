@@ -36,7 +36,7 @@ class AudioSource : public QObject
 {
 public :
 	AudioSource();
-	AudioSource(const QString& dir, const QString& name);
+	AudioSource(QString  dir, const QString& name);
         virtual ~AudioSource();
 	
 	void set_name(const QString& name);
@@ -56,18 +56,18 @@ public :
 protected:
 	QList<RingBufferNPT<audio_sample_t>*> 	m_buffers;
 	
-	uint		m_bufferSize;
-	uint		m_chunkSize;
+    uint		m_bufferSize{};
+    uint		m_chunkSize{};
 	
-    uint		m_channelCount;
-	qint64		m_origSheetId;
+    uint		m_channelCount{};
+    qint64		m_origSheetId{};
 	QString 	m_dir;
-	qint64		m_id;
+	qint64		m_id{};
 	QString 	m_name;
 	QString		m_shortName;
-	uint		m_origBitDepth;
+    uint		m_origBitDepth{};
 	QString		m_fileName;
-	uint 		m_rate;
+    uint 		m_rate{};
 	int		m_wasRecording;
 };
 

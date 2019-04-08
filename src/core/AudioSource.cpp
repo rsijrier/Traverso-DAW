@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "AudioSource.h"
+
+#include <utility>
 #include "Sheet.h"
 #include "Peak.h"
 #include "Export.h"
@@ -34,8 +36,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 // This constructor is called at file import or recording
-AudioSource::AudioSource(const QString& dir, const QString& name)
-	: m_dir(dir)
+AudioSource::AudioSource(QString  dir, const QString& name)
+	: m_dir(std::move(dir))
 	, m_name(name)
 	, m_shortName(name)
 	, m_wasRecording (false)
