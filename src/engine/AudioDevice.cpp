@@ -153,13 +153,16 @@ AudioDevice& audiodevice()
 AudioDevice::AudioDevice()
 {
 	m_runAudioThread = false;
-        m_driver = 0;
-        m_masterOutBus = 0;
-        m_audioThread = 0;
-	m_bufferSize = 1024;
-        m_rate = 44100;
+    m_driver = nullptr;
+    m_masterOutBus = nullptr;
+    m_audioThread = nullptr;
+    m_bufferSize = 1024;
+    m_rate = 0;
+    m_bitdepth = 0;
 	m_xrunCount = 0;
 	m_cpuTime = new RingBufferNPT<trav_time_t>(4096);
+    m_cycleStartTime = {};
+    m_lastCpuReadTime = {};
 
 	m_driverType = tr("No Driver Loaded");
 
@@ -210,10 +213,7 @@ AudioDevice::~AudioDevice()
 
 	shutdown();
 	
-        if (m_audioThread) {
-                delete m_audioThread;
-	}
-	
+    delete m_audioThread;
 	delete m_cpuTime;
 }
 
@@ -231,8 +231,8 @@ void AudioDevice::set_buffer_size( nframes_t size )
 	Q_ASSERT(size > 0);
 	m_bufferSize = size;
 
-        for (int i=0; i<m_channels.size(); i++) {
-                m_channels.at(i)->set_buffer_size(m_bufferSize);
+        for (auto m_channel : m_channels) {
+                m_channel->set_buffer_size(m_bufferSize);
         }
 
 }
@@ -390,7 +390,7 @@ void AudioDevice::set_parameters(AudioDeviceSetup ads)
 	emit started();
 }
 
-int AudioDevice::create_driver(QString driverType, bool capture, bool playback, const QString& cardDevice)
+int AudioDevice::create_driver(const QString& driverType, bool capture, bool playback, const QString& cardDevice)
 {
     Q_ASSERT(!m_driver);
 
@@ -790,7 +790,7 @@ void AudioDevice::private_remove_client(TAudioDeviceClient* client)
 		printf("AudioDevice:: Client was not in clients list, failed to remove it!\n");
 	}
 
-        m_masterOutBus = 0;
+        m_masterOutBus = nullptr;
         client->set_connected_to_audiodevice(0);
 }
 
@@ -834,11 +834,11 @@ void AudioDevice::audiothread_finished()
 
 void AudioDevice::xrun( )
 {
-	RT_THREAD_EMIT(this, NULL, bufferUnderRun());
+	RT_THREAD_EMIT(this, nullptr, bufferUnderRun());
 	
 	m_xrunCount++;
 	if (m_xrunCount > 30) {
-		RT_THREAD_EMIT(this, NULL, xrunStormDetected());
+		RT_THREAD_EMIT(this, nullptr, xrunStormDetected());
 	}
 }
 
@@ -959,13 +959,13 @@ JackDriver* AudioDevice::slaved_jack_driver()
 		}
 	}
 	
-	return 0;
+	return nullptr;
 }
 #endif
 
 TimeRef AudioDevice::get_buffer_latency()
 {
-	return TimeRef(m_bufferSize, m_rate);
+	return {m_bufferSize, m_rate};
 }
 
 void AudioDevice::set_driver_properties(QHash< QString, QVariant > & properties)
@@ -981,7 +981,7 @@ void AudioDevice::set_driver_properties(QHash< QString, QVariant > & properties)
 #endif
 }
 
-QVariant AudioDevice::get_driver_property(const QString& property, QVariant defaultValue)
+QVariant AudioDevice::get_driver_property(const QString& property, const QVariant& defaultValue)
 {
 	return m_driverProperties.value(property, defaultValue);
 }

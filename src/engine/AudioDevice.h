@@ -170,7 +170,7 @@ private:
 	QHash<QString, QVariant> m_driverProperties;
 
 	int run_one_cycle(nframes_t nframes, float delayed_usecs);
-	int create_driver(QString driverType, bool capture, bool playback, const QString& cardDevice);
+	int create_driver(const QString& driverType, bool capture, bool playback, const QString& cardDevice);
 	int transport_control(transport_state_t state);
 
 	void post_process();
@@ -204,7 +204,7 @@ private:
 	
 	size_t run_audio_thread() const;
 	
-	QVariant get_driver_property(const QString& property, QVariant defaultValue);
+	QVariant get_driver_property(const QString& property, const QVariant& defaultValue);
 
 signals:
 	/**
