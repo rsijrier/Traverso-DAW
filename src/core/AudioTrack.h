@@ -70,9 +70,9 @@ protected:
 private :
         Sheet*          m_sheet;
         APILinkedList 	m_clips;
-        int             m_numtakes;
-        bool            m_isArmed;
-	bool		m_showClipVolumeAutomation;
+        int             m_numtakes{};
+        bool            m_isArmed{};
+	bool		m_showClipVolumeAutomation{};
 
         void set_armed(bool armed);
         void init();
