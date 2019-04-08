@@ -22,6 +22,7 @@ AudioFileCopyConvert.cpp
 AudioFileMerger.cpp
 AudioTrack.cpp
 AudioSource.cpp
+AbstractViewPort.cpp
 TCommand.cpp
 TConfig.cpp
 TShortcutManager.cpp

@@ -148,9 +148,6 @@ void ContextPointer::jog_start()
 {
 	m_globalMousePos = QCursor::pos();
 
-	if (m_port) {
-		m_port->grab_mouse();
-	}
 	m_jogEvent = true;
 	int interval = config().get_property("InputEventDispatcher", "jogupdateinterval", 33).toInt();
 	m_jogTimer.start(interval);
@@ -160,7 +157,6 @@ void ContextPointer::jog_finished()
 {
 	if (m_port) {
 		emit contextChanged();
-		m_port->release_mouse();
 	}
 	m_jogTimer.stop();
 }

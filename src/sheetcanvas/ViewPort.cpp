@@ -130,81 +130,81 @@ bool ViewPort::event(QEvent * event)
 
 void ViewPort::mouseMoveEvent(QMouseEvent* event)
 {
-        PENTER4;
+    PENTER4;
 
-        // tells the context pointer where we are, so command object can 'get' the
-        // scene position in their jog function from cpointer, or view items that
-        // accept mouse hover move 'events'
-	cpointer().store_mouse_cursor_position(event->x(), event->y());
+    // tells the context pointer where we are, so command object can 'get' the
+    // scene position in their jog function from cpointer, or view items that
+    // accept mouse hover move 'events'
+    cpointer().store_mouse_cursor_position(event->x(), event->y());
 
-        if (cpointer().keyboard_only_input()) {
-                event->accept();
-                return;
+    if (cpointer().keyboard_only_input()) {
+        event->accept();
+        return;
+    }
+
+    // Qt generates mouse move events when the scrollbars move
+    // since a mouse move event generates a jog() call for the
+    // active holding command, this has a number of nasty side effects :-(
+    // For now, we ignore such events....
+    if (event->pos() == m_oldMousePos) {
+        return;
+    }
+
+    m_oldMousePos = event->pos();
+
+    QList<ViewItem*> mouseTrackingItems;
+
+    if (!ied().is_holding())
+    {
+        QList<QGraphicsItem *> itemsUnderCursor = scene()->items(mapToScene(event->pos()));
+        QList<ContextItem*> activeContextItems;
+
+        if (itemsUnderCursor.size())
+        {
+            foreach(QGraphicsItem* item, itemsUnderCursor)
+            {
+                if (ViewItem::is_viewitem(item))
+                {
+                    ViewItem* viewItem = static_cast<ViewItem*>(item);
+                    if (!viewItem->ignore_context())
+                    {
+                        activeContextItems.append(viewItem);
+                        if (viewItem->has_mouse_tracking())
+                        {
+                            mouseTrackingItems.append(viewItem);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // If no item is below the mouse, default to default cursor
+            if (m_sv)
+            {
+                m_sv->set_cursor_shape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
+            }
         }
 
-	// Qt generates mouse move events when the scrollbars move
-	// since a mouse move event generates a jog() call for the 
-	// active holding command, this has a number of nasty side effects :-(
-	// For now, we ignore such events....
-	if (event->pos() == m_oldMousePos) {
-		return;
+        // since sheetview has no bounding rect, and should always have 'active context'
+        // add it if it's available
+        if (m_sv) {
+            activeContextItems.append(m_sv);
         }
 
-        m_oldMousePos = event->pos();
+        cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
 
-	QList<ViewItem*> mouseTrackingItems;
+        if (m_sv)
+        {
+            m_sv->set_canvas_cursor_pos(mapToScene(event->pos()));
+        }
+    }
 
-	if (!ied().is_holding())
-	{
-		QList<QGraphicsItem *> itemsUnderCursor = scene()->items(mapToScene(event->pos()));
-		QList<ContextItem*> activeContextItems;
+    foreach(ViewItem* item, mouseTrackingItems) {
+        item->mouse_hover_move_event();
+    }
 
-		if (itemsUnderCursor.size())
-		{
-			foreach(QGraphicsItem* item, itemsUnderCursor)
-			{
-				if (ViewItem::is_viewitem(item))
-				{
-					ViewItem* viewItem = (ViewItem*)item;
-					if (!viewItem->ignore_context())
-					{
-						activeContextItems.append(viewItem);
-						if (viewItem->has_mouse_tracking())
-						{
-							mouseTrackingItems.append(viewItem);
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			// If no item is below the mouse, default to default cursor
-			if (m_sv)
-			{
-				m_sv->set_cursor_shape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
-			}
-		}
-
-		// since sheetview has no bounding rect, and should always have 'active context'
-		// add it if it's available
-		if (m_sv) {
-			activeContextItems.append(m_sv);
-		}
-
-		cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
-
-		if (m_sv)
-		{
-			m_sv->set_canvas_cursor_pos(mapToScene(event->pos()));
-		}
-	}
-
-	foreach(ViewItem* item, mouseTrackingItems) {
-		item->mouse_hover_move_event();
-	}
-
-	event->accept();
+    event->accept();
 }
 
 void ViewPort::tabletEvent(QTabletEvent * event)
@@ -219,7 +219,16 @@ void ViewPort::tabletEvent(QTabletEvent * event)
 
 void ViewPort::enterEvent(QEvent* e)
 {
-	QGraphicsView::enterEvent(e);
+    if (ied().is_holding()) {
+        // we allready have viewport so do nothing
+        printf("enter event while holding\n");
+        if (m_sv) {
+            viewport()->setCursor(Qt::BlankCursor);
+        }
+        return;
+    }
+
+    QGraphicsView::enterEvent(e);
 
 	if (m_sv)
 	{
@@ -236,11 +245,17 @@ void ViewPort::enterEvent(QEvent* e)
 
 void ViewPort::leaveEvent(QEvent *)
 {
-	cpointer().set_current_viewport(0);
+    if (ied().is_holding()) {
+        // we need current viewport, do nothing
+        printf("leave event while holding\n");
+        return;
+    }
+
+    cpointer().set_current_viewport(nullptr);
 	// Force the next mouse move event to do something
-        // even if the mouse didn't move, so switching viewports
-        // does update the current context!
-        m_oldMousePos = QPoint();
+    // even if the mouse didn't move, so switching viewports
+    // does update the current context!
+    m_oldMousePos = QPoint();
 }
 
 void ViewPort::keyPressEvent( QKeyEvent * e)
@@ -303,14 +318,4 @@ void ViewPort::set_holdcursor_pos(QPointF pos)
 void ViewPort::set_current_mode(int mode)
 {
 	m_mode = mode;
-}
-
-void ViewPort::grab_mouse()
-{
-        viewport()->grabMouse();
-}
-
-void ViewPort::release_mouse()
-{
-        viewport()->releaseMouse();
 }

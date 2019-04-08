@@ -55,8 +55,6 @@ public :
 
 	int get_current_mode() const {return m_mode;}
 
-        void grab_mouse();
-        void release_mouse();
         inline QPointF map_to_scene(int x, int y) const {
                 return mapToScene(x, y);
         }
