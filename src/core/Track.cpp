@@ -103,14 +103,12 @@ int Track::set_state( const QDomNode & node )
 {
         QDomElement e = node.toElement();
 
-	m_showTrackVolumeAutomation = e.attribute("showtrackvolumeautomation", 0).toInt();
+        m_showTrackVolumeAutomation = e.attribute("showtrackvolumeautomation", 0).toInt();
 
         m_sortIndex = e.attribute( "sortindex", "-1" ).toInt();
         m_name = e.attribute( "name", "" );
         set_muted(e.attribute( "mute", "" ).toInt());
-        if (e.attribute( "solo", "" ).toInt()) {
-                solo();
-        }
+        set_solo(e.attribute( "solo", "" ).toInt());
         set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
         set_pan( e.attribute( "pan", "" ).toFloat() );
         m_id = e.attribute("id", "0").toLongLong();
@@ -178,11 +176,11 @@ TCommand* Track::solo(  )
 
         // Not all Tracks have a sheet (e.g. Project Master)
         if (!sheet) {
-                return 0;
+                return nullptr;
         }
 
         sheet->solo_track(this);
-        return (TCommand*) 0;
+        return nullptr;
 }
 
 TCommand* Track::toggle_presend()
@@ -191,7 +189,7 @@ TCommand* Track::toggle_presend()
 
 	emit preSendChanged(m_preSendOn);
 
-	return (TCommand*) 0;
+    return  nullptr;
 }
 
 TCommand* Track::toggle_show_track_volume_automation()
@@ -199,7 +197,7 @@ TCommand* Track::toggle_show_track_volume_automation()
 	m_showTrackVolumeAutomation = !m_showTrackVolumeAutomation;
 	emit automationVisibilityChanged();
 
-	return (TCommand*) 0;
+    return nullptr;
 }
 
 bool Track::is_solo()
