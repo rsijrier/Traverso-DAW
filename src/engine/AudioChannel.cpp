@@ -52,7 +52,8 @@ AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, qi
         m_monitoring = true;
         m_buffer = nullptr;
         m_bufferSize = 0;
-        mlocked = 0;
+        mlocked = false;
+        m_latency = 0;
         if (id == 0) {
                 m_id = create_id();
         } else {
@@ -86,13 +87,11 @@ void AudioChannel::set_buffer_size( nframes_t size )
                 if (munlock (m_buffer, m_bufferSize) == -1) {
                 	PERROR("Couldn't lock buffer into memory");
 				}
-                mlocked = 0;
+                mlocked = false;
         }
 #endif /* USE_MLOCK */
 
-        if (m_buffer) {
-                delete [] m_buffer;
-        }
+        delete [] m_buffer;
 
         m_buffer = new audio_sample_t[size];
         m_bufferSize = size;
@@ -102,7 +101,7 @@ void AudioChannel::set_buffer_size( nframes_t size )
         if (mlock (m_buffer, size) == -1) {
         	PERROR("Couldn't lock buffer into memory");
         }
-        mlocked = 1;
+        mlocked = true;
 #endif /* USE_MLOCK */
 }
 
