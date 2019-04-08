@@ -39,8 +39,8 @@ public:
         TAudioDeviceClient(const QString& name);
         ~TAudioDeviceClient();
 
-	void set_process_callback(ProcessCallback call);
-	void set_transport_control_callback(TransportControlCallback call);
+	void set_process_callback(const ProcessCallback& call);
+	void set_transport_control_callback(const TransportControlCallback& call);
 	bool is_smaller_then(APILinkedListNode* ) {return false;}
         int is_connected() const {return m_isConnected;}
 	void set_connected_to_audiodevice(int connected) {
@@ -57,7 +57,7 @@ public:
 	TransportControlCallback transport_control;
 	
 	QString		m_name;
-        AudioBus*       masterOutBus;
+        AudioBus*       masterOutBus{};
 
 private:
         int     m_isConnected;

@@ -66,12 +66,12 @@ TAudioDeviceClient::~ TAudioDeviceClient( )
  *
  * @param call The FastDelegate \a call to use as the callback function 
  */
-void TAudioDeviceClient::set_process_callback( ProcessCallback call)
+void TAudioDeviceClient::set_process_callback( const ProcessCallback& call)
 {
 	process = call;
 }
 
-void TAudioDeviceClient::set_transport_control_callback(TransportControlCallback callback)
+void TAudioDeviceClient::set_transport_control_callback(const TransportControlCallback& callback)
 {
 	transport_control = callback;
 }
