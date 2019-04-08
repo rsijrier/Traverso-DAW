@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "ProcessingData.h"
 
+#include <cmath>
+
 #include "AudioClip.h"
 #include "AudioClipManager.h"
 #include "PluginChain.h"
@@ -43,7 +45,7 @@ ProcessingData::ProcessingData(TSession *session)
                 m_pluginChain = new PluginChain(this);
         }
 
-        m_processBus = 0;
+        m_processBus = nullptr;
         m_isMuted = false;
         m_pan = 0.0f;
         m_maxGainAmplification = 2.0f;
@@ -70,7 +72,7 @@ void ProcessingData::set_pan(float pan)
                 }
         }
 
-        if (fabs(pan) < std::numeric_limits<float>::epsilon()) {
+        if (std::fabs(pan) < std::numeric_limits<float>::epsilon()) {
                 m_pan = 0.0f;
         }
 
