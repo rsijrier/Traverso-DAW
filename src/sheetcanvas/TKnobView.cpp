@@ -179,7 +179,6 @@ TGainKnobView::TGainKnobView(ViewItem* parent, Track* track)
 
 void TGainKnobView::track_gain_changed()
 {
-    float db = coefficient_to_dB(m_track->get_gain());
-    set_value(m_track->get_gain());
+    set_value(double(m_track->get_gain()));
 }
 
