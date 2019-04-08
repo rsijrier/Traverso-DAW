@@ -69,8 +69,8 @@ Peak::Peak(AudioSource* source)
 		
 		data->fileName = sourcename + "-ch" + QByteArray::number(chan) + ".peak";
 		data->fileName.prepend(path);
-		data->pd = 0;
-		data->peakreader = 0;
+		data->pd = nullptr;
+		data->peakreader = nullptr;
 		
 		m_channelData.append(data);
 	}
@@ -83,7 +83,7 @@ Peak::Peak(AudioSource* source)
 	} else {
 		// No ReadSource object? Then it's created by WriteSource for on the fly
 		// peak data creation, no m_source needed!
-		m_source = 0;
+		m_source = nullptr;
 	}
 }
 
@@ -91,9 +91,9 @@ Peak::~Peak()
 {
 	PENTERDES;
 	
-	if (m_source) {
+	
 		delete m_source;
-	}
+	
 	
 	foreach(ChannelData* data, m_channelData) {
 		if (data->normFile.isOpen()) {
@@ -110,9 +110,9 @@ Peak::~Peak()
 		}
 #endif
 #endif
-		if (data->peakreader) {
+		
 			delete data->peakreader;
-		}
+		
 		delete data;
 	}
 }
@@ -297,7 +297,7 @@ int Peak::calculate_peaks(
 		return produced;
 
 	// Micro view mode
-	} else {
+	} 
 		// Calculate the amount of frames to be read
                 nframes_t toRead = qRound(peakDataCount * framesPerPeak * qreal(m_source->get_file_rate()) / qreal(44100));
 		
@@ -366,7 +366,7 @@ int Peak::calculate_peaks(
 		*buffer = peakdata;
 		
 		return count;
-	}
+	
 
 	return 0;
 }
@@ -519,7 +519,7 @@ int Peak::finish_processing()
 		
 		delete [] saveBuffer;
 		delete data->pd;
-		data->pd = 0;
+		data->pd = nullptr;
 		
 	}
 	
@@ -530,7 +530,7 @@ int Peak::finish_processing()
 }
 
 
-void Peak::process(uint channel, audio_sample_t* buffer, nframes_t nframes)
+void Peak::process(uint channel, const audio_sample_t* buffer, nframes_t nframes)
 {
 	ChannelData* data = m_channelData.at(channel);
 	ProcessData* pd = data->pd;
@@ -703,7 +703,7 @@ audio_sample_t Peak::get_max_amplitude(TimeRef startlocation, TimeRef endlocatio
 	// at the right hand part and run compute_peak on it.
 	float f = (float) endframe / NORMALIZE_CHUNK_SIZE;
 	int endpos = (int) f;
-	int toRead = (int) ((f - (endframe / NORMALIZE_CHUNK_SIZE)) * NORMALIZE_CHUNK_SIZE);
+    int toRead = (int) ((f - (endframe / float(NORMALIZE_CHUNK_SIZE))) * NORMALIZE_CHUNK_SIZE);
 	int read = m_source->file_read(&decodebuffer, endframe - toRead, toRead);
 	
 	if (read > 0) {
@@ -912,11 +912,12 @@ nframes_t PeakDataReader::read(DecodeBuffer* buffer, nframes_t count)
 	
 	Q_ASSERT(m_d->file.isOpen());
 	
-	int framesRead = 0;
+    qint64 framesRead = 0;
 	peak_data_t* readbuffer;
 	
-	framesRead = m_d->file.read((char*)buffer->readBuffer, sizeof(peak_data_t) * count) / sizeof(peak_data_t);
-	readbuffer = (peak_data_t*)(buffer->readBuffer);
+    qint64 length = sizeof(peak_data_t) * count;
+    framesRead = m_d->file.read(reinterpret_cast<char*>(buffer->readBuffer), length) / qint64(sizeof(peak_data_t));
+    readbuffer = reinterpret_cast<peak_data_t*>(buffer->readBuffer);
 
 	for (int f = 0; f < framesRead; f++) {
 		buffer->destination[0][f] = float(readbuffer[f]);
@@ -924,7 +925,7 @@ nframes_t PeakDataReader::read(DecodeBuffer* buffer, nframes_t count)
 	
 	m_readPos += framesRead;
 	
-	return framesRead;
+    return nframes_t(framesRead);
 }
 
 void Peak::calculate_lut_data()
@@ -953,7 +954,7 @@ int Peak::max_zoom_value()
 
 Peak::ChannelData::~ ChannelData()
 {
-	if (peakdataDecodeBuffer) {
+	
 		delete peakdataDecodeBuffer;
-	}
+	
 }
