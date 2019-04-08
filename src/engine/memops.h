@@ -68,12 +68,12 @@ void sample_move_dither_tri_d16_sSs      (char *dst, audio_sample_t *src, unsign
 void sample_move_dither_shaped_d16_sS    (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state);
 void sample_move_dither_shaped_d16_sSs   (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state);
 
-void sample_move_dS_s32u24s          (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
-void sample_move_dS_s32u24           (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
-void sample_move_dS_s24              (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
-void sample_move_dS_s24s             (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
-void sample_move_dS_s16              (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
-void sample_move_dS_s16s             (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s32u24s          (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s32u24           (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s24              (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s24s             (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s16              (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
+void sample_move_dS_s16s             (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip);
 
 void sample_merge_d16_sS             (char *dst,  audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state);
 void sample_merge_d32u24_sS          (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state);
@@ -97,17 +97,17 @@ sample_memcpy (audio_sample_t *dst, audio_sample_t *src, unsigned long cnt)
 }
 
 void memset_interleave               (char *dst, char val, unsigned long bytes, unsigned long unit_bytes, unsigned long skip_bytes);
-void memcpy_fake                     (char *dst, char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
+void memcpy_fake                     (char *dst, const char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
 
-void memcpy_interleave_d16_s16       (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
-void memcpy_interleave_d24_s24       (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
-void memcpy_interleave_d32_s32       (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void memcpy_interleave_d16_s16       (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void memcpy_interleave_d24_s24       (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void memcpy_interleave_d32_s32       (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
 
-void merge_memcpy_interleave_d16_s16 (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
-void merge_memcpy_interleave_d24_s24 (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
-void merge_memcpy_interleave_d32_s32 (char *dst, char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void merge_memcpy_interleave_d16_s16 (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void merge_memcpy_interleave_d24_s24 (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
+void merge_memcpy_interleave_d32_s32 (char *dst, const char *src, unsigned long src_bytes, unsigned long dst_skip_bytes, unsigned long src_skip_bytes);
 
-void merge_memcpy_d16_s16            (char *dst, char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
-void merge_memcpy_d32_s32            (char *dst, char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
+void merge_memcpy_d16_s16            (char *dst, const char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
+void merge_memcpy_d32_s32            (char *dst, const char *src, unsigned long src_bytes, unsigned long foo, unsigned long bar);
 
 #endif /* __jack_memops_h__ */

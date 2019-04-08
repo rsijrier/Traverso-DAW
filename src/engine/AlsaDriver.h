@@ -150,7 +150,7 @@ private:
 
 
 	typedef void (*ReadCopyFunction)  (	audio_sample_t *dst,
-					char *src,
+                    const char *src,
 					unsigned long src_bytes,
 					unsigned long src_skip_bytes
 					);
@@ -161,7 +161,7 @@ private:
 					dither_state_t *state
 					);
 	typedef void (*CopyCopyFunction)  (	char *dst,
-					char *src,
+                    const char *src,
 					unsigned long src_bytes,
 					unsigned long dst_skip_bytes,
 					unsigned long src_skip_byte

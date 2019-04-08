@@ -24,12 +24,12 @@
 #define __USE_ISOC9X    1
 #define __USE_ISOC99    1
 
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
 #include <memory.h>
-#include <stdlib.h>
-#include <limits.h>
+#include <cstdlib>
+#include <climits>
 
 #include <memops.h> 
 
@@ -46,7 +46,7 @@ inline unsigned int fast_rand() {
 	return seed;
 } 
 
-void sample_move_d32u24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_d32u24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 
 {
 	long long y;
@@ -97,7 +97,7 @@ void sample_move_d32u24_sS (char *dst, audio_sample_t *src, unsigned long nsampl
 	}
 }	
 
-void sample_move_dS_s32u24 (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip)
+void sample_move_dS_s32u24 (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip)
 {
 	/* ALERT: signed sign-extension portability !!! */
 
@@ -162,7 +162,7 @@ void sample_move_dither_tri_d32u24_sS (char *dst,  audio_sample_t *src, unsigned
 	state->rm1 = rm1;
 }
 
-void sample_move_dS_s32u24s (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip)
+void sample_move_dS_s32u24s (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip)
 {
 	/* ALERT: signed sign-extension portability !!! */
 
@@ -239,7 +239,7 @@ void sample_move_dither_shaped_d32u24_sS (char *dst,  audio_sample_t *src, unsig
 	state->idx = idx;
 }
 
-void sample_move_dither_rect_d32u24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_dither_rect_d32u24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 
 {
 	/* ALERT: signed sign-extension portability !!! */
@@ -401,7 +401,7 @@ void sample_move_d24_sS (char *dst, audio_sample_t *src, unsigned long nsamples,
 	}
 }	
 
-void sample_move_d24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_d24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 
 {
 	long long y;
@@ -431,7 +431,7 @@ void sample_move_d24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples
 	}
 }	
 
-void sample_move_dS_s24 (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip)
+void sample_move_dS_s24 (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip)
 {
 	/* ALERT: signed sign-extension portability !!! */
 
@@ -479,7 +479,7 @@ void sample_move_dither_rect_d24_sS (char *dst, audio_sample_t *src, unsigned lo
 	}
 }	
 
-void sample_move_dS_s24s (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip)
+void sample_move_dS_s24s (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip)
 {
 	/* ALERT: signed sign-extension portability !!! */
 
@@ -514,7 +514,7 @@ void sample_move_dS_s24s (audio_sample_t *dst, char *src, unsigned long nsamples
 
 
 
-void sample_move_dither_rect_d24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_dither_rect_d24_sSs (char *dst, audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 
 {
 	/* ALERT: signed sign-extension portability !!! */
@@ -755,7 +755,7 @@ void sample_move_d16_sS (char *dst,  audio_sample_t *src, unsigned long nsamples
 	}
 }
 
-void sample_move_dither_rect_d16_sSs (char *dst,  audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_dither_rect_d16_sSs (char *dst,  audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 	
 {
 	audio_sample_t val;
@@ -917,7 +917,7 @@ void sample_move_dither_shaped_d16_sSs (char *dst,  audio_sample_t *src, unsigne
 	state->idx = idx;
 }
 
-void sample_move_dS_s16s (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip) 
+void sample_move_dS_s16s (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip) 
 	
 {
 	short z;
@@ -939,7 +939,7 @@ void sample_move_dS_s16s (audio_sample_t *dst, char *src, unsigned long nsamples
 	}
 }	
 
-void sample_move_d16_sSs (char *dst,  audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t *state)
+void sample_move_d16_sSs (char *dst,  audio_sample_t *src, unsigned long nsamples, unsigned long dst_skip, dither_state_t * /*state*/)
 	
 {
 	int tmp;
@@ -1011,7 +1011,7 @@ void sample_move_dither_shaped_d16_sS (char *dst,  audio_sample_t *src, unsigned
 	state->idx = idx;
 }
 
-void sample_move_dS_s16 (audio_sample_t *dst, char *src, unsigned long nsamples, unsigned long src_skip) 
+void sample_move_dS_s16 (audio_sample_t *dst, const char *src, unsigned long nsamples, unsigned long src_skip) 
 	
 {
 	/* ALERT: signed sign-extension portability !!! */
@@ -1098,13 +1098,13 @@ void memset_interleave (char *dst, char val, unsigned long bytes,
 */
 
 void 
-memcpy_fake (char *dst, char *src, unsigned long src_bytes, unsigned long , unsigned long )
+memcpy_fake (char *dst, const char *src, unsigned long src_bytes, unsigned long , unsigned long )
 {
 	memcpy (dst, src, src_bytes);
 }
 
 void 
-merge_memcpy_d16_s16 (char *dst, char *src, unsigned long src_bytes,
+merge_memcpy_d16_s16 (char *dst, const char *src, unsigned long src_bytes,
 		      unsigned long , unsigned long )
 {
 	while (src_bytes) {
@@ -1116,7 +1116,7 @@ merge_memcpy_d16_s16 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-merge_memcpy_d32_s32 (char *dst, char *src, unsigned long src_bytes,
+merge_memcpy_d32_s32 (char *dst, const char *src, unsigned long src_bytes,
 		      unsigned long , unsigned long )
 
 {
@@ -1129,7 +1129,7 @@ merge_memcpy_d32_s32 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-merge_memcpy_interleave_d16_s16 (char *dst, char *src, unsigned long src_bytes, 
+merge_memcpy_interleave_d16_s16 (char *dst, const char *src, unsigned long src_bytes, 
 				 unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 
 {
@@ -1142,7 +1142,7 @@ merge_memcpy_interleave_d16_s16 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-merge_memcpy_interleave_d32_s32 (char *dst, char *src, unsigned long src_bytes,
+merge_memcpy_interleave_d32_s32 (char *dst, const char *src, unsigned long src_bytes,
 				 unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 {
 	while (src_bytes) {
@@ -1154,7 +1154,7 @@ merge_memcpy_interleave_d32_s32 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-merge_memcpy_interleave_d24_s24 (char *dst, char *src, unsigned long src_bytes,
+merge_memcpy_interleave_d24_s24 (char *dst, const char *src, unsigned long src_bytes,
 				 unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 {
 	while (src_bytes) {
@@ -1167,7 +1167,7 @@ merge_memcpy_interleave_d24_s24 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-memcpy_interleave_d16_s16 (char *dst, char *src, unsigned long src_bytes,
+memcpy_interleave_d16_s16 (char *dst, const char *src, unsigned long src_bytes,
 			   unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 {
 	while (src_bytes) {
@@ -1179,7 +1179,7 @@ memcpy_interleave_d16_s16 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-memcpy_interleave_d24_s24 (char *dst, char *src, unsigned long src_bytes,
+memcpy_interleave_d24_s24 (char *dst, const char *src, unsigned long src_bytes,
 			   unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 
 {
@@ -1192,7 +1192,7 @@ memcpy_interleave_d24_s24 (char *dst, char *src, unsigned long src_bytes,
 }
 
 void 
-memcpy_interleave_d32_s32 (char *dst, char *src, unsigned long src_bytes,
+memcpy_interleave_d32_s32 (char *dst, const char *src, unsigned long src_bytes,
 			   unsigned long dst_skip_bytes, unsigned long src_skip_bytes)
 
 {
