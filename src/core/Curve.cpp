@@ -193,8 +193,8 @@ void Curve::solve ()
 		i = 0;
         for(APILinkedListNode* node = m_nodes.first(); node!=nullptr; node = node->next, ++i) {
             cn = static_cast<CurveNode*>(node);
-			x[i] = cn->when;
-			y[i] = cn->value;
+            x[i] = cn->when;
+            y[i] = cn->value;
 		}
 
 		double lp0, lp1, fpone;
@@ -213,14 +213,11 @@ void Curve::solve ()
 		i = 0;
         for(APILinkedListNode* node = m_nodes.first(); node!=nullptr; node = node->next, ++i) {
 			
-            cn = static_cast<CurveNode*>(node);
-			
+            cn = dynamic_cast<CurveNode*>(node);
+
             if (cn == nullptr) {
-/*				qCritical  << _("programming error: ")
-				<< X_("non-CurvePoint event found in event list for a Curve")
-				<< endmsg;*/
-				/*NOTREACHED*/
-			}
+                qFatal("programming error: non-CurvePoint event found in event list for a Curve");
+            }
 			
 			double xdelta;   /* gcc is wrong about possible uninitialized use */
 			double xdelta2;  /* ditto */
@@ -279,7 +276,7 @@ void Curve::solve ()
 
 			d = (fppR - fppL) / (6 * xdelta);   
 			c = ((x[i] * fppL) - (x[i-1] * fppR))/(2 * xdelta);
-			
+
 			double xim12, xim13;
 			double xi2, xi3;
 			
@@ -291,13 +288,13 @@ void Curve::solve ()
 			b = (ydelta - (c * (xi2 - xim12)) - (d * (xi3 - xim13))) / xdelta;
 
 			/* store */
-			
-			cn->coeff[0] = y[i-1] - (b * x[i-1]) - (c * xim12) - (d * xim13);
-			cn->coeff[1] = b;
-			cn->coeff[2] = c;
-			cn->coeff[3] = d;
 
-			fplast = fpi;
+            cn->coeff[0] = y[i-1] - (b * x[i-1]) - (c * xim12) - (d * xim13);
+            cn->coeff[1] = b;
+            cn->coeff[2] = c;
+            cn->coeff[3] = d;
+
+            fplast = fpi;
 		}
 	}
 
@@ -307,7 +304,7 @@ void Curve::solve ()
 
 void Curve::get_vector (double x0, double x1, float *vec, nframes_t veclen)
 {
-	double rx, dx, lx, hx, max_x, min_x;
+    double rx, dx, lx, hx, max_x, min_x;
     nframes_t i;
     nframes_t original_veclen;
 	int32_t npoints;
@@ -425,11 +422,11 @@ void Curve::get_vector (double x0, double x1, float *vec, nframes_t veclen)
 		return;
 	}
 
-	if (m_changed) {
+    if (m_changed) {
 		solve ();
 	}
 
-	rx = lx;
+    rx = lx;
 
 	if (veclen > 1) {
 

@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class APILinkedListNode
 {
 public:
-	APILinkedListNode () : next(0) {}
+    APILinkedListNode () : next(nullptr) {}
 	virtual ~APILinkedListNode () {}
 	APILinkedListNode* next;
 	virtual bool is_smaller_then(APILinkedListNode* node) = 0;
@@ -40,7 +40,7 @@ public:
 class APILinkedList
 {
 public:
-	APILinkedList() : m_size(0), m_head(0), m_last(0) {}
+    APILinkedList() : m_size(0), m_head(nullptr), m_last(nullptr) {}
 	~APILinkedList() {}
 	
 	void append(APILinkedListNode* item);
@@ -51,7 +51,7 @@ public:
 	APILinkedListNode* first() const {return m_head;}
 	APILinkedListNode* last() const {return m_last;}
 	int size() const {return m_size;}
-	void clear() {m_head = 0; m_last = 0; m_size=0;}
+    void clear() {m_head = nullptr; m_last = nullptr; m_size=0;}
 	void sort(APILinkedListNode* node);
 	bool isEmpty() {return m_size == 0 ? true : false;}
 	int indexOf(APILinkedListNode* node);
@@ -73,7 +73,7 @@ inline void APILinkedList::prepend(APILinkedListNode * item)
 	m_head = item;
 	if (!m_size) {
 		m_last = item;
-		m_last->next = 0;
+        m_last->next = nullptr;
 	}
 	m_size++;
 	Q_ASSERT(m_last == slow_last());
@@ -90,7 +90,7 @@ inline void APILinkedList::append(APILinkedListNode * item)
 		m_last = item;
 	}
 	
-	m_last->next = 0;
+    m_last->next = nullptr;
 	m_size++;
 	
 	Q_ASSERT(m_last == slow_last());
@@ -109,7 +109,7 @@ inline int APILinkedList::remove(APILinkedListNode * item)
 		m_head = m_head->next;
 		m_size--;
 		if (m_size == 0) {
-			m_last = m_head = 0;
+            m_last = m_head = nullptr;
 		}
 		Q_ASSERT(m_last == slow_last());
 		return 1;
@@ -119,13 +119,13 @@ inline int APILinkedList::remove(APILinkedListNode * item)
 	r = m_head;
 	q = m_head->next;
 	
-	while( q!=0 ) {
+    while( q!=nullptr ) {
 		if( q == item ) {
 			r->next = q->next;
 			m_size--;
 			if (!q->next) {
 				m_last = r;
-				m_last->next = 0;
+                m_last->next = nullptr;
 			}
 			Q_ASSERT(m_last == slow_last());
 			return 1;
@@ -152,7 +152,7 @@ inline void APILinkedList::insert(APILinkedListNode* after, APILinkedListNode* i
 	
 	if (after == m_last) {
 		m_last = item;
-		m_last->next = 0;
+        m_last->next = nullptr;
 	}
 	m_size++;
 	
@@ -163,7 +163,7 @@ inline void APILinkedList::insert(APILinkedListNode* after, APILinkedListNode* i
 inline APILinkedListNode * APILinkedList::slow_last() const
 {
 	if (!m_size) {
-		return 0;
+        return nullptr;
 	}
 	
 	APILinkedListNode* last = m_head;
@@ -229,7 +229,7 @@ inline APILinkedListNode * APILinkedList::at(int i)
 		q = q->next;
 		++loopcounter;
 	}
-	return 0;
+    return nullptr;
 }
 
 inline void APILinkedList::sort(APILinkedListNode* node)
