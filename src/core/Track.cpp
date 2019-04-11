@@ -349,13 +349,25 @@ void Track::remove_post_sends(QList<qint64> sendIds)
         }
 
         foreach(TSend* send, sendsToBeRemoved) {
-                if (!m_session || (m_session && m_session->is_transport_rolling())) {
-                        THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, send, private_remove_post_send(TSend*), routingConfigurationChanged())
-                } else {
-                        private_remove_post_send(send);
-                        emit routingConfigurationChanged();
-                }
+            remove_post_send(send);
         }
+}
+
+void Track::remove_post_send(TSend *send)
+{
+    if (!m_session || (m_session && m_session->is_transport_rolling())) {
+        THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, send, private_remove_post_send(TSend*), routingConfigurationChanged())
+    } else {
+        private_remove_post_send(send);
+        emit routingConfigurationChanged();
+    }
+}
+
+void Track::remove_all_post_sends()
+{
+    apill_foreach(TSend* send, TSend*, m_postSends) {
+        remove_post_send(send);
+    }
 }
 
 void Track::remove_pre_sends(QList<qint64> sendIds)

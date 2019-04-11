@@ -67,6 +67,8 @@ public:
         void add_post_send(AudioBus* bus);
         void add_pre_send(qint64 busId);
         void remove_post_sends(QList<qint64> sendIds);
+        void remove_all_post_sends();
+        void remove_post_send(TSend* send);
         void remove_pre_sends(QList<qint64> sendIds);
         void add_input_bus(qint64 busId);
 
