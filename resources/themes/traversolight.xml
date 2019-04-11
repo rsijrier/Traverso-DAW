@@ -144,7 +144,7 @@
         <color alpha="255" red="237" blue="250" name="TrackPanel:bus:background" green="237"/>
         <color alpha="255" red="255" blue="255" name="PanSlider:0" green="255"/>
         <color alpha="255" red="90" blue="90" name="AudioClip:wavemacroview:outline:muted" green="90"/>
-        <color alpha="100" red="150" blue="251" name="BusTrack:background" green="150"/>
+        <color alpha="40" red="150" blue="251" name="BusTrack:background" green="150"/>
         <color alpha="255" red="255" blue="0" name="PanSlider:1" green="0"/>
         <color alpha="255" red="243" blue="255" name="ResourcesBin:alternaterowcolor" green="248"/>
         <color alpha="255" red="255" blue="0" name="FFTMeter:curve:average" green="0"/>
@@ -155,6 +155,8 @@
         <color alpha="200" red="240" blue="218" name="AudioClip:clipinfobackground" green="190"/>
         <color alpha="255" red="255" blue="255" name="VUMeter:background:widget" green="255"/>
         <color alpha="180" red="255" blue="0" name="Playhead:active" green="0"/>
+        <color alpha="255" red="207" blue="255" name="TrackPanel:header:background" green="207"/>
+
     </colors>
     <gradients>
         <gradient name="CorrelationMeter:foreground">

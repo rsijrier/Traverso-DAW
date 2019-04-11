@@ -113,7 +113,7 @@ TrackPanelView::TrackPanelView(TrackView* view)
     INDENT = 10;
     PANEL_ITEM_SPACING = 16;
     VU_WIDTH = 8;
-    LED_Y_POS = int(m_trackNameView->boundingRect().height()) + PANEL_ITEM_SPACING;
+    LED_Y_POS = int(m_trackNameView->pos().y() + m_trackNameView->boundingRect().height()) + PANEL_ITEM_SPACING;
     VUMETER_Y_POS = LED_Y_POS + LED_HEIGHT + PANEL_ITEM_SPACING;
 
     connect(m_track, SIGNAL(soloChanged(bool)), m_soloLed, SLOT(ison_changed(bool)));
@@ -163,10 +163,10 @@ void TrackPanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
 
         if (m_trackView->m_bottomborderwidth > 0) {
                 QColor color = themer()->get_color("Track:clipbottomoffset");
-		painter->fillRect(xstart, m_trackView->get_total_height() - m_trackView->m_bottomborderwidth, pixelcount, m_trackView->m_bottomborderwidth, color);
+            painter->fillRect(xstart, m_trackView->get_total_height() - m_trackView->m_bottomborderwidth, pixelcount, m_trackView->m_bottomborderwidth, color);
         }
 
-        painter->fillRect(m_viewPort->width() - 3, 0, 3, m_trackView->get_total_height() - 1, themer()->get_color("TrackPanel:trackseparation"));
+        painter->fillRect(m_viewPort->width() - 1, 0, 1, m_trackView->get_total_height() - 1, themer()->get_color("Track:clipbottomoffset"));
 }
 
 void TrackPanelView::update_name()
@@ -183,6 +183,8 @@ void TrackPanelView::calculate_bounding_rect()
 
 void TrackPanelView::layout_panel_items()
 {
+    m_trackNameView->setPos(2, 2);
+
     qreal height =  m_boundingRect.height();
 
     Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
