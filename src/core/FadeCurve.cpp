@@ -91,7 +91,7 @@ void FadeCurve::init()
 		QPointF p = get_curve_point(f);
 		
 		CurveNode* node = new CurveNode(this, p.x(), p.y());
-		AddRemove* cmd = (AddRemove*) add_node(node, false);
+        AddRemove* cmd = (AddRemove*) add_node(node, false);
 		cmd->set_instantanious(true);
 		TCommand::process_command(cmd);
 		

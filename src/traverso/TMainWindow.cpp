@@ -92,10 +92,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class HistoryWidget : public QUndoView
 {
 public:
-	HistoryWidget(QUndoGroup* group, QWidget* parent)
-		: QUndoView(group, parent)
-	{
-	}
+    HistoryWidget(QUndoGroup* group, QWidget* parent);
+    ~HistoryWidget();
 
 protected:
 	QSize sizeHint() const {
@@ -106,6 +104,16 @@ protected:
 		return QSize(90, 90);
 	}
 };
+
+HistoryWidget::HistoryWidget(QUndoGroup *group, QWidget *parent)
+    : QUndoView(group, parent)
+{
+}
+
+HistoryWidget::~HistoryWidget()
+{
+
+}
 
 
 TMainWindow* TMainWindow::m_instance = 0;
@@ -1157,8 +1165,7 @@ void TMainWindow::select_fade_in_shape( )
 		connect(menu, SIGNAL(triggered(QAction*)), this, SLOT(set_fade_in_shape(QAction*)));
 	}
 
-
-	menu->exec(QCursor::pos());
+    menu->popup(QCursor::pos());
 }
 
 void TMainWindow::select_fade_out_shape( )
@@ -1170,8 +1177,7 @@ void TMainWindow::select_fade_out_shape( )
 		connect(menu, SIGNAL(triggered(QAction*)), this, SLOT(set_fade_out_shape(QAction*)));
 	}
 
-
-	menu->exec(QCursor::pos());
+    menu->popup(QCursor::pos());
 }
 
 
