@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "NewTrackDialog.h"
 #include <QPushButton>
 #include <QRadioButton>
-#include <QComboBox>
 
 #include "AudioDevice.h"
 #include "AudioBus.h"
@@ -47,12 +46,15 @@ NewTrackDialog::NewTrackDialog(QWidget * parent)
     monoRadioButton->setChecked(true);
     reset_information_label();
     m_timer.setSingleShot(true);
+    m_completer.setFilterMode(Qt::MatchContains);
+    m_completer.setCaseSensitivity(Qt::CaseInsensitive);
 
     connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
     connect(closeButton, SIGNAL(clicked()), this, SLOT(close_clicked()));
     connect(addTrackBusButton, SIGNAL(clicked()), this, SLOT(create_track()));
     connect(isBusTrack, SIGNAL(toggled(bool)), this, SLOT(update_buses_comboboxes()));
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(reset_information_label()));
+    connect(trackName, SIGNAL(textChanged(const QString&)), SLOT(update_completer(const QString&)));
 }
 
 void NewTrackDialog::showEvent(QShowEvent */*event*/)
@@ -119,11 +121,16 @@ void NewTrackDialog::create_track()
                 if (audioTrack) {
                     track->add_input_bus(item->text());
                 }
+                // If new track is a Bus Track, and the selected item is an AudioTrack
+                // then we route AudioTrack to this Bus by adding Bus to the post send
+                // of AudioTrack.
+                // If AudioTrack already had any post sends then we remove it by default here
                 if (busTrack) {
                     qint64 audioTrackId = item->data(Qt::UserRole).toLongLong();
-                    Track* sender = pm().get_project()->get_track(audioTrackId);
-                    if (sender) {
-                        sender->add_post_send(busTrack->get_process_bus());
+                    AudioTrack* inputAudioTrack = qobject_cast<AudioTrack*>(pm().get_project()->get_track(audioTrackId));
+                    if (inputAudioTrack) {
+                        inputAudioTrack->remove_all_post_sends();
+                        inputAudioTrack->add_post_send(busTrack->get_process_bus());
                     }
                 }
             }
@@ -143,8 +150,27 @@ void NewTrackDialog::create_track()
         m_timer.start(2000);
 
         trackName->setFocus();
-        trackName->selectAll();
-        routingInputListWidget->setCurrentRow(-1);
+        trackName->setText("");
+}
+
+void NewTrackDialog::update_completer(const QString &text)
+{
+    routingInputListWidget->setCurrentRow(-1, QItemSelectionModel::Clear);
+
+    if (text.isEmpty()) {
+        return;
+    }
+
+    m_completer.setCompletionPrefix(text);
+
+    for (int i = 0; m_completer.setCurrentRow(i); i++) {
+        for(int j = 0; j < routingInputListWidget->count(); ++j) {
+            QListWidgetItem* item = routingInputListWidget->item(j);
+            if (item->text() == m_completer.currentCompletion()) {
+                routingInputListWidget->setCurrentRow(j, QItemSelectionModel::Select);
+            }
+        }
+    }
 }
 
 void NewTrackDialog::set_project(Project * project)
@@ -152,7 +178,6 @@ void NewTrackDialog::set_project(Project * project)
 	m_project = project;
 }
 
-#include <QMenu>
 void NewTrackDialog::update_buses_comboboxes()
 {
         routingInputListWidget->clear();
@@ -220,7 +245,9 @@ void NewTrackDialog::update_buses_comboboxes()
             routingInputListWidget->setCurrentRow(0);
         }
         routingOutputListWidget->setCurrentRow(1);
+        m_completer.setModel(routingInputListWidget->model());
 
+        update_completer(trackName->text());
 }
 
 void NewTrackDialog::update_driver_info()

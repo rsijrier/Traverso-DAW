@@ -25,17 +25,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "ui_NewTrackDialog.h"
 
 #include <QDialog>
+#include <QCompleter>
 #include <QTimer>
 
 class Project;
 class QAbstractButton;
+class QCompleter;
 
 class NewTrackDialog : public QDialog, protected Ui::NewTrackDialog
 {
 	Q_OBJECT
 
 public:
-	NewTrackDialog(QWidget* parent = 0);
+    NewTrackDialog(QWidget* parent = nullptr);
         ~NewTrackDialog() {}
 
 protected:
@@ -44,8 +46,8 @@ protected:
 
 private:
 	Project* m_project;
-        QTimer  m_timer;
-
+        QTimer      m_timer;
+        QCompleter  m_completer;
         void update_driver_info();
 
 
@@ -55,6 +57,7 @@ private slots:
         void update_buses_comboboxes();
         void reset_information_label();
         void create_track();
+        void update_completer(const QString &text);
 
 };
 
