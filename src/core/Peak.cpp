@@ -159,9 +159,9 @@ int Peak::read_header()
 		data->file.seek(0);
 	
 		data->file.read(data->headerdata.label, sizeof(data->headerdata.label));
-		data->file.read((char*)data->headerdata.version, sizeof(data->headerdata.version));
+        data->file.read(reinterpret_cast<char*>(data->headerdata.version), sizeof(data->headerdata.version));
 	
-		if (	(data->headerdata.label[0]!='T') ||
+        if ((data->headerdata.label[0]!='T') ||
 			(data->headerdata.label[1]!='R') ||
 			(data->headerdata.label[2]!='A') ||
 			(data->headerdata.label[3]!='V') ||
@@ -272,7 +272,7 @@ int Peak::calculate_peaks(
 			truncate = peakDataCount - (data->headerdata.peakDataSizeForLevel[index] - offset);
             //FIXME: nothing done here?
             qDebug("Peak::calculate_peaks truncate: %d", truncate);
-// 			pixelcount = data->headerdata.peakDataSizeForLevel[index] - offset;
+//            peakDataCount = data->headerdata.peakDataSizeForLevel[index] - offset;
 		}
 		
 		nframes_t readposition = data->headerdata.headerSize + (data->headerdata.peakDataOffsets[index] + offset) * sizeof(peak_data_t);
@@ -366,9 +366,6 @@ int Peak::calculate_peaks(
 		*buffer = peakdata;
 		
 		return count;
-	
-
-	return 0;
 }
 
 
