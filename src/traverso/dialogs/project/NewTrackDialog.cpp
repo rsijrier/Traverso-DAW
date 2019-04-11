@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2007 Remon Sijrier 
+Copyright (C) 2007-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -39,27 +39,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 NewTrackDialog::NewTrackDialog(QWidget * parent)
 	: QDialog(parent)
 {
-	setupUi(this);
+    setupUi(this);
 
-        resize(300, 300);
+    set_project(pm().get_project());
 
-	set_project(pm().get_project());
-	
-        buttonBox->button(QDialogButtonBox::Apply)->setDefault(true);
+    update_buses_comboboxes();
+    monoRadioButton->setChecked(true);
+    reset_information_label();
+    m_timer.setSingleShot(true);
 
-        update_buses_comboboxes();
-        reset_information_label();
-        m_timer.setSingleShot(true);
-	
-	connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
-        connect(buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(clicked(QAbstractButton*)));
-        connect(isBusTrack, SIGNAL(toggled(bool)), this, SLOT(update_buses_comboboxes()));
-        connect(&m_timer, SIGNAL(timeout()), this, SLOT(reset_information_label()));
-
-        resize(300, 300);
+    connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
+    connect(closeButton, SIGNAL(clicked()), this, SLOT(close_clicked()));
+    connect(addTrackBusButton, SIGNAL(clicked()), this, SLOT(create_track()));
+    connect(isBusTrack, SIGNAL(toggled(bool)), this, SLOT(update_buses_comboboxes()));
+    connect(&m_timer, SIGNAL(timeout()), this, SLOT(reset_information_label()));
 }
 
-void NewTrackDialog::showEvent(QShowEvent *event)
+void NewTrackDialog::showEvent(QShowEvent */*event*/)
 {
         update_driver_info();
         if (m_project->get_current_session() == m_project) {
@@ -100,51 +96,55 @@ void NewTrackDialog::create_track()
                 track = new AudioTrack(sheet, title, AudioTrack::INITIAL_HEIGHT);
         }
 
-        track->set_channel_count(channelCountSpinBox->value());
+        int channelCount = 1;
+        if (stereoRadioButton->isChecked()) {
+            channelCount = 2;
+        }
+        track->set_channel_count(channelCount);
+
+
+        TCommand* command = session->add_track(track);
+        command->setText(tr("Added %1: %2").arg(track->metaObject()->className()).arg(track->get_name()));
+        TCommand::process_command(command);
 
         if (driver == "Jack") {
                 track->connect_to_jack(true, true);
         } else {
-                // only AudioTracks have external inputs
-                if (track->get_type() == Track::AUDIOTRACK) {
-                        track->add_input_bus(inputsHW->currentText());
-                }
+            AudioTrack* audioTrack = qobject_cast<AudioTrack*>(track);
+            TBusTrack* busTrack = qobject_cast<TBusTrack*>(track);
 
-                int index = outputsHW->currentIndex();
-                qint64 outputBusId = outputsHW->itemData(index).toLongLong();
-                if (outputBusId) {
-                        track->add_post_send(outputBusId);
+            QList<QListWidgetItem*> selectedItems = routingInputListWidget->selectedItems();
+            foreach(QListWidgetItem* item, selectedItems) {
+                // add external input (AudioTrack only)
+                if (audioTrack) {
+                    track->add_input_bus(item->text());
                 }
-                outputBusId = outputsBus->itemData(index).toLongLong();
-                if (outputBusId) {
-                        track->add_post_send(outputBusId);
+                if (busTrack) {
+                    qint64 audioTrackId = item->data(Qt::UserRole).toLongLong();
+                    Track* sender = pm().get_project()->get_track(audioTrackId);
+                    if (sender) {
+                        sender->add_post_send(busTrack->get_process_bus());
+                    }
                 }
+            }
+
+            // add post send to Track/Bus if any was selected
+            QList<QListWidgetItem*> selectedOutputItems = routingOutputListWidget->selectedItems();
+            foreach(QListWidgetItem* item, selectedOutputItems) {
+                qint64 outputBusId = item->data(Qt::UserRole).toLongLong();
+                track->add_post_send(outputBusId);
+            }
         }
-
-        TCommand* command = session->add_track(track);
-        command->setText(tr("Added %1: %2").arg(track->metaObject()->className()).arg(track->get_name()));
-
-        TCommand::process_command(command);
 
         QString styleSheet = "color: darkGreen; background: lightGreen; padding: 5px; border: solid 1px;";
         informationLabel->setStyleSheet(styleSheet);
         informationLabel->setText(tr("Created new Track '%1'' in Sheet '%2'").arg(track->get_name(), session->get_name()));
 
         m_timer.start(2000);
-}
 
-void NewTrackDialog::clicked(QAbstractButton *button)
-{
-        QDialogButtonBox::ButtonRole role = buttonBox->buttonRole(button);
-
-        if (role == QDialogButtonBox::RejectRole) {
-                hide();
-        }
-
-        if (role == QDialogButtonBox::ApplyRole) {
-                create_track();
-        }
-
+        trackName->setFocus();
+        trackName->selectAll();
+        routingInputListWidget->setCurrentRow(-1);
 }
 
 void NewTrackDialog::set_project(Project * project)
@@ -152,13 +152,11 @@ void NewTrackDialog::set_project(Project * project)
 	m_project = project;
 }
 
+#include <QMenu>
 void NewTrackDialog::update_buses_comboboxes()
 {
-        outputsBus->clear();
-        inputsHW->clear();
-        outputsHW->clear();
-
-        outputsHW->addItem("Select...");
+        routingInputListWidget->clear();
+        routingOutputListWidget->clear();
 
         TSession* session = m_project->get_current_session();
 
@@ -167,42 +165,77 @@ void NewTrackDialog::update_buses_comboboxes()
         }
 
         if (isBusTrack->isChecked()) {
-                inputBusFrame->setEnabled(false);
                 jackInPortsCheckBox->setChecked(false);
+                routingInputListWidget->setSelectionMode(QAbstractItemView::SelectionMode::MultiSelection);
         } else {
-                inputBusFrame->setEnabled(true);
+                routingInputListWidget->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
                 jackInPortsCheckBox->setChecked(true);
         }
 
+        QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
+        item->setText(tr("Internal Buses:"));
+        item->setTextColor(QColor("grey"));
+        item->setFlags(Qt::NoItemFlags);
+
         QList<TBusTrack*> subs;
-        subs.append(m_project->get_master_out());
         subs.append(session->get_master_out());
         subs.append(session->get_bus_tracks());
+        subs.append(m_project->get_master_out());
         foreach(TBusTrack* sg, subs) {
-                outputsBus->addItem(sg->get_name(), sg->get_id());
+            QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
+            item->setText(sg->get_name());
+            item->setData(Qt::UserRole, sg->get_id());
         }
 
         QList<AudioBus*> hardwareBuses = m_project->get_hardware_buses();
 
+        item = new QListWidgetItem(routingOutputListWidget);
+        item->setText(tr("External Outputs:"));
+        item->setTextColor(QColor("grey"));
+        item->setFlags(Qt::NoItemFlags);
         foreach(AudioBus* bus, hardwareBuses) {
-                if (bus->get_type() == ChannelIsInput) {
-                        inputsHW->addItem(bus->get_name(), bus->get_id());
-                } else {
-                        outputsHW->addItem(bus->get_name(), bus->get_id());
-                }
+            if (isAudioTrack->isChecked() && bus->get_type() == ChannelIsInput) {
+                QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
+                item->setText(bus->get_name());
+                item->setData(Qt::UserRole, bus->get_id());
+            }
+            if (bus->get_type() == ChannelIsOutput) {
+                QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
+                item->setText(bus->get_name());
+                item->setData(Qt::UserRole, bus->get_id());
+            }
         }
+
+        Sheet* sheet = qobject_cast<Sheet*>(session);
+        if (isBusTrack->isChecked() && sheet) {
+            foreach(AudioTrack* at, sheet->get_audio_tracks()) {
+                QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
+                item->setText(at->get_name());
+                item->setData(Qt::UserRole, at->get_id());
+            }
+        }
+
+
+        if (isAudioTrack->isChecked()) {
+            routingInputListWidget->setCurrentRow(0);
+        }
+        routingOutputListWidget->setCurrentRow(1);
+
 }
 
 void NewTrackDialog::update_driver_info()
 {
         QString driver = audiodevice().get_driver_type();
         if (driver == "Jack") {
-                jackTrackFrame->show();
-                busesFrame->hide();
+                jackFrame->show();
         } else {
-                jackTrackFrame->hide();
-                busesFrame->show();
+                jackFrame->hide();
         }
+}
+
+void NewTrackDialog::close_clicked()
+{
+    hide();
 }
 
 void NewTrackDialog::reset_information_label()

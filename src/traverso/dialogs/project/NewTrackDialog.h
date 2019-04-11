@@ -46,15 +46,15 @@ private:
 	Project* m_project;
         QTimer  m_timer;
 
-        void create_track();
         void update_driver_info();
 
 
 private slots:
-        void clicked (QAbstractButton * button );
-	void set_project(Project* project);
+        void close_clicked ();
+        void set_project(Project* project);
         void update_buses_comboboxes();
         void reset_information_label();
+        void create_track();
 
 };
 
