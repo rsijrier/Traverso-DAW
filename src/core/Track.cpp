@@ -292,15 +292,20 @@ void Track::add_post_send(qint64 busId)
                 return;
         }
 
-        TSend* postSend = new TSend(this, bus);
-        postSend->set_type(TSend::POSTSEND);
+        add_post_send(bus);
+}
 
-        if (!m_session || (m_session && m_session->is_transport_rolling())) {
-                THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, postSend, private_add_post_send(TSend*), routingConfigurationChanged())
-        } else {
-                private_add_post_send(postSend);
-                emit routingConfigurationChanged();
-        }
+void Track::add_post_send(AudioBus *bus)
+{
+    TSend* postSend = new TSend(this, bus);
+    postSend->set_type(TSend::POSTSEND);
+
+    if (!m_session || (m_session && m_session->is_transport_rolling())) {
+            THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, postSend, private_add_post_send(TSend*), routingConfigurationChanged())
+    } else {
+            private_add_post_send(postSend);
+            emit routingConfigurationChanged();
+    }
 }
 
 
@@ -534,7 +539,7 @@ bool Track::connect_to_jack(bool inports, bool outports)
                 busconfig.type = "output";
 
                 bus = project->create_software_audio_bus(busconfig);
-                add_post_send(bus->get_id());
+                add_post_send(bus);
         }
 
         if (inports) {

@@ -360,7 +360,7 @@ int Project::load(QString projectfile)
                 if (audiodevice().get_driver_type() != "Jack") {
                         AudioBus* bus = get_playback_bus("Playback 1-2");
                         if (bus) {
-                                m_masterOut->add_post_send(bus->get_id());
+                                m_masterOut->add_post_send(bus);
                         }
                 }
         }

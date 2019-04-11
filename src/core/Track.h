@@ -64,6 +64,7 @@ public:
 
         void add_input_bus(const QString& name);
         void add_post_send(qint64 busId);
+        void add_post_send(AudioBus* bus);
         void add_pre_send(qint64 busId);
         void remove_post_sends(QList<qint64> sendIds);
         void remove_pre_sends(QList<qint64> sendIds);
@@ -80,6 +81,7 @@ public:
         QList<TSend*> get_post_sends() const;
         QList<TSend*> get_pre_sends() const;
         TSend* get_send(qint64 sendId);
+        virtual void add_input_bus(AudioBus* bus);
 
 
 protected:
@@ -100,7 +102,6 @@ protected:
 
         void process_post_sends(nframes_t nframes);
         void process_pre_sends(nframes_t nframes);
-        virtual void add_input_bus(AudioBus* bus);
         void remove_input_bus(AudioBus* bus);
 
 private:
