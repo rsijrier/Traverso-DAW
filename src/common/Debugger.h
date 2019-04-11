@@ -29,15 +29,15 @@
 
 
 //Debugging Macros
-#define CHANGE_COLOR_BLACK   std::cout << "\033[0;31m\n"
-#define CHANGE_COLOR_RED     std::cout << "\033[0;31m\n"
-#define CHANGE_COLOR_GREEN   std::cout << "\033[0;32m\n"
-#define CHANGE_COLOR_ORANGE  std::cout << "\033[0;33m\n"
-#define CHANGE_COLOR_BLUE    std::cout << "\033[0;34m\n"
-#define CHANGE_COLOR_MAGENTA std::cout << "\033[0;35m\n"
-#define CHANGE_COLOR_CYAN    std::cout << "\033[0;36m\n"
-#define CHANGE_COLOR_WHITE   std::cout << "\033[0;37m\n"
-#define CHANGE_COLOR_YELLOW  std::cout << "\033[0;33m\n"
+#define CHANGE_COLOR_BLACK   std::cout << "\033[0;31m"
+#define CHANGE_COLOR_RED     std::cout << "\033[0;31m"
+#define CHANGE_COLOR_GREEN   std::cout << "\033[0;32m"
+#define CHANGE_COLOR_ORANGE  std::cout << "\033[0;33m"
+#define CHANGE_COLOR_BLUE    std::cout << "\033[0;34m"
+#define CHANGE_COLOR_MAGENTA std::cout << "\033[0;35m"
+#define CHANGE_COLOR_CYAN    std::cout << "\033[0;36m"
+#define CHANGE_COLOR_WHITE   std::cout << "\033[0;37m"
+#define CHANGE_COLOR_YELLOW  std::cout << "\033[0;33m"
 
 #ifdef USE_DEBUGGER
 
