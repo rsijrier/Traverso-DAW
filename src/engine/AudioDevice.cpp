@@ -316,9 +316,9 @@ void AudioDevice::set_parameters(AudioDeviceSetup ads)
         m_bufferSize = ads.bufferSize;
 	m_xrunCount = 0;
         m_ditherShape = ads.ditherShape;
-        if (!(ads.driverType == "Null Driver")) {
+//        if (!(ads.driverType == "Null Driver")) {
                 m_setup = ads;
-        }
+//        }
 
 	shutdown();
 
