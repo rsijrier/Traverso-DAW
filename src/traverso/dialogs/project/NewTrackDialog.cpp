@@ -155,6 +155,10 @@ void NewTrackDialog::create_track()
 
 void NewTrackDialog::update_completer(const QString &text)
 {
+    if (!isBusTrack->isChecked()) {
+        return;
+    }
+
     routingInputListWidget->setCurrentRow(-1, QItemSelectionModel::Clear);
 
     if (text.isEmpty()) {
