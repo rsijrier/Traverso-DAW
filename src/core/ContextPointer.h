@@ -161,10 +161,7 @@ public:
         void mouse_button_left_pressed();
 
         inline AbstractViewPort* get_viewport() const {
-                if (m_port) {
-                        return m_port;
-                }
-                return 0;
+            return m_port;
         }
 
         void set_current_viewport(AbstractViewPort* vp);
