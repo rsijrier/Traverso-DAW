@@ -144,7 +144,7 @@
 	<color alpha="255" red="0" blue="0" name="TrackPanel:led:font:active" green="0"/>
 	<color alpha="255" red="0" blue="200" name="VUMeter:foreground:-6db" green="175"/>
 	<color alpha="105" red="100" blue="100" name="TrackPanel:bus:margin" green="100"/>
-	<color alpha="255" red="255" blue="0" name="TrackPanel:recled" green="0"/>
+        <color alpha="255" red="255" blue="0" name="TrackPanel:recled" green="0"/>
 	<color alpha="255" red="55" blue="90" name="TrackPanel:head:inactive" green="80"/>
 	<color alpha="255" red="25" blue="51" name="TrackPanel:led:inactive" green="51"/>
 	<color alpha="255" red="120" blue="58" name="PanSlider:0" green="58"/>

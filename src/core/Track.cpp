@@ -43,7 +43,7 @@ Track::Track(TSession* session)
 	m_isSolo = m_mutedBySolo = m_isMuted = false;
 	m_showTrackVolumeAutomation = false;
 	m_preSendOn = false;
-        m_inputBus = 0;
+        m_inputBus = nullptr;
         m_channelCount = 2;
 
         for (int i=0; i<2; ++i) {

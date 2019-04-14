@@ -207,18 +207,17 @@ AudioClip* AudioTrack::init_recording()
 void AudioTrack::set_armed( bool armed )
 {
         m_isArmed = armed;
-//        AudioBus* bus = audiodevice().get_capture_bus(m_busInName);
-//        if (bus) {
-//                if (!m_isArmed) {
-//                        for (int i=0; i<bus->get_channel_count(); i++) {
-//                                bus->get_channel(i)->remove_monitor(m_vumonitors.at(i));
-//                        }
-//                } else {
-//                        for (int i=0; i<bus->get_channel_count(); i++) {
-//                                bus->get_channel(i)->add_monitor(m_vumonitors.at(i));
-//                        }
-//                }
-//        }
+        if (m_inputBus) {
+            if (m_isArmed) {
+                for (uint i=0; i<m_inputBus->get_channel_count(); i++) {
+                    m_inputBus->get_channel(i)->add_monitor(m_vumonitors.at(int(i)));
+                }
+            } else {
+                for (uint i=0; i<m_inputBus->get_channel_count(); i++) {
+                    m_inputBus->get_channel(i)->remove_monitor(m_vumonitors.at(int(i)));
+                }
+            }
+        }
 
         emit armedChanged(m_isArmed);
 }
