@@ -135,11 +135,11 @@ void CurveNodeView::set_hard_selected(bool selected)
 
 void CurveNodeView::update_hard_soft_selected_state()
 {
-	int size = 8;//themer()->get_property("CurveNode:diameter", 6).toInt();
+    int size = 9;//themer()->get_property("CurveNode:diameter", 6).toInt();
 
 	if (m_isSoftSelected || m_isHardSelected) {
-		m_boundingRect.setWidth(size + 2);
-		m_boundingRect.setHeight(size + 2);
+        m_boundingRect.setWidth(size + 3);
+        m_boundingRect.setHeight(size + 3);
 	} else {
 		m_boundingRect.setWidth(size);
 		m_boundingRect.setHeight(size);
