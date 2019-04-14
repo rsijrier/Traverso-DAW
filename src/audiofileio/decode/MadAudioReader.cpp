@@ -35,78 +35,7 @@ RELAYTOOL_MAD;
 #include "Debugger.h"
 
 
-
-
 static const int INPUT_BUFFER_SIZE = 5*8192;
-
-class K3bMad
-{
-public:
-	K3bMad();
-	~K3bMad();
-	
-	bool open(const QString& filename);
-	
-	/**
-	 * @return true if the mad stream contains data
-	 *         false if there is no data left or an error occurred.
-	 *         In the latter case inputError() returns true.
-	 */
-	bool fillStreamBuffer();
-	
-	/**
-	 * Skip id3 tags.
-	 *
-	 * This will reset the input file.
-	 */
-	bool skipTag();
-	
-	/**
-	 * Find first frame and seek to the beginning of that frame.
-	 * This is used to skip the junk that many mp3 files start with.
-	 */
-	bool seekFirstHeader();
-	
-	bool eof() const;
-	bool inputError() const;
-	
-	/**
-	 * Current position in theinput file. This does NOT
-	 * care about the status of the mad stream. Use streamPos()
-	 * in that case.
-	 */
-	qint64 inputPos() const;
-	
-	/**
-	 * Current absolut position of the decoder stream.
-	 */
-	qint64 streamPos() const;
-	bool inputSeek(qint64 pos);
-	
-	void initMad();
-	void cleanup();
-	
-	bool decodeNextFrame();
-	bool findNextHeader();
-	bool checkFrameHeader(mad_header* header) const;
-	
-	void createInputBuffer();
-	void clearInputBuffer();
-	
-	mad_stream*   madStream;
-	mad_frame*    madFrame;
-	mad_synth*    madSynth;
-	mad_timer_t*  madTimer;
-	
-private:
-	QFile m_inputFile;
-	bool m_madStructuresInitialized;
-	unsigned char* m_inputBuffer;
-	bool m_bInputError;
-	
-	int m_channels;
-	int m_sampleRate;
-};
 
 
 K3bMad::K3bMad()
@@ -118,7 +47,7 @@ K3bMad::K3bMad()
 	madSynth  = new mad_synth;
 	madTimer  = new mad_timer_t;
 	
-	m_inputBuffer = 0;
+    m_inputBuffer = nullptr;
 }
 
 
