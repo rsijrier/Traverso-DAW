@@ -1071,7 +1071,7 @@ void SheetView::collect_item_browser_data(ItemBrowserData &data)
 	}
 
 	foreach(ContextItem* obj, list) {
-		if (!data.timeLineView) {
+        if (!data.timeLineView) {
 			data.timeLineView = qobject_cast<TimeLineView*>(obj);
 		}
 		if (!data.markerView) {
@@ -1122,7 +1122,11 @@ TCommand* SheetView::to_lower_context_level()
 
 	if (data.currentContext == "CurveView")
 	{
-		browse_to_audio_clip_view(data.acv);
+        if (data.acv) {
+            browse_to_audio_clip_view(data.acv);
+        } else if (data.tv) {
+            browse_to_track(data.tv->get_track());
+        }
 	}
 	else if (data.currentContext == "AudioClipView")
 	{
