@@ -154,7 +154,7 @@ void AudioChannel::read_from_hardware_port(audio_sample_t *buf, nframes_t nframe
         memcpy (m_buffer, buf, sizeof(audio_sample_t) * nframes);
         if (m_monitoring) {
                 process_monitoring();
-                audiodevice().send_to_master_out(this, m_bufferSize);
+//                audiodevice().send_to_master_out(this, m_bufferSize);
         }
 }
 
