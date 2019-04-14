@@ -159,12 +159,12 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	
 	QPolygonF polygon;
     auto buffer = QVarLengthArray<float, 40>(pixelcount);
-    printf("pixelocunt %d\n", pixelcount);
-// 	printf("range: %d\n", (int)m_nodeViews.last()->pos().x());
+
+    // 	printf("range: %d\n", (int)m_nodeViews.last()->pos().x());
 	m_guicurve->get_vector(xstart + offset,
 				xstart + pixelcount + offset,
                     buffer.data(),
-    				pixelcount);
+                    nframes_t(pixelcount));
 	
 	for (int i=0; i<pixelcount; i+=3) {
         polygon <<  QPointF(xstart + i, height - (buffer.at(i) * height) );
@@ -200,7 +200,7 @@ int CurveView::get_vector(qreal xstart, qreal pixelcount, float* arg)
 		return 0;
 	}
 	
-	m_guicurve->get_vector(xstart, xstart + pixelcount, arg, pixelcount);
+    m_guicurve->get_vector(xstart, xstart + pixelcount, arg, nframes_t(pixelcount));
 	
 	return 1;
 }
@@ -225,7 +225,7 @@ void CurveView::remove_curvenode_view(CurveNode* node)
 		if (nodeview->get_curve_node() == node) {
 			m_nodeViews.removeAll(nodeview);
 			if (nodeview == m_blinkingNode) {
-                                m_blinkingNode = 0;
+                                m_blinkingNode = nullptr;
                                 update_softselected_node(cpointer().scene_pos());
 			}
 			AddRemove* cmd = (AddRemove*) m_guicurve->remove_node(nodeview, false);
@@ -263,7 +263,7 @@ void CurveView::active_context_changed()
                 if (m_blinkingNode) {
                         m_blinkingNode->set_color(themer()->get_color("CurveNode:default"));
 			m_blinkingNode->set_soft_selected(false);
-                        m_blinkingNode = 0;
+                        m_blinkingNode = nullptr;
                 }
 
         }
@@ -314,7 +314,7 @@ void CurveView::update_softselected_node(QPointF point)
 	}
 
         if ((pos - QPoint(4, 4) - QPoint((int)m_blinkingNode->scenePos().x(), (int)m_blinkingNode->scenePos().y())).manhattanLength() > NODE_SOFT_SELECTION_DISTANCE) {
-		m_blinkingNode = 0;
+        m_blinkingNode = nullptr;
 	}
 	
 	if (prevNode && (prevNode != m_blinkingNode) ) {
@@ -471,8 +471,8 @@ TCommand* CurveView::drag_node()
 
 void CurveView::node_moved( )
 {
-	CurveNodeView* prev = 0;
-	CurveNodeView* next = 0;
+    CurveNodeView* prev = nullptr;
+    CurveNodeView* next = nullptr;
 	
 	QList<CurveNodeView*> selectedNodes = get_selected_nodes();
 
@@ -601,7 +601,7 @@ CurveNodeView* CurveView::get_node_view_before(TimeRef location) const
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 CurveNodeView* CurveView::get_node_view_after(TimeRef location) const
@@ -615,7 +615,7 @@ CurveNodeView* CurveView::get_node_view_after(TimeRef location) const
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 QString CurveView::get_name() const
