@@ -307,7 +307,7 @@ void AudioDriverConfigPage::restart_driver_button_clicked()
 	// So there is no way to use the current selected one, other then
 	// setting it now, and restoring it afterwards...
 	int currentperiods = config().get_property("Hardware", "numberofperiods", 3).toInt();
-	config().set_property("Hardware", "numberofperiods", periods);
+    config().set_property("Hardware", "numberofperiods", periods);
 	
 	if (driver == "ALSA") {
 		int index = m_alsadevices->devicesCombo->currentIndex();

@@ -1,5 +1,7 @@
 TOBEDONE FOR 0.50.x
 
+* Select Clip does not work from context menu, it waits for enter/escape to finish hold commmand
+* Setting input bus for AudioTrack: update vumeter monitoring  on the newly added bus, not the configuration on the old bus
 * CurveView does not seem to overlap AudioClipView, cursor changes to early to AudioClipView from CurveView when
   moving to edge of CurveView
 * Track sorting logic seems fragile with the Bus Tracks added to the logic. As a result an old project did not
@@ -9,10 +11,8 @@ TOBEDONE FOR 0.50.x
 * Restore original behavior of main menu bar.
 * Better feedback for alsa driver when using incompatible setup, this: printf("ALSA: use %d periods for %s\n", *nperiodsp, stream_name);
   doesn't read like: you should do that! what about a popup that explains driver failures in more detail?
-* idle dsp usage on alsa driver is 'much' higher then with 0.49.x due constant monitoring of capture buffers for one!
 * vertical zoom keyfact is wrong
-* check if cpointer().get_viewport() returns an object or 0 !!
-* new sheet/track names: force unique names
+* new sheet/track names: force unique names ??
 * add switch to turn monitoring on/off
 * Project::process() must be suspended when starting an export!
 * child views: make them use their own snap list.
@@ -25,7 +25,6 @@ TOBEDONE FOR 0.50.x
 * new track dialog: create jack ports bus, or use existing bus, or create new bus, choosing one of the available hardware channels
 * jack in/out buses: when removed from a track, remove them from the jackdriver too, but still be able to re-add them with the set input / add output
   buttons in track manager dialog.
-* add Traverso to wikipedia
 * create several project templates to ship by default with traverso
 
 ### NEEDS TESTING ###
@@ -38,7 +37,6 @@ TOBEDONE FOR 0.50.x
 * clips with a source start offset: qwerty navigation still broken for curve nodes!!
 * fade out + snap ([ F ] + < S > ) doens't work yet.
 * free disk space vs recording status
-* don't use setStackSize() at all anywhere ? Hard to figure out stack overflow bugs!!
 * jack transport callbacks need to be managed more robust, they cause random segfaults
 * [ W ] + M release move Marker with arrow key, release W: arrow keys no longer navigate.
 * on zoom level change: inform clips first, let them generate new peak data (multithreaded!) only
@@ -50,7 +48,6 @@ TOBEDONE FOR 0.50.x
 * MoveEdge: do not jump to Mouse Cursor!
 * CD Burning: abort button clicked crashed for me once, try to reproduce ?
 * class name collision: wrap everything in a namespace? RFC
-* restart driver doesn't take num periods into account
 * importing multiple files from file browser in resources bin places all clips on same position!!!
 * node aligned vertically (so below eachother) do not paint the curve line!
 * Traverso close sometimes gives crash: probably due cleanup routines for subgroups/new audio io stuff not existing?

@@ -125,6 +125,9 @@ QVariant TConfig::get_property( const QString & type, const QString & property, 
 void TConfig::set_property( const QString & type, const QString & property, QVariant newValue )
 {
 	m_configs.insert(type + "/" + property, newValue);
+    if (type == "Hardware" && property == "numberofperiods") {
+        set_audiodevice_driver_properties();
+    }
 }
 
 
