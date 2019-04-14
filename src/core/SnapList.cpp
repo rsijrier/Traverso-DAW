@@ -171,41 +171,50 @@ void SnapList::update_snaplist()
 }
 
 
-// public function that checks if there is a snap position
-// within +- snap-range of the supplied value i
 TimeRef SnapList::get_snap_value(const TimeRef& pos)
 {
-	if (m_isDirty) {
-		update_snaplist();
-	}
-	
-	int i = (int)((pos - m_rangeStart) / m_scalefactor);
-	SLPRINT("get_snap_value:: i is %d\n", i);
-	
-	// catch dangerous values:
-	if (i < 0) { 
-		SLPRINT("get_snap_value:: i < 0\n");
-		return pos;
-	}
+    bool didSnap;
+    return get_snap_value(pos, didSnap);
+}
 
-	if (m_xposLut.isEmpty()) {
-		SLPRINT("get_snap_value:: empty lut\n");
-		return pos;
-	}
+// public function that checks if there is a snap position
+// within +- snap-range of the supplied value i
+TimeRef SnapList::get_snap_value(const TimeRef& pos, bool& didSnap)
+{
+    if (m_isDirty) {
+        update_snaplist();
+    }
 
-	if (i >= m_xposLut.size()) {
-		SLPRINT("get_snap_value:: i > m_xposLut.size()\n");
-		return pos;
-	}
-	
-	if (is_snap_value(pos)) {
-                SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
-		return m_xposLut.at(i);
-	}
-	
-	
-        SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(pos).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
+    didSnap = false;
+
+    int i = (int)((pos - m_rangeStart) / m_scalefactor);
+    SLPRINT("get_snap_value:: i is %d\n", i);
+
+    // catch dangerous values:
+    if (i < 0) {
+        SLPRINT("get_snap_value:: i < 0\n");
         return pos;
+    }
+
+    if (m_xposLut.isEmpty()) {
+        SLPRINT("get_snap_value:: empty lut\n");
+        return pos;
+    }
+
+    if (i >= m_xposLut.size()) {
+        SLPRINT("get_snap_value:: i > m_xposLut.size()\n");
+        return pos;
+    }
+
+    if (is_snap_value(pos)) {
+        SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
+        didSnap = true;
+        return m_xposLut.at(i);
+    }
+
+
+    SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(pos).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
+    return pos;
 }
 
 // returns true if i is inside a snap area, else returns false

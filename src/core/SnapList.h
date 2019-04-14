@@ -32,33 +32,34 @@ class SnapList
 {
 
 public:
-        SnapList(TSession* sheet);
-        ~SnapList() {}
+    SnapList(TSession* sheet);
+    ~SnapList() {}
 
-	TimeRef get_snap_value(const TimeRef& location);
-	bool is_snap_value(const TimeRef& location);
-	qint64 get_snap_diff(const TimeRef& location);
-	TimeRef next_snap_pos(const TimeRef& location);
-	TimeRef prev_snap_pos(const TimeRef& location);
-	
-	TimeRef calculate_snap_diff(TimeRef leftlocation, TimeRef rightlocation);
+    TimeRef get_snap_value(const TimeRef& location);
+    TimeRef get_snap_value(const TimeRef& location, bool& didSnap);
+    qint64 get_snap_diff(const TimeRef& location);
+    TimeRef next_snap_pos(const TimeRef& location);
+    TimeRef prev_snap_pos(const TimeRef& location);
 
-	void set_range(const TimeRef& start, const TimeRef& end, int scalefactor);
-	void mark_dirty();
-	bool was_dirty();
+    TimeRef calculate_snap_diff(TimeRef leftlocation, TimeRef rightlocation);
+
+    void set_range(const TimeRef& start, const TimeRef& end, int scalefactor);
+    void mark_dirty();
+    bool was_dirty();
 
 private:
-        TSession*	m_sheet;
-	QList<TimeRef> 	m_xposList;
-	QList<TimeRef> 	m_xposLut;
-	QList<bool> 	m_xposBool;
-	bool		m_isDirty;
-        bool		m_wasDirty;
-	TimeRef		m_rangeStart;
-	TimeRef		m_rangeEnd;
-	qint64		m_scalefactor;
+    TSession*	m_sheet;
+    QList<TimeRef> 	m_xposList;
+    QList<TimeRef> 	m_xposLut;
+    QList<bool> 	m_xposBool;
+    bool		m_isDirty;
+    bool		m_wasDirty;
+    TimeRef		m_rangeStart;
+    TimeRef		m_rangeEnd;
+    qint64		m_scalefactor;
 
-	void update_snaplist();
+    void update_snaplist();
+    bool is_snap_value(const TimeRef& location);
 };
 
 #endif
