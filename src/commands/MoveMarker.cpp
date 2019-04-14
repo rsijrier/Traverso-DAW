@@ -49,7 +49,7 @@ int MoveMarker::prepare_actions()
 int MoveMarker::begin_hold()
 {
 	m_origWhen = m_newWhen = m_marker->get_when();
-	m_marker->set_snappable(false);
+    m_marker->set_snappable(false);
 	d->view->get_sheetview()->start_shuttle(true, true);
 	d->view->set_dragging(true);
 	return 1;
@@ -137,9 +137,11 @@ int MoveMarker::jog()
 {
 	TimeRef newpos = TimeRef(cpointer().scene_x() * d->scalefactor);
 
+    bool didSnap = false;
+
 	if (m_doSnap) {
 		SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
-		newpos = slist->get_snap_value(newpos);
+        newpos = slist->get_snap_value(newpos, didSnap);
 	}
 
 	if (newpos < TimeRef()) {
@@ -148,6 +150,14 @@ int MoveMarker::jog()
 
 	m_newWhen = newpos;
 	m_marker->set_when(m_newWhen);
+    if (didSnap) {
+        QPointF scenePos = cpointer().scene_pos();
+        scenePos.setX(d->view->x());
+        cpointer().setCursorPos(scenePos);
+    } else {
+        cpointer().setCursorPos(cpointer().scene_pos());
+    }
+
 //	d->view->set_position(int(m_newWhen / d->scalefactor));
 
 	d->view->get_sheetview()->update_shuttle_factor();
