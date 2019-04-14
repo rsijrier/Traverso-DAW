@@ -94,9 +94,6 @@ public:
         : QThread(diskio),
           m_diskio(diskio)
     {
-#ifndef Q_WS_MAC
-        // 		setStackSize(20000);
-#endif
     }
 
     DiskIO*		m_diskio;

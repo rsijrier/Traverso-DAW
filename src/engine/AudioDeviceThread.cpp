@@ -82,10 +82,6 @@ AudioDeviceThread::AudioDeviceThread(AudioDevice* device)
 	m_realTime = true;
 	setTerminationEnabled(true);
 
-#ifndef Q_WS_MAC
-	setStackSize(1000000);
-#endif
-
 	watchdogCheck = 1;
 }
 
