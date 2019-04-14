@@ -1385,7 +1385,7 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 QList<TrackView*> SheetView::get_track_views() const
 {
 	QList<TrackView*> views;
-	if (m_sheetMasterOutView) {
+    if (m_sheetMasterOutView) {
 		views.append(m_sheetMasterOutView);
 	}
 	if (m_projectMasterOutView) {
