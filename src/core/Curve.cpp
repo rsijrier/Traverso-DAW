@@ -170,7 +170,7 @@ int Curve::process(
 
 void Curve::solve ()
 {
-	uint32_t npoints;
+    int npoints;
 
 	if (!m_changed) {
 		printf("Curve::solve, no data change\n");
@@ -184,9 +184,10 @@ void Curve::solve ()
 		(www.korf.co.uk/spline.pdf) for more details.
 		*/
 
-		double x[npoints];
-		double y[npoints];
-		uint32_t i;
+        auto x = QVarLengthArray<double>(npoints);
+        auto y = QVarLengthArray<double>(npoints);
+
+        int i;
 		QList<CurveNode* >::iterator xx;
 
 		CurveNode* cn;
@@ -580,7 +581,7 @@ void Curve::set_range(double when)
 	
 	CurveNode* lastnode = (CurveNode*)m_nodes.last();
 	
-	if (lastnode->when == when) {
+    if (qFuzzyCompare(lastnode->when, when)) {
 // 		printf("Curve::set_range: new range == current range!\n");
 		return;
 	}
@@ -638,7 +639,7 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
 	PENTER2;
 	
     apill_foreach(CurveNode* cn, CurveNode*, m_nodes) {
-		if (node->when == cn->when && node->value == cn->value) {
+        if (qFuzzyCompare(node->when, cn->when) && qFuzzyCompare(node->value, cn->value)) {
 			info().warning(tr("There is allready a node at this exact position, not adding a new node"));
 			delete node;
             node = nullptr;
@@ -677,7 +678,7 @@ TCommand* Curve::remove_node(CurveNode* node, bool historable)
 	PENTER2;
 	
 	if (m_nodes.first() == node) {
-		return 0;
+        return nullptr;
 	}
 
 	AddRemove* cmd;
