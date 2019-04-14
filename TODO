@@ -14,7 +14,6 @@ TOBEDONE FOR 0.50.x
 * add switch to turn monitoring on/off
 * Project::process() must be suspended when starting an export!
 * child views: make them use their own snap list.
-* Curve.cpp: printf("filling last %d samples %f\n", subveclen, firstnode->value);
 * Notify users that if they open an old project that they won't be able to properly restore that
   project in pre 0.50.x releases !
 * routing from multiple buses to buses/hardware buses
