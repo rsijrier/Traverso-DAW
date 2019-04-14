@@ -55,9 +55,9 @@ CurveView::CurveView(SheetView* sv, ViewItem* parentViewItem, Curve* curve)
 	load_theme_data();
 	
 	m_blinkColorDirection = 1;
-	m_blinkingNode = 0;
+    m_blinkingNode = nullptr;
 	m_startoffset = TimeRef();
-	m_guicurve = new Curve(0);
+    m_guicurve = new Curve(nullptr);
 	m_guicurve->set_sheet(sv->get_sheet());
 	
     apill_foreach(CurveNode* node, CurveNode*, m_curve->get_nodes()) {
@@ -68,7 +68,7 @@ CurveView::CurveView(SheetView* sv, ViewItem* parentViewItem, Curve* curve)
 	connect(m_curve, SIGNAL(nodeAdded(CurveNode*)), this, SLOT(add_curvenode_view(CurveNode*)));
 	connect(m_curve, SIGNAL(nodeRemoved(CurveNode*)), this, SLOT(remove_curvenode_view(CurveNode*)));
 	connect(m_curve, SIGNAL(nodePositionChanged()), this, SLOT(node_moved()));
-        connect(m_curve, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
+    connect(m_curve, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
 	
 	m_hasMouseTracking = true;
 }
@@ -88,8 +88,8 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	Q_UNUSED(widget);
 	PENTER2;
 
-	int xstart = (int) option->exposedRect.x();
-	int pixelcount = (int) option->exposedRect.width()+1;
+    int xstart = int(option->exposedRect.x());
+    int pixelcount = int(option->exposedRect.width()+1);
 	int height = int(m_boundingRect.height());
 	int offset = int(m_startoffset / m_sv->timeref_scalefactor);
 	
@@ -111,7 +111,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	
 	
 	if (m_nodeViews.size() == 1) {
-		int y = int(height - (m_nodeViews.first()->value * height));
+        int y = int(height - (m_nodeViews.first()->value * height));
 		painter->drawLine(xstart, y, xstart + pixelcount, y);
 		painter->restore();
 		return;
@@ -158,16 +158,16 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 	painter->setRenderHint(QPainter::Antialiasing);
 	
 	QPolygonF polygon;
-	float vector[pixelcount];
-	
+    auto buffer = QVarLengthArray<float, 40>(pixelcount);
+    printf("pixelocunt %d\n", pixelcount);
 // 	printf("range: %d\n", (int)m_nodeViews.last()->pos().x());
 	m_guicurve->get_vector(xstart + offset,
 				xstart + pixelcount + offset,
-    				vector,
+                    buffer.data(),
     				pixelcount);
 	
 	for (int i=0; i<pixelcount; i+=3) {
-		polygon <<  QPointF(xstart + i, height - (vector[i] * height) );
+        polygon <<  QPointF(xstart + i, height - (buffer.at(i) * height) );
 	}
 	
 	// Depending on the zoom level, curve nodes can end up to be aligned 
