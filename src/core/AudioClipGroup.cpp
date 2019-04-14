@@ -150,7 +150,7 @@ void AudioClipGroup::check_valid_track_index_delta(int & delta)
 		return;
 	}
 	
-	int allowedDeltaPlus = (m_clips.first()->get_sheet()->get_numtracks() - 1) - m_bottomTrackIndex;
+    int allowedDeltaPlus = (m_clips.first()->get_sheet()->get_audio_track_count() - 1) - m_bottomTrackIndex;
 	int allowedDeltaMin  = -m_topTrackIndex;
 	
 	if (delta > allowedDeltaPlus) {

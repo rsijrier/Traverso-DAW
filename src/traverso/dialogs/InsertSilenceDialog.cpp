@@ -71,7 +71,7 @@ void InsertSilenceDialog::accept()
 		m_track = foundTrack;
 	}
 
-	if (sheet->get_numtracks() > 0) {
+	if (sheet->get_audio_track_count() > 0) {
 		if (!m_track){
 			AudioTrack*	shortestTrack = (AudioTrack*)tracks.first();
 	

@@ -258,8 +258,8 @@ void SheetView::move_trackview_up(TrackView *trackView)
 
 	if (atv) {
 		for(int i=0; i<m_audioTrackViews.size(); i++) {
-			if (i==newindex) {
-				m_audioTrackViews.at(i)->get_track()->set_sort_index(i+1);
+            if (i==newindex) {
+                m_audioTrackViews.at(i)->get_track()->set_sort_index(i+1);
 			}
 		}
 	}

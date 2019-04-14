@@ -185,12 +185,12 @@ MoveClip::~MoveClip()
 
 int MoveClip::begin_hold()
 {
-	if ((!m_group.get_size() || m_group.is_locked()) && !m_markers.count()) {
+    if ((!m_group.get_size() || m_group.is_locked()) && !m_markers.count()) {
 		return -1;
 	}
 	
 	if (m_actionType == COPY) {
-		// FIXME Memory leak here!
+        // FIXME Memory leak here!
 		QList<AudioClip*> newclips = m_group.copy_clips();
 		m_group.set_clips(newclips);
 		m_group.add_all_clips_to_tracks();
@@ -301,7 +301,7 @@ int MoveClip::jog()
     AudioTrackView* trackView = d->sv->get_audio_trackview_under(cpointer().scene_pos());
 	int deltaTrackIndex = 0;
 	if (trackView/* && !(m_actionType == FOLD_SHEET)*/) {
-		deltaTrackIndex = trackView->get_track()->get_sort_index() - d->pointedTrackIndex;
+        deltaTrackIndex = trackView->get_track()->get_sort_index() - d->pointedTrackIndex;
 		m_group.check_valid_track_index_delta(deltaTrackIndex);
 		m_newTrackIndex = m_newTrackIndex + deltaTrackIndex;
 		d->pointedTrackIndex = trackView->get_track()->get_sort_index();

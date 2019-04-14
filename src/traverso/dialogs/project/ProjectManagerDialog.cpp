@@ -145,7 +145,7 @@ void ProjectManagerDialog::update_sheet_list( )
 
 		QString sheetNr = QString::number(m_project->get_sheet_index(sheet->get_id()));
                 QString sheetName = "Sheet " + sheetNr + " - " + sheet->get_name();
-		QString numberOfTracks = QString::number(sheet->get_numtracks());
+		QString numberOfTracks = QString::number(sheet->get_audio_track_count());
 		QString sheetLength = timeref_to_ms_2(sheet->get_last_location());
 		QString sheetStatus = sheet->is_changed()?"UnSaved":"Saved";
 		QString sheetSpaceAllocated = "Unknown";

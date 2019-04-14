@@ -1297,7 +1297,7 @@ void TMainWindow::import_audio()
 	}
 
 	Sheet* sheet = qobject_cast<Sheet*>(m_currentSheetWidget->get_sheet());
-	if (!sheet || !sheet->get_numtracks()) {
+	if (!sheet || !sheet->get_audio_track_count()) {
 		return;
 	}
 

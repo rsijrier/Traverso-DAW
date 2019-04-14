@@ -1,6 +1,9 @@
 TOBEDONE FOR 0.50.x
 
-
+* Track sorting logic seems fragile with the Bus Tracks added to the logic. As a result an old project did not
+  account for the added Sheet Master Bus Track at the top and Move Clip moved the clip always one track upwards
+  Moving tracks up/down reset the internal trackindex and solved this issue but more robust solution is needed
+* Moving Track up/down moves canvas cursor to workcursor and back during jog
 * Restore original behavior of main menu bar.
 * Better feedback for alsa driver when using incompatible setup, this: printf("ALSA: use %d periods for %s\n", *nperiodsp, stream_name);
   doesn't read like: you should do that! what about a popup that explains driver failures in more detail?

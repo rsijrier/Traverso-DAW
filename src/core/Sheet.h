@@ -58,7 +58,7 @@ public:
 	~Sheet();
 	
 	// Get functions
-        int get_numtracks() const {return m_audioTracks.size();}
+    int get_audio_track_count() const {return m_audioTracks.size();}
 
         QString get_artists() const {return m_artists;}
 	QDomNode get_state(QDomDocument doc, bool istemplate=false);
