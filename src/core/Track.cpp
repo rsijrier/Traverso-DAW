@@ -157,7 +157,7 @@ int Track::set_state( const QDomNode & node )
                 QString busOutName = e.attribute( "OutputBus", tr("Sheet Master"));
                 Project* project = pm().get_project();
                 if (m_session && project) {
-                    if (m_name == "Sheet Master") {
+                    if (m_name == "") {
                         add_post_send(project->get_master_out()->get_id());
                     } else {
                         add_post_send(m_session->get_master_out()->get_id());
