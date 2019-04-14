@@ -25,6 +25,7 @@
 #include "TMainWindow.h"
 
 class Track;
+class AudioTrack;
 class VUMeterLevelView;
 class VUMonitor;
 class QLabel;
@@ -78,11 +79,13 @@ private:
         int			m_vulevelspacing;
         QBrush			m_widgetBgBrush;
         Qt::Orientation         m_orientation;
+        AudioTrack*      m_audioTrack;
 
         static void calculate_lut_data();
 
 private slots:
         void load_theme_data();
+        void audiotrack_armed_changed();
 };
 
 /**

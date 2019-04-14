@@ -30,6 +30,7 @@
 #include "Mixer.h"
 #include <AudioDevice.h>
 #include "Track.h"
+#include "AudioTrack.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -59,6 +60,7 @@ VUMeterView::VUMeterView(ViewItem* parent, Track* track)
         : ViewItem(parent)
 {
         load_theme_data();
+        m_audioTrack = qobject_cast<AudioTrack*>(track);
 
         for (int i = 0; i < 2; ++i) {
                 VUMeterLevelView* level = new VUMeterLevelView(this, track->get_vumonitors().at(i));
@@ -72,6 +74,9 @@ VUMeterView::VUMeterView(ViewItem* parent, Track* track)
 //        ruler->setPos(0, 10);
 
         connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
+        if (m_audioTrack) {
+            connect(m_audioTrack, SIGNAL(armedChanged(bool)), this, SLOT(audiotrack_armed_changed()));
+        }
 }
 
 VUMeterView::~ VUMeterView( )
@@ -97,6 +102,19 @@ void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*opt
 	painter->setBrush(QColor(0, 0, 0, 250));
 	painter->setPen(Qt::NoPen);
     painter->drawRect(m_boundingRect);
+    if (m_audioTrack && m_audioTrack->armed()) {
+        painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setBrush(Qt::transparent);
+        QColor color = themer()->get_color("TrackPanel:recled");
+        color.setAlpha(100);
+        QPen armedPen;
+        armedPen.setColor(color);
+        armedPen.setWidth(2);
+        painter->setPen(armedPen);
+        painter->drawRect(m_boundingRect);
+        painter->restore();
+    }
 }
 
 void VUMeterView::calculate_bounding_rect()
@@ -161,6 +179,11 @@ void VUMeterView::load_theme_data()
 {
         m_vulevelspacing = themer()->get_property("VUMeterView:layout:vuspacing", 1).toInt();
         m_widgetBgBrush = themer()->get_brush("VUMeter:background:widget");
+}
+
+void VUMeterView::audiotrack_armed_changed()
+{
+    update();
 }
 
 /**********************************************************************/
