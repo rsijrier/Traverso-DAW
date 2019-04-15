@@ -87,6 +87,9 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 {
 	Q_UNUSED(widget);
 	PENTER2;
+    if (ignore_context() && m_nodeViews.size() == 1) {
+        return;
+    }
 
     int xstart = int(option->exposedRect.x());
     int pixelcount = int(option->exposedRect.width()+1);
@@ -100,8 +103,12 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 
 	QPen pen;
 	
-        pen.setColor(themer()->get_color("Curve:active"));
-	
+    QColor penColor = themer()->get_color("Curve:active");
+    if (ignore_context()) {
+        penColor.setAlpha(75);
+    }
+    pen.setColor(penColor);
+
         if (m_boundingRect.height() > 40) {
                 pen.setWidth(2);
         }

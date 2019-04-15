@@ -89,7 +89,7 @@ void AudioTrackView::add_new_audioclipview( AudioClip * clip )
 	AudioClipView* clipView = new AudioClipView(m_sv, this, clip);
 	m_clipViews.append(clipView);
 	if (!m_track->show_clip_volume_automation()) {
-		clipView->get_gain_curve_view()->hide();
+        clipView->get_gain_curve_view()->set_ignore_context(true);
 	}
 }
 
@@ -179,24 +179,24 @@ AudioClipView* AudioTrackView::get_nearest_audioclip_view(TimeRef location) cons
 
 TCommand* AudioTrackView::show_track_gain_curve()
 {
-        if (m_curveView->isVisible()) {
-                m_curveView->hide();
-        } else {
-		m_curveView->show();
-        }
+    if (m_curveView->isVisible()) {
+        m_curveView->set_ignore_context(true);
+    } else {
+        m_curveView->set_ignore_context(false);
+    }
 
-        return nullptr;
+    return nullptr;
 }
 
 void AudioTrackView::automation_visibility_changed()
 {
 	if (m_track->show_clip_volume_automation()) {
 		foreach(AudioClipView* acView, m_clipViews) {
-			acView->get_gain_curve_view()->show();
+            acView->get_gain_curve_view()->set_ignore_context(false);
 		}
 	} else {
 		foreach(AudioClipView* acView, m_clipViews) {
-			acView->get_gain_curve_view()->hide();
+            acView->get_gain_curve_view()->set_ignore_context(true);
 		}
 	}
 

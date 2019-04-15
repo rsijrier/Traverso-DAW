@@ -90,6 +90,9 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 	{
 		color.setAlpha(255);
 	}
+    if (m_curveview->ignore_context()) {
+        color.setAlpha(75);
+    }
 
     path.addEllipse(m_boundingRect);
     painter->fillPath(path, color);

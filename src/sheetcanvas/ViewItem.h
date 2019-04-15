@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <Utils.h>
 
 class SheetView;
-		
+
 // Canvas width should be 2^31, but it doesn't work ok
 // 2^30 works ok, so let's use that, still gives a lot 
 // of headroom for real large recordings
@@ -46,65 +46,66 @@ class SheetView;
 
 class ViewItem : public ContextItem, public QGraphicsItem
 {
-	Q_OBJECT
+    Q_OBJECT
 #if QT_VERSION >= 0x040600
-        Q_INTERFACES(QGraphicsItem)
+    Q_INTERFACES(QGraphicsItem)
 #endif
-	
+
 public:
 
-        ViewItem(ViewItem* parentViewItem=nullptr, ContextItem* parentContext=nullptr) :
+    ViewItem(ViewItem* parentViewItem=nullptr, ContextItem* parentContext=nullptr) :
         ContextItem(parentViewItem)
-        , QGraphicsItem(parentViewItem)
-        {
-                set_context_item(parentContext);
-                m_parentViewItem = parentViewItem;
-                m_hasMouseTracking = false;
-		m_ignoreContext = false;
-        }
+      , QGraphicsItem(parentViewItem)
+    {
+        set_context_item(parentContext);
+        m_parentViewItem = parentViewItem;
+        m_hasMouseTracking = false;
+        m_ignoreContext = false;
+    }
 
-        virtual ~ViewItem() {}
-	
-	enum {Type = UserType + 1};
-	
-	QRectF boundingRect() const;
-	virtual void calculate_bounding_rect() {
+    virtual ~ViewItem() {}
+
+    enum {Type = UserType + 1};
+
+    QRectF boundingRect() const;
+    virtual void calculate_bounding_rect() {
         for (int i=0; i< QGraphicsItem::childItems().size(); ++i) {
             QGraphicsItem* item = QGraphicsItem::childItems().at(i);
-			if (is_viewitem(item)) {
-                                (qgraphicsitem_cast<ViewItem*>(item))->calculate_bounding_rect();
-			}
-		}
-	}
+            if (is_viewitem(item)) {
+                (qgraphicsitem_cast<ViewItem*>(item))->calculate_bounding_rect();
+            }
+        }
+    }
 
-	virtual int type() const;
-	bool ignore_context() const {return m_ignoreContext;}
+    virtual int type() const;
+    bool ignore_context() const {return m_ignoreContext;}
+    virtual void set_ignore_context(bool ignoreContext) {m_ignoreContext = ignoreContext;}
     virtual int get_height() const {return int(m_boundingRect.height());}
-	virtual QString get_name() const {return m_parentViewItem ? m_parentViewItem->get_name() : "";}
-	
-	/**
-	 *      Reimplement and call update() in the reimplementation
-	 *	to make the theme change visible.
-	 */
-        virtual void load_theme_data() {}
-        virtual void mouse_hover_move_event() {}
-	
-	SheetView* get_sheetview() const {return m_sv;}
-	
-	static bool is_viewitem(QGraphicsItem* item) {
-		return item->type() == Type;
-	}
+    virtual QString get_name() const {return m_parentViewItem ? m_parentViewItem->get_name() : "";}
 
-        bool has_mouse_tracking() const {return m_hasMouseTracking;}
-		
+    /**
+     *      Reimplement and call update() in the reimplementation
+     *	to make the theme change visible.
+     */
+    virtual void load_theme_data() {}
+    virtual void mouse_hover_move_event() {}
+
+    SheetView* get_sheetview() const {return m_sv;}
+
+    static bool is_viewitem(QGraphicsItem* item) {
+        return item->type() == Type;
+    }
+
+    bool has_mouse_tracking() const {return m_hasMouseTracking;}
+
 
 protected:
 
-	SheetView* 	m_sv;
-	ViewItem*	m_parentViewItem;
-	QRectF		m_boundingRect;
-        bool            m_hasMouseTracking;
-	bool		m_ignoreContext;
+    SheetView* 	m_sv;
+    ViewItem*	m_parentViewItem;
+    QRectF		m_boundingRect;
+    bool            m_hasMouseTracking;
+    bool		m_ignoreContext;
 };
 
 inline QRectF ViewItem::boundingRect() const {return m_boundingRect;}
