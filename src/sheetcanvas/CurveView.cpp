@@ -477,6 +477,9 @@ void CurveView::node_moved( )
 	QList<CurveNodeView*> selectedNodes = get_selected_nodes();
 
 	if (!selectedNodes.size()) {
+        // even though there are no selected nodes, a curve node did move
+        // e.g. by an undo action, so at least update the view
+        update();
 		return;
 	}
 
