@@ -43,6 +43,7 @@ TTrackManagerDialog::TTrackManagerDialog(Track *track, QWidget *parent)
         , m_track(track)
 {
         setupUi(this);
+        setAttribute(Qt::WA_DeleteOnClose);
 
         preSendsGainPanGroupBox->setEnabled(false);
         postSendsGainPanGroupBox->setEnabled(false);
@@ -104,6 +105,11 @@ TTrackManagerDialog::TTrackManagerDialog(Track *track, QWidget *parent)
         connect(postSendsPanSlider, SIGNAL(valueChanged(int)), this, SLOT(post_sends_pan_value_changed(int)));
         connect(preSendsGainSlider, SIGNAL(valueChanged(int)), this, SLOT(pre_sends_gain_value_changed(int)));
         connect(preSendsPanSlider, SIGNAL(valueChanged(int)), this, SLOT(pre_sends_pan_value_changed(int)));
+}
+
+TTrackManagerDialog::~TTrackManagerDialog()
+{
+    PENTERDES;
 }
 
 void TTrackManagerDialog::create_routing_input_menu()

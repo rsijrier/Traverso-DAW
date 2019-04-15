@@ -36,7 +36,7 @@ class TTrackManagerDialog : public QDialog, protected Ui::TTrackManagerDialog
 
 public:
         TTrackManagerDialog(Track* track, QWidget* parent);
-        ~TTrackManagerDialog() {}
+        ~TTrackManagerDialog();
 
 private:
         Track*  m_track;

@@ -130,23 +130,9 @@ int TrackView::get_height( ) const
 
 TCommand* TrackView::edit_properties( )
 {
-        TTrackManagerDialog manager(m_track, TMainWindow::instance());
-        manager.exec();
-        return 0;
-
-        if (m_track == m_track->get_session()->get_master_out()) {
-                return 0;
-        }
-
-        bool ok;
-        QString text = QInputDialog::getText(m_sv->get_trackpanel_view_port()->viewport(), tr("Edit name"),
-                                        tr("Enter new name"),
-                                        QLineEdit::Normal, m_track->get_name(), &ok);
-        if (ok && !text.isEmpty()) {
-                m_track->set_name(text);
-        }
-
-        return (TCommand*) 0;
+        TTrackManagerDialog* manager = new TTrackManagerDialog(m_track, TMainWindow::instance());
+        manager->open();
+        return nullptr;
 }
 
 TCommand* TrackView::add_new_plugin( )
