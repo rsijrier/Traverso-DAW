@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <Debugger.h>
 
 CurveNodeView::CurveNodeView( SheetView * sv, CurveView* curveview, CurveNode * node, Curve* guicurve)
-	: ViewItem(curveview, 0)
+    : ViewItem(curveview, nullptr)
 	, CurveNode(guicurve, node->get_when(), node->get_value())
 	, m_node(node)
 {
@@ -63,17 +63,17 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 	painter->save();
 
 	QPointF mapped = mapToParent(QPointF(0, 0));
-	int x = (int) mapped.x();
-	int y = (int) mapped.y();
-    int heightadjust = 0;
-    int widthadjust = 0;
+    double x = mapped.x();
+    double y = mapped.y();
+    double heightadjust = 0;
+    double widthadjust = 0;
 
-	if ( (y + m_boundingRect.height()) > (int) m_parentViewItem->boundingRect().height() ) {
-		heightadjust = y - (int)m_parentViewItem->boundingRect().height() + (int) m_boundingRect.height();
+    if ( (y + m_boundingRect.height()) > m_parentViewItem->boundingRect().height() ) {
+        heightadjust = y - m_parentViewItem->boundingRect().height() + m_boundingRect.height();
 	}
 	
-	if ( (x + m_boundingRect.width()) > (int) m_parentViewItem->boundingRect().width() ) {
-		widthadjust = x - (int) m_parentViewItem->boundingRect().width() + (int) m_boundingRect.width();
+    if ( (x + m_boundingRect.width()) > m_parentViewItem->boundingRect().width() ) {
+        widthadjust = x - m_parentViewItem->boundingRect().width() + m_boundingRect.width();
 	}
 		
 // 	printf("widthadjust is %d, heightadjust = %d\n", widthadjust, heightadjust);
@@ -91,8 +91,8 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 		color.setAlpha(255);
 	}
 
-	path.addEllipse(m_boundingRect);
-	painter->fillPath(path, color);
+    path.addEllipse(m_boundingRect);
+    painter->fillPath(path, color);
 	
 	
 	painter->restore();
