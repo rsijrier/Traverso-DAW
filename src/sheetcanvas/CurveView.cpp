@@ -91,15 +91,13 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         return;
     }
 
+    painter->save();
+
     int xstart = int(option->exposedRect.x());
     int pixelcount = int(option->exposedRect.width()+1);
 	int height = int(m_boundingRect.height());
 	int offset = int(m_startoffset / m_sv->timeref_scalefactor);
 	
-
-//        if (m_curve->has_active_context()) {
-//		painter->fillRect(option->exposedRect, QColor(0, 0, 0, 50));
-//        }
 
 	QPen pen;
 	
@@ -108,11 +106,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         penColor.setAlpha(75);
     }
     pen.setColor(penColor);
-
-        if (m_boundingRect.height() > 40) {
-                pen.setWidth(2);
-        }
-	painter->save();
+    pen.setWidth(2);
 	painter->setPen(pen);
 //	painter->setClipRect(m_boundingRect);
 	
