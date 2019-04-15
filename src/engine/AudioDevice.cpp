@@ -735,7 +735,7 @@ QString AudioDevice::get_driver_information() const
  * 
  * @return The cpu load, call this at least 1 time per second to keep data consistent 
  */
-trav_time_t AudioDevice::get_cpu_time( )
+float AudioDevice::get_cpu_time( )
 {
 #if defined (JACK_SUPPORT)
 	if (libjack_is_present)
@@ -759,7 +759,7 @@ trav_time_t AudioDevice::get_cpu_time( )
 		totaltime += value;
 	}
 
-	audio_sample_t result = ( (totaltime  / (currentTime - m_lastCpuReadTime) ) * 100 );
+    audio_sample_t result = ( (totaltime  / (currentTime - m_lastCpuReadTime) ) * 100 );
 
 	m_lastCpuReadTime = currentTime;
 

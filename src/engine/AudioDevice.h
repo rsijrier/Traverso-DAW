@@ -120,7 +120,7 @@ public:
 
 	int shutdown();
 	
-	trav_time_t get_cpu_time();
+    float get_cpu_time();
 
 
 private:
