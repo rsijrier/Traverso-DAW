@@ -31,17 +31,10 @@ class CurveNode : public APILinkedListNode
 {
 
 public:
-        CurveNode(){}
-	CurveNode(Curve* curve, double when, double  val)
-		: m_curve(curve)
-	{
-		coeff[0] = coeff[1] = coeff[2] = coeff[3] = 0.0;
-	
-		this->when = when;
-		this->value = val;
-	}
+    CurveNode(Curve* curve, double when, double  val);
+    CurveNode();
 
-        ~CurveNode(){}
+        ~CurveNode();
 	
 	void set_when(double when) {
 		this->when = when;

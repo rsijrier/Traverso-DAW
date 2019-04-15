@@ -27,15 +27,36 @@ $Id: CurveNode.cpp,v 1.8 2007/11/23 14:56:36 r_sijrier Exp $
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
+CurveNode::CurveNode(Curve *curve, double when, double val)
+    : m_curve(curve)
+{
+    coeff[0] = coeff[1] = coeff[2] = coeff[3] = 0.0;
+
+    this->when = when;
+    this->value = val;
+}
+
+CurveNode::CurveNode()
+{
+
+}
+
+CurveNode::~CurveNode()
+{
+
+}
+
 void CurveNode::set_relative_when_and_value( double relwhen, double value )
 {
-	this->when = relwhen * m_curve->get_range();
-	this->value = value;
+    this->when = relwhen * m_curve->get_range();
+    this->value = value;
 }
 
 void CurveNode::set_when_and_value(double when, double value)
 {
-    if (this->when == when && this->value == value) return;
+    if (qFuzzyCompare(this->when, when) && qFuzzyCompare(this->value, value)) {
+        return;
+    }
 	this->when = when;
 	this->value = value;
 	emit m_curve->nodePositionChanged();
