@@ -40,7 +40,7 @@ TCommand* TTransport::start_transport()
 		m_session->start_transport();
 	}
 
-	return 0;
+    return nullptr;
 }
 
 TCommand * TTransport::set_recordable_and_start_transport()
@@ -52,7 +52,7 @@ TCommand * TTransport::set_recordable_and_start_transport()
 		}
 	}
 
-	return 0;
+    return nullptr;
 }
 
 TCommand * TTransport::to_start()
@@ -62,7 +62,7 @@ TCommand * TTransport::to_start()
 		m_session->set_transport_pos(TimeRef());
 	}
 
-	return 0;
+    return nullptr;
 }
 
 TCommand* TTransport::to_end()
@@ -72,16 +72,23 @@ TCommand* TTransport::to_end()
 		m_session->set_transport_pos(m_session->get_last_location());
 	}
 
-	return 0;
+    return nullptr;
 }
 
 TCommand* TTransport::set_transport_position()
 {
-	SheetWidget* widget = TMainWindow::instance()->getCurrentSheetWidget();
-	if (widget)
-	{
-		return new PlayHeadMove(widget->get_sheetview());
+    if (m_session) {
+        Sheet* sheet = m_project->get_active_sheet();
+        if (!sheet) {
+            return nullptr;
+        }
+    }
 
-	}
-	return 0;
+    SheetWidget* widget = TMainWindow::instance()->getCurrentSheetWidget();
+    if (widget)
+    {
+        return new PlayHeadMove(widget->get_sheetview());
+
+    }
+    return nullptr;
 }
