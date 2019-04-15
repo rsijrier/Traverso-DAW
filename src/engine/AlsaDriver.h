@@ -80,7 +80,7 @@ private:
 			unsigned int *nperiodsp,
 			unsigned long *nchns,
 			unsigned long sample_width);
-	int set_parameters(nframes_t frames_per_cycle, nframes_t user_nperiods, nframes_t rate);
+    int set_parameters(nframes_t frames_per_cycle, int user_nperiods, nframes_t rate);
 	int xrun_recovery(float *delayed_usecs);
 	int reset_parameters(nframes_t frames_per_cycle, nframes_t user_nperiods, nframes_t rate);
 	int alsa_driver_set_parameters(nframes_t frames_per_cycle, nframes_t user_nperiods, nframes_t rate);
@@ -199,7 +199,7 @@ private:
 	snd_pcm_format_t              playback_sample_format;
 	snd_pcm_format_t              capture_sample_format;
 	float                         max_sample_val;
-	unsigned long                 user_nperiods;
+    int                          user_nperiods;
 	unsigned int                  playback_nperiods;
 	unsigned int                  capture_nperiods;
 	unsigned long                 last_mask;
