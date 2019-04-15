@@ -218,12 +218,12 @@ void AudioDriverConfigPage::load_config( )
 	
 	// Iterate over the maximum number of devices that can be in a system
 	// according to alsa, and add them to the devices list.
-	QString name;
+    QString name, longName;
 	for (int i=0; i<6; ++i) {
-		name = AlsaDriver::alsa_device_name(false, i);
-		if (name != "") {
-			QString card = "Card " + QString::number(i+1) + ":  ";
-                        m_alsadevices->devicesCombo->addItem(card + name, name);
+        name = AlsaDriver::alsa_device_name(i);
+        longName = AlsaDriver::alsa_device_longname(i);
+        if (name != "") {
+                m_alsadevices->devicesCombo->addItem(longName, name);
 		}
 	}
 	
