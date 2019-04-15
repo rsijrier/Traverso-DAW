@@ -65,7 +65,8 @@ public:
 
 	QString get_device_name();
 	QString get_device_longname();
-	static QString alsa_device_name(bool longname = false, int devicenumber=0);
+    static QString alsa_device_longname(int devicenumber);
+    static QString alsa_device_name(int devicenumber);
 
 private:
 	void setup_io_function_pointers();
@@ -88,7 +89,8 @@ private:
 				snd_pcm_uframes_t *capture_offset,
 				snd_pcm_uframes_t *playback_offset
 				);
-        int get_device_id_by_name(const QString& name);
+    int get_device_id_by_name(const QString& name);
+    static QString alsa_device_name(bool longname, int devicenumber);
 
 	int wait(int extra_fd, int *status, float *delayed_usecs);
 

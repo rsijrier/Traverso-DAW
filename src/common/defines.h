@@ -337,7 +337,7 @@ typedef QList<VUMonitor*> VUMonitors;
  * Type used to represent the value of free running
  * monotonic clock with units of microseconds.
  */
-typedef double trav_time_t;
+typedef uint64_t trav_time_t;
 
 typedef unsigned long          channel_t;
 
@@ -461,8 +461,8 @@ typedef uint8_t            u_int8_t;
 static inline trav_time_t get_microseconds()
 {
 	struct timeval now;
-	gettimeofday(&now, 0);
-	trav_time_t time = (now.tv_sec * 1000000.0 + now.tv_usec);
+    gettimeofday(&now, nullptr);
+    trav_time_t time = (now.tv_sec * 1000000 + now.tv_usec);
 	return time;
 }
 

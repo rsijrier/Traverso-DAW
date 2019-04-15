@@ -666,14 +666,14 @@ void TInputEventDispatcher::process_hold_modifier_keys()
 		if (!hmk->wasExecuted) {
 			hmk->wasExecuted = true;
 			dispatch_shortcut(hmk->shortcut);
-			hmk->lastTimeExecuted = get_microseconds() + hmk->shortcut->autorepeatStartDelay * 1000;
+            hmk->lastTimeExecuted = get_microseconds() + trav_time_t(hmk->shortcut->autorepeatStartDelay * 1000);
 			continue;
 		}
 
-		int timeDiff = qRound(get_microseconds() - hmk->lastTimeExecuted);
+        trav_time_t timeDiff = get_microseconds() - hmk->lastTimeExecuted;
 		// if timeDiff is very close (-2 ms) to it's interval value, execute it still
 		// else the next interval might be too long between the previous one.
-		if ((timeDiff + 2 * 1000) >= hmk->shortcut->autorepeatInterval * 1000) {
+        if ((timeDiff + 2 * 1000) >= trav_time_t(hmk->shortcut->autorepeatInterval * 1000)) {
 			hmk->lastTimeExecuted = get_microseconds();
             dispatch_shortcut(hmk->shortcut);
 		}

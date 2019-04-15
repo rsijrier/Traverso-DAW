@@ -467,7 +467,7 @@ SystemValueBar::SystemValueBar(QWidget * parent)
 
 void SystemValueBar::set_value(float value)
 {
-	if (m_current == value) {
+    if (qFuzzyCompare(m_current, value)) {
 		return;
 	}
 	
@@ -528,7 +528,7 @@ void SystemValueBar::paintEvent(QPaintEvent* )
 				m_text + " " + QString::number((int)m_current).append("%"));
 	} else {
 		painter.drawText(0, 0, width(), height(), Qt::AlignCenter, 
-				 m_text + " " + QString::number(m_current, 'f', 2).append("%"));
+                 m_text + " " + QString::number(double(m_current), 'f', 1).append("%"));
 	}
 }
 

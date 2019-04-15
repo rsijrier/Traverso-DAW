@@ -1608,12 +1608,22 @@ int AlsaDriver::detach ()
 
 QString AlsaDriver::get_device_name( )
 {
-	return alsa_device_name(false);
+    return alsa_device_name(false, 0);
 }
 
 QString AlsaDriver::get_device_longname( )
 {
-	return alsa_device_name(true);
+    return alsa_device_name(true, 0);
+}
+
+QString AlsaDriver::alsa_device_longname(int devicenumber)
+{
+    return alsa_device_name(true, devicenumber);
+}
+
+QString AlsaDriver::alsa_device_name(int devicenumber)
+{
+    return alsa_device_name(false, devicenumber);
 }
 
 QString AlsaDriver::alsa_device_name(bool longname, int devicenumber)
@@ -1642,7 +1652,7 @@ QString AlsaDriver::alsa_device_name(bool longname, int devicenumber)
 
 
 	if (longname) {
-		return snd_ctl_card_info_get_name(info);
+        return snd_ctl_card_info_get_mixername(info);
 	}
 
 	return snd_ctl_card_info_get_id(info);
