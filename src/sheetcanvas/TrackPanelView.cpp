@@ -449,7 +449,7 @@ TrackPanelLed::TrackPanelLed(TrackPanelView* view, QObject *obj, const QString& 
 	, m_toggleslot(toggleslot)
 	, m_isOn(false)
 {
-	m_object = obj;
+    m_object = obj;
 }
 
 void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*option*/, QWidget * widget )

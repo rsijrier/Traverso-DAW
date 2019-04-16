@@ -248,7 +248,7 @@ IF(WANT_MP3_ENCODE)
                 MESSAGE("-- Building with mp3 encoding support enabled")
                 SET(HAVE_MP3_ENCODING TRUE)
         ELSE(HAVE_LAME_H)
-                MESSAGE(FATAL_ERROR "MP3 encoding support requested, but mp3 development headers (lame.h) could not be found!\nPlease install the lame development package (Usually called liblame-dev), remove CMakeCache.txt and run cmake again")
+                MESSAGE(FATAL_ERROR "MP3 encoding support requested, but mp3 development headers (lame.h) could not be found!\nPlease install the lame development package (Debian/ubuntu: apt-get install libmp3lame-dev), remove CMakeCache.txt and run cmake again")
         ENDIF(HAVE_LAME_H)
 ELSE(WANT_MP3_ENCODE)
         SET(HAVE_MP3_ENCODING FALSE)
@@ -285,7 +285,7 @@ CONFIGURE_FILE(
 ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
 
-SET (QT_MIN_VERSION "5.10.0")
+SET (QT_MIN_VERSION "5.3.0")
 find_package(Qt5 COMPONENTS Core Widgets Xml REQUIRED)
 set(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)

@@ -111,7 +111,7 @@ Traverso::Traverso(int &argc, char **argv )
     tShortCutManager().add_meta_object(&CorrelationMeterView::staticMetaObject);
 
     // Initialize random number generator
-    srand ( time(NULL) );
+    srand ( time(nullptr) );
 
     init_sse();
 

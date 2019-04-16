@@ -1143,7 +1143,9 @@ void TMainWindow::add_function_to_menu(TFunction *function, QMenu *menu)
     QAction* action = menu->addAction(function->getDescription());
     QKeySequence sequence(function->getKeySequence().remove(" "));
     action->setShortcut(sequence);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     action->setShortcutVisibleInContextMenu(true);
+#endif
     QVariant v = qVariantFromValue(static_cast<void*>(function));
     action->setData(v);
 }
