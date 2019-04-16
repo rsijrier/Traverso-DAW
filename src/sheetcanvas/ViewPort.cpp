@@ -186,7 +186,7 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
             // If no item is below the mouse, default to default cursor
             if (m_sv)
             {
-                m_sv->set_cursor_shape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
+                cpointer().setCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
             }
         }
 

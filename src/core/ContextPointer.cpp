@@ -213,14 +213,14 @@ void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 	}
 }
 
-void ContextPointer::setCursorShape(const QString &cursor)
+void ContextPointer::setCursorShape(const QString &cursor, int alignment)
 {
 	if (!m_port)
 	{
 		return;
 	}
 
-	m_port->setCanvasCursorShape(cursor);
+    m_port->setCanvasCursorShape(cursor, alignment);
 }
 
 void ContextPointer::setCursorText(const QString &text, int mseconds)

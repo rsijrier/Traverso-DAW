@@ -1451,7 +1451,7 @@ void SheetView::context_changed()
         foreach(ContextItem * item, items) {
             QString cursorShape = cursor_dict()->value(item->metaObject()->className(), "");
             if (!cursorShape.isEmpty()) {
-                set_cursor_shape(cursorShape, Qt::AlignTop | Qt::AlignHCenter);
+                cpointer().setCursorShape(cursorShape, Qt::AlignTop | Qt::AlignHCenter);
                 break;
             }
         }

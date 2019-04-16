@@ -165,7 +165,7 @@ public:
         }
 
         void set_current_viewport(AbstractViewPort* vp);
-	void setCursorShape(const QString& cursor);
+    void setCursorShape(const QString& cursor, int alignment=Qt::AlignCenter);
 	void setCursorText(const QString& text, int mseconds=-1);
 	void setCursorPos(QPointF pos);
 
