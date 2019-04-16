@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <AddRemove.h>
 #include "Mixer.h"
 #include "Information.h"
+#include "TInputEventDispatcher.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -673,12 +674,11 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
  	it can be leaved alone, if it was a direct call, use Command::process_command()
  	to do the actuall work!!
  */
-#include "TInputEventDispatcher.h"
 TCommand* Curve::remove_node(CurveNode* node, bool historable)
 {
 	PENTER2;
 	
-	if (m_nodes.first() == node) {
+    if (m_nodes.first() == node && m_nodes.size() == 1) {
         return ied().failure();
 	}
 
