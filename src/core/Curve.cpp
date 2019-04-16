@@ -673,12 +673,13 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
  	it can be leaved alone, if it was a direct call, use Command::process_command()
  	to do the actuall work!!
  */
+#include "TInputEventDispatcher.h"
 TCommand* Curve::remove_node(CurveNode* node, bool historable)
 {
 	PENTER2;
 	
 	if (m_nodes.first() == node) {
-        return nullptr;
+        return ied().failure();
 	}
 
 	AddRemove* cmd;
