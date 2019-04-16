@@ -171,13 +171,13 @@ DriverInfo::DriverInfo( QWidget * parent )
 	: InfoWidget(parent)
 {
 	m_driver = new QPushButton();
-	m_driver->setIcon(find_pixmap(":/driver"));
-	m_driver->setToolTip(tr("Change Audio Device settings"));
-	m_driver->setFlat(true);
+
+    m_driver->setToolTip(tr("Change Audio Device settings"));
+//	m_driver->setFlat(true);
 	m_driver->setFocusPolicy(Qt::NoFocus);
 	
-        QHBoxLayout* lay = new QHBoxLayout(this);
-	lay->addWidget(m_driver);
+    QHBoxLayout* lay = new QHBoxLayout(this);
+    lay->addWidget(m_driver);
 	lay->setMargin(0);
 	setLayout(lay);
 	
@@ -185,7 +185,7 @@ DriverInfo::DriverInfo( QWidget * parent )
 	
 	connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(update_driver_info()));
 	connect(&audiodevice(), SIGNAL(bufferUnderRun()), this, SLOT(update_xrun_info()));
-	connect(m_driver, SIGNAL(clicked( bool )), this, SLOT(show_driver_config_dialog()));
+    connect(m_driver, SIGNAL(clicked( bool )), TMainWindow::instance(), SLOT(show_settings_dialog_sound_system_page()));
 	
 	update_driver_info();
 }
@@ -198,23 +198,20 @@ void DriverInfo::update_driver_info( )
 
 void DriverInfo::draw_information( )
 {
-	QString text;
-	QString latency = QString::number( ( (float)  (audiodevice().get_buffer_size() * 2) / audiodevice().get_sample_rate() ) * 1000, 'f', 2 ).append(" ms ");
-	
-	QByteArray xruns;
-	if (xrunCount) {
-		xruns = QByteArray::number(xrunCount).prepend(" xruns ");
-	}
-	
-        text = audiodevice().get_driver_information() + "   " +
-			QString::number(audiodevice().get_sample_rate()) + 
-			"/" + 
-			QString::number(audiodevice().get_bit_depth()) +
-			" @ " + latency +
-			xruns;
-	
-	m_driver->setText(text);
-	updateGeometry();
+    QString text;
+    QString latency = QString::number( (double(audiodevice().get_buffer_size() * 2) / audiodevice().get_sample_rate()) * 1000, 'f', 2 ).append(" ms ");
+
+    QByteArray xruns;
+    if (xrunCount) {
+        xruns = QByteArray::number(xrunCount).prepend(" xruns ");
+    }
+
+    text = audiodevice().get_driver_information();
+    if (audiodevice().is_driver_loaded()) {
+        text += "   " + QString::number(audiodevice().get_sample_rate() / 1000.0, 'f', 1) + "KHz @ " + latency + xruns;
+    }
+    m_driver->setText(text);
+    updateGeometry();
 }
 
 void DriverInfo::update_xrun_info( )
@@ -228,20 +225,14 @@ QSize DriverInfo::sizeHint() const
 	return QSize(m_driver->width(), SONG_TOOLBAR_HEIGHT);
 }
 
-void DriverInfo::enterEvent(QEvent * event)
+void DriverInfo::enterEvent(QEvent * /*event*/)
 {
-	m_driver->setFlat(false);
+//	m_driver->setFlat(false);
 }
 
-void DriverInfo::leaveEvent(QEvent * event)
+void DriverInfo::leaveEvent(QEvent * /*event*/)
 {
-	m_driver->setFlat(true);
-}
-
-
-void DriverInfo::show_driver_config_dialog( )
-{
-        TMainWindow::instance()->show_settings_dialog_sound_system_page();
+//	m_driver->setFlat(true);
 }
 
 

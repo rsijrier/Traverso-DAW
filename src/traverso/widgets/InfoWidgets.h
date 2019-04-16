@@ -108,7 +108,6 @@ private:
 private slots:
         void update_driver_info();
         void update_xrun_info();
-	void show_driver_config_dialog();
 };
 
 

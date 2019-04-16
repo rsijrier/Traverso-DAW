@@ -98,6 +98,7 @@ public:
 	QString get_device_longname() const;
 	QString get_driver_type() const;
         QString get_driver_information() const;
+        bool is_driver_loaded() const {return m_driver ? true : false;}
 
 	QStringList get_available_drivers() const;
 
