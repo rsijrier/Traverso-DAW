@@ -223,12 +223,12 @@ int SpectralMeter::get_data(QVector<float> &specl, QVector<float> &specr)
 		specl.push_back(tmp);
         if (tmp != 0.0f) {
 			isNullL = false;
-		}
+        }
         tmp = pow(float(fftspecr[i][0]),2.0f) + pow(float(fftspecr[i][1]),2.0f);
 		specr.push_back(tmp);
         if (tmp != 0.0f) {
 			isNullR = false;
-		}
+        }
 	}
 
 	if (isNullL && isNullR) {

@@ -168,8 +168,6 @@ int CropClip::jog()
 	m_selection->setRect(rect);
 	m_selection->setPos(x1, 0);
 
-    cpointer().setCursorPos(cpointer().scene_pos());
-
 	return 1;
 }
 

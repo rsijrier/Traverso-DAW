@@ -342,7 +342,6 @@ int MoveClip::jog()
 	
 	d->sv->update_shuttle_factor();
 	
-	cpointer().setCursorPos(cpointer().scene_pos());
 	cpointer().setCursorText(timeref_to_text(newTrackStartLocation, d->sv->timeref_scalefactor));
 
 	return 1;

@@ -27,6 +27,7 @@ Shuttle::Shuttle(SheetView* sv)
         : MoveCommand("Shuttle")
         , m_sv(sv)
 {
+    m_canvasCursorFollowsMouseCursor = false;
 }
 
 int Shuttle::begin_hold()

@@ -115,7 +115,7 @@ int MoveCurveNode::undo_action()
 		nodeData.node->set_when_and_value(nodeData.origWhen, nodeData.origValue);
 	}
 
-        return 1;
+    return 1;
 }
 
 void MoveCurveNode::move_up()
@@ -196,9 +196,7 @@ int MoveCurveNode::check_and_apply_when_and_value_diffs()
 		cpointer().setCursorText(QByteArray::number(dbFactor, 'f', 2).append(" dB"));
 	}
 
-        cpointer().setCursorPos(cpointer().scene_pos());
-
-        return do_action();
+    return do_action();
 }
 
 

@@ -120,7 +120,7 @@ $Id: AddRemove.cpp,v 1.6 2008/11/24 10:12:19 r_sijrier Exp $
 
 AddRemove::AddRemove(ContextItem* parent, ContextItem* item, const QString& des)
 	: TCommand(parent, des),
-	m_sheet(0),
+    m_sheet(nullptr),
 	m_doActionSlot(""),
 	m_undoActionSlot(""),
 	m_doSignal(""),

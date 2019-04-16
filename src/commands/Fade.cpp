@@ -47,6 +47,7 @@ FadeRange::FadeRange(AudioClip* clip, FadeCurve* curve, qint64 scalefactor)
         : MoveCommand(clip, "")
 	, d(new Private())
 {
+    m_canvasCursorFollowsMouseCursor = false;
 	m_curve = curve;
 	d->direction = (m_curve->get_fade_type() == FadeCurve::FadeIn) ? 1 : -1;
 	d->scalefactor = scalefactor;
@@ -135,7 +136,7 @@ int FadeRange::jog()
 	m_curve->set_range( m_newRange );
 	
 	TimeRef location = TimeRef(m_newRange);
-	cpointer().setCursorText(timeref_to_ms_3(location));
+    cpointer().setCursorText(timeref_to_ms_3(location));
 	
 	return 1;
 }

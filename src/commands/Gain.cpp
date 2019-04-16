@@ -46,6 +46,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
 	: TCommand(context, "")
 {
         m_gainObject = context;
+        m_canvasCursorFollowsMouseCursor = false;
 
     audio_sample_t gain = -1;
 	QString des = "";
@@ -260,8 +261,8 @@ int Gain::jog()
         int result = get_gain_from_object(m_newGain);
 	
 	// Update the vieport's hold cursor!
-	cpointer().setCursorPos(m_origPos);
-	cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
+    cpointer().setCursorPos(m_origPos);
+    cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
 
 	return result;
 }

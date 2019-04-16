@@ -59,6 +59,7 @@ public :
         void set_valid(bool valid);
 	void set_historable(bool historible);
         int push_to_history_stack();
+        bool canvas_cursor_follows_mouse_cursor() const {return m_canvasCursorFollowsMouseCursor;}
 	
         static void process_command(TCommand* cmd);
         
@@ -66,6 +67,7 @@ public :
 protected:
         bool 		m_isValid;
         bool		m_isHistorable;
+        bool        m_canvasCursorFollowsMouseCursor;
         QString		m_description;
 
 private:

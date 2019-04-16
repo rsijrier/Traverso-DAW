@@ -88,8 +88,9 @@ $Id: Command.cpp,v 1.21 2008/02/12 20:39:08 r_sijrier Exp $
 TCommand::TCommand( const QString& des )
 	: QUndoCommand(des)
 {
-	m_historyStack = 0;
+    m_historyStack = nullptr;
 	m_isHistorable = true;
+    m_canvasCursorFollowsMouseCursor = true;
 }
 
 /**
@@ -101,11 +102,10 @@ TCommand::TCommand( const QString& des )
  * @param des  The description as will show up in the HistoryView
  */
 TCommand::TCommand(ContextItem* item, const QString& des)
-	: QUndoCommand(des)
+    : TCommand(des)
 {
 	Q_ASSERT(item);
 	m_historyStack = item->get_history_stack();
-	m_isHistorable = true;
 }
 
 TCommand::~TCommand()

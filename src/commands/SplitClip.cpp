@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 SplitClip::SplitClip(AudioClipView* view)
         : MoveCommand(view->get_clip(), tr("Split Clip"))
 {
+    m_canvasCursorFollowsMouseCursor = false;
 	m_clip = view->get_clip();
 	m_sv = view->get_sheetview();
         m_session = m_sv->get_sheet();
@@ -165,8 +166,8 @@ int SplitClip::jog()
 	}
 	m_splitcursor->setPos(xpos, 0);
 	m_sv->update_shuttle_factor();
-	cpointer().setCursorText(timeref_to_text(m_splitPoint, m_sv->timeref_scalefactor));
-        cpointer().setCursorPos(cpointer().scene_pos());
+
+    cpointer().setCursorText(timeref_to_text(m_splitPoint, m_sv->timeref_scalefactor));
 	
 	return 1;
 }

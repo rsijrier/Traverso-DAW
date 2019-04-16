@@ -40,6 +40,7 @@ public :
 	~ClipSelection();
 
 	int begin_hold();
+    int prepare_action();
 
 private :
 	QList<AudioClip* >	m_clips;

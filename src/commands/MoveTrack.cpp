@@ -96,19 +96,18 @@ void MoveTrack::cancel_action()
 
 int MoveTrack::jog()
 {
-	cpointer().setCursorPos(cpointer().scene_pos());
 
-        if (int(m_trackView->scenePos().y() + m_trackView->boundingRect().height()) < cpointer().scene_y()) {
-                move_down();
-        }
+    if (int(m_trackView->scenePos().y() + m_trackView->boundingRect().height()) < cpointer().scene_y()) {
+        move_down();
+    }
 
-        if (int(m_trackView->scenePos().y()) > (cpointer().scene_y())) {
-                move_up();
-        }
+    if (int(m_trackView->scenePos().y()) > (cpointer().scene_y())) {
+        move_up();
+    }
 
-        m_sv->update_shuttle_factor();
+    m_sv->update_shuttle_factor();
 
-        return 1;
+    return 1;
 }
 
 

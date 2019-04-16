@@ -44,6 +44,7 @@ TrackPan::TrackPan(Track* track, QVariantList args)
 	: TCommand(track, "")
 {
         m_track = track;
+        m_canvasCursorFollowsMouseCursor = false;
 	
 	QString des;
 	

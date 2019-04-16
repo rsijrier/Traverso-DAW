@@ -150,7 +150,6 @@ int MoveEdge::jog()
 		m_newPos = m_clip->get_track_start_location();
 	}
 
-	cpointer().setCursorPos(cpointer().scene_pos());
 	cpointer().setCursorText(timeref_to_text(m_newPos, m_sv->timeref_scalefactor));
 
 	return 1;
