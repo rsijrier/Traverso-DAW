@@ -211,13 +211,15 @@ void CurveView::add_curvenode_view(CurveNode* node)
 	CurveNodeView* nodeview = new CurveNodeView(m_sv, this, node, m_guicurve);
 	m_nodeViews.append(nodeview);
 	
-	AddRemove* cmd = (AddRemove*) m_guicurve->add_node(nodeview, false);
-	cmd->set_instantanious(true);
-	TCommand::process_command(cmd);
+    AddRemove* cmd = dynamic_cast<AddRemove*>(m_guicurve->add_node(nodeview, false));
+    if (cmd) {
+        cmd->set_instantanious(true);
+        TCommand::process_command(cmd);
 
-	qSort(m_nodeViews.begin(), m_nodeViews.end(), Curve::smallerNode);
-	
-	update();
+        qSort(m_nodeViews.begin(), m_nodeViews.end(), Curve::smallerNode);
+
+        update();
+    }
 }
 
 void CurveView::remove_curvenode_view(CurveNode* node)
@@ -229,14 +231,16 @@ void CurveView::remove_curvenode_view(CurveNode* node)
                                 m_blinkingNode = nullptr;
                                 update_softselected_node(cpointer().scene_pos());
 			}
-			AddRemove* cmd = (AddRemove*) m_guicurve->remove_node(nodeview, false);
-			cmd->set_instantanious(true);
-			TCommand::process_command(cmd);
-			
-			scene()->removeItem(nodeview);
-			delete nodeview;
-			update();
-			return;
+            AddRemove* cmd = dynamic_cast<AddRemove*>(m_guicurve->remove_node(nodeview, false));
+            if (cmd) {
+                cmd->set_instantanious(true);
+                TCommand::process_command(cmd);
+
+                scene()->removeItem(nodeview);
+                delete nodeview;
+                update();
+                return;
+            }
 		}
 	}
 }
@@ -279,10 +283,10 @@ void CurveView::mouse_hover_move_event()
 
 	if (m_blinkingNode) {
 		QString shape = m_sv->cursor_dict()->value("CurveNodeView", "");
-		cpointer().setCursorShape(shape);
+        cpointer().setCursorShape(shape);
 	} else {
 		QString shape = m_sv->cursor_dict()->value("CurveView", "");
-		cpointer().setCursorShape(shape);
+        cpointer().setCursorShape(shape);
 	}
 }
 
