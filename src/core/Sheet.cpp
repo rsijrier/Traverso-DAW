@@ -728,7 +728,7 @@ int Sheet::process( nframes_t nframes )
                 RT_THREAD_EMIT(this, nullptr, transportStopped())
 
 		return 0;
-	}
+    }
 
 	// zero the m_masterOut buffers
         m_masterOut->get_process_bus()->silence_buffers(nframes);

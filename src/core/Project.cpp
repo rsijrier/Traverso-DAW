@@ -744,6 +744,7 @@ int Project::disconnect_from_audio_device()
 
 void Project::add_meter(Plugin *meter)
 {
+    return;
         SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
         if (sm) {
                 m_spectralMeter = sm;
