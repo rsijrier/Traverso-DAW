@@ -25,6 +25,7 @@ $Id: AudioChannel.h,v 1.8 2008/11/24 21:11:04 r_sijrier Exp $
 
 #include "defines.h"
 #include <QString>
+#include <QVarLengthArray>
 #include "Mixer.h"
 #include "RingBuffer.h"
 #include "APILinkedList.h"
@@ -36,87 +37,89 @@ class VUMonitor : public APILinkedListNode
 {
 
 public:
-        VUMonitor() {
-                m_flag = 0;
-        }
-        ~VUMonitor() {}
+    VUMonitor() {
+        m_flag = 0;
+    }
+    ~VUMonitor() {}
 
-        virtual bool is_smaller_then(APILinkedListNode* /*node*/);
+    virtual bool is_smaller_then(APILinkedListNode* /*node*/);
 
-        void process(float peakValue) {
-                if (m_flag) {
-                        m_peak = 0.0f;
-                        m_flag = 0;
-                }
-
-                if (peakValue > m_peak) {
-                        m_peak = peakValue;
-                }
+    void process(float peakValue) {
+        if (m_flag) {
+            m_peak = 0.0f;
+            m_flag = 0;
         }
 
-        audio_sample_t get_peak_value();
-        inline void set_read() {m_flag = 1;}
+        if (peakValue > m_peak) {
+            m_peak = peakValue;
+        }
+    }
+
+    audio_sample_t get_peak_value();
+    inline void set_read() {m_flag = 1;}
 
 private:
-        int    m_flag;
-        audio_sample_t m_peak;
+    int    m_flag;
+    audio_sample_t m_peak;
 };
 
 class AudioChannel : public QObject
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-        AudioChannel(const QString& name, uint channelNumber, int type, qint64 id=0);
-        ~AudioChannel();
+    AudioChannel(const QString& name, uint channelNumber, int type, qint64 id=0);
+    ~AudioChannel();
 
-        audio_sample_t* get_buffer(nframes_t ) {
-                return m_buffer;
-	}
+    inline audio_sample_t* get_buffer(nframes_t nframes) {
+        Q_ASSERT(int(nframes) <= m_buffer.size());
+        return m_buffer.data();
+    }
 
-	void set_latency(unsigned int latency);
+    void set_latency(unsigned int latency);
 
-        void silence_buffer(nframes_t nframes) {
-                memset (m_buffer, 0, sizeof (audio_sample_t) * nframes);
-	}
+    inline void silence_buffer(nframes_t nframes) {
+        Q_ASSERT(int(nframes) <= m_buffer.size());
+        memset (m_buffer.data(), 0, sizeof (audio_sample_t) * nframes);
+    }
 
-	void set_buffer_size(nframes_t size);
-        void set_monitoring(bool monitor);
-        void process_monitoring(VUMonitor* monitor=0);
+    void set_buffer_size(nframes_t size);
+    void set_monitoring(bool monitor);
+    void process_monitoring(VUMonitor* monitor=nullptr);
 
-        void add_monitor(VUMonitor* monitor);
-        void remove_monitor(VUMonitor* monitor);
+    void add_monitor(VUMonitor* monitor);
+    void remove_monitor(VUMonitor* monitor);
 
-        QString get_name() const {return m_name;}
-        uint get_number() const {return m_number;}
-        uint get_buffer_size() const {return m_bufferSize;}
-        int get_type() const {return m_type;}
-        qint64 get_id() const {return m_id;}
+    QString get_name() const {return m_name;}
+    uint get_number() const {return m_number;}
+    uint get_buffer_size() const {return m_bufferSize;}
+    int get_type() const {return m_type;}
+    qint64 get_id() const {return m_id;}
 
 private:
-        APILinkedList           m_monitors;
-        audio_sample_t* 	m_buffer;
-        uint 			m_bufferSize;
-	uint 			m_latency;
-	uint 			m_number;
-        qint64                  m_id;
-        int                     m_type;
-	bool			mlocked;
-        bool			m_monitoring;
-	QString 		m_name;
+    APILinkedList           m_monitors;
+    QVarLengthArray<audio_sample_t>     m_buffer;
+    uint 			m_bufferSize;
+    uint 			m_latency;
+    uint 			m_number;
+    qint64                  m_id;
+    int                     m_type;
+    bool			mlocked;
+    bool			m_monitoring;
+    QString 		m_name;
 
-	friend class JackDriver;
-	friend class AlsaDriver;
-	friend class PADriver;
-	friend class PulseAudioDriver;
-        friend class TAudioDriver;
-	friend class CoreAudioDriver;
+    friend class JackDriver;
+    friend class AlsaDriver;
+    friend class PADriver;
+    friend class PulseAudioDriver;
+    friend class TAudioDriver;
+    friend class CoreAudioDriver;
 
-        void read_from_hardware_port(audio_sample_t* buf, nframes_t nframes);
+    void read_from_hardware_port(audio_sample_t* buf, nframes_t nframes);
 
 private slots:
-        void private_add_monitor(VUMonitor* monitor);
-        void private_remove_monitor(VUMonitor* monitor);
+    void private_add_monitor(VUMonitor* monitor);
+    void private_remove_monitor(VUMonitor* monitor);
 };
 
 #endif

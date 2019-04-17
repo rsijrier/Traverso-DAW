@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2010 Remon Sijrier
+    Copyright (C) 2005-2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -50,8 +50,8 @@ AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, qi
         m_number = channelNumber;
         m_type = type;
         m_monitoring = true;
-        m_buffer = nullptr;
         m_bufferSize = 0;
+        m_buffer = QVarLengthArray<audio_sample_t>(2048);
         mlocked = false;
         m_latency = 0;
         if (id == 0) {
@@ -67,12 +67,11 @@ AudioChannel::~ AudioChannel( )
 
 #ifdef USE_MLOCK
 
-        if (mlocked) {
-                munlock (m_buffer, m_bufferSize);
-        }
+//        if (mlocked) {
+//                munlock (m_buffer, m_bufferSize);
+//        }
 #endif /* USE_MLOCK */
 
-        delete [] m_buffer;
 }
 
 void AudioChannel::set_latency( uint latency )
@@ -83,25 +82,24 @@ void AudioChannel::set_latency( uint latency )
 void AudioChannel::set_buffer_size( nframes_t size )
 {
 #ifdef USE_MLOCK
-        if (mlocked) {
-                if (munlock (m_buffer, m_bufferSize) == -1) {
-                	PERROR("Couldn't lock buffer into memory");
-				}
-                mlocked = false;
-        }
+//        if (mlocked) {
+//                if (munlock (m_buffer, m_bufferSize) == -1) {
+//                	PERROR("Couldn't lock buffer into memory");
+//				}
+//                mlocked = false;
+//        }
 #endif /* USE_MLOCK */
 
-        delete [] m_buffer;
-
-        m_buffer = new audio_sample_t[size];
+        m_buffer.resize(int(size));
         m_bufferSize = size;
         silence_buffer(size);
 
+
 #ifdef USE_MLOCK
-        if (mlock (m_buffer, size) == -1) {
-        	PERROR("Couldn't lock buffer into memory");
-        }
-        mlocked = true;
+//        if (mlock (m_buffer, size) == -1) {
+//        	PERROR("Couldn't lock buffer into memory");
+//        }
+//        mlocked = true;
 #endif /* USE_MLOCK */
 }
 
@@ -110,7 +108,7 @@ void AudioChannel::process_monitoring(VUMonitor* monitor)
 {
         Q_ASSERT(m_bufferSize > 0);
         float peakValue = 0;
-        peakValue = Mixer::compute_peak( m_buffer, m_bufferSize, peakValue );
+        peakValue = Mixer::compute_peak( m_buffer.data(), m_bufferSize, peakValue );
 
         if (monitor) {
                 monitor->process(peakValue);
@@ -151,7 +149,7 @@ void AudioChannel::remove_monitor(VUMonitor *monitor)
 
 void AudioChannel::read_from_hardware_port(audio_sample_t *buf, nframes_t nframes)
 {
-        memcpy (m_buffer, buf, sizeof(audio_sample_t) * nframes);
+        memcpy (m_buffer.data(), buf, sizeof(audio_sample_t) * nframes);
         if (m_monitoring) {
                 process_monitoring();
 //                audiodevice().send_to_master_out(this, m_bufferSize);
