@@ -174,7 +174,7 @@ private:
 	int create_driver(const QString& driverType, bool capture, bool playback, const QString& cardDevice);
 	int transport_control(transport_state_t state);
 
-	void post_process();
+    void post_run_cycle();
 
 	// These are reserved for Driver Objects only!!
 	AudioChannel* register_capture_channel(const QByteArray& busName, const QString& audioType, int flags, uint bufferSize, uint channel );

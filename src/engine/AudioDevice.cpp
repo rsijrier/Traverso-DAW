@@ -249,17 +249,17 @@ void AudioDevice::set_bit_depth( uint depth )
 
 int AudioDevice::run_cycle( nframes_t nframes, float delayed_usecs )
 {
-        if (m_masterOutBus) {
-                m_masterOutBus->silence_buffers(nframes);
-        }
-
 	nframes_t left;
 
 	if (nframes != m_bufferSize) {
-		printf ("late driver wakeup: nframes to process = %ld\n", (long)nframes);
+        printf ("late driver wakeup: nframes to process = %d\n", nframes);
 	}
 
 
+    // FIXME: apparently this happens specifically after Seeking to a different
+    // tranport position (to start), then 2 times the nframes have to be processed
+    // when using ALSA as the driver.
+    // Found out: is this important or not
 	/* run as many cycles as it takes to consume nframes (Should be 1 cycle!!)*/
 	for (left = nframes; left >= m_bufferSize; left -= m_bufferSize) {
 		if (run_one_cycle (m_bufferSize, delayed_usecs) < 0) {
@@ -268,7 +268,7 @@ int AudioDevice::run_cycle( nframes_t nframes, float delayed_usecs )
 		}
 	}
 
-	post_process();
+    post_run_cycle();
 
 	return 1;
 }
@@ -766,7 +766,7 @@ float AudioDevice::get_cpu_time( )
 	return result;
 }
 
-void AudioDevice::post_process( )
+void AudioDevice::post_run_cycle( )
 {
 	tsar().process_events();
 
