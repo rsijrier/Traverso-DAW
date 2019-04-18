@@ -94,9 +94,11 @@ public:
         : QThread(diskio),
           m_diskio(diskio)
     {
+        connect(&m_workTimer, SIGNAL(timeout()), m_diskio, SLOT(do_work()));
     }
 
     DiskIO*		m_diskio;
+    QTimer			m_workTimer;
 
 protected:
     virtual void run();
@@ -157,10 +159,10 @@ DiskIO::DiskIO(Sheet* sheet)
     m_resampleDecodeBuffer = new DecodeBuffer;
 
     // Move this instance to the workthread
-    moveToThread(m_diskThread);
-    m_workTimer.moveToThread(m_diskThread);
+//    moveToThread(m_diskThread);
+//    m_workTimer.moveToThread(m_diskThread);
 
-    connect(&m_workTimer, SIGNAL(timeout()), this, SLOT(do_work()));
+//    connect(&m_workTimer, SIGNAL(timeout()), this, SLOT(do_work()));
 
     m_diskThread->start();
 }
@@ -511,13 +513,15 @@ int DiskIO::get_read_buffers_fill_status( )
 void DiskIO::start_io( )
 {
     //	Q_ASSERT_X(m_sheet->threadId != QThread::currentThreadId (), "DiskIO::start_io", "Error, running in gui thread!!!!!");
-    m_workTimer.start(UPDATE_INTERVAL);
+    m_diskThread->m_workTimer.start(UPDATE_INTERVAL);
+    emit ioStartRequested();
 }
 
 void DiskIO::stop_io( )
 {
     //	Q_ASSERT_X(m_sheet->threadId != QThread::currentThreadId (), "DiskIO::stop_io", "Error, running in gui thread!!!!!");
     // 	m_workTimer.stop();
+    emit ioStopRequested();
 }
 
 void DiskIO::set_resample_quality(int quality)

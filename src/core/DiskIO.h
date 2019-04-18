@@ -119,6 +119,8 @@ signals:
 	void seekFinished();
 	void readSourceBufferUnderRun();
 	void writeSourceBufferOverRun();
+    void ioStartRequested();
+    void ioStopRequested();
 
 };
 
