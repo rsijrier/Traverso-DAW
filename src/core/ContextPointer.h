@@ -27,6 +27,8 @@
 
 #include "AbstractViewPort.h"
 
+struct TMouseData;
+
 class ContextPointer : public QObject
 {
     Q_OBJECT
@@ -37,22 +39,22 @@ public:
 
      * @return The current ViewPort's mouse x coordinate
      */
-    inline int x() const {return m_mousePos.x();}
+    int x() const;
 
     /**
      * 	Returns the current ViewPort's mouse y coordinate
 
      * @return The current ViewPort's mouse y coordinate
      */
-    inline int y() const {return m_mousePos.y();}
+    int y() const;
 
     /**
-     *        Convenience function, equals QPoint(cpointer().x(), cpointer().y())
+     *  Convenience function, equals QPoint(cpointer().x(), cpointer().y())
 
-    * @return The current ViewPorts mouse position;
+    *   @return The current ViewPorts mouse position;
     */
 
-    inline QPoint pos() {return m_mousePos;}
+    QPoint pos() const;
 
     /**
      * 	Convenience function that maps the ViewPort's mouse x <br />
@@ -60,13 +62,7 @@ public:
 
      * @return The current scene x coordinate, mapped from the ViewPort's mouse x coordinate
      */
-    inline qreal scene_x() const {
-        if (!m_viewPort) {
-            qDebug("scene_x() called, but no ViewPort was set!");
-            return 0;
-        }
-        return m_viewPort->map_to_scene(m_mousePos).x();
-    }
+    qreal scene_x() const;
 
     /**
      * 	Convenience function that maps the ViewPort's mouse y <br />
@@ -74,25 +70,13 @@ public:
 
      * @return The current ViewPort's scene y coordinate, mapped from the ViewPort's mouse y coordinate
      */
-    inline qreal scene_y() const {
-        if (!m_viewPort) {
-            qDebug("scene_y() called, but no ViewPort was set!");
-            return 0;
-        }
-        return m_viewPort->map_to_scene(m_mousePos).y();
-    }
+    qreal scene_y() const;
 
     /**
      * 	Returns the current's ViewPort's mouse position in the ViewPort's scene position.
      * @return The current's ViewPort's mouse position in the ViewPort's scene position.
      */
-    inline QPointF scene_pos() const {
-        if (!m_viewPort) {
-            qDebug("scene_pos() called, but no ViewPort was set!");
-            return QPointF(0,0);
-        }
-        return m_viewPort->map_to_scene(m_mousePos);
-    }
+    QPointF scene_pos() const;
 
 
     /**
@@ -107,58 +91,35 @@ public:
      *        Returns the ViewPort x coordinate on first input event.
      * @return The ViewPort x coordinate on first input event.
      */
-    inline int on_first_input_event_x() const {return m_onFirstInputEventPos.x(); }
+    int on_first_input_event_x() const;
 
     /**
      *        Returns the ViewPort y coordinate on first input event.
      * @return The ViewPort y coordinate on first input event.
      */
-    inline int on_first_input_event_y() const {return m_onFirstInputEventPos.y(); }
+    int on_first_input_event_y() const;
 
     /**
      *        Returns the scene x coordinate on first input event.
          * @return The scene x coordinate on first input event, -1 if no Port was set
      */
-    inline qreal on_first_input_event_scene_x() const {
-        if (!m_viewPort) {
-            // what else to do?
-            return -1;
-        }
-        return m_viewPort->map_to_scene(m_onFirstInputEventPos).x();
-    }
+    qreal on_first_input_event_scene_x() const;
 
-    inline QPointF on_first_input_event_scene_pos() const {
-        if (!m_viewPort) {
-            // what else to do?
-            return QPointF(-1, -1);
-        }
-        return m_viewPort->map_to_scene(m_onFirstInputEventPos);
-    }
+    QPointF on_first_input_event_scene_pos() const;
 
     /**
      *        Returns the scene y coordinate on first input event.
      * @return The scene y coordinate on first input event.
      */
-    inline qreal on_first_input_event_scene_y() const {
-        if (!m_viewPort) {
-            // what else to do?
-            return -1;
-        }
-        return m_viewPort->map_to_scene(m_onFirstInputEventPos).y();
-    }
+    qreal on_first_input_event_scene_y() const;
 
-    inline int get_current_mode() const {
-        if (m_viewPort) {
-            return m_viewPort->get_current_mode();
-        }
-        return -1;
-    }
+    int get_current_mode() const;
 
     void set_jog_bypass_distance(int distance);
     void set_left_mouse_click_bypasses_jog(bool bypassOnLeftMouseClick);
     void mouse_button_left_pressed();
 
-    inline AbstractViewPort* get_viewport() const {
+    AbstractViewPort* get_viewport() const {
         return m_viewPort;
     }
 
@@ -183,7 +144,7 @@ public:
     bool keyboard_only_input() const {return m_keyboardOnlyInput;}
     bool left_mouse_click_bypasses_jog() const {return m_mouseLeftClickBypassesJog;}
 
-    QPoint get_global_mouse_pos() const {return m_globalMousePos;}
+    QPoint get_global_mouse_pos() const;
 
     void update_mouse_positions(const QPoint &pos, const QPoint &globalPos);
 
@@ -201,11 +162,7 @@ private:
 
     QTimer  m_jogTimer;
 
-    QPoint  m_onFirstInputEventPos;
-    QPoint  m_jogStartGlobalMousePos;   // global Mouse Screen position at jog start
-    QPoint  m_mousePos;
-    QPoint  m_globalMousePos;           // global Mouse Screen position while holding
-    QPoint  m_mouseCursorPosDuringHold;  // global Mouse Screen pos while holding centered in ViewPort
+    TMouseData* m_mouseData;
 
     bool    m_keyboardOnlyInput;
     bool    m_jogEvent;

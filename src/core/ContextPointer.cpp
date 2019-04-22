@@ -48,11 +48,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 	as well as the InputEngine, which makes sure the mouse is grabbed and released <br />
 	during Hold type Command's.
 
-	Use cpointer() to get a reference to the singleton object!
+    Use cpointer() to get a reference to the singleton object
 
- *	\sa ViewPort, InputEngine
+ *	\sa ViewPort, TInputEventDispatcher
  */
 
+
+
+struct TMouseData {
+    QPoint  onFirstInputEventPos;
+    QPoint  jogStartGlobalMousePos;   // global Mouse Screen position at jog start
+    QPoint  mousePos;
+    QPoint  globalMousePos;           // global Mouse Screen position while holding
+    QPoint  mouseCursorPosDuringHold;  // global Mouse Screen pos while holding centered in ViewPort
+};
 
 /**
  *
@@ -70,6 +79,7 @@ ContextPointer::ContextPointer()
     m_viewPort = nullptr;
     m_currentContext = nullptr;
 	m_keyboardOnlyInput = false;
+    m_mouseData = new TMouseData{};
 
 	m_mouseLeftClickBypassesJog = config().get_property("InputEventDispatcher", "mouseclicktakesoverkeyboardnavigation", false).toBool();
 
@@ -144,7 +154,7 @@ void ContextPointer::remove_contextitem(QObject* item)
 
 void ContextPointer::jog_start()
 {
-    m_jogStartGlobalMousePos = QCursor::pos();
+    m_mouseData->jogStartGlobalMousePos = QCursor::pos();
 
 
 	m_jogEvent = true;
@@ -241,15 +251,101 @@ void ContextPointer::setCursorPos(QPointF pos)
 
 	if (ied().get_holding_command() && ied().get_holding_command()->restoreCursorPosition())
 	{
-        QCursor::setPos(m_jogStartGlobalMousePos);
+        QCursor::setPos(m_mouseData->jogStartGlobalMousePos);
 	}
 
     m_viewPort->set_holdcursor_pos(pos);
 }
 
+int ContextPointer::x() const {
+    return m_mouseData->mousePos.x();
+}
+
+int ContextPointer::y() const
+{
+    return m_mouseData->mousePos.y();
+}
+
+QPoint ContextPointer::pos() const
+{
+    return m_mouseData->mousePos;
+}
+
+qreal ContextPointer::scene_x() const
+{
+    if (!m_viewPort) {
+        qDebug("scene_x() called, but no ViewPort was set!");
+        return 0;
+    }
+    return m_viewPort->map_to_scene(m_mouseData->mousePos).x();
+}
+
+qreal ContextPointer::scene_y() const
+{
+    if (!m_viewPort) {
+        qDebug("scene_y() called, but no ViewPort was set!");
+        return 0;
+    }
+    return m_viewPort->map_to_scene(m_mouseData->mousePos).y();
+}
+
+QPointF ContextPointer::scene_pos() const
+{
+    if (!m_viewPort) {
+        qDebug("scene_pos() called, but no ViewPort was set!");
+        return QPointF(0,0);
+    }
+    return m_viewPort->map_to_scene(m_mouseData->mousePos);
+}
+
 void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
-    m_mousePos = pos;
+    m_mouseData->mousePos = pos;
+}
+
+int ContextPointer::on_first_input_event_x() const
+{
+    return m_mouseData->onFirstInputEventPos.x();
+}
+
+int ContextPointer::on_first_input_event_y() const
+{
+    return m_mouseData->onFirstInputEventPos.y();
+}
+
+qreal ContextPointer::on_first_input_event_scene_x() const
+{
+    if (!m_viewPort) {
+        // what else to do?
+        return -1;
+    }
+    return m_viewPort->map_to_scene(m_mouseData->onFirstInputEventPos).x();
+}
+
+QPointF ContextPointer::on_first_input_event_scene_pos() const
+{
+   if (!m_viewPort) {
+       // what else to do?
+       return QPointF(-1, -1);
+   }
+   return m_viewPort->map_to_scene(m_mouseData->onFirstInputEventPos);
+}
+
+qreal ContextPointer::on_first_input_event_scene_y() const
+{
+    if (!m_viewPort) {
+        // what else to do?
+        return -1;
+    }
+    return m_viewPort->map_to_scene(m_mouseData->onFirstInputEventPos).y();
+}
+
+int ContextPointer::get_current_mode() const
+{
+    if (m_viewPort) {
+        return m_viewPort->get_current_mode();
+    }
+    return -1;
 }
 
 void ContextPointer::set_active_context_items_by_mouse_movement(const QList<ContextItem *> &items)
@@ -260,21 +356,26 @@ void ContextPointer::set_active_context_items_by_mouse_movement(const QList<Cont
 void ContextPointer::set_active_context_items_by_keyboard_input(const QList<ContextItem *> &items)
 {
 	set_keyboard_only_input(true);
-    m_jogStartGlobalMousePos = QCursor::pos();
+    m_mouseData->jogStartGlobalMousePos = QCursor::pos();
 
     set_active_context_items(items);
 }
 
+QPoint ContextPointer::get_global_mouse_pos() const
+{
+    return m_mouseData->globalMousePos;
+}
+
 void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &globalPos)
 {
-    m_mousePos = pos;
-    m_globalMousePos = globalPos;
+    m_mouseData->mousePos = pos;
+    m_mouseData->globalMousePos = globalPos;
 
     m_jogEvent = true;
 
     if (m_keyboardOnlyInput && !m_mouseLeftClickBypassesJog)
     {
-        QPoint diff = m_jogStartGlobalMousePos - QCursor::pos();
+        QPoint diff = m_mouseData->jogStartGlobalMousePos - QCursor::pos();
         if (diff.manhattanLength() > m_jogBypassDistance)
         {
             set_keyboard_only_input(false);
@@ -319,7 +420,7 @@ void ContextPointer::prepare_for_shortcut_dispatch()
     Q_ASSERT(m_viewPort);
 
     m_onFirstInputEventActiveContextItems = m_activeContextItems;
-    m_onFirstInputEventPos = m_mousePos;
+    m_mouseData->onFirstInputEventPos = m_mouseData->mousePos;
 
     m_viewPort->prepare_for_shortcut_dispatch();
 }
@@ -349,6 +450,6 @@ void ContextPointer::set_keyboard_only_input(bool keyboardOnly)
 	// from the edit point :)
 	if (!keyboardOnly)
 	{
-        QCursor::setPos(m_jogStartGlobalMousePos);
+        QCursor::setPos(m_mouseData->jogStartGlobalMousePos);
 	}
 }
