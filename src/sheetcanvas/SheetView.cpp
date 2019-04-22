@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-11  USA.
 #include "TrackPanelViewPort.h"
 #include "TCanvasCursor.h"
 #include "TSession.h"
+#include "ViewPort.h"
 
 #include "AddRemove.h"
 #include "Shuttle.h"
@@ -797,18 +798,23 @@ TimeLineViewPort* SheetView::get_timeline_viewport() const
 
 TCommand * SheetView::touch( )
 {
-	if (cpointer().get_viewport() == m_tpvp) {
+    ViewPort* viewPort = dynamic_cast<ViewPort*>(cpointer().get_viewport());
+
+    if (viewPort == m_tpvp) {
 		return ied().did_not_implement();
 	}
+
 	int x;
-	if (!cpointer().get_viewport()) {
+
+    if (!viewPort) {
 		x = cpointer().on_first_input_event_x();
 	} else {
 		x = cpointer().x();
 	}
-	m_session->set_work_at(TimeRef(qRound(m_clipsViewPort->mapToScene(x, 0).x()) * timeref_scalefactor));
 
-	return 0;
+    m_session->set_work_at(TimeRef(qRound(viewPort->map_to_scene(QPoint(x, 0)).x()) * timeref_scalefactor));
+
+    return nullptr;
 }
 
 TCommand * SheetView::touch_play_cursor( )
