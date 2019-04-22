@@ -1,22 +1,22 @@
 /*
-    Copyright (C) 2005-2006 Remon Sijrier 
- 
+    Copyright (C) 2005-2006 Remon Sijrier
+
     This file is part of Traverso
- 
+
     Traverso is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
- 
+
 */
 
 #ifndef VIEWPORT_H
@@ -37,50 +37,48 @@ class QGraphicsTextItem;
 
 class ViewPort : public QGraphicsView, public AbstractViewPort
 {
-        Q_OBJECT
-			
+    Q_OBJECT
+
 public :
-        ViewPort(QGraphicsScene* scene, QWidget* parent);
-        virtual ~ViewPort();
+    ViewPort(QGraphicsScene* scene, QWidget* parent);
+    virtual ~ViewPort();
 
-        // Get functions
+    // Set functions
+    void setCursorText(const QString& text, int mseconds=-1);
+    void set_holdcursor_pos(QPointF pos);
+    void set_current_mode(int mode);
+    void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
+    void prepare_for_shortcut_dispatch( );
+    virtual void set_sheetview(SheetView* view) {m_sv = view;}
 
+    int get_current_mode() const {return m_mode;}
 
-        // Set functions
-	void setCursorText(const QString& text, int mseconds=-1);
-        void set_holdcursor_pos(QPointF pos);
-	void set_current_mode(int mode);
-	void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
-        virtual void set_sheetview(SheetView* view) {m_sv = view;}
-
-	int get_current_mode() const {return m_mode;}
-
-        inline QPointF map_to_scene(int x, int y) const {
-                return mapToScene(x, y);
-        }
+    inline QPointF map_to_scene(const QPoint& pos) const {
+        return mapToScene(pos);
+    }
 
 
 
 
 protected:
-	virtual bool event(QEvent *event);
-        virtual void enterEvent ( QEvent * );
-        virtual void leaveEvent ( QEvent * );
-        virtual void paintEvent( QPaintEvent* e);
-        virtual void mouseMoveEvent(QMouseEvent* e);
-        virtual void mousePressEvent ( QMouseEvent * e );
-        virtual void mouseReleaseEvent ( QMouseEvent * e );
-        virtual void mouseDoubleClickEvent ( QMouseEvent * e );
-	virtual void wheelEvent ( QWheelEvent* e );
-	virtual void keyPressEvent ( QKeyEvent* e);
-	virtual void keyReleaseEvent ( QKeyEvent* e);
-	void tabletEvent ( QTabletEvent * event );
+    virtual bool event(QEvent *event);
+    virtual void enterEvent ( QEvent * );
+    virtual void leaveEvent ( QEvent * );
+    virtual void paintEvent( QPaintEvent* e);
+    virtual void mouseMoveEvent(QMouseEvent* e);
+    virtual void mousePressEvent ( QMouseEvent * e );
+    virtual void mouseReleaseEvent ( QMouseEvent * e );
+    virtual void mouseDoubleClickEvent ( QMouseEvent * e );
+    virtual void wheelEvent ( QWheelEvent* e );
+    virtual void keyPressEvent ( QKeyEvent* e);
+    virtual void keyReleaseEvent ( QKeyEvent* e);
+    void tabletEvent ( QTabletEvent * event );
 
-        SheetView* m_sv;
-	
+    SheetView* m_sv;
+
 private:
-        int             m_mode;
-        QPoint		m_oldMousePos;
+    int             m_mode;
+    QPoint		m_oldMousePos;
 };
 
 #endif

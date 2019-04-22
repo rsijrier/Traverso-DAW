@@ -618,7 +618,7 @@ void TInputEventDispatcher::process_press_event(int keyValue)
 
 	if (shortCut)
 	{
-		cpointer().inputengine_first_input_event();
+        cpointer().prepare_for_shortcut_dispatch();
 		dispatch_shortcut(shortCut);
 		return;
 	}
@@ -817,7 +817,7 @@ void TInputEventDispatcher::set_numerical_input(const QString &number)
 	}
 
 	if (m_holdingCommand) {
-		m_holdingCommand->set_collected_number(m_sCollectedNumber);
+		m_holdingCommand->process_collected_number(m_sCollectedNumber);
 	}
 	emit collectedNumberChanged();
 }

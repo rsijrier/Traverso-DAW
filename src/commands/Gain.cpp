@@ -146,7 +146,7 @@ void Gain::cancel_action()
     undo_action();
 }
 
-void Gain::set_collected_number(const QString & collected)
+void Gain::process_collected_number(const QString & collected)
 {
     if (collected.size() == 0) {
         cpointer().setCursorText(" dB");

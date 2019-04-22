@@ -128,18 +128,23 @@ bool ViewPort::event(QEvent * event)
 	return QGraphicsView::event(event);
 }
 
+void ViewPort::prepare_for_shortcut_dispatch()
+{
+//    QPoint topLeftGlobalMousePos = mapToGlobal(QPoint());
+//    QPoint viewPortCenterGlobalMousePos = topLeftGlobalMousePos + QPoint(width() / 2, height() / 2);
+//    cpointer().set_virtual_global_mouse_pos(viewPortCenterGlobalMousePos);
+//    QCursor::setPos(viewPortCenterGlobalMousePos);
+//    printf("top left global mouse pos is %d, %d\n", topLeftGlobalMousePos.x(), topLeftGlobalMousePos.y());
+//    printf("top left center global mouse pos is %d, %d\n", viewPortCenterGlobalMousePos.x(), viewPortCenterGlobalMousePos.y());
+
+}
+
+
 void ViewPort::mouseMoveEvent(QMouseEvent* event)
 {
     PENTER4;
 
-    // tells the context pointer where we are, so command object can 'get' the
-    // scene position in their jog function from cpointer, or view items that
-    // accept mouse hover move 'events'
-    cpointer().store_mouse_cursor_position(event->x(), event->y());
-    // TODO: use global mouse cursor position to updated viewports cursor
-    // now when mouse cursor leaves viewport we get bouncy viewport cursor
-    // so grabbing the mouse did still something after all ;)
-    cpointer().store_global_mouse_cursor_position(event->globalPos());
+    cpointer().update_mouse_positions(event->pos(), event->globalPos());
 
     if (cpointer().keyboard_only_input()) {
         event->accept();
@@ -160,7 +165,7 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
 
     if (!ied().is_holding())
     {
-        QList<QGraphicsItem *> itemsUnderCursor = scene()->items(mapToScene(event->pos()));
+        QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
         QList<ContextItem*> activeContextItems;
 
         if (itemsUnderCursor.size())
@@ -180,14 +185,9 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             // If no item is below the mouse, default to default cursor
-            if (m_sv)
-            {
-                cpointer().setCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
-            }
+            setCanvasCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
         }
 
         // since sheetview has no bounding rect, and should always have 'active context'
@@ -200,7 +200,7 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
 
         if (m_sv)
         {
-            m_sv->set_canvas_cursor_pos(mapToScene(event->pos()));
+            m_sv->set_canvas_cursor_pos(cpointer().scene_pos());
         }
     }
 
@@ -216,7 +216,7 @@ void ViewPort::tabletEvent(QTabletEvent * event)
 	PMESG("ViewPort tablet event:: x, y: %d, %d", (int)event->x(), (int)event->y());
 	PMESG("ViewPort tablet event:: high resolution x, y: %f, %f",
 	      event->hiResGlobalX(), event->hiResGlobalY());
-	cpointer().store_mouse_cursor_position((int)event->x(), (int)event->y());
+//	cpointer().store_mouse_cursor_position((int)event->x(), (int)event->y());
 	
 	QGraphicsView::tabletEvent(event);
 }
@@ -306,7 +306,7 @@ void ViewPort::paintEvent( QPaintEvent* e )
 
 void ViewPort::setCanvasCursorShape(const QString &shape, int alignment)
 {
-	m_sv->set_cursor_shape(shape, alignment);
+    m_sv->set_cursor_shape(shape, alignment);
 }
 
 void ViewPort::setCursorText( const QString & text, int mseconds)

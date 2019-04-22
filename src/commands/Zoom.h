@@ -49,7 +49,7 @@ public :
         int jog();
 
         void set_cursor_shape(int useX, int useY);
-        void set_collected_number(const QString & collected);
+        void process_collected_number(const QString & collected);
 	bool supportsEnterFinishesHold() const {return false;}
 
 private :

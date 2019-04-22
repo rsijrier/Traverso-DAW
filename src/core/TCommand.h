@@ -47,7 +47,7 @@ public :
         virtual int jog();
         virtual void set_cursor_shape(int useX, int useY);
 	virtual void cancel_action();
-	virtual void set_collected_number(const QString& collected);
+	virtual void process_collected_number(const QString& collected);
         virtual void set_jog_bypassed(bool /*bypassed*/) {}
 	virtual bool is_hold_command() const {return true;}
 	virtual bool supportsEnterFinishesHold() const {return true;}

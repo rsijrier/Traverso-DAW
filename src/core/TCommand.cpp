@@ -254,7 +254,7 @@ void TCommand::cancel_action()
  * @param collected The QString of the collected number so far. Note that it can include a . (period) and
 			a , (comma), hence the number is supplied as a string, and not a numerical value.
  */
-void TCommand::set_collected_number(const QString & collected)
+void TCommand::process_collected_number(const QString & collected)
 {
 	Q_UNUSED(collected);
 	// reimplement me

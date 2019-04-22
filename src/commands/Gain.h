@@ -43,7 +43,7 @@ public :
         int do_action();
         int undo_action();
         void cancel_action();
-	void set_collected_number(const QString & collected);
+	void process_collected_number(const QString & collected);
         
         int jog();
         

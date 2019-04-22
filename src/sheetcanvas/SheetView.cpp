@@ -1379,7 +1379,7 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 	}
 
 	QPoint pos = m_clipsViewPort->mapFromScene(location / timeref_scalefactor, sceneY);
-	cpointer().store_canvas_cursor_position(pos.x(), pos.y());
+    cpointer().store_canvas_cursor_position(pos);
 
 	m_editCursor->set_text(timeref_to_text(location, timeref_scalefactor));
 	m_editCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY));

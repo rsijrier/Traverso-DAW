@@ -66,10 +66,8 @@ ContextPointer& cpointer()
 
 ContextPointer::ContextPointer()
 {
-	m_x = 0;
-	m_y = 0;
 	m_jogEvent = false;
-    m_port = nullptr;
+    m_viewPort = nullptr;
     m_currentContext = nullptr;
 	m_keyboardOnlyInput = false;
 
@@ -148,6 +146,7 @@ void ContextPointer::jog_start()
 {
     m_jogStartGlobalMousePos = QCursor::pos();
 
+
 	m_jogEvent = true;
 	int interval = config().get_property("InputEventDispatcher", "jogupdateinterval", 33).toInt();
 	m_jogTimer.start(interval);
@@ -155,7 +154,7 @@ void ContextPointer::jog_start()
 
 void ContextPointer::jog_finished()
 {
-	if (m_port) {
+    if (m_viewPort) {
 		emit contextChanged();
 	}
 	m_jogTimer.stop();
@@ -205,8 +204,8 @@ void ContextPointer::update_jog()
 void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 {
 	PENTER;
-	m_port = vp;
-	if (!m_port) {
+    m_viewPort = vp;
+    if (!m_viewPort) {
 		m_onFirstInputEventActiveContextItems.clear();
 		QList<ContextItem *> items;
 		set_active_context_items(items);
@@ -215,27 +214,27 @@ void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 
 void ContextPointer::setCursorShape(const QString &cursor, int alignment)
 {
-	if (!m_port)
+    if (!m_viewPort)
 	{
 		return;
 	}
 
-    m_port->setCanvasCursorShape(cursor, alignment);
+    m_viewPort->setCanvasCursorShape(cursor, alignment);
 }
 
 void ContextPointer::setCursorText(const QString &text, int mseconds)
 {
-	if (!m_port)
+    if (!m_viewPort)
 	{
 		return;
 	}
 
-	m_port->setCursorText(text, mseconds);
+    m_viewPort->setCursorText(text, mseconds);
 }
 
 void ContextPointer::setCursorPos(QPointF pos)
 {
-	if (!m_port)
+    if (!m_viewPort)
 	{
 		return;
 	}
@@ -245,34 +244,12 @@ void ContextPointer::setCursorPos(QPointF pos)
         QCursor::setPos(m_jogStartGlobalMousePos);
 	}
 
-	m_port->set_holdcursor_pos(pos);
+    m_viewPort->set_holdcursor_pos(pos);
 }
 
-void ContextPointer::store_canvas_cursor_position(int x, int y)
+void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
-	m_x = x;
-    m_y = y;
-}
-
-void ContextPointer::store_global_mouse_cursor_position(QPoint position)
-{
-    m_globalMousePos = position;
-}
-
-void ContextPointer::store_mouse_cursor_position(int x, int y)
-{
-	m_x = x;
-	m_y = y;
-	m_jogEvent = true;
-
-	if (m_keyboardOnlyInput && !m_mouseLeftClickBypassesJog)
-	{
-        QPoint diff = m_jogStartGlobalMousePos - QCursor::pos();
-		if (diff.manhattanLength() > m_jogBypassDistance)
-		{
-			set_keyboard_only_input(false);
-		}
-	}
+    m_mousePos = pos;
 }
 
 void ContextPointer::set_active_context_items_by_mouse_movement(const QList<ContextItem *> &items)
@@ -285,7 +262,24 @@ void ContextPointer::set_active_context_items_by_keyboard_input(const QList<Cont
 	set_keyboard_only_input(true);
     m_jogStartGlobalMousePos = QCursor::pos();
 
-	set_active_context_items(items);
+    set_active_context_items(items);
+}
+
+void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &globalPos)
+{
+    m_mousePos = pos;
+    m_globalMousePos = globalPos;
+
+    m_jogEvent = true;
+
+    if (m_keyboardOnlyInput && !m_mouseLeftClickBypassesJog)
+    {
+        QPoint diff = m_jogStartGlobalMousePos - QCursor::pos();
+        if (diff.manhattanLength() > m_jogBypassDistance)
+        {
+            set_keyboard_only_input(false);
+        }
+    }
 }
 
 void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
@@ -320,10 +314,20 @@ void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 	}
 }
 
+void ContextPointer::prepare_for_shortcut_dispatch()
+{
+    Q_ASSERT(m_viewPort);
+
+    m_onFirstInputEventActiveContextItems = m_activeContextItems;
+    m_onFirstInputEventPos = m_mousePos;
+
+    m_viewPort->prepare_for_shortcut_dispatch();
+}
+
 void ContextPointer::remove_from_active_context_list(ContextItem *item)
 {
-	m_activeContextItems.removeAll(item);
-	item->set_has_active_context(false);
+    m_activeContextItems.removeAll(item);
+    item->set_has_active_context(false);
 }
 
 void ContextPointer::about_to_delete(ContextItem *item)

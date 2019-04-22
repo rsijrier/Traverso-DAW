@@ -214,7 +214,7 @@ void Zoom::track_vzoom_out()
         m_sv->set_track_height(m_tv, trackheight);
 }
 
-void Zoom::set_collected_number(const QString &collected)
+void Zoom::process_collected_number(const QString &collected)
 {
         if (!m_tv) {
                 return;

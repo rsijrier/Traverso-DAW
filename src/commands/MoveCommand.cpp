@@ -33,7 +33,7 @@ MoveCommand::MoveCommand(const QString &description)
 {
 	QString collected = ied().get_collected_number();
 	if (!collected.isEmpty()) {
-		set_collected_number(collected);
+		process_collected_number(collected);
 	} else {
 		m_speed = pm().get_project()->get_keyboard_arrow_key_navigation_speed();
 	}
@@ -48,7 +48,7 @@ MoveCommand::MoveCommand(ContextItem* item, const QString &description)
 {
 	QString collected = ied().get_collected_number();
 	if (collected.size()) {
-		set_collected_number(collected);
+		process_collected_number(collected);
 	} else {
 		m_speed = pm().get_project()->get_keyboard_arrow_key_navigation_speed();
 	}
@@ -99,7 +99,7 @@ void MoveCommand::move_slower()
 	cpointer().setCursorText(tr("Speed: %1").arg(m_speed), 1000);
 }
 
-void MoveCommand::set_collected_number(const QString &collected)
+void MoveCommand::process_collected_number(const QString &collected)
 {
 	PENTER;
 	int number = 0;
