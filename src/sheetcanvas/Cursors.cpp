@@ -81,15 +81,22 @@ void PlayHead::paint( QPainter * painter, const QStyleOptionGraphicsItem * optio
 {
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
-        QBrush brush;
-	
-	if (m_session->is_transport_rolling()) {
-                brush = m_brushActive;
-	} else {
-                brush = m_brushInactive;
-	}
-	
-        painter->fillRect(QRectF(1, 0, m_boundingRect.width() - 2, m_boundingRect.height()), brush);
+
+    if (m_pixActive.height() != int(m_boundingRect.height())) {
+        create_pixmap();
+    }
+
+    painter->drawPixmap(0, 0, int(m_boundingRect.width()), int(m_boundingRect.height()), m_pixActive);
+}
+
+
+void PlayHead::create_pixmap()
+{
+    m_pixActive = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
+    m_pixActive.fill(Qt::transparent);
+
+    QPainter p(&m_pixActive);
+    p.fillRect(QRectF(0, 0, m_boundingRect.width() - 2, m_boundingRect.height()), m_brushActive);
 }
 
 void PlayHead::play_start()
@@ -149,12 +156,12 @@ void PlayHead::update_position()
 	newPos.setX(newXPos);
 	
 	
-	if (int(newPos.x()) != int(pos().x()) && (m_animation.state() != QTimeLine::Running)) {
+    if (int(newPos.x()) != int(pos().x()) && (m_animation.state() != QTimeLine::Running)) {
 		setPos(newPos);
-	} else {
-		return;
-	}
-	
+    } else {
+        return;
+    }
+
 	if ( ! m_follow || m_followDisabled || ! m_session->is_transport_rolling()) {
 		return;
 	}
@@ -227,7 +234,7 @@ void PlayHead::set_animation_value(int /*value*/)
     int newXPos = int(m_animationScrollStartPos + diff);
 	
 	if (newPos != pos()) {
-		setPos(newPos);
+        setPos(newPos);
 	}
 	
 	if (m_sv->hscrollbar_value() != newXPos) {

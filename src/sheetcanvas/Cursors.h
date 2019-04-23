@@ -67,7 +67,10 @@ private:
 	qreal		m_animScaleFactor;
         QBrush          m_brushActive;
         QBrush          m_brushInactive;
-	
+        QPixmap		m_pixActive;
+        QPixmap		m_pixInActive;
+
+        void create_pixmap();
 private slots:
 	void check_config();
         void play_start();
