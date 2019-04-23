@@ -161,50 +161,57 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
 
     m_oldMousePos = event->pos();
 
+    if (ied().is_holding()) {
+        // cpointer().update_mouse_positions() will instruct ied() to update holdcommand
+        // of new mouse position, so nothing to be done here
+        event->accept();
+        return;
+    }
+
     QList<ViewItem*> mouseTrackingItems;
 
-    if (!ied().is_holding())
-    {
-        QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
-        QList<ContextItem*> activeContextItems;
+    QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
+    QList<ContextItem*> activeContextItems;
 
-        if (itemsUnderCursor.size())
+    if (itemsUnderCursor.size())
+    {
+        foreach(QGraphicsItem* item, itemsUnderCursor)
         {
-            foreach(QGraphicsItem* item, itemsUnderCursor)
+            if (ViewItem::is_viewitem(item))
             {
-                if (ViewItem::is_viewitem(item))
+                ViewItem* viewItem = static_cast<ViewItem*>(item);
+                if (!viewItem->ignore_context())
                 {
-                    ViewItem* viewItem = static_cast<ViewItem*>(item);
-                    if (!viewItem->ignore_context())
+                    activeContextItems.append(viewItem);
+                    if (viewItem->has_mouse_tracking())
                     {
-                        activeContextItems.append(viewItem);
-                        if (viewItem->has_mouse_tracking())
-                        {
-                            mouseTrackingItems.append(viewItem);
-                        }
+                        mouseTrackingItems.append(viewItem);
                     }
                 }
             }
-        } else {
-            // If no item is below the mouse, default to default cursor
-            setCanvasCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
         }
-
-        // since sheetview has no bounding rect, and should always have 'active context'
-        // add it if it's available
-        if (m_sv) {
-            activeContextItems.append(m_sv);
-        }
-
-        cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
-
-        if (m_sv)
-        {
-            m_sv->set_canvas_cursor_pos(cpointer().scene_pos());
-        }
+    } else {
+        // If no item is below the mouse, default to default cursor
+        setCanvasCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
     }
 
-    foreach(ViewItem* item, mouseTrackingItems) {
+    // since sheetview has no bounding rect, and should always have 'active context'
+    // add it if it's available
+    if (m_sv) {
+        activeContextItems.append(m_sv);
+    }
+
+    cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
+
+    if (m_sv)
+    {
+        m_sv->set_canvas_cursor_pos(cpointer().scene_pos());
+    }
+
+    // Some ViewItems want to track mouse move events themselves like CurveView
+    // to update the soft selected node which cannot be done by the boudingRect of
+    // CurveNode since it is too small.
+    for(auto item : mouseTrackingItems) {
         item->mouse_hover_move_event();
     }
 
