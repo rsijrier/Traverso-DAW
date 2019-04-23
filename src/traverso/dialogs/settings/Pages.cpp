@@ -54,7 +54,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 AudioDriverConfigPage::AudioDriverConfigPage(QWidget *parent)
     : ConfigPage(parent)
 {
-	setupUi(this);
+    setupUi(this);
         driverInformationTextEdit->setTextInteractionFlags(Qt::NoTextInteraction);
         driverInformationTextEdit->hide();
 
@@ -88,7 +88,7 @@ AudioDriverConfigPage::AudioDriverConfigPage(QWidget *parent)
 
 void AudioDriverConfigPage::save_config()
 {
-	config().set_property("Hardware", "samplerate", rateComboBox->currentText());
+    config().set_property("Hardware", "samplerate", rateComboBox->currentText());
 	int bufferindex = latencyComboBox->currentIndex();
 	int buffersize = 1024;
 	if (bufferindex >= 0) {
@@ -132,7 +132,7 @@ void AudioDriverConfigPage::save_config()
 void AudioDriverConfigPage::reset_default_config()
 {
 	config().set_property("Hardware", "samplerate", 44100);
-	config().set_property("Hardware", "buffersize", 512);
+    config().set_property("Hardware", "buffersize", 512);
 #if defined (ALSA_SUPPORT)
 	config().set_property("Hardware", "drivertype", "ALSA");
         config().set_property("Hardware", "carddevice", "default");
@@ -168,7 +168,7 @@ void AudioDriverConfigPage::reset_default_config()
 void AudioDriverConfigPage::load_config( )
 {
 	int samplerate = config().get_property("Hardware", "samplerate", 44100).toInt();
-	int buffersize = config().get_property("Hardware", "buffersize", 512).toInt();
+    int buffersize = config().get_property("Hardware", "buffersize", 512).toInt();
 #if defined (Q_WS_X11)
 	QString driverType = config().get_property("Hardware", "drivertype", "ALSA").toString();
 #else
@@ -872,45 +872,27 @@ PerformanceConfigPage::PerformanceConfigPage(QWidget* parent)
 	
 	load_config();
 
-
-	// don't show it for now, it's not making sense with current opengl support
-	useOpenGLCheckBox->hide();
-#if defined (QT_OPENGL_SUPPORT)
-	useOpenGLCheckBox->setEnabled(true);
-#else
-	useOpenGLCheckBox->setEnabled(false);
-#endif
-	QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation);
-	reloadWarningLabel->setPixmap(icon.pixmap(22, 22));
+    QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation);
+    reloadWarningLabel->setPixmap(icon.pixmap(22, 22));
 }
 
 
 void PerformanceConfigPage::load_config()
 {
-	int jogUpdateInterval = config().get_property("InputEventDispatcher", "jogupdateinterval", 28).toInt();
-	bool useOpenGL = config().get_property("Interface", "OpenGL", false).toBool();
-	
-	jogUpdateIntervalSpinBox->setValue(1000 / jogUpdateInterval);
-	useOpenGLCheckBox->setChecked(useOpenGL);	
-
-
-	double buffertime = config().get_property("Hardware", "readbuffersize", 1.0).toDouble();
-	bufferTimeSpinBox->setValue(buffertime);
+    double buffertime = config().get_property("Hardware", "readbuffersize", 1.0).toDouble();
+    bufferTimeSpinBox->setValue(buffertime);
 }
 
 void PerformanceConfigPage::save_config()
 {
-	config().set_property("Interface", "OpenGL", useOpenGLCheckBox->isChecked());
-	config().set_property("InputEventDispatcher", "jogupdateinterval", 1000 / jogUpdateIntervalSpinBox->value());
-	double buffertime = bufferTimeSpinBox->value();
-	config().set_property("Hardware", "readbuffersize", buffertime);
+    double buffertime = bufferTimeSpinBox->value();
+    config().set_property("Hardware", "readbuffersize", buffertime);
 }
 
 void PerformanceConfigPage::reset_default_config()
 {
-	config().set_property("InputEventDispatcher", "jogupdateinterval", 28);
-	config().set_property("Hardware", "readbuffersize", 1.0);
-	load_config();
+    config().set_property("Hardware", "readbuffersize", 1.0);
+    load_config();
 }
 
 

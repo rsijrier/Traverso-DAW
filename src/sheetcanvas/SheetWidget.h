@@ -25,6 +25,7 @@
 
 #include <QFrame>
 #include <QPushButton>
+#include <QTimer>
 #include "ViewItem.h"
 #include "ViewPort.h"
 
