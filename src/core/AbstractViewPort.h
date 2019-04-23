@@ -18,7 +18,6 @@ public:
     virtual void setCursorText(const QString& text, int mseconds) = 0;
     virtual void set_holdcursor_pos(QPointF pos) = 0;
 
-    virtual void prepare_for_shortcut_dispatch() = 0;
     virtual void grab_mouse() = 0;
     virtual void release_mouse() = 0;
 };

@@ -402,12 +402,15 @@ void TMainWindow::set_project(Project* project)
 
 void TMainWindow::project_load_started()
 {
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
 }
 
 void TMainWindow::project_load_finished()
 {
 	PENTER;
+
+    QGuiApplication::restoreOverrideCursor();
+
 	if (!m_project) {
 		return;
 	}
@@ -429,8 +432,6 @@ void TMainWindow::project_load_finished()
 	}
 
 	show_session(m_project->get_current_session());
-
-	QApplication::restoreOverrideCursor();
 }
 
 void TMainWindow::remove_sheetwidget(Sheet* sheet)

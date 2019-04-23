@@ -416,8 +416,6 @@ void ContextPointer::prepare_for_shortcut_dispatch()
 
     m_onFirstInputEventActiveContextItems = m_activeContextItems;
     m_mouseData->onFirstInputEventPos = m_mouseData->mousePos;
-
-    m_viewPort->prepare_for_shortcut_dispatch();
 }
 
 void ContextPointer::remove_from_active_context_list(ContextItem *item)

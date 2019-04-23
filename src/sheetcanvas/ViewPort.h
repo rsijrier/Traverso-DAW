@@ -48,7 +48,6 @@ public :
     void set_holdcursor_pos(QPointF pos);
     void set_current_mode(int mode);
     void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
-    void prepare_for_shortcut_dispatch( );
     virtual void set_sheetview(SheetView* view) {m_sv = view;}
 
     int get_current_mode() const {return m_mode;}
@@ -81,8 +80,8 @@ protected:
     SheetView* m_sv;
 
 private:
-    int             m_mode;
-    QPoint		m_oldMousePos;
+    int         m_mode;
+    QPoint      m_oldMousePos;
 };
 
 #endif

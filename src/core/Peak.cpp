@@ -271,7 +271,7 @@ int Peak::calculate_peaks(
 		if ( (peakDataCount + offset) > data->headerdata.peakDataSizeForLevel[index]) {
 			truncate = peakDataCount - (data->headerdata.peakDataSizeForLevel[index] - offset);
             //FIXME: nothing done here?
-            qDebug("Peak::calculate_peaks truncate: %d", truncate);
+//            qDebug("Peak::calculate_peaks truncate: %d", truncate);
 //            peakDataCount = data->headerdata.peakDataSizeForLevel[index] - offset;
 		}
 		

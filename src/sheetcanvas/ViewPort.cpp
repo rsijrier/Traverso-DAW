@@ -80,18 +80,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
-	: QGraphicsView(scene, parent)
-        , AbstractViewPort()
-        , m_sv(0)
-        , m_mode(0)
+    : QGraphicsView(scene, parent)
+    , AbstractViewPort()
+    , m_sv(nullptr)
+    , m_mode(0)
 {
-	PENTERCONS;
-	setFrameStyle(QFrame::NoFrame);
-	setAlignment(Qt::AlignLeft | Qt::AlignTop);
-	
-	setOptimizationFlag(DontAdjustForAntialiasing);
-        setOptimizationFlag(DontSavePainterState);
-	setMouseTracking(true);
+    PENTERCONS;
+    setFrameStyle(QFrame::NoFrame);
+    setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
+    setOptimizationFlag(DontAdjustForAntialiasing);
+    setOptimizationFlag(DontSavePainterState);
+    setMouseTracking(true);
 }
 
 ViewPort::~ViewPort()
@@ -128,17 +128,6 @@ bool ViewPort::event(QEvent * event)
 	return QGraphicsView::event(event);
 }
 
-void ViewPort::prepare_for_shortcut_dispatch()
-{
-//    QPoint topLeftGlobalMousePos = mapToGlobal(QPoint());
-//    QPoint viewPortCenterGlobalMousePos = topLeftGlobalMousePos + QPoint(width() / 2, height() / 2);
-//    cpointer().set_virtual_global_mouse_pos(viewPortCenterGlobalMousePos);
-//    QCursor::setPos(viewPortCenterGlobalMousePos);
-//    printf("top left global mouse pos is %d, %d\n", topLeftGlobalMousePos.x(), topLeftGlobalMousePos.y());
-//    printf("top left center global mouse pos is %d, %d\n", viewPortCenterGlobalMousePos.x(), viewPortCenterGlobalMousePos.y());
-
-}
-
 void ViewPort::grab_mouse()
 {
     viewport()->grabMouse();
@@ -166,6 +155,7 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
     // active holding command, this has a number of nasty side effects :-(
     // For now, we ignore such events....
     if (event->pos() == m_oldMousePos) {
+        event->accept();
         return;
     }
 
@@ -235,41 +225,38 @@ void ViewPort::enterEvent(QEvent* e)
 {
     if (ied().is_holding()) {
         // we allready have viewport so do nothing
-        printf("enter event while holding\n");
-        if (m_sv) {
-            viewport()->setCursor(Qt::BlankCursor);
-        }
+        e->accept();
         return;
     }
 
     QGraphicsView::enterEvent(e);
 
-	if (m_sv)
-	{
-		viewport()->setCursor(Qt::BlankCursor);
-	}
-	else
-	{
-		viewport()->setCursor(themer()->get_cursor("Default"));
-	}
+    // even if the mouse is grabbed, the window system can set a default cursor on a leave event
+    // with this we override that behavior
+    QGuiApplication::setOverrideCursor(Qt::BlankCursor);
 
 	cpointer().set_current_viewport(this);
-	setFocus();
+    setFocus();
+    e->accept();
 }
 
 void ViewPort::leaveEvent(QEvent* e)
 {
     if (ied().is_holding()) {
-        // we need current viewport, do nothing
-        printf("leave event while holding\n");
+        e->accept();
         return;
     }
 
+    // always restore an overrided cursor, we did set one in enterEvent()
+    QGuiApplication::restoreOverrideCursor();
+
     cpointer().set_current_viewport(nullptr);
-	// Force the next mouse move event to do something
+
+    // Force the next mouse move event to do something
     // even if the mouse didn't move, so switching viewports
     // does update the current context!
     m_oldMousePos = QPoint();
+    e->accept();
 }
 
 void ViewPort::keyPressEvent( QKeyEvent * e)
