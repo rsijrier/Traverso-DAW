@@ -928,7 +928,6 @@ TCommand * AudioClipView::edit_properties()
 
 void AudioClipView::clip_state_changed()
 {
-    create_clipinfo_string();
     update();
 }
 
