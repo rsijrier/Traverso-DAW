@@ -23,9 +23,9 @@
 #define CONTEXTPOINTER_H
 
 #include <QObject>
-#include <QTimer>
 
-#include "AbstractViewPort.h"
+class AbstractViewPort;
+class ContextItem;
 
 struct TMouseData;
 
@@ -158,14 +158,14 @@ private:
     friend class TInputEventDispatcher;
     friend class Traverso;
 
-    int m_jogBypassDistance;
+    void jog_start();
+    void jog_finished();
 
-    QTimer  m_jogTimer;
+    int m_jogBypassDistance;
 
     TMouseData* m_mouseData;
 
     bool    m_keyboardOnlyInput;
-    bool    m_jogEvent;
     bool    m_mouseLeftClickBypassesJog;
 
 
@@ -188,11 +188,6 @@ private:
 
 signals:
     void contextChanged();
-
-private slots:
-    void update_jog();
-    void jog_start();
-    void jog_finished();
 };
 
 // use this function to access the context pointer

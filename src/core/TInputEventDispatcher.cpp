@@ -478,7 +478,9 @@ void TInputEventDispatcher::set_jogging(bool jog)
 
 	if (m_isJogging) {
 		emit jogStarted();
+        cpointer().jog_start();
 	} else {
+        cpointer().jog_finished();
 		emit jogFinished();
 	}
 }

@@ -57,6 +57,10 @@ public :
         return mapToScene(pos);
     }
 
+    void grab_mouse();
+    void release_mouse();
+
+
 
 
 

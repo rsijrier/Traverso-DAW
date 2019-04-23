@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "ContextPointer.h"
-
+#include "AbstractViewPort.h"
 #include "ContextItem.h"
 #include "TConfig.h"
 #include "TInputEventDispatcher.h"
@@ -75,17 +75,12 @@ ContextPointer& cpointer()
 
 ContextPointer::ContextPointer()
 {
-	m_jogEvent = false;
     m_viewPort = nullptr;
     m_currentContext = nullptr;
 	m_keyboardOnlyInput = false;
     m_mouseData = new TMouseData{};
 
 	m_mouseLeftClickBypassesJog = config().get_property("InputEventDispatcher", "mouseclicktakesoverkeyboardnavigation", false).toBool();
-
-	connect(&m_jogTimer, SIGNAL(timeout()), this, SLOT(update_jog()));
-	connect(&ied(), SIGNAL(jogStarted()), this, SLOT(jog_start()));
-	connect(&ied(), SIGNAL(jogFinished()), this, SLOT(jog_finished()));
 }
 
 /**
@@ -154,20 +149,18 @@ void ContextPointer::remove_contextitem(QObject* item)
 
 void ContextPointer::jog_start()
 {
+    if (m_viewPort) {
+        m_viewPort->grab_mouse();
+    }
     m_mouseData->jogStartGlobalMousePos = QCursor::pos();
-
-
-	m_jogEvent = true;
-	int interval = config().get_property("InputEventDispatcher", "jogupdateinterval", 33).toInt();
-	m_jogTimer.start(interval);
 }
 
 void ContextPointer::jog_finished()
 {
     if (m_viewPort) {
+        m_viewPort->release_mouse();
 		emit contextChanged();
 	}
-	m_jogTimer.stop();
 }
 
 void ContextPointer::set_jog_bypass_distance(int distance)
@@ -197,24 +190,18 @@ void ContextPointer::set_contextmenu_items(QList< QObject * > list)
 	m_contextMenuItems = list;
 }
 
-void ContextPointer::update_jog()
-{
-	if (m_keyboardOnlyInput) {
-		// no need or desire to call the current's
-		// Hold Command::jog() function, were moving by keyboard now!
-		return;
-	}
-
-	if (m_jogEvent) {
-		ied().jog();
-		m_jogEvent = false;
-	}
-}
-
 void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 {
 	PENTER;
+    if (m_viewPort) {
+        // just in case, it should not be possible at this stage that a viewport
+        // still has mouse grab, but if a key release is not catched at the proper
+        // time this will avoid a locked terminal ??
+        m_viewPort->release_mouse();
+    }
+
     m_viewPort = vp;
+
     if (!m_viewPort) {
 		m_onFirstInputEventActiveContextItems.clear();
 		QList<ContextItem *> items;
@@ -371,7 +358,15 @@ void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &glo
     m_mouseData->mousePos = pos;
     m_mouseData->globalMousePos = globalPos;
 
-    m_jogEvent = true;
+    if (ied().is_jogging()) {
+        if (m_keyboardOnlyInput) {
+            // no need or desire to call the current's
+            // Hold Command::jog() function, were moving by keyboard now!
+            return;
+        }
+
+        ied().jog();
+    }
 
     if (m_keyboardOnlyInput && !m_mouseLeftClickBypassesJog)
     {
@@ -417,7 +412,7 @@ void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 
 void ContextPointer::prepare_for_shortcut_dispatch()
 {
-    Q_ASSERT(m_viewPort);
+//    `Q_ASSERT(m_viewPort);
 
     m_onFirstInputEventActiveContextItems = m_activeContextItems;
     m_mouseData->onFirstInputEventPos = m_mouseData->mousePos;

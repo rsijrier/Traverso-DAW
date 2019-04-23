@@ -139,6 +139,16 @@ void ViewPort::prepare_for_shortcut_dispatch()
 
 }
 
+void ViewPort::grab_mouse()
+{
+    viewport()->grabMouse();
+}
+
+void ViewPort::release_mouse()
+{
+    viewport()->releaseMouse();
+}
+
 
 void ViewPort::mouseMoveEvent(QMouseEvent* event)
 {
@@ -247,7 +257,7 @@ void ViewPort::enterEvent(QEvent* e)
 	setFocus();
 }
 
-void ViewPort::leaveEvent(QEvent *)
+void ViewPort::leaveEvent(QEvent* e)
 {
     if (ied().is_holding()) {
         // we need current viewport, do nothing
