@@ -1012,43 +1012,53 @@ TCommand * TMainWindow::show_context_menu( )
     QMenu* toplevelmenu = nullptr;
     QAction* action = nullptr;
 
-	for (int i=0; i<items.size(); ++i) {
-		QObject* item = items.at(i);
+    if (items.size()) {
+        QObject* item = items.first();
+        QString className = item->metaObject()->className();
 
-		QString className = item->metaObject()->className();
+        toplevelmenu = m_contextMenus.value(className);
 
-		if (i==0) {
-			toplevelmenu = m_contextMenus.value(className);
+        if ( ! toplevelmenu ) {
+            while (items.size() > 1) {
+                toplevelmenu = create_context_menu(item);
+                if (! toplevelmenu ) {
+                    items.removeFirst();
+                    item = items.first();
+                    className = item->metaObject()->className();
+                } else {
+                    break;
+                }
+            }
 
-			if ( ! toplevelmenu ) {
-				printf("Interface: No menu for %s, creating new one\n", QS_C(className));
-				toplevelmenu = create_context_menu(item);
-				if (! toplevelmenu ) {
-					if (items.size() > 1) {
-						toplevelmenu = new QMenu(this);
-					} else {
-                        return nullptr;
-					}
+            if (!toplevelmenu) {
+                return nullptr;
+            }
 
-				}
-				m_contextMenus.insert(className, toplevelmenu);
-				connect(toplevelmenu, SIGNAL(triggered(QAction*)), this, SLOT(process_context_menu_action(QAction*)));
-			} else {
-				break;
-			}
-		} else {
-			// Create submenus
-			toplevelmenu->addSeparator();
-			QMenu* menu = create_context_menu(item);
-			if (! menu) {
-				continue;
-			}
-			action = toplevelmenu->insertMenu(action, menu);
-			QString name = tShortCutManager().get_translation_for(className);
+            if (items.size() > 1 ) {
+                // Create submenus
+                toplevelmenu->addSeparator();
 
-			action->setText(name);
-		}
-	}
+                for (int i=items.size() -1; i>0; --i) {
+                    {
+                        QObject* item = items.at(i);
+                        QString className = item->metaObject()->className();
+                        QMenu* menu = create_context_menu(item);
+                        if (! menu) {
+                            continue;
+                        }
+                        action = toplevelmenu->insertMenu(action, menu);
+                        QString name = tShortCutManager().get_translation_for(className);
+
+                        action->setText(name);
+                    }
+                }
+            }
+
+
+            m_contextMenus.insert(className, toplevelmenu);
+            connect(toplevelmenu, SIGNAL(triggered(QAction*)), this, SLOT(process_context_menu_action(QAction*)));
+        }
+    }
 
 	// It's impossible there is NO toplevelmenu, but oh well...
 	if (toplevelmenu) {
