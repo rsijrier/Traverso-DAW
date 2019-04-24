@@ -87,6 +87,10 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 {
     Q_UNUSED(widget);
     PENTER2;
+    if (m_nodeViews.isEmpty()) {
+        return;
+    }
+
     if (ignore_context() && m_nodeViews.size() == 1) {
         return;
     }
@@ -261,6 +265,7 @@ void CurveView::active_context_changed()
         m_blinkTimer.start(40);
     } else {
         if (ied().is_holding()) {
+            printf("returning in active context changed\n");
             return;
         }
 
@@ -293,7 +298,11 @@ void CurveView::mouse_hover_move_event()
 
 void CurveView::update_softselected_node(QPointF point)
 {
-    QPoint pos = mapToItem(this, point).toPoint();
+    if (m_nodeViews.isEmpty()) {
+        return;
+    }
+
+    QPointF pos = mapToItem(this, point);
 
     CurveNodeView* prevNode = m_blinkingNode;
     m_blinkingNode = m_nodeViews.first();
@@ -303,18 +312,17 @@ void CurveView::update_softselected_node(QPointF point)
 
     foreach(CurveNodeView* nodeView, m_nodeViews) {
 
-        QPoint nodePos((int)nodeView->scenePos().x(), (int)nodeView->scenePos().y());
-        // 		printf("node x,y pos %d,%d\n", nodePos.x(), nodePos.y());
+        QPointF nodePos(nodeView->scenePos().x(), nodeView->scenePos().y());
 
-        int nodeDist = (pos - nodePos).manhattanLength();
-        int blinkNodeDist = (pos - QPoint((int)m_blinkingNode->scenePos().x(), (int)m_blinkingNode->scenePos().y())).manhattanLength();
+        qreal nodeDist = (pos - nodePos).manhattanLength();
+        qreal blinkNodeDist = (pos - QPointF(m_blinkingNode->scenePos().x(), m_blinkingNode->scenePos().y())).manhattanLength();
 
         if (nodeDist < blinkNodeDist) {
             m_blinkingNode = nodeView;
         }
     }
 
-    if ((pos - QPoint(4, 4) - QPoint((int)m_blinkingNode->scenePos().x(), (int)m_blinkingNode->scenePos().y())).manhattanLength() > NODE_SOFT_SELECTION_DISTANCE) {
+    if ((pos - QPointF(4, 4) - QPointF(m_blinkingNode->scenePos().x(), m_blinkingNode->scenePos().y())).manhattanLength() > NODE_SOFT_SELECTION_DISTANCE) {
         m_blinkingNode = nullptr;
     }
 
