@@ -97,7 +97,7 @@ ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
 ViewPort::~ViewPort()
 {
 	PENTERDES;
-	
+
     if (cpointer().get_viewport() == this) {
         cpointer().set_current_viewport(nullptr);
     }

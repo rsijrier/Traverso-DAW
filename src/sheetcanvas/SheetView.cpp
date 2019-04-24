@@ -1041,9 +1041,9 @@ void SheetView::browse_to_marker_view(MarkerView *markerView)
 
 void SheetView::browse_to_curve_node_view(CurveNodeView *nodeView)
 {
-	QList<ContextItem*> activeList;
+    QList<ContextItem*> activeList;
 	CurveView* curveView = nodeView->get_curve_view();
-	curveView->update_softselected_node(nodeView->scenePos());
+    curveView->update_softselected_node(nodeView->scenePos());
 
 	AudioClipView* acv = static_cast<AudioClipView*>(curveView->parentItem());
 	activeList.append(curveView);
@@ -1256,7 +1256,7 @@ TCommand* SheetView::browse_to_next_context_item()
 
 	}
 	if (data.currentContext == "CurveView") {
-		CurveNodeView* nodeView = data.curveView->get_node_view_after(m_session->get_work_location());
+        CurveNodeView* nodeView = data.curveView->get_node_view_after(m_session->get_work_location());
 		if (!nodeView) {
 			return 0;
 		}
@@ -1312,7 +1312,7 @@ TCommand* SheetView::browse_to_previous_context_item()
 	}
 
 	if (data.currentContext == "CurveView") {
-		CurveNodeView* nodeView = data.curveView->get_node_view_before(m_session->get_work_location());
+        CurveNodeView* nodeView = data.curveView->get_node_view_before(m_session->get_work_location());
 		if (!nodeView) {
 			return 0;
 		}

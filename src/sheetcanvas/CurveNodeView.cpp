@@ -81,22 +81,26 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 	if (y > 0) y = 0;
 
 	QRectF rect = m_boundingRect.adjusted(- x, 0, - widthadjust, 0);
-	painter->setClipRect(rect);
+//    painter->setClipRect(rect);
 	painter->setRenderHint(QPainter::Antialiasing);
 	
-	QPainterPath path;
 	QColor color = m_color;
-	if (m_isHardSelected /*&& !m_isSoftSelected*/)
-	{
-		color.setAlpha(255);
-	}
+    QColor hardSelectOutlineColor(Qt::white);
+
     if (m_curveview->ignore_context()) {
         color.setAlpha(75);
+        hardSelectOutlineColor.setAlpha(75);
     }
 
-    path.addEllipse(m_boundingRect);
-    painter->fillPath(path, color);
-	
+    if (m_isHardSelected) {
+        painter->setPen(hardSelectOutlineColor);
+        painter->setBrush(color);
+        painter->drawRect(rect);
+    } else {
+        QPainterPath path;
+        path.addEllipse(rect);
+        painter->fillPath(path, color);
+    }
 	
 	painter->restore();
 } 
@@ -140,9 +144,9 @@ void CurveNodeView::update_hard_soft_selected_state()
 {
     int size = 9;//themer()->get_property("CurveNode:diameter", 6).toInt();
 
-	if (m_isSoftSelected || m_isHardSelected) {
+    if (m_isSoftSelected) {
         m_boundingRect.setWidth(size + 3);
-        m_boundingRect.setHeight(size + 3);
+        m_boundingRect.setHeight(m_boundingRect.width());
 	} else {
 		m_boundingRect.setWidth(size);
 		m_boundingRect.setHeight(size);

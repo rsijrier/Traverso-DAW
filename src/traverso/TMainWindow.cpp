@@ -1002,15 +1002,15 @@ TCommand * TMainWindow::show_context_menu( )
 
 	if (items.isEmpty()) {
 		printf("Interface:: No items under mouse to show context menu for!\n");
-		return 0;
+        return nullptr;
 	}
 
 	// 'Store' the contextitems under the mouse cursor, so the InputEngine
 	// dispatches the 'keyfact' from the menu to the 'pointed' objects!
 	cpointer().set_contextmenu_items(cpointer().get_context_items());
 
-	QMenu* toplevelmenu = 0;
-	QAction* action = 0;
+    QMenu* toplevelmenu = nullptr;
+    QAction* action = nullptr;
 
 	for (int i=0; i<items.size(); ++i) {
 		QObject* item = items.at(i);
@@ -1027,7 +1027,7 @@ TCommand * TMainWindow::show_context_menu( )
 					if (items.size() > 1) {
 						toplevelmenu = new QMenu(this);
 					} else {
-						return 0;
+                        return nullptr;
 					}
 
 				}
@@ -1058,9 +1058,13 @@ TCommand * TMainWindow::show_context_menu( )
 		// so showing it will be sufficient. In fact, using exec() is
 		// considered bad practice due this very issue.
 		toplevelmenu->popup(QCursor::pos());
-	}
 
-	return 0;
+        if (ied().is_holding()) {
+//            QGuiApplication::restoreOverrideCursor();
+        }
+    }
+
+    return nullptr;
 }
 
 QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menulist)
