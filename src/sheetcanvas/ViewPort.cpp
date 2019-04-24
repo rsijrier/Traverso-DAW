@@ -98,7 +98,9 @@ ViewPort::~ViewPort()
 {
 	PENTERDES;
 	
-    cpointer().set_current_viewport(nullptr);
+    if (cpointer().get_viewport() == this) {
+        cpointer().set_current_viewport(nullptr);
+    }
 }
 
 bool ViewPort::event(QEvent * event)
