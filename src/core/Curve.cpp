@@ -676,20 +676,13 @@ TCommand* Curve::add_node(CurveNode* node, bool historable)
  */
 TCommand* Curve::remove_node(CurveNode* node, bool historable)
 {
-	PENTER2;
-	
-    if (m_nodes.first() == node && m_nodes.size() == 1) {
-        return ied().failure();
-	}
+    PENTER2;
 
-	AddRemove* cmd;
-	
-        cmd = new AddRemove(this, node, historable, m_session,
-			"private_remove_node(CurveNode*)", "nodeRemoved(CurveNode*)", 
-			"private_add_node(CurveNode*)", "nodeAdded(CurveNode*)", 
-   			tr("Remove CurveNode"));
-			
-	return cmd;
+    return new AddRemove(this, node, historable, m_session,
+                         "private_remove_node(CurveNode*)", "nodeRemoved(CurveNode*)",
+                         "private_add_node(CurveNode*)", "nodeAdded(CurveNode*)",
+                         tr("Remove CurveNode"));
+
 }
 
 void Curve::private_add_node( CurveNode * node )

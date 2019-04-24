@@ -401,10 +401,7 @@ TCommand* CurveView::remove_node()
 
     foreach(CurveNodeView* nodeView, nodesToBeRemoved) {
         nodeView->set_hard_selected(false);
-        TCommand* command = m_curve->remove_node(nodeView->get_curve_node());
-        if (command) {
-            group->add_command(command);
-        }
+        group->add_command(m_curve->remove_node(nodeView->get_curve_node()));
     }
 
     return group;
