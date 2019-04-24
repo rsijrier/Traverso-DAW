@@ -108,9 +108,9 @@ QList< QObject * > ContextPointer::get_context_items( )
 	}
 
 	for (int i=0; i < activeItems.size(); ++i) {
-		item = activeItems.at(i);
-		contextItems.append(item);
-		while ((nextItem = item->get_context())) {
+        item = activeItems.at(i);
+        contextItems.append(item);
+        while ((nextItem = item->get_context())) {
 			contextItems.append(nextItem);
 			item = nextItem;
 		}

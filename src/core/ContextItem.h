@@ -33,68 +33,70 @@ class QUndoGroup;
 /**
  * \class ContextItem
  * \brief Interface class for objects (both core and gui) that operate in a 'Soft Selection'
- *	
-	Each core object that has/can have a visual representation should inherit from this class.
+ *
+    Each core object that has/can have a visual representation should inherit from this class.
 
-	Only core objects that inherit this class need to set the historystack which <br />
-	they need to create/get themselves.
+    Only core objects that inherit this class need to set the historystack which <br />
+    they need to create/get themselves.
  */
 
 class ContextItem : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	ContextItem(QObject* parent)
-		: QObject(parent)
-		, m_hs(0)
-                , m_contextItem(0)
-                , m_hasActiveContext(false) {}
-	
-	ContextItem()
-		: QObject()
-		, m_hs(0)
-                , m_contextItem(0)
-                , m_hasActiveContext(false) {}
+    ContextItem(QObject* parent)
+        : QObject(parent)
+        , m_hs(nullptr)
+        , m_ignoreContext(false)
+        , m_contextItem(nullptr)
+        , m_hasActiveContext(false)
+    {}
 
-        virtual ~ContextItem() {
-                if (m_hasActiveContext) {
-                        cpointer().about_to_delete(this);
-                }
+    ContextItem()
+        : ContextItem(nullptr)
+    {}
+
+    virtual ~ContextItem() {
+        if (m_hasActiveContext) {
+            cpointer().about_to_delete(this);
+        }
+    }
+
+    ContextItem* get_context() const {return m_contextItem;}
+
+    QUndoStack* get_history_stack() const {return m_hs;}
+    qint64 get_id() const {return m_id;}
+
+    void set_history_stack(QUndoStack* hs) {m_hs = hs;}
+    void set_context_item(ContextItem* item) {m_contextItem = item;}
+    void set_has_active_context(bool context) {
+        if (context == m_hasActiveContext) {
+            return;
         }
 
-	ContextItem* get_context() const {return m_contextItem;}
-	
-	QUndoStack* get_history_stack() const {return m_hs;}
-	qint64 get_id() const {return m_id;}
+        m_hasActiveContext = context;
 
-	void set_history_stack(QUndoStack* hs) {m_hs = hs;}
-	void set_context_item(ContextItem* item) {m_contextItem = item;}
-        void set_has_active_context(bool context) {
-                if (context == m_hasActiveContext) {
-                        return;
-                }
-
-                m_hasActiveContext = context;
-
-                if (m_contextItem) {
-                        m_contextItem->set_has_active_context(context);
-                }
-
-                emit activeContextChanged();
+        if (m_contextItem) {
+            m_contextItem->set_has_active_context(context);
         }
-        bool has_active_context() const {return m_hasActiveContext;}
 
-	
+        emit activeContextChanged();
+    }
+    bool has_active_context() const {return m_hasActiveContext;}
+    bool ignore_context() const {return m_ignoreContext;}
+
+
 protected:
-	QUndoStack* m_hs;
-	qint64 m_id;
+    QUndoStack*     m_hs;
+    qint64          m_id;
+    bool            m_ignoreContext;
 
 private:
-        QPointer<ContextItem>    m_contextItem;
-        bool            m_hasActiveContext;
+    QPointer<ContextItem>    m_contextItem;
+    bool                     m_hasActiveContext;
 
 signals:
-        void activeContextChanged();
+    void activeContextChanged();
 };
 
 #endif

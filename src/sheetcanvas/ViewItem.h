@@ -60,7 +60,6 @@ public:
         set_context_item(parentContext);
         m_parentViewItem = parentViewItem;
         m_hasMouseTracking = false;
-        m_ignoreContext = false;
     }
 
     virtual ~ViewItem() {}
@@ -78,7 +77,6 @@ public:
     }
 
     virtual int type() const;
-    bool ignore_context() const {return m_ignoreContext;}
     virtual void set_ignore_context(bool ignoreContext) {m_ignoreContext = ignoreContext;}
     virtual int get_height() const {return int(m_boundingRect.height());}
     virtual QString get_name() const {return m_parentViewItem ? m_parentViewItem->get_name() : "";}
@@ -105,7 +103,6 @@ protected:
     ViewItem*	m_parentViewItem;
     QRectF		m_boundingRect;
     bool            m_hasMouseTracking;
-    bool		m_ignoreContext;
 };
 
 inline QRectF ViewItem::boundingRect() const {return m_boundingRect;}
