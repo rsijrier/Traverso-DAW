@@ -54,9 +54,6 @@ private:
         SheetView*      m_sv;
         TrackView*      m_trackView;
 
-//        void move_up();
-//        void move_down();
-
 public slots:
         void move_up();
         void move_down();

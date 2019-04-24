@@ -98,28 +98,17 @@ int MoveTrack::jog()
 {
 
     if (int(m_trackView->scenePos().y() + m_trackView->boundingRect().height()) < cpointer().scene_y()) {
-        move_down();
+        m_sv->move_trackview_down(m_trackView);
     }
 
     if (int(m_trackView->scenePos().y()) > (cpointer().scene_y())) {
-        move_up();
+        m_sv->move_trackview_up(m_trackView);
     }
 
     m_sv->update_shuttle_factor();
 
     return 1;
 }
-
-
-//void MoveTrack::move_up()
-//{
-//        m_sv->move_trackview_up(m_trackView);
-//}
-
-//void MoveTrack::move_down()
-//{
-//        m_sv->move_trackview_down(m_trackView);
-//}
 
 
 void MoveTrack::move_up()
