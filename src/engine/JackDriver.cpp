@@ -53,7 +53,12 @@ JackDriver::~JackDriver( )
 	PENTER;
         Q_ASSERT(!is_running());
 
-        jack_client_close (m_jack_client);
+    if (m_running == -1) {
+        // jack server shut us down so do not call jack_client_close
+        return;
+    }
+
+    jack_client_close (m_jack_client);
 }
 
 int JackDriver::_read( nframes_t nframes )
