@@ -86,11 +86,11 @@ TShortcutEditorDialog::TShortcutEditorDialog(QWidget *parent)
 	foreach(QString className, tShortCutManager().getClassNames()) {
 		if (tShortCutManager().isCommandClass(className))
 		{
-			commandClassNamesMap.insert(tShortCutManager().get_translation_for(className), className);
+            commandClassNamesMap.insert(tShortCutManager().get_translation_for(className), className);
 		}
 		else
 		{
-			classNamesMap.insert(tShortCutManager().get_translation_for(className), className);
+            classNamesMap.insert(tShortCutManager().get_translation_for(className), className);
 		}
 	}
 
@@ -143,7 +143,7 @@ void TShortcutEditorDialog::objects_combo_box_activated(int index)
 	}
 	else {
 		ui->shortCutGroupBox->setTitle(tr("&Shortcuts"));
-		ui->shortcutsTreeWidget->setHeaderLabels(QStringList() << tr("Function") << tr("Shortcut"));
+        ui->shortcutsTreeWidget->setHeaderLabels(QStringList() << tr("Function") << tr("Shortcut Key"));
 	}
 
 	QList<TFunction* > functionsList = tShortCutManager().getFunctionsFor(className);
@@ -234,7 +234,7 @@ void TShortcutEditorDialog::key1_combo_box_activated(int /*index*/)
 		QVariant v = qVariantFromValue((void*) function);
 		item->setData(0, Qt::UserRole, v);
 
-		ui->shortcutsTreeWidget->addTopLevelItem(item);
+        ui->shortcutsTreeWidget->addTopLevelItem(item);
 	}
 }
 

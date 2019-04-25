@@ -33,10 +33,10 @@ class TraversoCommands : public CommandPlugin
 
 public:
 	TraversoCommands();
-	TCommand* create(QObject* obj, const QString& command, QVariantList arguments);
+    TCommand* create(QObject* obj, const QString& commandName, QVariantList arguments);
 
 private:
-	enum Commands {
+    enum TraversoCommand {
 		GainCommand,
 		TrackPanCommand,
 		ImportAudioCommand,
@@ -66,7 +66,8 @@ private:
 	};
 
 private:
-	void addFunction(TFunction* function, int command);
+    void addFunction(TFunction* function, TraversoCommand command);
+    void addFunction(const QString& object, const QString& description, const QString& commandName, TraversoCommand command, const QString& arguments="");
 };
 
 #endif

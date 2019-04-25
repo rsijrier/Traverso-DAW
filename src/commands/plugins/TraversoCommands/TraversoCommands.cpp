@@ -118,7 +118,7 @@ TraversoCommands::TraversoCommands()
 	tShortCutManager().add_translation("TBusTrack",tr("Bus Track"));
 	tShortCutManager().add_translation("TimeLine",tr("Time Line"));
 	tShortCutManager().add_translation("TBusTrackPanel", tr("Bus Track"));
-	tShortCutManager().add_translation("TMainWindow", tr("Main Window"));
+    tShortCutManager().add_translation("TMainWindow", tr("Global"));
 	tShortCutManager().add_translation("ProjectManager", tr("Project Manager"));
 	tShortCutManager().add_translation("TrackPanelGain", tr("Gain"));
 	tShortCutManager().add_translation("TrackPanelPan", tr("Panorama"));
@@ -362,28 +362,34 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "Scroll";
 	addFunction(function, ScrollCommand);
 
-	function = new TFunction();
-	function->object = "AudioClip";
-	function->setDescription(tr("(De)Select"));
-	function->commandName = "ClipSelectionSelect";
-	function->arguments << "toggle_selected";
-	addFunction(function, ClipSelectionCommand);
+
+    addFunction("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, "toggle_selected");
 
 // TODO:
 	// <Object objectname="SheetView" mousehint="LR" sortorder="6" pluginname="TraversoCommands" commandname="Shuttle" />
 	// <Object objectname="SheetView" mousehint="UD" sortorder="7" pluginname="TraversoCommands" commandname="ArmTracks"  arguments="" />
 }
 
-void TraversoCommands::addFunction(TFunction *function, int command)
+void TraversoCommands::addFunction(TFunction *function, TraversoCommand command)
 {
 	function->pluginname = "TraversoCommands";
 	m_dict.insert(function->commandName, command);
-	tShortCutManager().addFunction(function);
+    tShortCutManager().addFunction(function);
 }
 
-TCommand* TraversoCommands::create(QObject* obj, const QString& command, QVariantList arguments)
+void TraversoCommands::addFunction(const QString &object, const QString &description, const QString &commandName, TraversoCommand command, const QString &arguments)
 {
-	switch (m_dict.value(command)) {
+    auto function = new TFunction();
+    function->object = object;
+    function->setDescription(description);
+    function->commandName = commandName;
+    function->arguments << arguments;
+    addFunction(function, command);
+}
+
+TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVariantList arguments)
+{
+    switch (m_dict.value(commandName)) {
 		case GainCommand:
 		{
 			ContextItem* item = qobject_cast<ContextItem*>(obj);

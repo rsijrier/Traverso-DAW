@@ -341,9 +341,7 @@ bool TShortcutManager::isCommandClass(const QString &className)
 
 QList<QString> TShortcutManager::getClassNames() const
 {
-    QStringList stringList = m_classes.keys();
-	stringList.sort();
-    return stringList;
+    return m_classes.keys();
 }
 
 QString TShortcutManager::getClassForObject(const QString &object) const
