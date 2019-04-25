@@ -1442,7 +1442,6 @@ void SheetView::set_canvas_cursor_pos(QPointF pos)
 
 void SheetView::context_changed()
 {
-	PENTER;
 	if (!m_clipsViewPort->isVisible())
 	{
 		return;

@@ -1019,7 +1019,7 @@ TCommand * TMainWindow::show_context_menu( )
         toplevelmenu = m_contextMenus.value(className);
 
         if ( ! toplevelmenu ) {
-            while (items.size() > 1) {
+            while (items.size() > 0) {
                 toplevelmenu = create_context_menu(item);
                 if (! toplevelmenu ) {
                     items.removeFirst();
