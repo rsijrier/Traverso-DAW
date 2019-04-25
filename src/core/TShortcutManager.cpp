@@ -103,7 +103,10 @@ QList<int> TFunction::getModifierKeys(bool fromInheritedBase)
 
 QString TFunction::getSlotSignature() const
 {
-	if (m_inheritedFunction)
+    // a slotsignature is only set for hold commands, not for modifier keys
+    // if the shortcut is from a modifier key then the slotsignature will be
+    // empty in which case we do return the slotsignature set for the TFunction
+    if (m_inheritedFunction && !m_inheritedFunction->getSlotSignature().isEmpty())
 	{
 		return m_inheritedFunction->getSlotSignature();
 	}
@@ -367,6 +370,8 @@ void TShortcutManager::loadFunctions()
 //		}
 //	}
 
+    add_translation("ToggleVerticalBase", tr("Toggle Vertical"));
+    m_classes.insert("ToggleVerticalBase", QStringList() << "ToggleVerticalBase");
 
 	add_translation("GainBase", tr("Gain"));
 	m_classes.insert("GainBase", QStringList() << "GainBase");
@@ -383,6 +388,12 @@ void TShortcutManager::loadFunctions()
 
 
 	TFunction* function;
+
+    function = new TFunction();
+    function->object = "ToggleVerticalBase";
+    function->setDescription(tr("Toggle Vertical"));
+    function->commandName = "ToggleVerticalBase";
+    addFunction(function);
 
 	function = new TFunction();
 	function->object = "GainBase";
@@ -1073,6 +1084,7 @@ void TShortcutManager::loadFunctions()
 	function->slotsignature = "toggle_vertical_horizontal_jog_zoom";
 	function->setDescription(tr("Toggle Vertical / Horizontal"));
 	function->commandName = "ZoomToggleVerticalHorizontal";
+    function->setInheritedBase("ToggleVerticalBase");
 	addFunction(function);
 
 	function = new TFunction();
@@ -1080,6 +1092,7 @@ void TShortcutManager::loadFunctions()
 	function->slotsignature = "toggle_vertical_only";
 	function->setDescription(tr("Toggle Vertical Only"));
 	function->commandName = "MoveClipToggleVerticalOnly";
+    function->setInheritedBase("ToggleVerticalBase");
 	addFunction(function);
 
 	function = new TFunction();
@@ -1087,6 +1100,7 @@ void TShortcutManager::loadFunctions()
 	function->slotsignature = "toggle_vertical_only";
 	function->setDescription(tr("Toggle Vertical Only"));
 	function->commandName = "MoveCurveNodeToggleVerticalOnly";
+    function->setInheritedBase("ToggleVerticalBase");
 	addFunction(function);
 
 	function = new TFunction();

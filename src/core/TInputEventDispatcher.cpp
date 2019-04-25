@@ -224,7 +224,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
         QString commandname = shortCutFunction->commandName;
 
         if (contextItem == m_holdingCommand) {
-            PMESG("Dispatching to holdcommand blah");
+            PMESG("Dispatching to holdcommand %s", m_holdingCommand->metaObject()->className());
             if (QMetaObject::invokeMethod(contextItem, QS_C(slotsignature), Qt::DirectConnection)) {
                 PMESG("HIT, invoking %s::%s", m_holdingCommand->metaObject()->className(), QS_C(slotsignature));
                 // only now we know which object this hold modifier key was dispatched on.
@@ -238,6 +238,8 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                 }
 
                 break;
+            } else {
+                PMESG("InvokeMethod failed: %s::%s", m_holdingCommand->metaObject()->className(), QS_C(slotsignature));
             }
         }
 
