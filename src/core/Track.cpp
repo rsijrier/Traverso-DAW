@@ -89,7 +89,13 @@ void Track::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
         QDomNode sendsNode = doc.createElement("Sends");
 
         apill_foreach(TSend* send, TSend*, m_postSends) {
-                sendsNode.appendChild(send->get_state(node.toDocument()));
+            if (send->get_bus()->get_bus_type() == BusIsSoftware) {
+                // SoftwareBus is Traverso's way to expose track in/outs to the outside
+                // world, e.g. jackd. They are thus not needed to be saved or restored
+                // since we detect at runtime if we need to create those buses.
+                continue;
+            }
+            sendsNode.appendChild(send->get_state(node.toDocument()));
         }
         apill_foreach(TSend* send, TSend*, m_preSends) {
                 sendsNode.appendChild(send->get_state(node.toDocument()));
@@ -543,7 +549,7 @@ bool Track::connect_to_jack(bool inports, bool outports)
 
         if (outports) {
                 for (int chan=0; chan<m_channelCount; ++chan) {
-			channelconfig.name = m_name + "_" + QString("%1").arg(chan);
+            channelconfig.name = m_name + " : " + QString("%1 : out").arg(chan);
                         channelconfig.type = "output";
                         busconfig.channelNames << channelconfig.name;
                 }
@@ -556,7 +562,7 @@ bool Track::connect_to_jack(bool inports, bool outports)
 
         if (inports) {
                 for (int chan=0; chan<m_channelCount; ++chan) {
-			channelconfig.name = m_name + "_" + QString("%1").arg(chan);
+            channelconfig.name = m_name + " : " + QString("%1 : in").arg(chan);
                         channelconfig.type = "input";
                         busconfig.channelNames << channelconfig.name;
                 }
