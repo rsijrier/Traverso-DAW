@@ -242,7 +242,10 @@ void ViewPort::enterEvent(QEvent* e)
 
     // even if the mouse is grabbed, the window system can set a default cursor on a leave event
     // with this we override that behavior
-    QGuiApplication::setOverrideCursor(Qt::BlankCursor);
+    // TODO: setOverrideCursor screws up when showing context menus :(
+    // for now, default to old solution by only setting BlankCursor
+//    QGuiApplication::setOverrideCursor(Qt::BlankCursor);
+    viewport()->setCursor(Qt::BlankCursor);
 
 	cpointer().set_current_viewport(this);
     setFocus();
@@ -257,7 +260,7 @@ void ViewPort::leaveEvent(QEvent* e)
     }
 
     // always restore an overrided cursor, we did set one in enterEvent()
-    QGuiApplication::restoreOverrideCursor();
+//    QGuiApplication::restoreOverrideCursor();
 
     cpointer().set_current_viewport(nullptr);
 
