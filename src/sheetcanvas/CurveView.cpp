@@ -547,7 +547,11 @@ bool CurveView::has_nodes() const
 
 float CurveView::get_default_value()
 {
-    return ((CurveNode*)m_guicurve->get_nodes().first())->value;
+    if (m_guicurve->get_nodes().isEmpty()) {
+        return 1.0f;
+    }
+
+    return float(dynamic_cast<CurveNode*>(m_guicurve->get_nodes().first())->value);
 }
 
 TCommand * CurveView::remove_all_nodes()

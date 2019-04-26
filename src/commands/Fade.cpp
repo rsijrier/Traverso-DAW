@@ -204,7 +204,8 @@ FadeBend::FadeBend(FadeCurveView * FadeCurveView)
 	, m_fade(FadeCurveView->get_fade())
 	, m_fv(FadeCurveView) 
 {
-	setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: bend") : tr("Fade Out: bend"));
+    m_canvasCursorFollowsMouseCursor = false;
+    setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: bend") : tr("Fade Out: bend"));
 }
 
 FadeBend::FadeBend(FadeCurve *fade, double val)
@@ -294,7 +295,8 @@ FadeStrength::FadeStrength(FadeCurveView* FadeCurveView)
 	, m_fade(FadeCurveView->get_fade())
 	, m_fv(FadeCurveView)
 {
-	setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: strength") : tr("Fade Out: strength"));
+    m_canvasCursorFollowsMouseCursor = false;
+    setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: strength") : tr("Fade Out: strength"));
 }
 
 FadeStrength::FadeStrength(FadeCurve *fade, double val)
