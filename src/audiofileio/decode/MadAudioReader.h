@@ -95,21 +95,21 @@ private:
     unsigned char* m_inputBuffer;
     bool m_bInputError;
 
-    int m_channels;
-    int m_sampleRate;
+    int m_channels{};
+    int m_sampleRate{};
 };
 
 
 class MadAudioReader : public AbstractAudioReader
 {
 public:
-	MadAudioReader(QString filename);
+	MadAudioReader(const QString& filename);
 	~MadAudioReader();
 	
 	QString decoder_type() const {return "mad";}
 	void clear_buffers();
 	
-	static bool can_decode(QString filename);
+	static bool can_decode(const QString& filename);
 	
 protected:
 	bool seek_private(nframes_t start);
