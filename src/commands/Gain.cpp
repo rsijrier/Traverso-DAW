@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 
-Gain::Gain(ContextItem* context, QVariantList args)
+Gain::Gain(ContextItem* context, const QVariantList& args)
     : TCommand(context, "")
 {
     m_gainObject = context;
@@ -56,7 +56,7 @@ Gain::Gain(ContextItem* context, QVariantList args)
         name = data->get_name();
     }
 
-    if (args.size() > 0) {
+    if (!args.empty()) {
         gain = audio_sample_t(args.at(0).toDouble());
         des = QString(context->metaObject()->className()) + ": Reset gain";
     } else {

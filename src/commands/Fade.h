@@ -103,10 +103,10 @@ public :
 	bool restoreCursorPosition() const {return true;}
 	
 private :
-	float	oldValue;
-	int	origY;
-	double	origStrength;
-	double	newStrength;
+    float	oldValue{};
+    int	origY{};
+	double	origStrength{};
+	double	newStrength{};
 	FadeCurve*	m_fade;
 	FadeCurveView*	m_fv;
 };
@@ -134,10 +134,10 @@ public :
 	bool restoreCursorPosition() const {return true;}
 
 private :
-	float	oldValue;
-	int	origY;
-	double	origBend;
-	double	newBend;
+    float	oldValue{};
+    int	origY{};
+	double	origBend{};
+	double	newBend{};
 	FadeCurve*	m_fade;
 	FadeCurveView*	m_fv;
 };

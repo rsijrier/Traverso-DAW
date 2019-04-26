@@ -45,7 +45,7 @@ protected:
 
 
 private:
-	Project* m_project;
+	Project* m_project{};
         QTimer      m_timer;
         QCompleter  m_completer;
         void update_driver_info();

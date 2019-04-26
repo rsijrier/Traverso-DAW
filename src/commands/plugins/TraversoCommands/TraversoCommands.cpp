@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "libtraversocore.h"
 #include "libtraversosheetcanvas.h"
 #include "commands.h"
-#include <float.h>
+#include <cfloat>
 #include "TMainWindow.h"
 #include "TTransport.h"
 #include "TShortcutManager.h"
@@ -536,7 +536,7 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
 			Sheet* sheet = qobject_cast<Sheet*>(obj);
 			if (sheet) {
 				QString action;
-				if (arguments.size()) {
+				if (!arguments.empty()) {
 					action = arguments.at(0).toString();
 					if (action == "select_all_clips") {
 						return sheet->get_audioclip_manager()->select_all_clips();

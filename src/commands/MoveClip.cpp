@@ -53,13 +53,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 /**
  *	Creates  a Move Clip or Copy Clip Command object.
  */
-MoveClip::MoveClip(ViewItem* view, QVariantList args)
+MoveClip::MoveClip(ViewItem* view, const QVariantList& args)
         : MoveCommand(view->get_context(), "")
 	, d(new Data)
 {
 	QString action = "move"; // default action!
 	
-	if (args.size() > 0) {
+	if (!args.empty()) {
 		action = args.at(0).toString();
 	}
 	if (args.size() > 1) {
@@ -170,7 +170,7 @@ MoveClip::MoveClip(ViewItem* view, QVariantList args)
 		m_trackStartLocation = m_group.get_track_start_location();
 	}
         m_session = d->sv->get_sheet();
-	d->zoom = 0;
+	d->zoom = nullptr;
 }
 
 MoveClip::~MoveClip()

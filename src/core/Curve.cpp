@@ -51,7 +51,7 @@ Curve::Curve(ContextItem* parent)
 	init();
 }
 
-Curve::Curve(ContextItem* parent, const QDomNode node )
+Curve::Curve(ContextItem* parent, const QDomNode& node )
 	: ContextItem(parent)
 {
 	init();

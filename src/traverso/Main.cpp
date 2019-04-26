@@ -20,8 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include <cstdio>
-#include <signal.h>
-#include <stdlib.h>
+#include <csignal>
+#include <cstdlib>
 #include <unistd.h>
 
 #include <QLocale>

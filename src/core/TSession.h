@@ -94,8 +94,8 @@ public:
 	void add_child_session(TSession* child);
 	void remove_child_session(TSession* child);
 
-	audio_sample_t* 	mixdown;
-	audio_sample_t*		gainbuffer;
+	audio_sample_t* 	mixdown{};
+	audio_sample_t*		gainbuffer{};
 
 	enum Mode {
 		EDIT = 1,
@@ -110,7 +110,7 @@ protected:
 	QList<AudioTrack*>      m_audioTracks;
 	QList<TBusTrack*>       m_busTracks;
 	QHash<qint64, Track* >	m_tracks;
-	TBusTrack*              m_masterOut;
+	TBusTrack*              m_masterOut{};
 	QHash<qint64, int>      m_trackHeights;
 
 	SnapList*	m_snaplist;
@@ -119,14 +119,14 @@ protected:
 	EditPointLocation m_editPointLocation;
 	QString         m_name;
 
-	int		m_mode;
-	int		m_sbx;
-	int		m_sby;
-	qreal		m_hzoom;
-	bool 		m_isSnapOn;
-	bool            m_isProjectSession;
+	int		m_mode{};
+	int		m_sbx{};
+	int		m_sby{};
+	qreal		m_hzoom{};
+	bool 		m_isSnapOn{};
+	bool            m_isProjectSession{};
 
-	volatile size_t		m_transport;
+	volatile size_t		m_transport{};
 	TimeRef                 m_transportLocation;
 	TimeRef                 m_workLocation;
 	TimeRef                 m_newTransportLocation;

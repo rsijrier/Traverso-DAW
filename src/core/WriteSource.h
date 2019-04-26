@@ -67,21 +67,21 @@ private:
 	Peak*			m_peak;
 	
 	DiskIO*		m_diskio;
-	GDither         m_dither;
-	bool		m_processPeaks;
-    bool            m_isRecording;
-	nframes_t       m_sampleRate;
-	uint32_t        m_sample_bytes;
+	GDither         m_dither{};
+	bool		m_processPeaks{};
+    bool            m_isRecording{};
+	nframes_t       m_sampleRate{};
+	uint32_t        m_sample_bytes{};
 	
 	// Sample rate conversion variables
-	nframes_t       m_out_samples_max;
-	nframes_t       m_leftover_frames;
-	SRC_DATA        m_src_data;
-	SRC_STATE*      m_src_state;
-	nframes_t       m_max_leftover_frames;
-	float*		m_leftoverF;
-	float*		m_dataF2;
-	void*           m_output_data;
+	nframes_t       m_out_samples_max{};
+	nframes_t       m_leftover_frames{};
+	SRC_DATA        m_src_data{};
+	SRC_STATE*      m_src_state{};
+	nframes_t       m_max_leftover_frames{};
+	float*		m_leftoverF{};
+	float*		m_dataF2{};
+	void*           m_output_data{};
 	
 	
 	void prepare_rt_buffers();

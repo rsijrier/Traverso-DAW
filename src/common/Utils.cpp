@@ -31,6 +31,7 @@
 #include <QChar>
 #include <QTranslator>
 #include <QDir>
+#include <cmath>
 
 TimeRef msms_to_timeref(QString str)
 {
@@ -75,7 +76,7 @@ QString coefficient_to_dbstring ( float coeff, int decimals)
 
 	QString gainIndB;
 
-	if (fabs(db) < (1/::pow(10, decimals))) {
+	if (std::fabs(db) < (1/::pow(10, decimals))) {
 		db = 0.0f;
 	}
 

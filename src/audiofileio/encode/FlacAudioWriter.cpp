@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "FlacAudioWriter.h"
 #include "Utils.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include "FLAC/export.h"
 
 #if !defined FLAC_API_VERSION_CURRENT || FLAC_API_VERSION_CURRENT < 6

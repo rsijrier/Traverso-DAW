@@ -32,7 +32,7 @@ TSend::TSend(Track* track)
         : m_track(track)
 {
         m_type = POSTSEND;
-        m_bus = 0;
+        m_bus = nullptr;
         init();
 }
 

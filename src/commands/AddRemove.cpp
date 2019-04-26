@@ -125,7 +125,7 @@ AddRemove::AddRemove(ContextItem* parent, ContextItem* item, const QString& des)
 	m_undoActionSlot(""),
 	m_doSignal(""),
 	m_undoSignal(""),
-	m_instantanious(0)
+	m_instantanious(false)
 {
 	m_parentItem = parent;
         m_arg = item;
@@ -175,7 +175,7 @@ AddRemove::AddRemove(
 	  m_undoActionSlot(undoActionSlot),
 	  m_doSignal(doSignal),
 	  m_undoSignal(undoSignal),
-	  m_instantanious(0)
+	  m_instantanious(false)
 {
 	m_isHistorable = historable;
 }
@@ -198,7 +198,7 @@ AddRemove::AddRemove(
           m_undoActionSlot(undoActionSlot),
           m_doSignal(doSignal),
           m_undoSignal(undoSignal),
-          m_instantanious(0)
+          m_instantanious(false)
 {
         m_isHistorable = historable;
 

@@ -48,18 +48,18 @@ public :
 	
 private:
 
-	SRC_STATE*		m_srcState;
-	SRC_DATA		m_srcData;
+	SRC_STATE*		m_srcState{};
+	SRC_DATA		m_srcData{};
 	audio_sample_t*		m_overflowBuffer;
 	audio_sample_t*		m_inputBuffer;
 	audio_sample_t*		m_outputBuffer;
 	long			m_overflowUsed;
-	uint			m_outputRate;
-	uint 			m_inputRate;
+	uint			m_outputRate{};
+	uint 			m_inputRate{};
 	bool			m_isResampleAvailable;
-	nframes_t		m_readExtraFrames;
-	nframes_t 		bufferUsed;	
-	nframes_t framesRead;
+	nframes_t		m_readExtraFrames{};
+	nframes_t 		bufferUsed{};	
+	nframes_t framesRead{};
 };
 
 

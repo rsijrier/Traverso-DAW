@@ -53,7 +53,7 @@ private:
     QList<TimeRef> 	m_xposLut;
     QList<bool> 	m_xposBool;
     bool		m_isDirty;
-    bool		m_wasDirty;
+    bool		m_wasDirty{};
     TimeRef		m_rangeStart;
     TimeRef		m_rangeEnd;
     qint64		m_scalefactor;

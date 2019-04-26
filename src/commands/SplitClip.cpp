@@ -43,8 +43,8 @@ SplitClip::SplitClip(AudioClipView* view)
         m_session = m_sv->get_sheet();
 	m_cv = view;
 	m_track = m_clip->get_track();
-	leftClip = 0;
-	rightClip = 0;
+	leftClip = nullptr;
+	rightClip = nullptr;
 	m_splitPoint = TimeRef();
 	Q_ASSERT(m_clip->get_sheet());
 }

@@ -193,7 +193,7 @@ void WorkCursorMove::browse_to_next_marker()
 		}
 	}
 
-	Marker* next = 0;
+	Marker* next = nullptr;
 	foreach(Marker* marker, markers) {
 		if (marker->get_when() > m_session->get_work_location()) {
 			next = marker;
@@ -228,7 +228,7 @@ void WorkCursorMove::browse_to_previous_marker()
 		}
 	}
 
-	Marker* prev = 0;
+	Marker* prev = nullptr;
 	for (int i=markers.size() - 1; i>= 0; --i) {
 		Marker* marker = markers.at(i);
 		if (marker->get_when() < m_session->get_work_location()) {

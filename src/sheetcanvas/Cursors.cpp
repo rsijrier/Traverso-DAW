@@ -42,7 +42,8 @@
 PlayHead::PlayHead(SheetView* sv, TSession* session, ClipsViewPort* vp)
         : ViewItem(nullptr, session)
         , m_session(session)
-	, m_vp(vp)
+        , m_vp(vp)
+        , m_mode(ANIMATED_FLIP_PAGE)
 {
 	m_sv = sv;
 	check_config();

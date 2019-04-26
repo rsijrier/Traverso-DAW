@@ -41,7 +41,7 @@ class FadeCurve : public Curve, public APILinkedListNode
 public:
 	static QStringList defaultShapes;
 	
-	FadeCurve(AudioClip* clip, Sheet* sheet, QString type);
+	FadeCurve(AudioClip* clip, Sheet* sheet, const QString &type);
 	~FadeCurve();
 	
 	enum FadeType {
@@ -59,7 +59,7 @@ public:
 	int get_mode() const {return m_mode;}
 	int get_raster() const {return m_raster;}
 	
-	void set_shape(QString shapeName);
+	void set_shape(const QString &shapeName);
 	void set_bend_factor(float factor);
 	void set_strength_factor(float factor);
 	

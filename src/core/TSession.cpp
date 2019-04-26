@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 TSession::TSession(TSession *parentSession)
 	: ContextItem()
 {
-	m_parentSession = 0;
+	m_parentSession = nullptr;
 
 	if (!parentSession) {
 		m_timeline = new TimeLine(this);

@@ -49,15 +49,15 @@ public:
 	
 	bool is_smaller_then(APILinkedListNode* node) {return ((CurveNode*)node)->when > when;}
 
-	Curve*	m_curve;
+	Curve*	m_curve{};
 	
 	// declaring friend class Curve seems not to make any difference 
 	// when compiling on windows ? (not allowed to access compile error)
-	double 	when;
-	double 	value;
+	double 	when{};
+	double 	value{};
 	
 private:
-	double  coeff[4];
+    double  coeff[4]{};
 /*	double 	when;
 	double 	value;*/
 	

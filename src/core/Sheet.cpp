@@ -100,7 +100,7 @@ Sheet::Sheet(Project* project, int numtracks)
         resize_buffer(audiodevice().get_buffer_size());
 }
 
-Sheet::Sheet(Project* project, const QDomNode node)
+Sheet::Sheet(Project* project, const QDomNode& node)
         : TSession(nullptr)
         , m_project(project)
 {

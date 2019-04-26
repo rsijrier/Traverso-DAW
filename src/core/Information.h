@@ -57,7 +57,7 @@ signals:
         void message(InfoStruct );
 	
 private slots:
-	void audiodevice_message(QString message, int severity);
+	void audiodevice_message(const QString &message, int severity);
 };
 
 // use this function to propagate the Information

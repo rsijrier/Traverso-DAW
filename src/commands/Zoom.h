@@ -37,7 +37,7 @@ class Zoom : public TCommand
 	Q_OBJECT
 
 public :
-        Zoom(SheetView* sv, QVariantList args);
+        Zoom(SheetView* sv, const QVariantList &args);
         ~Zoom() {}
 
         int begin_hold();
@@ -53,8 +53,8 @@ public :
 	bool supportsEnterFinishesHold() const {return false;}
 
 private :
-        int m_horizontalJogZoomLastX;
-        int m_verticalJogZoomLastY;
+        int m_horizontalJogZoomLastX{};
+        int m_verticalJogZoomLastY{};
         int m_trackHeight;
 	bool m_jogVertical;
 	bool m_jogHorizontal;

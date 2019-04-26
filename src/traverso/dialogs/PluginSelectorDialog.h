@@ -52,15 +52,15 @@ private:
 	
 	static PluginSelectorDialog* m_instance;
 	
-	QVBoxLayout *vboxLayout;
-	QLabel *objectToAddPluginTooLabel;
-	QTreeWidget *pluginTreeWidget;
-	QHBoxLayout *hboxLayout;
-	QSpacerItem *spacerItem;
-	QPushButton *okButton;
-	QPushButton *cancelButton;
+	QVBoxLayout *vboxLayout{};
+	QLabel *objectToAddPluginTooLabel{};
+	QTreeWidget *pluginTreeWidget{};
+	QHBoxLayout *hboxLayout{};
+	QSpacerItem *spacerItem{};
+	QPushButton *okButton{};
+	QPushButton *cancelButton{};
 	
-	Plugin* m_plugin;
+	Plugin* m_plugin{};
 
 	void setupUi(QDialog *PluginSelectorDialog)
 	{

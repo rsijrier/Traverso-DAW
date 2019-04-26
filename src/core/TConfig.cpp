@@ -108,7 +108,7 @@ void TConfig::save( )
 	emit configChanged();
 }
 
-QVariant TConfig::get_property( const QString & type, const QString & property, QVariant defaultValue )
+QVariant TConfig::get_property( const QString & type, const QString & property, const QVariant& defaultValue )
 {
 	QVariant var = defaultValue;
 	QString key = type + ("/") + property;
@@ -122,7 +122,7 @@ QVariant TConfig::get_property( const QString & type, const QString & property, 
 	return var;
 }
 
-void TConfig::set_property( const QString & type, const QString & property, QVariant newValue )
+void TConfig::set_property( const QString & type, const QString & property, const QVariant& newValue )
 {
 	m_configs.insert(type + "/" + property, newValue);
     if (type == "Hardware" && property == "numberofperiods") {

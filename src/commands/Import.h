@@ -56,14 +56,14 @@ public :
         ReadSource* readsource() {return m_source;}
 
 private :
-        AudioTrack*	m_track;
-        AudioClip*	m_clip;
-	ReadSource* 	m_source;
+        AudioTrack*	m_track{};
+        AudioClip*	m_clip{};
+    ReadSource* 	m_source{};
         QString 	m_fileName;
 	QString		m_name;
-	bool		m_silent;
+    bool		m_silent{};
 	TimeRef		m_initialLength;
-	bool		m_hasPosition;
+    bool		m_hasPosition{};
 	TimeRef		m_position;
 
         void init(AudioTrack* track, const QString& filename);

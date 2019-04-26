@@ -121,7 +121,7 @@ public :
 	void set_upc_ean(const QString& pUPC);
 	void set_genre(int pGenre);
 	void set_sheet_export_progress(int pogress);
-        void set_export_message(QString message);
+        void set_export_message(const QString &message);
         void set_current_session(qint64 id);
 	void set_import_dir(const QString& dir);
         void set_sheets_are_tracks_folder(bool isFolder);
@@ -139,7 +139,7 @@ public :
         bool sheets_are_track_folder() const {return m_sheetsAreTrackFolder;}
 	
 	int save(bool autosave=false);
-	int load(QString projectfile = "");
+	int load(const QString &projectfile = "");
 	int export_project(ExportSpecification* spec);
 	int start_export(ExportSpecification* spec);
 	int create_cdrdao_toc(ExportSpecification* spec);
@@ -187,7 +187,7 @@ private:
 	QString		m_description;
 	QString		m_importDir;
 	QString		m_discid;
-	int		m_genre;
+	int		m_genre{};
 	QString		m_upcEan;
 	QString		m_performer;
 	QString		m_arranger;
@@ -199,10 +199,10 @@ private:
     uint		m_bitDepth;
         int             m_keyboardArrowNavigationSpeed;
 	bool		m_useResampling;
-        bool            m_sheetsAreTrackFolder;
+        bool            m_sheetsAreTrackFolder{};
 
-	int		overallExportProgress;
-	int 		renderedSheets;
+	int		overallExportProgress{};
+	int 		renderedSheets{};
 	QList<Sheet* > 	sheetsToRender;
 
         qint64 		m_activeSheetId;

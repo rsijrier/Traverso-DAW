@@ -37,7 +37,7 @@ class ReadSource : public AudioSource
 {
 	Q_OBJECT
 public :
-	ReadSource(const QDomNode node);
+	ReadSource(const QDomNode &node);
 	ReadSource(const QString& dir, const QString& name);
     ReadSource(const QString& dir, const QString& name, uint channelCount);
 	ReadSource();  // For creating a 0-channel, silent ReadSource
@@ -83,27 +83,27 @@ public :
 	
 	
 private:
-	ResampleAudioReader*	m_audioReader;
-	AudioClip* 		m_clip;
-	DiskIO*			m_diskio;
-	int			m_refcount;
-	int			m_error;
+    ResampleAudioReader*	m_audioReader{};
+    AudioClip* 		m_clip{};
+    DiskIO*			m_diskio{};
+    int			m_refcount{};
+    int			m_error{};
 	bool			m_silent;
 	TimeRef			m_rbFileReadPos;
 	TimeRef			m_rbRelativeFileReadPos;
 	TimeRef			m_syncPos;
-	volatile size_t		m_rbReady;
-	volatile size_t		m_needSync;
-	volatile size_t		m_active;
-	volatile size_t		m_wasActivated;
-	volatile size_t		m_bufferUnderRunDetected;
-	bool			m_syncInProgress;
+    volatile size_t		m_rbReady{};
+    volatile size_t		m_needSync{};
+    volatile size_t		m_active{};
+    volatile size_t		m_wasActivated{};
+    volatile size_t		m_bufferUnderRunDetected{};
+    bool			m_syncInProgress{};
 	
 	mutable TimeRef		m_length;
 	QString			m_decodertype;
-    uint			m_outputRate;
+    uint			m_outputRate{};
 	
-	BufferStatus*		m_bufferstatus;
+    BufferStatus*		m_bufferstatus{};
 	
 	int ref() { return m_refcount++;}
 	

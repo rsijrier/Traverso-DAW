@@ -34,7 +34,7 @@ class Gain : public TCommand
 	Q_OBJECT
 	
 public :
-        Gain(ContextItem* context, QVariantList args);
+        Gain(ContextItem* context, const QVariantList& args);
         ~Gain();
 
         int begin_hold();
@@ -52,7 +52,7 @@ public :
 
 private :
         ContextItem*	m_gainObject;
-        float 		m_origGain;
+        float 		m_origGain{};
         float 		m_newGain;
         QPointF		m_origPos;
 	

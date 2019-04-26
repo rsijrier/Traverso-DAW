@@ -35,7 +35,7 @@ $Id: Tsar.h,v 1.4 2008/02/11 10:11:52 r_sijrier Exp $
     }
 
 #define RT_THREAD_EMIT(cal, arg, signalSignature) {\
-    TsarEvent event; \
+    TsarEvent event{}; \
     event.caller = cal; \
     event.argument = arg; \
     event.slotindex = -1; \

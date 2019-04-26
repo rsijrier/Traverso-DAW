@@ -39,7 +39,7 @@ public:
 	
 private:
 	Project* m_project;
-	Marker* m_marker;
+	Marker* m_marker{};
         TSession* m_session;
 
 	Marker* get_marker(qint64);

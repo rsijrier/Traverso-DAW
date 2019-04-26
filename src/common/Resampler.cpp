@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 Resampler::Resampler()
 {
 	m_isResampleAvailable = false;
-	m_overflowBuffer = 0;
-	m_inputBuffer = 0;
-	m_outputBuffer = 0;
+	m_overflowBuffer = nullptr;
+	m_inputBuffer = nullptr;
+	m_outputBuffer = nullptr;
 	m_overflowUsed = 0;
 }
 
@@ -72,7 +72,7 @@ void Resampler::clear_buffers()
 {
 	if (m_overflowBuffer) {
 		delete [] m_overflowBuffer;
-		m_overflowBuffer = 0;
+		m_overflowBuffer = nullptr;
 	}
 }
 

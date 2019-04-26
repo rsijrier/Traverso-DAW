@@ -24,10 +24,10 @@
 #include "defines.h"
 #include <cmath> // used for fabs
 
-Mixer::compute_peak_t			Mixer::compute_peak 		= 0;
-Mixer::apply_gain_to_buffer_t		Mixer::apply_gain_to_buffer 	= 0;
-Mixer::mix_buffers_with_gain_t		Mixer::mix_buffers_with_gain 	= 0;
-Mixer::mix_buffers_no_gain_t		Mixer::mix_buffers_no_gain 	= 0;
+Mixer::compute_peak_t			Mixer::compute_peak 		= nullptr;
+Mixer::apply_gain_to_buffer_t		Mixer::apply_gain_to_buffer 	= nullptr;
+Mixer::mix_buffers_with_gain_t		Mixer::mix_buffers_with_gain 	= nullptr;
+Mixer::mix_buffers_no_gain_t		Mixer::mix_buffers_no_gain 	= nullptr;
 
 
 

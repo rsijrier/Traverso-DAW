@@ -47,7 +47,7 @@ class Curve : public ContextItem
 	
 public:
 	Curve(ContextItem* parent);
-	Curve(ContextItem* parent, const QDomNode node);
+	Curve(ContextItem* parent, const QDomNode& node);
         virtual ~Curve();
 
 	QDomNode get_state(QDomDocument doc, const QString& name);
@@ -77,7 +77,7 @@ public:
 
 
 protected:
-        TSession* m_session;
+        TSession* m_session{};
 
 private :
 	APILinkedList m_nodes;
@@ -87,8 +87,8 @@ private :
 		
 	};
         LookupCache     m_lookup_cache;
-        bool            m_changed;
-        double          m_defaultValue;
+        bool            m_changed{};
+        double          m_defaultValue{};
         TimeRef		m_startoffset;
 
 	

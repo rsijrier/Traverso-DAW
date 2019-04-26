@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioDevice.h"
 #include <QFile>
 #include "TConfig.h"
-#include <limits.h>
+#include <climits>
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 // This constructor is called for existing (recorded/imported) audio sources
-ReadSource::ReadSource(const QDomNode node)
+ReadSource::ReadSource(const QDomNode& node)
 	: AudioSource()
 {
 	
@@ -223,7 +223,7 @@ int ReadSource::init( )
 	
 	m_rbReady = 0;
 	m_needSync = 1;
-	m_syncInProgress = 0;
+	m_syncInProgress = false;
 	m_bufferUnderRunDetected = m_wasActivated = 0;
 	m_active = 0;
 	

@@ -34,7 +34,7 @@ class PCommand : public TCommand
 
 public :
         PCommand(ContextItem* item, const char* slot, const QString& des);
-	PCommand(ContextItem* item, const char* slot, QVariant doValue, QVariant undoValue, const QString& des);
+	PCommand(ContextItem* item, const char* slot, const QVariant &doValue, const QVariant &undoValue, const QString& des);
         ~PCommand();
 
         int prepare_actions();

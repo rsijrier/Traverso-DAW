@@ -37,7 +37,7 @@ public:
         ~ProjectManagerDialog();
 
 private:
-	Project* m_project;
+	Project* m_project{};
 
 private slots:
 	void update_sheet_list();

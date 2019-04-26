@@ -50,9 +50,9 @@ RELAYTOOL_FLAC;
 class FlacPrivate
 {
 	public:
-		FlacPrivate(QString filename)
+        FlacPrivate(const QString& filename)
 		{
-			internalBuffer = 0;
+			internalBuffer = nullptr;
 			bufferSize = 0;
 			bufferUsed = 0;
 			bufferStart = 0;
@@ -66,7 +66,7 @@ class FlacPrivate
 		}
 		
 		
-		bool open(QString filename)
+        bool open(const QString& filename)
 		{
 			file = new QFile(filename);
 			if (!file->open(QIODevice::ReadOnly)) {
@@ -108,7 +108,7 @@ class FlacPrivate
 		}
 		
 		
-		bool is_valid() { return (flac != 0); }
+		bool is_valid() { return (flac != nullptr); }
 #ifdef LEGACY_FLAC
 		bool flush() { return FLAC__seekable_stream_decoder_flush(flac); }
 		bool finish() { return FLAC__seekable_stream_decoder_finish(flac); }
@@ -157,10 +157,10 @@ class FlacPrivate
 #endif
 		}
 		
-		uint m_channels;
-		uint m_rate;
-		uint m_bitsPerSample;
-		uint m_samples;
+		uint m_channels{};
+		uint m_rate{};
+		uint m_bitsPerSample{};
+		uint m_samples{};
 		
 		audio_sample_t	*internalBuffer;
 		int		bufferSize;
@@ -188,11 +188,11 @@ class FlacPrivate
 		static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *decoder, const FLAC__Frame *frame, const FLAC__int32 * const buffer[], void *client_data);
 #endif
 		
-		QFile		*file;
+		QFile		*file{};
 #ifdef LEGACY_FLAC
 		FLAC__SeekableStreamDecoder	*flac;
 #else
-		FLAC__StreamDecoder	*flac;
+		FLAC__StreamDecoder	*flac{};
 #endif
 };
 
@@ -384,7 +384,7 @@ FLAC__bool FlacPrivate::eof_callback(const FLAC__StreamDecoder *decoder, void *c
 
 
 
-FlacAudioReader::FlacAudioReader(QString filename)
+FlacAudioReader::FlacAudioReader(const QString& filename)
  : AbstractAudioReader(filename)
 {
 	m_flac = new FlacPrivate(filename);
@@ -414,7 +414,7 @@ void FlacAudioReader::clear_buffers()
 }
 
 
-bool FlacAudioReader::can_decode(QString filename)
+bool FlacAudioReader::can_decode(const QString& filename)
 {
 	if (!libFLAC_is_present) {
 		return false;

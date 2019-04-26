@@ -185,7 +185,7 @@ QList< QObject * > ContextPointer::get_contextmenu_items() const
 	return m_contextMenuItems;
 }
 
-void ContextPointer::set_contextmenu_items(QList< QObject * > list)
+void ContextPointer::set_contextmenu_items(const QList< QObject * >& list)
 {
 	m_contextMenuItems = list;
 }

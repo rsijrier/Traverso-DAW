@@ -40,7 +40,7 @@ public:
         int process(nframes_t nframes);
 
 protected:
-        int m_channelCount;
+        int m_channelCount{};
 
 private:
         void create_process_bus();

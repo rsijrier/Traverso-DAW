@@ -54,7 +54,7 @@ PluginManager::~PluginManager()
 
 PluginManager* PluginManager::instance()
 {
-	if (m_instance == 0) {
+	if (m_instance == nullptr) {
 		m_instance = new PluginManager;
 	}
 
@@ -73,7 +73,7 @@ void PluginManager::init()
 }
 
 
-Plugin* PluginManager::get_plugin(const  QDomNode node )
+Plugin* PluginManager::get_plugin(const  QDomNode& node )
 {
 	QDomElement e = node.toElement();
 	QString type = e.attribute( "type", "");

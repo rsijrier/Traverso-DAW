@@ -30,14 +30,14 @@ RELAYTOOL_WAVPACK;
 #include "Debugger.h"
 
 
-WPAudioReader::WPAudioReader(QString filename)
+WPAudioReader::WPAudioReader(const QString& filename)
  : AbstractAudioReader(filename)
 {
 	char error[80];
 	
 	m_wp = WavpackOpenFileInput(m_fileName.toUtf8().data(), error, OPEN_2CH_MAX | OPEN_NORMALIZE | OPEN_WVC, 0);
 	
-	if (m_wp == 0) {
+	if (m_wp == nullptr) {
 		qWarning("Couldn't open soundfile (%s) %s", QS_C(filename), error);
 		return;
 	}
@@ -60,7 +60,7 @@ WPAudioReader::~WPAudioReader()
 }
 
 
-bool WPAudioReader::can_decode(QString filename)
+bool WPAudioReader::can_decode(const QString& filename)
 {
 	if (!libwavpack_is_present) {
 		return false;
@@ -70,7 +70,7 @@ bool WPAudioReader::can_decode(QString filename)
 	
 	WavpackContext *wp = WavpackOpenFileInput(filename.toUtf8().data(), error, OPEN_2CH_MAX | OPEN_NORMALIZE | OPEN_WVC, 0);
 	
-	if (wp == 0) {
+	if (wp == nullptr) {
 		return false;
 	}
 	

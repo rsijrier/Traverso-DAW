@@ -54,7 +54,7 @@ class Sheet : public TSession, public APILinkedListNode
 public:
 
         Sheet(Project* project, int numtracks=0);
-	Sheet(Project* project, const QDomNode node);
+	Sheet(Project* project, const QDomNode &node);
 	~Sheet();
 	
 	// Get functions
@@ -105,8 +105,8 @@ public:
         bool is_recording() const {return m_recording;}
 	bool is_smaller_then(APILinkedListNode* node) {Q_UNUSED(node); return false;}
 
-        audio_sample_t*		readbuffer;
-        DecodeBuffer*		renderDecodeBuffer;
+        audio_sample_t*		readbuffer{};
+        DecodeBuffer*		renderDecodeBuffer{};
 
 #if defined (THREAD_CHECK)
 	unsigned long	threadId;
@@ -116,12 +116,12 @@ private:
         QList<AudioClip*>	m_recordingClips;
 	QTimer			m_skipTimer;
 	Project*		m_project;
-	WriteSource*		m_exportSource;
-        TAudioDeviceClient*	m_audiodeviceClient;
-        AudioBus*		m_renderBus;
-	AudioBus*		m_clipRenderBus;
-	DiskIO*			m_diskio;
-	AudioClipManager*	m_acmanager;
+    WriteSource*		m_exportSource{};
+        TAudioDeviceClient*	m_audiodeviceClient{};
+        AudioBus*		m_renderBus{};
+    AudioBus*		m_clipRenderBus{};
+    DiskIO*			m_diskio{};
+    AudioClipManager*	m_acmanager{};
 	QList<TimeRef>		m_xposList;
         QString                 m_audioSourcesDir;
 
@@ -130,22 +130,22 @@ private:
 	// atomic behaviour, still not sure if volatile size_t declaration
 	// would suffice, or should we use t_atomic_int_set/get() to make
 	// it 100% portable and working on all platforms...?
-	volatile size_t		m_transportFrame;
-	volatile size_t		m_newTransportFramePos;
-	volatile size_t		m_seeking;
-	volatile size_t		m_startSeek;
-        volatile size_t		m_stopTransport;
+    volatile size_t		m_transportFrame{};
+    volatile size_t		m_newTransportFramePos{};
+    volatile size_t		m_seeking{};
+    volatile size_t		m_startSeek{};
+        volatile size_t		m_stopTransport{};
 
 
         QString 	m_artists;
-	uint		m_currentSampleRate;
-	bool 		m_rendering;
-        bool 		m_changed;
-	bool		m_resumeTransport;
-	bool		m_realtimepath;
-        bool		m_recording;
-	bool		m_prepareRecording;
-	bool		m_readyToRecord;
+    uint		m_currentSampleRate{};
+    bool 		m_rendering{};
+        bool 		m_changed{};
+    bool		m_resumeTransport{};
+    bool		m_realtimepath{};
+        bool		m_recording{};
+    bool		m_prepareRecording{};
+    bool		m_readyToRecord{};
 	
 	void init();
 

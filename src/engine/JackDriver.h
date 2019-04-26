@@ -73,11 +73,11 @@ private:
         };
 
         volatile size_t         m_running;
-        jack_client_t*          m_jack_client;
+        jack_client_t*          m_jack_client{};
         QList<PortChannelPair*> m_inputs;
         QList<PortChannelPair*> m_outputs;
 
-        bool                    m_isSlave;
+        bool                    m_isSlave{};
 
 	int  jack_sync_callback (jack_transport_state_t, jack_position_t*);
 

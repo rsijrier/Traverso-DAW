@@ -32,7 +32,7 @@ Scroll::Scroll(SheetView* sv, QVariantList args)
 	m_sv = sv;
 	m_dx = m_dy = 0;
 	
-	if (args.size() > 0) {
+	if (!args.empty()) {
 		m_dx = args.at(0).toInt();
 	}
 	if (args.size() > 1) {

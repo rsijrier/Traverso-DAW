@@ -100,8 +100,7 @@ TInputEventDispatcher::TInputEventDispatcher()
 }
 
 TInputEventDispatcher::~ TInputEventDispatcher( )
-{
-}
+= default;
 
 int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* function)
 {
@@ -279,7 +278,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
 				delegatedobject = "HoldCommand";
 			} else {
                 delegatedobject = metaObject->className();
-				if (m_activeModifierKeys.size() > 0) {
+				if (!m_activeModifierKeys.empty()) {
 					//FIXME: objects has values inserted with insertMulti()
 					// do we have to use values(delegatedobject) instead of value(delegatedobject)
 					// here too?
@@ -290,7 +289,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
 				PMESG("delegatedobject is %s", QS_C(delegatedobject));
 			}
 
-			if (objectFunctions.size()) {
+			if (!objectFunctions.empty()) {
                 shortCutFunction = objectFunctions.first();
 			} else {
                 shortCutFunction = nullptr;
@@ -305,8 +304,8 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
 
 			if (strlist.size() == 2) {
 				PMESG("Detected delegate action, checking if it is valid!");
-				QString classname = strlist.at(0);
-				QString slot = strlist.at(1);
+                const QString& classname = strlist.at(0);
+                const QString& slot = strlist.at(1);
                 QObject* obj = nullptr;
 				bool validobject = false;
 
@@ -663,7 +662,7 @@ void TInputEventDispatcher::process_release_event(int eventcode)
 void TInputEventDispatcher::process_hold_modifier_keys()
 {
     PENTER;
-	if (!m_holdModifierKeys.size()) {
+	if (m_holdModifierKeys.empty()) {
 		m_holdKeyRepeatTimer.stop();
 		return;
 	}
@@ -836,7 +835,7 @@ TCommand * TInputEventDispatcher::get_holding_command() const
 	return m_holdingCommand;
 }
 
-bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, QList<int> second)
+bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>& second)
 {
 	if (first.size() != second.size())
 	{

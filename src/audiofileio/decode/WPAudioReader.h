@@ -29,12 +29,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class WPAudioReader : public AbstractAudioReader
 {
 public:
-	WPAudioReader(QString filename);
+	WPAudioReader(const QString& filename);
 	~WPAudioReader();
 	
 	QString decoder_type() const {return "wavpack";}
 	
-	static bool can_decode(QString filename);
+	static bool can_decode(const QString& filename);
 
 protected:
 	bool seek_private(nframes_t start);

@@ -34,7 +34,7 @@
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-Zoom::Zoom(SheetView* sv, QVariantList args)
+Zoom::Zoom(SheetView* sv, const QVariantList& args)
 	: TCommand("Zoom")
 {
 	m_tv = sv->get_trackview_under(cpointer().scene_pos());
@@ -43,7 +43,7 @@ Zoom::Zoom(SheetView* sv, QVariantList args)
 
 	m_jogHorizontal = m_jogVertical = false;
 
-	if (args.size() > 0) {
+	if (!args.empty()) {
 		QString type = args.at(0).toString();
 		if (type == "JogZoom") {
 			m_jogHorizontal = m_jogVertical = true;

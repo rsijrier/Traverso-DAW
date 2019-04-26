@@ -31,8 +31,8 @@ class TConfig : public QObject
 {
 	Q_OBJECT
 public:
-	QVariant get_property(const QString& type, const QString& property, QVariant defaultValue);
-	void set_property(const QString& type, const QString& property, QVariant newValue);
+	QVariant get_property(const QString& type, const QString& property, const QVariant &defaultValue);
+	void set_property(const QString& type, const QString& property, const QVariant &newValue);
 	
 	void check_and_load_configuration();
 	void reset_settings( );

@@ -99,13 +99,13 @@ int JackDriver::setup(QList<AudioChannel* > channels)
 	PENTER;
 	
         const char *client_name = "Traverso";
-        m_jack_client = 0;
+        m_jack_client = nullptr;
         capture_frame_latency = playback_frame_latency =0 ;
 
 
         printf("Connecting to the Jack server...\n");
 
-        if ( (m_jack_client = jack_client_open(client_name, JackNoStartServer, NULL)) == NULL) {
+        if ( (m_jack_client = jack_client_open(client_name, JackNoStartServer, nullptr)) == nullptr) {
                 device->driverSetupMessage(tr("Couldn't connect to the jack server, is jack running?"), AudioDevice::DRIVER_SETUP_FAILURE);
                 return -1;
         }
@@ -131,7 +131,7 @@ void JackDriver::add_channel(AudioChannel* channel)
 		pcpair->jackport = jack_port_register (m_jack_client, channel->get_name().toUtf8().data(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
         }
 
-        if (pcpair->jackport == 0) {
+        if (pcpair->jackport == nullptr) {
                 printf("JackDriver: cannot register port \"%s\"!\n", channel->get_name().toUtf8().data());
                 return;
         }

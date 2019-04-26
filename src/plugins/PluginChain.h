@@ -58,7 +58,7 @@ public:
 private:
 	QList<Plugin* >	m_pluginList;
 	GainEnvelope*	m_fader;
-        TSession*	m_session;
+        TSession*	m_session{};
 	
 signals:
 	void pluginAdded(Plugin* plugin);

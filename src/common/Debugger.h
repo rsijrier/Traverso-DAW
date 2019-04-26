@@ -178,13 +178,13 @@ void set_debug_level(int l);
 int get_debug_level();
 
 //! create a log file "fn" under home dir and enable copy of all debugging messagem to this file.
-void create_log(QString fn);
+void create_log(const QString& fn);
 
 //! close the log file
 void close_log();
 
 //! Used internally by TraversoDebugger. Feed the log file.
-void log(QString msg);
+void log(const QString& msg);
 
 //! Used internally to check if output is stdout or a log file
 bool is_logging();

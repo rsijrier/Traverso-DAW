@@ -21,6 +21,8 @@
 
 #include "TrackPan.h"
 
+#include <cmath>
+
 #include "ViewPort.h"
 
 #include "ContextPointer.h"
@@ -48,7 +50,7 @@ TrackPan::TrackPan(Track* track, QVariantList args)
 	
 	QString des;
 	
-	if (args.size() > 0) {
+	if (!args.empty()) {
 		m_newPan = args.at(0).toDouble();
 		des = tr("Track Pan: %1").arg("Reset");
 		m_origPan = m_track->get_pan();
@@ -134,7 +136,7 @@ int TrackPan::jog()
 	if (m_newPan > 1.0) 
                 m_newPan = 1.0f;
 	
-        if (fabs(m_newPan) < 0.01f) {
+        if (std::fabs(m_newPan) < 0.01f) {
                 m_newPan = 0.0f;
         }
 

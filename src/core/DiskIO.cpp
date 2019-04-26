@@ -101,7 +101,7 @@ public:
     QTimer			m_workTimer;
 
 protected:
-    virtual void run();
+    void run() override;
 };
 
 void DiskIOThread::run()
@@ -146,7 +146,7 @@ DiskIO::DiskIO(Sheet* sheet)
 {
     m_diskThread = new DiskIOThread(this);
     m_lastdoWorkReadTime = get_microseconds();
-    m_stopWork = m_seeking = 0;
+    m_stopWork = m_seeking = false;
     m_sampleRateChanged = false;
     m_resampleQuality = config().get_property("Conversion", "RTResamplingConverterType", DEFAULT_RESAMPLE_QUALITY).toInt();
     m_readBufferFillStatus = m_writeBufferFillStatus = 0;

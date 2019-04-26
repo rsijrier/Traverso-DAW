@@ -69,7 +69,7 @@ int ClipSelection::begin_hold()
     return 1;
 }
 
-int ClipSelection::prepare_action()
+int ClipSelection::prepare_actions()
 {
     return 1;
 }

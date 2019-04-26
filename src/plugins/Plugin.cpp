@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 Plugin::Plugin(TSession* session)
-	: m_slave(0)
+	: m_slave(nullptr)
         , m_session(session)
 {
 	m_bypass = false;
@@ -46,7 +46,7 @@ QDomNode Plugin::get_state(QDomDocument doc)
 		controlPortsNode.appendChild(port->get_state(doc));
 	}
 	
-	if (m_audioInputPorts.size() > 0) {
+	if (!m_audioInputPorts.empty()) {
 		QDomNode audioInputPortsNode = doc.createElement("AudioInputPorts");
 		foreach(AudioInputPort* port, m_audioInputPorts) {
 			audioInputPortsNode.appendChild(port->get_state(doc));
@@ -54,7 +54,7 @@ QDomNode Plugin::get_state(QDomDocument doc)
 		node.appendChild(audioInputPortsNode);
 	}
 	
-	if (m_audioOutputPorts.size() > 0) {
+	if (!m_audioOutputPorts.empty()) {
 		QDomNode audioOutputPortsNode = doc.createElement("AudioOutputPorts");
 		foreach(AudioOutputPort* port, m_audioOutputPorts) {
 			audioOutputPortsNode.appendChild(port->get_state(doc));
@@ -82,7 +82,7 @@ TCommand* Plugin::toggle_bypass( )
 	
 	emit bypassChanged();
 	
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 PluginControlPort* Plugin::get_control_port_by_index(int index) const
@@ -92,7 +92,7 @@ PluginControlPort* Plugin::get_control_port_by_index(int index) const
 			return port;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void Plugin::automate_port(int index, bool automate)
@@ -166,7 +166,7 @@ int AudioOutputPort::set_state( const QDomNode & node )
 
 PluginControlPort::PluginControlPort(Plugin* parent, int index, float value)
 	: PluginPort(parent, index)
-	, m_curve(0)
+	, m_curve(nullptr)
 	, m_plugin(parent)
 	, m_value(value)
 	, m_automation(false)
@@ -175,7 +175,7 @@ PluginControlPort::PluginControlPort(Plugin* parent, int index, float value)
 
 PluginControlPort::PluginControlPort(Plugin* parent, const QDomNode node)
 	: PluginPort(parent)
-	, m_curve(0)
+	, m_curve(nullptr)
 	, m_plugin(parent)
 	, m_automation(false)
 {

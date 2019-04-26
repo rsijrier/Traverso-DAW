@@ -71,7 +71,7 @@ void NewSheetDialog::accept()
 	
 	CommandGroup* group = new CommandGroup(m_project, "");
 	
-	Sheet* firstNewSheet = 0;
+	Sheet* firstNewSheet = nullptr;
 	
 	for (int i=0; i<count; ++i) {
 		Sheet* sheet;

@@ -47,7 +47,7 @@ protected:
 	void closeEvent(QCloseEvent* event);
 
 private:
-        Project* m_project;
+        Project* m_project{};
 	QProcess* m_burnprocess;
 	ExportSpecification* 	m_exportSpec;
 	
@@ -75,9 +75,9 @@ private:
 	
 	int m_writingState;
         qint64 m_lastSheetExported;
-	bool m_wasClosed;
+	bool m_wasClosed{};
 	bool m_wodimAvailable;
-	int m_copyNumber;
+	int m_copyNumber{};
 	QString get_device(int index);
 
 private slots:

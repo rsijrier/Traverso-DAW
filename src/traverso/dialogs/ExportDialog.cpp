@@ -42,7 +42,7 @@
 
 ExportDialog::ExportDialog( QWidget * parent )
 	: QDialog(parent)
-	, m_exportSpec(0)
+	, m_exportSpec(nullptr)
 {
         setupUi(this);
         

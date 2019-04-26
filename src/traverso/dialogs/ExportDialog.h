@@ -45,15 +45,15 @@ protected:
 	void closeEvent(QCloseEvent* event);
 
 private:
-	Project* m_project;
+	Project* m_project{};
 	ExportSpecification* 	m_exportSpec;
 	ExportFormatOptionsWidget* m_formatOptionsWidget;
 
 	bool is_safe_to_export();
 
-	int m_lastSheetExported;
-	bool m_wasClosed;
-	int m_copyNumber;
+	int m_lastSheetExported{};
+	bool m_wasClosed{};
+	int m_copyNumber{};
 
 private slots:
 	void set_project(Project* project);

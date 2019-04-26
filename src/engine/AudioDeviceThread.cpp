@@ -33,7 +33,7 @@ $Id: AudioDeviceThread.cpp,v 1.21 2007/10/20 17:38:19 r_sijrier Exp $
 
 #include <sys/time.h>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -50,7 +50,7 @@ public:
 	}
 
 protected:
-	void run()
+	void run() override
 	{
 #if defined (Q_WS_X11) || defined (Q_WS_MAC)
 		struct sched_param param;

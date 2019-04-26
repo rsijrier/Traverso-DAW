@@ -38,7 +38,7 @@ ImportClipsDialog::ImportClipsDialog( QWidget * parent )
 ImportClipsDialog::~ ImportClipsDialog( )
 {}
 
-void ImportClipsDialog::set_tracks(QList<AudioTrack*> tracks)
+void ImportClipsDialog::set_tracks(const QList<AudioTrack*>& tracks)
 {
 	m_tracks = tracks;
 	for (int i = 0; i < m_tracks.size(); ++i) {

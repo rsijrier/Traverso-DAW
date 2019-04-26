@@ -56,7 +56,7 @@ PCommand::PCommand(ContextItem* item, const char* slot, const QString& des)
 {
 }
 
-PCommand::PCommand(ContextItem * item, const char * slot, QVariant doValue, QVariant undoValue, const QString & des)
+PCommand::PCommand(ContextItem * item, const char * slot, const QVariant& doValue, const QVariant& undoValue, const QString & des)
 	: TCommand(item, des)
 	, m_contextitem(item)
 	, m_slot(slot)

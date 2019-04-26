@@ -30,13 +30,13 @@ class FlacPrivate;
 class FlacAudioReader : public AbstractAudioReader
 {
 public:
-	FlacAudioReader(QString filename);
+	FlacAudioReader(const QString &filename);
 	~FlacAudioReader();
 	
 	QString decoder_type() const {return "flac";}
 	void clear_buffers();
 
-	static bool can_decode(QString filename);
+	static bool can_decode(const QString &filename);
 	
 protected:
 	bool seek_private(nframes_t start);

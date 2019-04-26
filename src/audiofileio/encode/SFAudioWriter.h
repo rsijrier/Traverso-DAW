@@ -47,9 +47,9 @@ protected:
 	bool close_private();
 	int get_sf_format();
 	
-	int		m_fileType;	
+	int		m_fileType{};	
 	SNDFILE*	m_sf;
-	SF_INFO 	m_sfinfo;
+	SF_INFO 	m_sfinfo{};
 	
 private:
 	QFile m_file;

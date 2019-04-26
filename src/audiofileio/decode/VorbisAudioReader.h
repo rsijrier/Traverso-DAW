@@ -31,19 +31,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class VorbisAudioReader : public AbstractAudioReader
 {
 public:
-	VorbisAudioReader(QString filename);
+	VorbisAudioReader(const QString& filename);
 	~VorbisAudioReader();
 	
 	QString decoder_type() const {return "vorbis";}
 	
-	static bool can_decode(QString filename);
+	static bool can_decode(const QString& filename);
 
 protected:
 	bool seek_private(nframes_t start);
 	nframes_t read_private(DecodeBuffer* buffer, nframes_t frameCount);
 	
 	FILE*		m_file;
-	OggVorbis_File	m_vf;
+	OggVorbis_File	m_vf{};
 	vorbis_info*	m_vi;
 };
 

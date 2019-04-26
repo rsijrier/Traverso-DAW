@@ -47,7 +47,7 @@ class MoveClip : public MoveCommand
 	Q_OBJECT
 	
 public :
-	MoveClip(ViewItem* view, QVariantList args);
+	MoveClip(ViewItem* view, const QVariantList& args);
         ~MoveClip();
 
         int begin_hold();

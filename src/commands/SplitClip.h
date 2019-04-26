@@ -59,7 +59,7 @@ private :
         AudioClip* leftClip;
         AudioClip* rightClip;
 	TimeRef m_splitPoint;
-	LineView* m_splitcursor;
+	LineView* m_splitcursor{};
 
         void do_keyboard_move(TimeRef location);
 

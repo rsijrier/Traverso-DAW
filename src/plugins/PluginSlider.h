@@ -56,7 +56,7 @@ private:
 	float	m_min;
 	float	m_value;
 	float	m_stepvalue;
-	int	m_xpos;
+	int	m_xpos{};
 	bool	highlight;
 	bool 	dragging;
 	

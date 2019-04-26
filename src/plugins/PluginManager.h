@@ -39,7 +39,7 @@ public:
 
 	static PluginManager* instance();
 
-	Plugin* get_plugin(const QDomNode node);
+	Plugin* get_plugin(const QDomNode &node);
 
 #if defined (LV2_SUPPORT)
 	const LilvPlugins* get_lilv_plugins();
@@ -52,8 +52,8 @@ private:
 
 	static PluginManager* m_instance;
 #if defined (LV2_SUPPORT)
-	LilvWorld* 	m_lilvWorld;
-	const LilvPlugins*	m_lilvPlugins;
+	LilvWorld* 	m_lilvWorld{};
+	const LilvPlugins*	m_lilvPlugins{};
 #endif
 	void init();
 };

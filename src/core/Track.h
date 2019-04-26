@@ -89,7 +89,7 @@ public:
 protected:
         VUMonitors      m_vumonitors;
         int             m_sortIndex;
-        int             m_type;
+        int             m_type{};
         int             m_channelCount;
         bool            m_mutedBySolo;
         bool            m_isSolo;

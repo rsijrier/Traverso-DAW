@@ -50,8 +50,8 @@ private:
         AudioClipView* m_cv;
         AudioTrack* m_track;
         AudioClip* m_clip;
-        AudioClip* leftClip;
-        AudioClip* rightClip;
+        AudioClip* leftClip{};
+        AudioClip* rightClip{};
         QGraphicsRectItem* m_selection;
         qint64 x1;
         qint64 x2;

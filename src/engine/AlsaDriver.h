@@ -169,59 +169,59 @@ private:
 					unsigned long src_skip_byte
 					);
 
-	int                           poll_timeout;
-	trav_time_t                   poll_last;
-	trav_time_t                   poll_next;
-	char                        **playback_addr;
-	char                        **capture_addr;
-	const snd_pcm_channel_area_t *capture_areas;
-	const snd_pcm_channel_area_t *playback_areas;
-	struct pollfd                *pfd;
-	unsigned int                  playback_nfds;
-	unsigned int                  capture_nfds;
-	unsigned long                 interleave_unit;
-	unsigned long                *capture_interleave_skip;
-	unsigned long                *playback_interleave_skip;
-	channel_t                     max_nchannels;
-	channel_t                     user_nchannels;
-	channel_t                     playback_nchannels;
-	channel_t                     capture_nchannels;
-	unsigned long                 playback_sample_bytes;
-	unsigned long                 capture_sample_bytes;
+	int                           poll_timeout{};
+	trav_time_t                   poll_last{};
+	trav_time_t                   poll_next{};
+	char                        **playback_addr{};
+	char                        **capture_addr{};
+	const snd_pcm_channel_area_t *capture_areas{};
+	const snd_pcm_channel_area_t *playback_areas{};
+	struct pollfd                *pfd{};
+	unsigned int                  playback_nfds{};
+	unsigned int                  capture_nfds{};
+	unsigned long                 interleave_unit{};
+	unsigned long                *capture_interleave_skip{};
+	unsigned long                *playback_interleave_skip{};
+	channel_t                     max_nchannels{};
+	channel_t                     user_nchannels{};
+	channel_t                     playback_nchannels{};
+	channel_t                     capture_nchannels{};
+	unsigned long                 playback_sample_bytes{};
+	unsigned long                 capture_sample_bytes{};
 
 
-	unsigned long                *silent;
-	char                         *alsa_name_playback;
-	char                         *alsa_name_capture;
-	char                         *alsa_driver;
-	bitset_t			channels_not_done;
-	bitset_t			channels_done;
+	unsigned long                *silent{};
+	char                         *alsa_name_playback{};
+	char                         *alsa_name_capture{};
+	char                         *alsa_driver{};
+	bitset_t			channels_not_done{};
+	bitset_t			channels_done{};
 	snd_pcm_format_t              playback_sample_format;
 	snd_pcm_format_t              capture_sample_format;
-	float                         max_sample_val;
-    int                          user_nperiods;
-	unsigned int                  playback_nperiods;
-	unsigned int                  capture_nperiods;
-	unsigned long                 last_mask;
-	snd_ctl_t                    *ctl_handle;
-	snd_pcm_t                    *playback_handle;
-	snd_pcm_t                    *capture_handle;
-	snd_pcm_hw_params_t          *playback_hw_params;
-	snd_pcm_sw_params_t          *playback_sw_params;
-	snd_pcm_hw_params_t          *capture_hw_params;
-	snd_pcm_sw_params_t          *capture_sw_params;
+	float                         max_sample_val{};
+    int                          user_nperiods{};
+	unsigned int                  playback_nperiods{};
+	unsigned int                  capture_nperiods{};
+	unsigned long                 last_mask{};
+	snd_ctl_t                    *ctl_handle{};
+	snd_pcm_t                    *playback_handle{};
+	snd_pcm_t                    *capture_handle{};
+	snd_pcm_hw_params_t          *playback_hw_params{};
+	snd_pcm_sw_params_t          *playback_sw_params{};
+	snd_pcm_hw_params_t          *capture_hw_params{};
+	snd_pcm_sw_params_t          *capture_sw_params{};
 
-	char soft_mode;
-	char capture_and_playback_not_synced;
-	char playback_interleaved;
-	char capture_interleaved;
-	char quirk_bswap;
+	char soft_mode{};
+	char capture_and_playback_not_synced{};
+	char playback_interleaved{};
+	char capture_interleaved{};
+	char quirk_bswap{};
 
-	ReadCopyFunction read_via_copy;
-	WriteCopyFunction write_via_copy;
-	CopyCopyFunction channel_copy;
+	ReadCopyFunction read_via_copy{};
+	WriteCopyFunction write_via_copy{};
+	CopyCopyFunction channel_copy{};
 
-	int process_count;
+	int process_count{};
 
 };
 

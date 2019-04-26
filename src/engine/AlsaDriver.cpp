@@ -29,20 +29,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioChannel.h"
 #include <Utils.h>
 
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include <memory.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <signal.h>
+#include <cstdlib>
+#include <cerrno>
+#include <cstdarg>
+#include <csignal>
 #include <sys/types.h>
 #include <regex.h>
 
-#include <string.h>
+#include <cstring>
 #include <sys/time.h>
-#include <time.h>
+#include <ctime>
 
 #include "AudioDevice.h"
 
@@ -322,33 +322,33 @@ void AlsaDriver::release_channel_dependent_memory ()
 
     if (playback_addr) {
         free(playback_addr);
-        playback_addr = 0;
+        playback_addr = nullptr;
     }
 
     if (capture_addr) {
         free(capture_addr);
-        capture_addr = 0;
+        capture_addr = nullptr;
     }
 
     if (playback_interleave_skip) {
         free (playback_interleave_skip);
-        playback_interleave_skip = NULL;
+        playback_interleave_skip = nullptr;
     }
 
     if (capture_interleave_skip) {
         free (capture_interleave_skip);
-        capture_interleave_skip = NULL;
+        capture_interleave_skip = nullptr;
     }
 
 
     if (silent) {
         free(silent);
-        silent = 0;
+        silent = nullptr;
     }
 
     if (dither_state) {
         free(dither_state);
-        dither_state = 0;
+        dither_state = nullptr;
     }
 }
 
@@ -529,7 +529,7 @@ int AlsaDriver::configure_stream(char *device_name,
     }
 
     format = (sample_width == 4) ? 0 : (NUMFORMATS - 1);
-    while (1) {
+    while (true) {
         if ((err = snd_pcm_hw_params_set_format ( handle, hw_params, formats[format].format)) < 0) {
 
             if (( (sample_width == 4) ? (format++ >= int(NUMFORMATS) - 1) : (format-- <= 0))) {

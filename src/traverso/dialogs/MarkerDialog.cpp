@@ -96,7 +96,7 @@ void MarkerDialog::update_marker_treeview()
 	int currentIndex = markersTreeWidget->indexOfTopLevelItem(markersTreeWidget->currentItem());
 
 	// since the treeWidget will be cleared, point m_marker to somewhere else
-	m_marker = (Marker*)0;
+	m_marker = (Marker*)nullptr;
 	markersTreeWidget->clear();
 
         TimeLine* tl = m_session->get_timeline();
@@ -121,7 +121,7 @@ void MarkerDialog::update_marker_treeview()
 void MarkerDialog::item_changed(QTreeWidgetItem * current, QTreeWidgetItem * previous)
 {
 	if (!current) {
-		m_marker = (Marker*)0;
+		m_marker = (Marker*)nullptr;
 		return;
 	}
 
@@ -209,7 +209,7 @@ Marker * MarkerDialog::get_marker(qint64 id)
 			return marker;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void MarkerDialog::apply()

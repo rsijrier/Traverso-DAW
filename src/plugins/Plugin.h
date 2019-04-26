@@ -148,10 +148,10 @@ public:
 protected:
     Curve*	m_curve;
     Plugin*	m_plugin;
-    float	m_value;
-    float 	m_default;
-    float	m_min;
-    float	m_max;
+    float	m_value{};
+    float 	m_default{};
+    float	m_min{};
+    float	m_max{};
     bool	m_automation;
     QString m_description;
 

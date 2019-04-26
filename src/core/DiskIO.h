@@ -86,18 +86,18 @@ private:
         QMutex			mutex;
 	volatile int		m_readBufferFillStatus;
 	volatile int		m_writeBufferFillStatus;
-        trav_time_t             m_totalDoWorkTime;
-	trav_time_t		m_doWorkStartTime;
+        trav_time_t             m_totalDoWorkTime{};
+	trav_time_t		m_doWorkStartTime{};
         trav_time_t		m_lastdoWorkReadTime;
 	bool			m_seeking;
 	int			m_resampleQuality;
 	bool			m_sampleRateChanged;
 	int			m_hardDiskOverLoadCounter;
-	audio_sample_t*		framebuffer[2];
-	audio_sample_t*		m_readbuffer;
+	audio_sample_t*		framebuffer[2]{};
+	audio_sample_t*		m_readbuffer{};
 	DecodeBuffer*		m_decodebuffer;
 	DecodeBuffer*		m_resampleDecodeBuffer;
-    uint			m_outputRate;
+    uint			m_outputRate{};
 
 	
 	void update_time_usage();

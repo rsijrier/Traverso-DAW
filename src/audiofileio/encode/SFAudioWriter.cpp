@@ -155,7 +155,7 @@ bool SFAudioWriter::close_private()
 {
 	bool success = (sf_close(m_sf) == 0);
 	
-	m_sf = 0;
+	m_sf = nullptr;
 	
 	return success;
 }

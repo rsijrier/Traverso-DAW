@@ -35,7 +35,7 @@ class MoveEdge : public MoveCommand
 {
         Q_OBJECT
 public :
-        MoveEdge(AudioClipView* cv, SheetView* sv, QByteArray whichEdge);
+        MoveEdge(AudioClipView* cv, SheetView* sv, const QByteArray &whichEdge);
         ~MoveEdge();
 
         int begin_hold();

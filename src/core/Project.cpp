@@ -210,7 +210,7 @@ int Project::create_peakfiles_dir()
 }
 
 
-int Project::load(QString projectfile)
+int Project::load(const QString& projectfile)
 {
 	PENTER;
 	QDomDocument doc("Project");
@@ -1427,7 +1427,7 @@ void Project::set_sheet_export_progress(int progress)
 	emit overallExportProgressChanged(overallExportProgress);
 }
 
-void Project::set_export_message(QString message)
+void Project::set_export_message(const QString& message)
 {
         emit exportMessage(message);
 }

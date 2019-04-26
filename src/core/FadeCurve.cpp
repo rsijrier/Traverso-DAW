@@ -40,7 +40,7 @@ $Id: FadeCurve.cpp,v 1.36 2008/11/07 10:43:08 r_sijrier Exp $
 
 QStringList FadeCurve::defaultShapes = QStringList() << "Fastest" << "Fast" << "Linear"  << "Slow" << "Slowest";
 
-FadeCurve::FadeCurve(AudioClip* clip, Sheet* sheet, QString type )
+FadeCurve::FadeCurve(AudioClip* clip, Sheet* sheet, const QString& type )
 	: Curve(clip)
 	, m_clip(clip)
 	, m_sType(type)
@@ -242,7 +242,7 @@ void FadeCurve::process(AudioBus *bus, nframes_t nframes)
 }
 
 
-void FadeCurve::set_shape(QString shapeName)
+void FadeCurve::set_shape(const QString& shapeName)
 {
 	QDomDocument doc("FadeShapes");
 	

@@ -143,7 +143,7 @@ public:
 	TShortcut* getShortcutForKey(const QString& key);
 	TShortcut* getShortcutForKey(int key);
 	CommandPlugin* getCommandPlugin(const QString& pluginName);
-	void modifyFunctionKeys(TFunction* function, QStringList keys, QStringList modifiers);
+	void modifyFunctionKeys(TFunction* function, const QStringList& keys, QStringList modifiers);
 	void modifyFunctionInheritedBase(TFunction* function, bool usesInheritedBase);
 	void add_translation(const QString& signature, const QString& translation);
 	void add_meta_object(const QMetaObject* mo);

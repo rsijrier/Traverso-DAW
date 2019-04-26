@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class SFAudioReader : public AbstractAudioReader
 {
 public:
-	SFAudioReader(QString filename);
+	SFAudioReader(const QString &filename);
 	~SFAudioReader();
 	
 	QString decoder_type() const {return "sndfile";}
@@ -42,7 +42,7 @@ protected:
 	nframes_t read_private(DecodeBuffer* buffer, nframes_t frameCount);
 	
 	SNDFILE*	m_sf;
-	SF_INFO		m_sfinfo;
+	SF_INFO		m_sfinfo{};
 	
 private:
 	QFile m_file;

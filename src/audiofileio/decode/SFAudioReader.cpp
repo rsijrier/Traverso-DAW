@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 
-SFAudioReader::SFAudioReader(QString filename)
+SFAudioReader::SFAudioReader(const QString& filename)
 	: AbstractAudioReader(filename)
 {
 	/* although libsndfile says we don't need to set this,
@@ -44,7 +44,7 @@ SFAudioReader::SFAudioReader(QString filename)
 		return;
 	}
 	
-	if ((m_sf = sf_open_fd (m_file.handle(), SFM_READ, &m_sfinfo, false)) == 0) {
+	if ((m_sf = sf_open_fd (m_file.handle(), SFM_READ, &m_sfinfo, false)) == nullptr) {
 		qWarning("SFAudioReader::Could not open soundfile (%s)", QS_C(m_fileName));
 		return;
 	}

@@ -89,7 +89,7 @@ void TransportConsoleWidget::set_project(Project* project)
                 connect(m_project, SIGNAL(currentSessionChanged(TSession*)), this, SLOT(set_session(TSession*)));
 	} else {
 		m_updateTimer.stop();
-                set_session(0);
+                set_session(nullptr);
 	}
 }
 

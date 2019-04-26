@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 Import::Import(const QString& fileName)
 	: TCommand("")
 {
-	init(0, fileName);
+	init(nullptr, fileName);
 }
 
 
@@ -69,8 +69,8 @@ Import::Import(AudioTrack* track, const QString& fileName, const TimeRef& positi
 
 void Import::init(AudioTrack* track, const QString& fileName)
 {
-	m_clip = 0;
-	m_source = 0;
+	m_clip = nullptr;
+	m_source = nullptr;
 	m_position = TimeRef();
 	m_silent = false;
 	m_hasPosition = false;
@@ -83,7 +83,7 @@ void Import::init(AudioTrack* track, const QString& fileName)
 
 
 Import::~Import()
-{}
+= default;
 
 int Import::prepare_actions()
 {

@@ -60,7 +60,7 @@ void Information::critical( const QString & mes )
 	emit message(s);
 }
 
-void Information::audiodevice_message(QString message, int severity)
+void Information::audiodevice_message(const QString& message, int severity)
 {
 	switch(severity) {
         case AudioDevice::INFO: information(message);

@@ -43,8 +43,8 @@ public:
 
 private:
 	QPushButton*	m_timeLabel;
-	Project*	m_project;
-        Sheet*		m_sheet;
+	Project*	m_project{};
+        Sheet*		m_sheet{};
 	QAction*	m_toStartAction;
 	QAction*	m_toLeftAction;
 	QAction*	m_recAction;

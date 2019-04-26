@@ -41,7 +41,7 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
 	, d(new MoveCurveNode::Data)
 {
 	foreach(CurveNode* node, nodes) {
-		CurveNodeData curveData;
+		CurveNodeData curveData{};
 		curveData.node = node;
 		curveData.origValue = node->get_value();
 		curveData.origWhen = node->get_when();
@@ -56,7 +56,7 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
         d->scalefactor = scalefactor;
         d->verticalOnly = false;
 
-    m_valueDiff = 0.0f;
+    m_valueDiff = 0.0;
 }
 
 void MoveCurveNode::toggle_vertical_only()

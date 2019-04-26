@@ -32,7 +32,7 @@ class ArrowKeyBrowser : public TCommand
 {
         Q_OBJECT
 public:
-        ArrowKeyBrowser(SheetView* sv, QVariantList args);
+        ArrowKeyBrowser(SheetView* sv, const QVariantList& args);
 
         int begin_hold();
         int finish_hold();

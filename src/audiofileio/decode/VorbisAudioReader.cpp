@@ -37,7 +37,7 @@ RELAYTOOL_VORBISFILE;
 #include "Debugger.h"
 
 
-VorbisAudioReader::VorbisAudioReader(QString filename)
+VorbisAudioReader::VorbisAudioReader(const QString& filename)
  : AbstractAudioReader(filename)
 {
 	m_file = fopen(filename.toUtf8().data(), "rb");
@@ -46,7 +46,7 @@ VorbisAudioReader::VorbisAudioReader(QString filename)
 		return;
 	}
 	
-	if (ov_open(m_file, &m_vf, 0, 0) < 0) {
+	if (ov_open(m_file, &m_vf, nullptr, 0) < 0) {
 		PERROR("Input does not appear to be an Ogg bitstream.");
 		fclose(m_file);
 		return;
@@ -70,7 +70,7 @@ VorbisAudioReader::~VorbisAudioReader()
 }
 
 
-bool VorbisAudioReader::can_decode(QString filename)
+bool VorbisAudioReader::can_decode(const QString& filename)
 {
 	if (!libvorbisfile_is_present) {
 		return false;
@@ -84,7 +84,7 @@ bool VorbisAudioReader::can_decode(QString filename)
 	
 	OggVorbis_File of;
 	
-	if (ov_test(file, &of, 0, 0)) {
+	if (ov_test(file, &of, nullptr, 0)) {
 		fclose(file);
 		return false;
 	}
@@ -129,7 +129,7 @@ nframes_t VorbisAudioReader::read_private(DecodeBuffer* buffer, nframes_t frameC
 			PERROR("VorbisAudioReader: OV_HOLE");
 			return read(buffer, frameCount);
 		}
-		else if (framesRead == 0) {
+		if (framesRead == 0) {
 			/* EOF */
 			break;
 		} else if (framesRead < 0) {

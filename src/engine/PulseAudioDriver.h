@@ -57,8 +57,8 @@ private:
 	pa_stream *stream;
 	pa_mainloop_api *mainloop_api;
 	pa_volume_t volume;
-	pa_sample_spec sample_spec;
-	pa_channel_map channel_map;	
+	pa_sample_spec sample_spec{};
+	pa_channel_map channel_map{};	
 	int channel_map_set;
 		
 	static void context_state_callback(pa_context *c, void *userdata);

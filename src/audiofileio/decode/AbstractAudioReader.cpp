@@ -47,8 +47,7 @@ AbstractAudioReader::AbstractAudioReader(const QString& filename)
 
 
 AbstractAudioReader::~AbstractAudioReader()
-{
-}
+= default;
 
 
 // Read cnt frames starting at start from the AudioReader, into dst

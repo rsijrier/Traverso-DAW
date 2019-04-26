@@ -65,8 +65,8 @@ public :
 private :
 	ContextItem*	m_parentItem;
 	void* 		m_arg;
-	TsarEvent	m_doActionEvent;
-	TsarEvent	m_undoActionEvent;
+    TsarEvent	m_doActionEvent{};
+    TsarEvent	m_undoActionEvent{};
 	TSession*	m_sheet;
 
 	const char*	m_doActionSlot;

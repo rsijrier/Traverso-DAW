@@ -122,7 +122,7 @@ protected:
 	bool eventFilter(QObject *obj, QEvent *ev);
 
 private:
-        QGridLayout*            m_mainLayout;
+        QGridLayout*            m_mainLayout{};
         QStackedWidget*         m_centerAreaWidget;
         int                     m_previousCenterAreaWidgetIndex;
         int                     m_vuLevelUpdateFrequency;
@@ -157,7 +157,7 @@ private:
 	QDialog*		m_quickStart;
 	RestoreProjectBackupDialog* m_restoreProjectBackupDialog;
 	Project*		m_project;
-	bool			m_isFollowing;
+	bool			m_isFollowing{};
         QByteArray              m_windowState;
 
 	BusMonitor* 		busMonitor;
@@ -166,11 +166,11 @@ private:
 	QToolBar*		m_projectToolBar;
 	QToolBar*		m_editToolBar;
         QToolBar*               m_sessionTabsToolbar;
-	QAction*		m_snapAction;
-	QAction*		m_followAction;
-	QAction*		m_effectAction;
-	QMenu*			m_encodingMenu;
-	QMenu*			m_resampleQualityMenu;
+	QAction*		m_snapAction{};
+	QAction*		m_followAction{};
+	QAction*		m_effectAction{};
+	QMenu*			m_encodingMenu{};
+	QMenu*			m_resampleQualityMenu{};
         QList<QAction*>         m_projectMenuToolbarActions;
         QLineEdit*              m_trackFinder;
         QCompleter*             m_trackFinderCompleter;

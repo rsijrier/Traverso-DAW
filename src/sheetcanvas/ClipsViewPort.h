@@ -50,7 +50,7 @@ private:
 	SheetWidget*	m_sw;
 	QList<Import*>	m_imports;
 	QList<qint64 >	m_resourcesImport;
-	AudioTrack*     m_importTrack;
+	AudioTrack*     m_importTrack{};
 };
 
 

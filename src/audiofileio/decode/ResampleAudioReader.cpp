@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 // On init, creates a child AudioReader for any filetype, and a samplerate converter
-ResampleAudioReader::ResampleAudioReader(QString filename, const QString& decoder)
+ResampleAudioReader::ResampleAudioReader(const QString& filename, const QString& decoder)
 	: AbstractAudioReader(filename)
 {
 	m_reader = AbstractAudioReader::create_audio_reader(filename, decoder);

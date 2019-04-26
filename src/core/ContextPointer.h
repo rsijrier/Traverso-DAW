@@ -137,7 +137,7 @@ public:
     void about_to_delete(ContextItem* item);
 
     QList<QObject* > get_contextmenu_items() const;
-    void set_contextmenu_items(QList<QObject* > list);
+    void set_contextmenu_items(const QList<QObject *> &list);
     void set_active_context_items_by_mouse_movement(const QList<ContextItem*>& items);
     void set_active_context_items_by_keyboard_input(const QList<ContextItem*>& items);
 
@@ -161,7 +161,7 @@ private:
     void jog_start();
     void jog_finished();
 
-    int m_jogBypassDistance;
+    int m_jogBypassDistance{};
 
     TMouseData* m_mouseData;
 

@@ -51,7 +51,7 @@ private:
 	std::vector<int>	presetMark;
 	std::vector<int>	lineMark;
 	QFont			m_font;
-	int			m_fontLabelAscent;
+	int			m_fontLabelAscent{};
 	QColor			m_colorActive;
 	QColor			m_colorInactive;
 
@@ -178,7 +178,7 @@ protected:
 
 
 private:
-        bool 		activeTail;
+        bool 		activeTail{};
 	bool		peakHoldFalling;
         AudioChannel*	m_channel;
         VUMonitor*      m_monitor;
@@ -191,14 +191,14 @@ private:
 	QLinearGradient	gradient2D;
 	QColor		m_colOverLed;
 
-        float 			presetMark[7];
+        float 			presetMark[7]{};
         float			tailDeltaY;
-        float			prevPeakValue;
+        float			prevPeakValue{};
         float			peak;
 	float			rms;
 	float			maxFalloff;
 	float			peakHoldValue;
-	float			peakHistory[50];
+	float			peakHistory[50]{};
 	short unsigned int	rmsIndex;
 	short unsigned int	overCount;
 

@@ -38,7 +38,7 @@ public:
 	
 	
 private:
-	Project* m_project;
+	Project* m_project{};
 	
 
 private slots:

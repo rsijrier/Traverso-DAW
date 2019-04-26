@@ -44,12 +44,12 @@ Marker::Marker(TimeLine* tl, const TimeRef when, Type type)
 	m_arranger = "";
 	m_message = "";
 	m_isrc = "";
-	m_preemph = 0;
-	m_copyprotect = 0;
+	m_preemph = false;
+	m_copyprotect = false;
 	m_index = -1;
 }
 
-Marker::Marker(TimeLine * tl, const QDomNode node)
+Marker::Marker(TimeLine * tl, const QDomNode& node)
 	: ContextItem(tl)
 	, Snappable()
 	, m_timeline(tl)

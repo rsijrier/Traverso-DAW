@@ -101,15 +101,15 @@ private:
     QTimer          m_holdKeyRepeatTimer;
 
 
-    bool 			m_isHolding;
-    bool			m_enterFinishesHold;
+    bool 			m_isHolding{};
+    bool			m_enterFinishesHold{};
     bool 			m_isJogging;
-    bool			m_cancelHold;
-    bool			m_bypassJog;
+    bool			m_cancelHold{};
+    bool			m_bypassJog{};
 
     int 			m_collectedNumber;
-    int             m_dispatchResult;
-    int             m_unbypassJogDistance;
+    int             m_dispatchResult{};
+    int             m_unbypassJogDistance{};
     int             m_holdEventCode;
 
     void 			finish_hold();
@@ -125,7 +125,7 @@ private:
     void process_press_event(int keyValue);
     void process_release_event(int keyValue);
     bool is_modifier_keyfact(int eventcode);
-    bool modifierKeysMatch(QList<int> first, QList<int> second);
+    bool modifierKeysMatch(QList<int> first, const QList<int>& second);
     void clear_hold_modifier_keys();
 
 

@@ -20,8 +20,8 @@
     $Id: Debugger.cpp,v 1.3 2009/02/23 20:12:09 r_sijrier Exp $
 */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 #include "Debugger.h"
 
@@ -29,8 +29,8 @@ namespace TraversoDebugger
 {
 int ntabs = 0;
 int debugLevel = OFF;
-FILE* logFile = (FILE*) 0;
-QString logFileName = 0;
+FILE* logFile = (FILE*) nullptr;
+QString logFileName = nullptr;
 bool logging = false;
 }
 
@@ -73,7 +73,7 @@ int TraversoDebugger::get_debug_level()
 }
 
 
-void TraversoDebugger::create_log(QString fn)
+void TraversoDebugger::create_log(const QString& fn)
 {
         logFileName = QString(getenv("HOME")) + "/" + fn;
         logFile = fopen(logFileName.toLatin1(),"a+");
@@ -95,7 +95,7 @@ void TraversoDebugger::close_log()
 
 
 
-void TraversoDebugger::log(QString s)
+void TraversoDebugger::log(const QString& s)
 {
         const char* sc = s.toLatin1();
         int len = s.length();

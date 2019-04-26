@@ -44,7 +44,7 @@ public:
 private:
 	AudioFileCopyConvert* m_converter;
 	ExportSpecification* m_exportSpec;
-	ExportFormatOptionsWidget* m_formatOptionsWidget;
+	ExportFormatOptionsWidget* m_formatOptionsWidget{};
 	QButtonGroup* m_buttonGroup;
 
 	void load_all_files();

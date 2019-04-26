@@ -41,7 +41,7 @@ public:
 	};
 
 	Marker(TimeLine* tl, const TimeRef when, Type type = CDTRACK);
-	Marker(TimeLine* tl, const QDomNode node);
+	Marker(TimeLine* tl, const QDomNode& node);
         ~Marker() {}
 	
 	QDomNode get_state(QDomDocument doc);
@@ -87,10 +87,10 @@ private:
 		m_arranger,
 		m_message,
 		m_isrc;
-	bool	m_preemph,
-		m_copyprotect;
+	bool	m_preemph{},
+		m_copyprotect{};
 	Type	m_type;
-	int	m_index;
+	int	m_index{};
 	
 signals:
 	void positionChanged();

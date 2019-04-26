@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 PluginChain::PluginChain(ContextItem * parent)
 	: ContextItem(parent)
 {
-	m_fader = new GainEnvelope(0);
+	m_fader = new GainEnvelope(nullptr);
 }
 
 PluginChain::PluginChain(ContextItem* parent, TSession* session)

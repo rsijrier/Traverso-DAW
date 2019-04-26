@@ -65,10 +65,10 @@ public:
 private:
         AudioBus*       m_bus;
         Track*          m_track;
-        qint64          m_id;
-        int             m_type;
-        float           m_gain;
-        float           m_pan;
+        qint64          m_id{};
+        int             m_type{};
+        float           m_gain{};
+        float           m_pan{};
 
         void init();
 };

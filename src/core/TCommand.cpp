@@ -109,7 +109,7 @@ TCommand::TCommand(ContextItem* item, const QString& des)
 }
 
 TCommand::~TCommand()
-{}
+= default;
 
 /**
  * 	Virtual function, only needs to be reimplemented when making a 

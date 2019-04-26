@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 // FIXME: MoveEdge::jog() continuously calls Snaplist::mark_dirty()
 
-MoveEdge::MoveEdge(AudioClipView* cv, SheetView* sv, QByteArray whichEdge)
+MoveEdge::MoveEdge(AudioClipView* cv, SheetView* sv, const QByteArray& whichEdge)
 	: MoveCommand(cv->get_clip(), tr("Move Clip Edge"))
 {
 	m_sv = sv;

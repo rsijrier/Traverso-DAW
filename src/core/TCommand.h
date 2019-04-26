@@ -65,7 +65,7 @@ public :
         
 
 protected:
-        bool 		m_isValid;
+        bool 		m_isValid{};
         bool		m_isHistorable;
         bool        m_canvasCursorFollowsMouseCursor;
         QString		m_description;

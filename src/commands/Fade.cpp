@@ -210,7 +210,7 @@ FadeBend::FadeBend(FadeCurveView * FadeCurveView)
 FadeBend::FadeBend(FadeCurve *fade, double val)
 	: TCommand(fade)
 	, m_fade(fade)
-	, m_fv(0)
+	, m_fv(nullptr)
 {
 	setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: bend") : tr("Fade Out: bend"));
 	origBend = m_fade->get_bend_factor();
@@ -300,7 +300,7 @@ FadeStrength::FadeStrength(FadeCurveView* FadeCurveView)
 FadeStrength::FadeStrength(FadeCurve *fade, double val)
 	: TCommand(fade)
 	, m_fade(fade)
-	, m_fv(0)
+	, m_fv(nullptr)
 {
 	setText( (m_fade->get_fade_type() == FadeCurve::FadeIn) ? tr("Fade In: strength") : tr("Fade Out: strength"));
 	origStrength = m_fade->get_strength_factor();

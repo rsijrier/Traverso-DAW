@@ -50,10 +50,10 @@ private :
         TSession*	m_session;
 	SheetView*	m_sv;
 	bool		m_resync;
-	int		m_origXPos;
-	int		m_newXPos;
-	int		m_newYPos;
-        int             m_holdCursorSceneY;
+	int		m_origXPos{};
+	int		m_newXPos{};
+	int		m_newYPos{};
+        int             m_holdCursorSceneY{};
         TimeRef         m_newTransportLocation;
 
         void do_keyboard_move(TimeRef newLocation, bool centerInView = false);

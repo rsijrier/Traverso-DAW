@@ -36,7 +36,7 @@ public:
 	ImportClipsDialog(QWidget* parent = 0);
 	~ImportClipsDialog();
 
-        void set_tracks(QList<AudioTrack*>);
+        void set_tracks(const QList<AudioTrack *> &);
 
         AudioTrack* get_selected_track();
 	bool get_add_markers();

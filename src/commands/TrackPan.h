@@ -53,7 +53,7 @@ private :
 	float	m_origPan;
 	float	m_newPan;
 	Track*	m_track;
-	int	m_origX;
+	int	m_origX{};
 
 	void set_value_by_keyboard_input(float newPan);
 	
