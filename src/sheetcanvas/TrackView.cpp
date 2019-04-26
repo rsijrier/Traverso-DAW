@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <Debugger.h>
 
 TrackView::TrackView(SheetView* sv, Track * track)
-	: ViewItem(0, track)
+	: ViewItem(nullptr, track)
 {
         PENTERCONS;
 	m_sv = sv;
@@ -79,8 +79,7 @@ TrackView::TrackView(SheetView* sv, Track * track)
 }
 
 TrackView:: ~ TrackView( )
-{
-}
+= default;
 
 void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {

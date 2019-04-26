@@ -41,7 +41,7 @@ public:
 	void set_soft_selected(bool selected);
 	void set_hard_selected(bool selected);
 	
-	void set_color(QColor color);
+    void set_color(const QColor& color);
 	void load_theme_data();
 
 	CurveNode* get_curve_node() const {return m_node;}

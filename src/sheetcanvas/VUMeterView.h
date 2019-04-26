@@ -45,7 +45,7 @@ public:
 private:
         std::vector<int>	m_presetMark;
         QFont			m_font;
-        int			m_fontLabelAscent;
+        int			m_fontLabelAscent{};
         QColor			m_colorActive;
         QColor			m_colorInactive;
 
@@ -73,10 +73,10 @@ public:
         static QVector<float>* VUMeterView_lut();
 
 private:
-        VUMeterRulerView*	m_ruler;
+        VUMeterRulerView*	m_ruler{};
         static QVector<float>	lut;
         QList<VUMeterLevelView*> m_levels;
-        int			m_vulevelspacing;
+        int			m_vulevelspacing{};
         QBrush			m_widgetBgBrush;
         Qt::Orientation         m_orientation;
         AudioTrack*      m_audioTrack;
@@ -145,7 +145,7 @@ private:
         float			m_rms;
         float			m_maxFalloff;
         float			m_peakHoldValue;
-        float			m_peakHistory[50];
+        float			m_peakHistory[50]{};
         short unsigned int	m_rmsIndex;
         short unsigned int	m_overCount;
 

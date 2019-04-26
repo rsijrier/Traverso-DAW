@@ -47,7 +47,7 @@ PluginView::PluginView(PluginChainView* parent, PluginChain* chain, Plugin* plug
 {
 	PENTERCONS;
 	
-	m_propertiesDialog = 0;
+	m_propertiesDialog = nullptr;
 
         setZValue(parent->zValue() + 2);
 	
@@ -65,9 +65,9 @@ PluginView::PluginView(PluginChainView* parent, PluginChain* chain, Plugin* plug
 PluginView::~PluginView( )
 {
 	PENTERDES2;
-	if (m_propertiesDialog) {
+	
 		delete m_propertiesDialog;
-	}
+	
 }
 
 void PluginView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -108,7 +108,7 @@ TCommand * PluginView::edit_properties( )
 		m_propertiesDialog->setWindowTitle(m_name);
 	} 
 	m_propertiesDialog->show();
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 TCommand* PluginView::remove_plugin()

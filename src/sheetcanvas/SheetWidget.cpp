@@ -43,7 +43,7 @@
 #include <Debugger.h>
 
 SheetPanelView::SheetPanelView(QGraphicsScene* scene, TSession* sheet)
-	: ViewItem(0, 0)
+	: ViewItem(nullptr, nullptr)
 	, m_sheet(sheet)
 {
         scene->addItem(this);
@@ -51,7 +51,7 @@ SheetPanelView::SheetPanelView(QGraphicsScene* scene, TSession* sheet)
 }
 
 
-void SheetPanelView::paint(QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget)
+void SheetPanelView::paint(QPainter * painter, const QStyleOptionGraphicsItem *  /*option*/, QWidget *  /*widget*/)
 {
         painter->fillRect(-3, 0, 3, -TIMELINE_HEIGHT - 1, themer()->get_color("TrackPanel:trackseparation"));
 }
@@ -144,7 +144,7 @@ SheetWidget::SheetWidget(TSession* sheet, QWidget* parent)
 	m_hScrollBar->setOrientation(Qt::Horizontal);
 
 	m_trackPanel = new TrackPanelViewPort(m_scene, this);
-	m_clipsViewPort = new ClipsViewPort(m_scene, this);
+    m_clipsViewPort = new ClipsViewPort(m_scene, this);
 	m_timeLine = new TimeLineViewPort(m_scene, this);
 	m_sheetPanelVP = new SheetPanelViewPort(m_scene, this);
 

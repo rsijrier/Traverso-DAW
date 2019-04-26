@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QFileDialog>
 #include <QLinearGradient>
+#include <cmath>
 #include "dialogs/AudioClipEditDialog.h"
 #include "Fade.h"
 #include "AudioDevice.h"
@@ -236,7 +237,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
         return;
     }
 
-    bool microView = m_sheet->get_hzoom() < 64 ? 1 : 0;
+    bool microView = m_sheet->get_hzoom() < 64 ? true : false;
     TimeRef clipstartoffset = m_clip->get_source_start_location();
     uint channels = m_clip->get_channel_count();
     int peakdatacount = microView ? pixelcount : pixelcount * 2;
@@ -341,7 +342,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
             // if Rectified View, calculate max of the minimum and maximum value.
             if (!m_classicView) {
                 for (int i=0, j=0; i < (pixelcount*2); i+=2, ++j) {
-                    pixeldata[chan][j] = - fabs(f_max(pixeldata[chan][i], - pixeldata[chan][i+1]));
+                    pixeldata[chan][j] = - std::fabs(f_max(pixeldata[chan][i], - pixeldata[chan][i+1]));
                 }
             }
 
@@ -545,7 +546,7 @@ void AudioClipView::draw_db_lines(QPainter* p, qreal xstart, int pixelcount)
     p->save();
 
     int channels = m_clip->get_channel_count();
-    bool microView = m_sheet->get_hzoom() < 64 ? 1 : 0;
+    bool microView = m_sheet->get_hzoom() < 64 ? true : false;
     int linestartpos = xstart;
     if (xstart < m_lineOffset) linestartpos = m_lineOffset;
 
@@ -616,7 +617,7 @@ void AudioClipView::draw_db_lines(QPainter* p, qreal xstart, int pixelcount)
 void AudioClipView::create_brushes()
 {
     /** TODO: The following part is identical to calculations in draw_db_lines(). Move to a central place. **/
-    bool microView = m_sheet->get_hzoom() < 64 ? 1 : 0;
+    bool microView = m_sheet->get_hzoom() < 64 ? true : false;
     int channels = m_clip->get_channel_count();
 
     if ((m_mergedView) || (channels == 0)) {
@@ -741,15 +742,12 @@ void AudioClipView::update_start_pos()
 TCommand * AudioClipView::fade_range()
 {
     Q_ASSERT(m_sheet);
-    int x = (int) (cpointer().on_first_input_event_scene_x() - scenePos().x());
+    qreal x = cpointer().on_first_input_event_scene_x() - scenePos().x();
 
     if (x < (m_boundingRect.width() / 2)) {
         return clip_fade_in();
-    } else {
-        return clip_fade_out();
-    }
-
-    return 0;
+    } 
+    return clip_fade_out();
 }
 
 TCommand * AudioClipView::clip_fade_in( )
@@ -772,15 +770,12 @@ TCommand * AudioClipView::clip_fade_out( )
 TCommand * AudioClipView::reset_fade()
 {
     Q_ASSERT(m_sheet);
-    int x = (int) (cpointer().on_first_input_event_scene_x() - scenePos().x());
+    qreal x = cpointer().on_first_input_event_scene_x() - scenePos().x();
 
     if (x < (m_boundingRect.width() / 2)) {
         return m_clip->reset_fade_in();
-    } else {
-        return m_clip->reset_fade_out();
-    }
-
-    return 0;
+    } 
+    return m_clip->reset_fade_out();
 }
 
 void AudioClipView::position_changed()
@@ -838,14 +833,14 @@ TCommand * AudioClipView::select_fade_in_shape( )
 {
     TMainWindow::instance()->select_fade_in_shape();
 
-    return 0;
+    return nullptr;
 }
 
 TCommand * AudioClipView::select_fade_out_shape( )
 {
     TMainWindow::instance()->select_fade_out_shape();
 
-    return 0;
+    return nullptr;
 }
 
 void AudioClipView::start_recording()
@@ -923,7 +918,7 @@ TCommand * AudioClipView::edit_properties()
 
     editdialog.exec();
 
-    return 0;
+    return nullptr;
 }
 
 void AudioClipView::clip_state_changed()

@@ -143,11 +143,11 @@ private:
 	TrackView*              m_projectMasterOutView;
 	WorkCursor*		m_workCursor;
 	TCanvasCursor*            m_editCursor;
-	int			m_shuttleXfactor;
-	int			m_shuttleYfactor;
-	int			m_sceneHeight;
-	float                   m_meanTrackHeight;
-	bool			m_dragShuttle;
+	int			m_shuttleXfactor{};
+	int			m_shuttleYfactor{};
+	int			m_sceneHeight{};
+	float                   m_meanTrackHeight{};
+	bool			m_dragShuttle{};
 	QTimer			m_shuttletimer;
 	QScrollBar*		m_vScrollBar;
 	QScrollBar*		m_hScrollBar;
@@ -156,10 +156,10 @@ private:
 	static QHash<QString, QString> m_cursorsDict;
 
 	// Themeing data
-	int	m_trackSeperatingHeight;
-	int	m_trackMinimumHeight;
-	int	m_trackMaximumHeight;
-	int	m_trackTopIndent;
+	int	m_trackSeperatingHeight{};
+	int	m_trackMinimumHeight{};
+	int	m_trackMaximumHeight{};
+	int	m_trackTopIndent{};
 
 	void update_tracks_bounding_rect();
 	void collect_item_browser_data(ItemBrowserData& data);

@@ -39,6 +39,7 @@ class VUMonitor : public APILinkedListNode
 public:
     VUMonitor() {
         m_flag = 0;
+        m_peak = 0;
     }
     ~VUMonitor() {}
 

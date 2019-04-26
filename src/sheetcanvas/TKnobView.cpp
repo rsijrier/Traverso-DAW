@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Themer.h"
 #include "Track.h"
-#include "math.h"
+#include <cmath>
 
 #include <Utils.h>
 #include <Mixer.h>

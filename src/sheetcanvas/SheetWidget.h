@@ -69,7 +69,7 @@ public:
         void set_sheet_view(SheetView* view) { m_sv = view;}
 
 private:
-        Sheet*          m_sheet;
+        Sheet*          m_sheet{};
         SheetPanelView* m_spv;
 
 private slots:

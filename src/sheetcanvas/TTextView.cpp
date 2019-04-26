@@ -32,9 +32,7 @@ TTextView::TTextView(ViewItem *parent)
 }
 
 TTextView::~TTextView()
-{
-
-}
+= default;
 
 void TTextView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {

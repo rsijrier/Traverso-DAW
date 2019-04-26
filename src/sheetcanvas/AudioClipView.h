@@ -69,23 +69,23 @@ private:
 	QTimer 		m_recordingTimer;
 
 	float m_progress;
-	int m_peakloadingcount;
+	int m_peakloadingcount{};
 
 	bool m_waitingForPeaks;
-	bool m_mergedView;
-	bool m_classicView;
-	bool m_paintWithOutline;
-	bool m_drawDbGrid;
-	int m_height;
-	int m_infoAreaHeight;
-	int m_mimimumheightforinfoarea;
-	int m_lineOffset;
-	int m_lineVOffset;
+	bool m_mergedView{};
+	bool m_classicView{};
+	bool m_paintWithOutline{};
+	bool m_drawDbGrid{};
+	int m_height{};
+	int m_infoAreaHeight{};
+	int m_mimimumheightforinfoarea{};
+	int m_lineOffset{};
+	int m_lineVOffset{};
 	TimeRef m_oldRecordingPos;
 	
 	// theme data
-	int m_drawbackground;
-	int m_fillwave;
+	int m_drawbackground{};
+	int m_fillwave{};
 	QColor m_backgroundColorTop;
 	QColor m_backgroundColorBottom;
 	QColor m_backgroundColorMouseHoverTop;

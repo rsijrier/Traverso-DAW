@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QPainter>
 #include <QPen>
+#include <utility>
 #include <CurveNode.h>
 #include <Themer.h>
 #include <Curve.h>
@@ -112,9 +113,9 @@ void CurveNodeView::calculate_bounding_rect()
 }
 
 
-void CurveNodeView::set_color(QColor color)
+void CurveNodeView::set_color(const QColor &color)
 {
-	m_color = color;
+    m_color = color;
 }
 
 void CurveNodeView::update_pos( )

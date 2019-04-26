@@ -116,7 +116,7 @@ void ClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 		}
 	}
 	
-	if (m_imports.size() || m_resourcesImport.size()) {
+	if (!m_imports.empty() || !m_resourcesImport.empty()) {
 		event->acceptProposedAction();
 	}
 }
@@ -192,7 +192,7 @@ void ClipsViewPort::dragMoveEvent( QDragMoveEvent * event )
 		return;
 	}
 	
-	m_importTrack = 0;
+	m_importTrack = nullptr;
 	
 	// hmmm, code below is candidate for improvements...?
 	

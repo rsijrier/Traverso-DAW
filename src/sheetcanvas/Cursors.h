@@ -59,12 +59,12 @@ private:
         QTimer		m_playTimer;
         QTimeLine	m_animation;
         ClipsViewPort*	m_vp;
-        bool 		m_follow;
-	bool		m_followDisabled;
+        bool 		m_follow{};
+	bool		m_followDisabled{};
         PlayHeadMode	m_mode;
-        int 		m_animationScrollStartPos;
-    qreal		m_animFrameRange;
-	qreal		m_animScaleFactor;
+        int 		m_animationScrollStartPos{};
+    qreal		m_animFrameRange{};
+	qreal		m_animScaleFactor{};
         QBrush          m_brushActive;
         QBrush          m_brushInactive;
         QPixmap		m_pixActive;

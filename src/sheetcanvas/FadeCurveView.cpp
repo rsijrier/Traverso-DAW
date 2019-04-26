@@ -48,7 +48,7 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 	PENTERCONS;
         m_sv = sv;
 	m_holdactive = false;
-	m_guicurve = new Curve(0);
+	m_guicurve = new Curve(nullptr);
 	m_guicurve->set_sheet(m_sv->get_sheet());
 	
 	
@@ -139,8 +139,8 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 		int h = (int) m_boundingRect.height() - 1;
 		int w = (int) m_boundingRect.width() - 1;
 		QList<QPointF> points = m_fadeCurve->get_control_points();
-		QPoint p1(int(points.at(1).x() * w + 0.5), h - int(points.at(1).y() * h + 0.5));
-		QPoint p2(w - int((1.0 - points.at(2).x()) * w + 0.5), int((1.0 - points.at(2).y()) * h + 0.5));
+        QPointF p1((points.at(1).x() * w + 0.5), h - (points.at(1).y() * h + 0.5));
+        QPointF p2(w - ((1.0 - points.at(2).x()) * w + 0.5), ((1.0 - points.at(2).y()) * h + 0.5));
 	
 		painter->setPen(QColor(DOT_COLOR));
 		painter->setBrush(QColor(DOT_COLOR));
@@ -150,15 +150,15 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 			p1.setY(h - int((1 - points.at(2).y()) * h + 0.5));
 			p2.setX(int((points.at(1).x()) * w + 0.5));
 			p2.setY(int((points.at(1).y()) * h + 0.5));
-			painter->drawLine(w, h, p1.x(), p1.y());
-			painter->drawLine(0, 0, p2.x(), p2.y());
+            painter->drawLine(QPointF(w, h), QPointF(p1.x(), p1.y()));
+            painter->drawLine(QPointF(0, 0), QPointF(p2.x(), p2.y()));
 		} else {
-			painter->drawLine(0, h, p1.x(), p1.y());
-			painter->drawLine(w, 0, p2.x(), p2.y());
+            painter->drawLine(QPointF(0, h), QPointF(p1.x(), p1.y()));
+            painter->drawLine(QPointF(w, 0), QPointF(p2.x(), p2.y()));
 		}
 		
-		painter->drawEllipse(p1.x() - DOT_SIZE/2, p1.y() - DOT_SIZE/2, DOT_SIZE, DOT_SIZE);
-		painter->drawEllipse(p2.x() - DOT_SIZE/2, p2.y() - DOT_SIZE/2, DOT_SIZE, DOT_SIZE);
+        painter->drawEllipse(QPointF(p1.x() - DOT_SIZE/2, p1.y() - DOT_SIZE/2), DOT_SIZE, DOT_SIZE);
+        painter->drawEllipse(QPointF(p2.x() - DOT_SIZE/2, p2.y() - DOT_SIZE/2), DOT_SIZE, DOT_SIZE);
 	}
 	
 	painter->restore();
@@ -280,7 +280,7 @@ TCommand* FadeCurveView::select_fade_shape()
 	else {
 		TMainWindow::instance()->select_fade_out_shape();
 	}
-	return 0;
+	return nullptr;
 }
 
 void FadeCurveView::set_holding(bool hold)

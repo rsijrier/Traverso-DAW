@@ -103,7 +103,7 @@ protected:
 	TrackPanelLed*          m_infoLed;
 	TrackPanelLed*          m_muteLed;
 	TrackPanelLed*          m_soloLed;
-	TrackPanelLed*          m_portLed;
+	TrackPanelLed*          m_portLed{};
 	TrackPanelLed*          m_preLedButton;
 	TPanKnobView*	        m_panKnob;
     TGainKnobView*          m_gainKnob;
@@ -112,7 +112,7 @@ protected:
     int LED_HEIGHT;
     int LED_Y_POS;
     int VU_WIDTH;
-    int GAIN_Y_POS;
+    int GAIN_Y_POS{};
     int VUMETER_Y_POS;
     int INDENT;
     int PANEL_ITEM_SPACING;

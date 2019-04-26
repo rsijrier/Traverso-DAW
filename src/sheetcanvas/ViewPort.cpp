@@ -81,7 +81,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
     : QGraphicsView(scene, parent)
-    , AbstractViewPort()
     , m_sv(nullptr)
     , m_mode(0)
 {

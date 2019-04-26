@@ -110,7 +110,7 @@ void PluginChainView::remove_pluginview( Plugin * plugin )
 		x += (int)view->boundingRect().width() + 6;
 	}
 	
-	if (!m_pluginViews.size()) {
+	if (m_pluginViews.empty()) {
 		hide();
 	}
 	

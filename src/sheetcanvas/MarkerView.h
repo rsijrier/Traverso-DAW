@@ -53,7 +53,7 @@ private:
 	Marker* m_marker;
 	LineView* m_line;
 	QColor	m_fillColor;
-	bool	m_active;
+	bool	m_active{};
 	bool	m_dragging;
 	PositionIndicator* m_posIndicator;
     int	m_height;

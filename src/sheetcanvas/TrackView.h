@@ -65,11 +65,11 @@ protected:
 	PluginChainView*	m_pluginChainView;
 	CurveView*              m_curveView;
 	Track*                  m_track;
-	TrackPanelView*		m_panel;
-	int			m_height;
-	int			m_paintBackground;
-	int			m_topborderwidth;
-	int			m_bottomborderwidth;
+	TrackPanelView*		m_panel{};
+	int			m_height{};
+	int			m_paintBackground{};
+	int			m_topborderwidth{};
+	int			m_bottomborderwidth{};
 	bool                    m_isMoving;
 
 	void add_lane_view(TTrackLaneView* laneView);
@@ -80,9 +80,9 @@ protected:
 
 private:
 	QList<TTrackLaneView*>	m_laneViews;
-	int	m_laneSpacing;
-	int	m_cliptopmargin;
-	int	m_clipbottommargin;
+	int	m_laneSpacing{};
+	int	m_cliptopmargin{};
+	int	m_clipbottommargin{};
 	int	m_visibleLanes;
 
 public slots:

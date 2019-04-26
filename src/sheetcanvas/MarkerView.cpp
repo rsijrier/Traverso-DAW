@@ -47,9 +47,8 @@ MarkerView::MarkerView(Marker* marker, SheetView* sv, ViewItem* parentView)
 	m_line = new LineView(this);
     m_posIndicator = nullptr;
 
-	QFontMetrics fm(themer()->get_font("Timeline:marker"));
-    m_width = 16;//fm.width("NI"); // use any two letters to set the width of the marker indicator
-    m_height = m_width;//fm.ascent();
+    m_width = 16;
+    m_height = m_width;
     m_line->setPos(m_width / 2, m_height);
 	
 	load_theme_data();

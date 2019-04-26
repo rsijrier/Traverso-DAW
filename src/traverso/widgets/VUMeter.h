@@ -88,10 +88,10 @@ private:
 	VUMeterRuler*		ruler;
 	static QVector<float>	lut;
 	QList<VUMeterLevel*>	m_levels;
-	int			m_vulevelspacing;
-	int			m_vulayoutspacing;
-	int			m_mainlayoutmargin;
-	int			m_mainlayoutspacing;
+	int			m_vulevelspacing{};
+	int			m_vulayoutspacing{};
+	int			m_mainlayoutmargin{};
+	int			m_mainlayoutspacing{};
 	QFont			m_chanNameFont;
 	QFont			m_labelFont;
 	QBrush			m_widgetBgBrush;

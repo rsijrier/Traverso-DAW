@@ -61,6 +61,7 @@ VUMeterView::VUMeterView(ViewItem* parent, Track* track)
 {
         load_theme_data();
         m_audioTrack = qobject_cast<AudioTrack*>(track);
+        m_orientation = Qt::Horizontal;
 
         for (int i = 0; i < 2; ++i) {
                 VUMeterLevelView* level = new VUMeterLevelView(this, track->get_vumonitors().at(i));
@@ -80,7 +81,7 @@ VUMeterView::VUMeterView(ViewItem* parent, Track* track)
 }
 
 VUMeterView::~ VUMeterView( )
-{}
+= default;
 
 
 void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)

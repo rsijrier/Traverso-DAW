@@ -29,13 +29,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 TTrackLaneView::TTrackLaneView(ViewItem* parent)
-	: ViewItem(parent, 0)
+	: ViewItem(parent, nullptr)
 {
 	m_sv = parent->get_sheetview();
 	m_height = 150;
 	m_ignoreContext = true;
-	m_panel = 0;
-	m_childView = 0;
+	m_panel = nullptr;
+	m_childView = nullptr;
 	setZValue(parent->zValue() + 1);
 }
 
@@ -48,11 +48,10 @@ void TTrackLaneView::set_child_view(ViewItem *view)
 }
 
 TTrackLaneView::~TTrackLaneView()
-{
-}
+= default;
 
 
-void TTrackLaneView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+void TTrackLaneView::paint(QPainter*  /*painter*/, const QStyleOptionGraphicsItem*  /*option*/, QWidget* widget)
 {
 	Q_UNUSED(widget);
 

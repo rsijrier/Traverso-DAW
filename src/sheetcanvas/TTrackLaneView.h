@@ -51,7 +51,7 @@ private:
 	QString		m_name;
 	ViewItem*	m_childView;
 	int		m_height;
-	bool		m_paintBackground;
+	bool		m_paintBackground{};
 };
 
 #endif // TTRACKLANEVIEW_H

@@ -54,11 +54,11 @@ protected:
     void set_title(const QString &title);
 
 private:
-	double		m_angle;
-	double		m_nTurns;
+	double		m_angle{};
+	double		m_nTurns{};
 	double		m_minValue;
 	double		m_maxValue;
-    double      m_value;
+    double      m_value{};
     QString     m_title;
 	double		m_totalAngle;
 	QLinearGradient	m_gradient2D;

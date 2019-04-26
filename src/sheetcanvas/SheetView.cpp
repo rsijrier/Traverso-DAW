@@ -73,7 +73,7 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	TrackPanelViewPort* tpvp,
 	TimeLineViewPort* tlvp,
 	TSession* session)
-	: ViewItem(0, session)
+	: ViewItem(nullptr, session)
 {
 	setZValue(1);
 
@@ -729,7 +729,7 @@ void SheetView::update_shuttle_factor()
 
 	int yscale;
 
-	if (m_audioTrackViews.size()) {
+	if (!m_audioTrackViews.empty()) {
 		yscale = int(m_meanTrackHeight / 10);
 	} else {
 		yscale = int(m_clipsViewPort->viewport()->height() / 10);
@@ -767,7 +767,7 @@ TCommand* SheetView::goto_begin()
 	stop_follow_play_head();
 	m_session->set_work_at(TimeRef());
 	center();
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 
@@ -777,7 +777,7 @@ TCommand* SheetView::goto_end()
 	TimeRef lastlocation = m_session->get_last_location();
 	m_session->set_work_at(lastlocation);
 	center();
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 
@@ -830,7 +830,7 @@ TCommand * SheetView::touch_play_cursor( )
 	}
 	m_session->set_transport_pos(TimeRef(qRound(m_clipsViewPort->mapToScene(x, 0).x()) * timeref_scalefactor));
 
-	return 0;
+	return nullptr;
 }
 
 void SheetView::set_snap_range(int start)
@@ -846,14 +846,14 @@ TCommand* SheetView::scroll_up( )
 	PENTER3;
 	set_vscrollbar_value(m_clipsViewPort->verticalScrollBar()->value() - int(m_meanTrackHeight * 0.75));
 
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 TCommand* SheetView::scroll_down( )
 {
 	PENTER3;
 	set_vscrollbar_value(m_clipsViewPort->verticalScrollBar()->value() + int(m_meanTrackHeight * 0.75));
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 TCommand* SheetView::scroll_right()
@@ -861,7 +861,7 @@ TCommand* SheetView::scroll_right()
 	PENTER3;
 	stop_follow_play_head();
 	set_hscrollbar_value(m_clipsViewPort->horizontalScrollBar()->value() + 50);
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 
@@ -870,7 +870,7 @@ TCommand* SheetView::scroll_left()
 	PENTER3;
 	stop_follow_play_head();
 	set_hscrollbar_value(m_clipsViewPort->horizontalScrollBar()->value() - 50);
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 int SheetView::hscrollbar_value() const
@@ -925,7 +925,7 @@ TCommand * SheetView::center_playhead( )
 
 	follow_play_head();
 
-	return (TCommand*) 0;
+	return (TCommand*) nullptr;
 }
 
 void SheetView::set_hscrollbar_value(int value)
@@ -1065,14 +1065,14 @@ TCommand* SheetView::browse_to_time_line()
 
 	cpointer().set_active_context_items_by_keyboard_input(items);
 
-	return 0;
+	return nullptr;
 }
 
 void SheetView::collect_item_browser_data(ItemBrowserData &data)
 {
 	QList<ContextItem*> list = cpointer().get_active_context_items();
 
-	if (list.size()) {
+	if (!list.empty()) {
 		data.currentContext = list.first()->metaObject()->className();
 	}
 
@@ -1118,7 +1118,7 @@ TCommand* SheetView::to_upper_context_level()
 		}
 	}
 
-	return 0;
+	return nullptr;
 }
 
 TCommand* SheetView::to_lower_context_level()
@@ -1143,7 +1143,7 @@ TCommand* SheetView::to_lower_context_level()
 		browse_to_time_line();
 	}
 
-	return 0;
+	return nullptr;
 }
 
 
@@ -1153,7 +1153,7 @@ TCommand* SheetView::browse_to_context_item_below()
 	collect_item_browser_data(data);
 
 	if (data.currentContext == "CurveView") {
-		return 0;
+		return nullptr;
 	}
 
 	if (data.currentContext == "AudioClipView") {
@@ -1163,19 +1163,19 @@ TCommand* SheetView::browse_to_context_item_below()
 			if (index < (views.size() - 1)) {
 				data.atv = qobject_cast<AudioTrackView*>(views.at(index + 1));
 				if (!data.atv) {
-					return 0;
+					return nullptr;
 				}
 				AudioClipView* nearestClipView = data.atv->get_nearest_audioclip_view(m_session->get_work_location());
 				if (nearestClipView) {
 					browse_to_audio_clip_view(nearestClipView);
-					return 0;
+					return nullptr;
 				}
 			} else {
-				data.atv = 0;
+				data.atv = nullptr;
 			}
 		}
 
-		return 0;
+		return nullptr;
 
 	}
 
@@ -1187,16 +1187,16 @@ TCommand* SheetView::browse_to_context_item_below()
 			browse_to_track(views.at(index)->get_track());
 		}
 
-		return 0;
+		return nullptr;
 	}
 
 	// We're not yet in the viewport, at least not upon a track,
 	// browse to top most track
-	if (get_track_views().size()) {
+	if (!get_track_views().empty()) {
 		browse_to_track(get_track_views().first()->get_track());
 	}
 
-	return 0;
+	return nullptr;
 }
 
 TCommand* SheetView::browse_to_context_item_above()
@@ -1205,7 +1205,7 @@ TCommand* SheetView::browse_to_context_item_above()
 	collect_item_browser_data(data);
 
 	if (data.currentContext == "CurveView") {
-		return 0;
+		return nullptr;
 	}
 
 	if (data.acv) {
@@ -1232,12 +1232,12 @@ TCommand* SheetView::browse_to_context_item_above()
 	} else {
 		// Where not yet in the viewport, at least not upon a track,
 		// browse to bottom most track
-		if (get_track_views().size()) {
+		if (!get_track_views().empty()) {
 			browse_to_track(get_track_views().last()->get_track());
 		}
 	}
 
-	return 0;
+	return nullptr;
 }
 
 TCommand* SheetView::browse_to_next_context_item()
@@ -1250,7 +1250,7 @@ TCommand* SheetView::browse_to_next_context_item()
 	if (data.currentContext == "TimeLineView" || data.currentContext == "MarkerView") {
 		MarkerView* markerView = m_tlvp->get_timeline_view()->get_marker_view_after(m_session->get_work_location());
 		if (!markerView) {
-			return 0;
+			return nullptr;
 		}
 		browse_to_marker_view(markerView);
 
@@ -1258,41 +1258,41 @@ TCommand* SheetView::browse_to_next_context_item()
 	if (data.currentContext == "CurveView") {
         CurveNodeView* nodeView = data.curveView->get_node_view_after(m_session->get_work_location());
 		if (!nodeView) {
-			return 0;
+			return nullptr;
 		}
 		browse_to_curve_node_view(nodeView);
-		return 0;
+		return nullptr;
 	}
 
 	if (data.currentContext == "AudioClipView") {
 		AudioClip* nextClip = data.atv->get_track()->get_clip_after(data.acv->get_clip()->get_track_start_location());
 		if (!nextClip) {
-			return 0;
+			return nullptr;
 		}
 
 		QList<AudioClipView*> views = data.atv->get_clipviews();
 		foreach(AudioClipView* view, views) {
 			if (view->get_clip() == nextClip) {
 				browse_to_audio_clip_view(view);
-				return 0;
+				return nullptr;
 			}
 		}
 	}
 
 	if (data.currentContext == "AudioTrackView") {
 		to_upper_context_level();
-		return 0;
+		return nullptr;
 	}
 
-	if (!activeList.size()) {
-		return 0;
+	if (activeList.empty()) {
+		return nullptr;
 	}
 
 	activeList.append(this);
 	cpointer().set_active_context_items_by_keyboard_input(activeList);
 
 
-	return 0;
+	return nullptr;
 }
 
 TCommand* SheetView::browse_to_previous_context_item()
@@ -1305,7 +1305,7 @@ TCommand* SheetView::browse_to_previous_context_item()
 	if (data.currentContext == "TimeLineView" || data.currentContext == "MarkerView") {
 		MarkerView* markerView = m_tlvp->get_timeline_view()->get_marker_view_before(m_session->get_work_location());
 		if (!markerView) {
-			return 0;
+			return nullptr;
 		}
 		browse_to_marker_view(markerView);
 
@@ -1314,40 +1314,40 @@ TCommand* SheetView::browse_to_previous_context_item()
 	if (data.currentContext == "CurveView") {
         CurveNodeView* nodeView = data.curveView->get_node_view_before(m_session->get_work_location());
 		if (!nodeView) {
-			return 0;
+			return nullptr;
 		}
 		browse_to_curve_node_view(nodeView);
-		return 0;
+		return nullptr;
 	}
 
 	if (data.currentContext == "AudioClipView") {
 		AudioClip* nextClip = data.atv->get_track()->get_clip_before(data.acv->get_clip()->get_track_start_location());
 		if (!nextClip) {
-			return 0;
+			return nullptr;
 		}
 
 		QList<AudioClipView*> views = data.atv->get_clipviews();
 		foreach(AudioClipView* view, views) {
 			if (view->get_clip() == nextClip) {
 				browse_to_audio_clip_view(view);
-				return 0;
+				return nullptr;
 			}
 		}
 	}
 
 	if (data.currentContext == "AudioTrackView") {
 		to_upper_context_level();
-		return 0;
+		return nullptr;
 	}
 
-	if (!activeList.size()) {
-		return 0;
+	if (activeList.empty()) {
+		return nullptr;
 	}
 
 	activeList.append(this);
 	cpointer().set_active_context_items_by_keyboard_input(activeList);
 
-	return 0;
+	return nullptr;
 }
 
 void SheetView::center_in_view(ViewItem *item, enum Qt::AlignmentFlag flag)
@@ -1422,7 +1422,7 @@ TCommand* SheetView::edit_properties()
 		m_session->set_name(text);
 	}
 
-	return 0;
+	return nullptr;
 }
 
 void SheetView::set_cursor_shape(const QString& shape, int alignment)

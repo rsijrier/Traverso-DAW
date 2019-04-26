@@ -262,7 +262,7 @@ TCommand* TimeLineView::add_marker_at(const TimeRef when)
 	CommandGroup* group = new CommandGroup(m_timeline, "");
 
 	// check if it is the first marker added to the timeline
-	if (!m_timeline->get_markers().size()) {
+	if (m_timeline->get_markers().empty()) {
 		if (when > TimeRef()) {  // add one at the beginning of the sheet
 			Marker* m = new Marker(m_timeline, TimeRef(), Marker::CDTRACK);
 			m->set_description("");

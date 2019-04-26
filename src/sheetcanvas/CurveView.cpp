@@ -41,8 +41,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define NODE_SOFT_SELECTION_DISTANCE 40
 
 
-#include "limits.h"
-#include "float.h"
+#include <climits>
+#include <cfloat>
 
 CurveView::CurveView(SheetView* sv, ViewItem* parentViewItem, Curve* curve)
     : ViewItem(parentViewItem, curve)
@@ -642,7 +642,7 @@ QList<CurveNodeView*> CurveView::get_selected_nodes()
         }
     }
 
-    if (!list.size() && m_blinkingNode) {
+    if (list.empty() && m_blinkingNode) {
         list.append(m_blinkingNode);
 
     }
