@@ -38,12 +38,14 @@ public:
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-	void set_text(const QString& text, int mseconds=-1);
+    void set_text(const QString& text, int mseconds=-1);
+    void set_info(const QString& info);
 	void set_cursor_shape(QString shape, int alignment);
         void set_pos(QPointF pos);
 
 private:
-	PositionIndicator*	m_textItem;
+    PositionIndicator*	m_textItem;
+    PositionIndicator* m_infoItem;
 	QPointF			m_pos;
     qreal			m_xOffset;
     qreal			m_yOffset;

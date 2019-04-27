@@ -139,7 +139,7 @@ public:
 	void addFunction(TFunction* function);
 	TFunction* getFunction(const QString& function) const;
 
-	QList<TFunction* > getFunctionsFor(QString className);
+    QList<TFunction* > getFunctionsFor(QString className);
 	TShortcut* getShortcutForKey(const QString& key);
 	TShortcut* getShortcutForKey(int key);
 	CommandPlugin* getCommandPlugin(const QString& pluginName);

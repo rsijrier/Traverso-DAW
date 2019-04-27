@@ -384,7 +384,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                     if (fromContextMenu && command->supportsEnterFinishesHold())
 					{
 						m_enterFinishesHold = true;
-						info().information(tr("Enter to accept, Esc to abort"));
 					}
                     if (shortCutFunction->usesAutoRepeat())
 					{
@@ -394,7 +393,17 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                     if (!command->supportsEnterFinishesHold())
 					{
 						m_enterFinishesHold = false;
-					}
+                    }
+
+                    bool showCursorShortCutHelp = config().get_property("ShortCuts", "ShowCursorHelp", false).toBool();
+                    if (showCursorShortCutHelp && (fromContextMenu || m_enterFinishesHold)) {
+                        QString key{};
+                        QStringList keyList = shortCutFunction->getKeys();
+                        if (!keyList.isEmpty()) {
+                            key = keyList.first();
+                        }
+                        cpointer().setCursorText(tr("Press Enter or %1 to accept, Esc to reject").arg(key));
+                    }
 				} else {
 					PERROR("hold action begin_hold() failed!");
 					// OOPSSS, something went wrong when making the Command

@@ -286,7 +286,7 @@ QList< TFunction* > TShortcutManager::getFunctionsFor(QString className)
 	}
 
 	qSort(functionsList.begin(), functionsList.end(), TFunction::smaller);
-	return functionsList;
+    return functionsList;
 }
 
 TShortcut* TShortcutManager::getShortcutForKey(const QString &keyString)
@@ -1445,7 +1445,7 @@ QString TShortcutManager::createHtmlForClass(const QString& className, QObject* 
 	QMap<QString, QList<TFunction*> > functionsMap;
 
 	foreach(TFunction* function, list)
-	{
+    {
 		QList<TFunction*> listForKey = functionsMap.value(function->submenu);
 		listForKey.append(function);
 		functionsMap.insert(function->submenu, listForKey);
@@ -1464,7 +1464,7 @@ QString TShortcutManager::createHtmlForClass(const QString& className, QObject* 
 
 		foreach(TFunction* function, subMenuFunctionList)
 		{
-			QString keySequence = function->getKeySequence();
+            QString keySequence = function->getKeySequence();
 			keySequence.replace(QString("Up Arrow"), QString("&uarr;"));
 			keySequence.replace(QString("Down Arrow"), QString("&darr;"));
 			keySequence.replace(QString("Left Arrow"), QString("&larr;"));

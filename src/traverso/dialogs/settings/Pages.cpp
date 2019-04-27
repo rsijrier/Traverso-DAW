@@ -744,6 +744,7 @@ void BehaviorConfigPage::save_config()
 	config().set_property("PlayHead", "Scrollmode", scrollModeComboBox->currentIndex());
 	config().set_property("AudioClip", "SyncDuringDrag", resyncAudioCheckBox->isChecked());
 	config().set_property("AudioClip", "LockByDefault", lockClipsCheckBox->isChecked());
+    config().set_property("ShortCuts", "ShowCursorHelp", showShortcutUsageMessagesCheckBox->isChecked());
 
 	QString oncloseaction;
 	if (saveRadioButton->isChecked()) {
@@ -758,15 +759,17 @@ void BehaviorConfigPage::save_config()
 void BehaviorConfigPage::load_config()
 {
 	QString oncloseaction = config().get_property("Project", "onclose", "save").toString();
-        int defaultNumTracks = config().get_property("Sheet", "trackCreationCount", 1).toInt();
+    int defaultNumTracks = config().get_property("Sheet", "trackCreationCount", 1).toInt();
 	int scrollMode = config().get_property("PlayHead", "Scrollmode", 2).toInt();
 	bool resyncAudio = config().get_property("AudioClip", "SyncDuringDrag", false).toBool();
 	bool lockClips = config().get_property("AudioClip", "LockByDefault", false).toBool();
+    bool showShortcutHelpMessages = config().get_property("ShortCuts", "ShowCursorHelp", true).toBool();
 	
 	numberOfTrackSpinBox->setValue(defaultNumTracks);
 	scrollModeComboBox->setCurrentIndex(scrollMode);
 	resyncAudioCheckBox->setChecked(resyncAudio);
 	lockClipsCheckBox->setChecked(lockClips);
+    showShortcutUsageMessagesCheckBox->setChecked(showShortcutHelpMessages);
 	
 	if (oncloseaction == "save") {
 		saveRadioButton->setChecked(true);
@@ -791,12 +794,13 @@ void BehaviorConfigPage::update_follow()
 void BehaviorConfigPage::reset_default_config()
 {
 	config().set_property("Project", "onclose", "save");
-        config().set_property("Sheet", "trackCreationCount", 1);
-	config().set_property("PlayHead", "Follow", 0);
+    config().set_property("Sheet", "trackCreationCount", 1);
+    config().set_property("PlayHead", "Follow", 0);
 	config().set_property("PlayHead", "Scrollmode", 2);
 	config().set_property("AudioClip", "SyncDuringDrag", false);
-	config().set_property("AudioClip", "LockByDefault", false);
-	
+    config().set_property("AudioClip", "LockByDefault", false);
+    config().set_property("ShortCuts", "ShowCursorHelp", true);
+
 	load_config();
 }
 

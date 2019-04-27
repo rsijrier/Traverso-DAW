@@ -33,12 +33,14 @@ TCanvasCursor::TCanvasCursor(SheetView* )
         : ViewItem(nullptr)
 {
 	m_textItem = new PositionIndicator(this);
+    m_infoItem = new PositionIndicator(this);
 	m_textItem->hide();
+    m_infoItem->hide();
 
 	m_ignoreContext = true;
     m_xOffset = m_yOffset = 0.0;
 
-        setZValue(20000);
+    setZValue(20000);
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 }
@@ -49,8 +51,8 @@ TCanvasCursor::~TCanvasCursor( )
 
 void TCanvasCursor::paint( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget )
 {
-        Q_UNUSED(widget);
-        Q_UNUSED(option);
+    Q_UNUSED(widget);
+    Q_UNUSED(option);
 
 	painter->drawPixmap(0, 0, m_pixmap);
 }
@@ -101,23 +103,28 @@ void TCanvasCursor::create_cursor_pixmap(const QString &shape)
 
 void TCanvasCursor::set_text( const QString & text, int mseconds)
 {
-        m_text = text;
+    m_text = text;
 
-	if (m_timer.isActive())
-	{
-		m_timer.stop();
-	}
+    if (m_timer.isActive())
+    {
+        m_timer.stop();
+    }
 
-        if (!m_text.isEmpty()) {
-		m_textItem->set_value(m_text);
-                m_textItem->show();
-		if (mseconds > 0)
-		{
-			m_timer.start(mseconds);
-		}
-        } else {
-                m_textItem->hide();
+    if (!m_text.isEmpty()) {
+        m_textItem->set_value(m_text);
+        m_textItem->show();
+        if (mseconds > 0)
+        {
+            m_timer.start(mseconds);
         }
+    } else {
+        m_textItem->hide();
+    }
+}
+
+void TCanvasCursor::set_info(const QString &info)
+{
+    m_infoItem->set_value(info);
 }
 
 void TCanvasCursor::set_cursor_shape(QString shape, int alignment)
