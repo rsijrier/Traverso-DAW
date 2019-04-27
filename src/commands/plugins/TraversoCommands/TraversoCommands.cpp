@@ -130,8 +130,9 @@ TraversoCommands::TraversoCommands()
 	tShortCutManager().add_translation("Plugin",tr("Plugin"));
 	tShortCutManager().add_translation("PlayHead", tr("Play Head"));
 	tShortCutManager().add_translation("PositionIndicator", tr("Position Indicator"));
-	tShortCutManager().add_translation("WorkCursor", tr("Work Cursor"));
-	tShortCutManager().add_translation("CorrelationMeter", tr("Correlation Meter"));
+    tShortCutManager().add_translation("WorkCursor", tr("Work Cursor"));
+    tShortCutManager().add_translation("Playhead", tr("Play Cursor"));
+    tShortCutManager().add_translation("CorrelationMeter", tr("Correlation Meter"));
 	tShortCutManager().add_translation("SpectralMeter", tr("Spectral Analyzer"));
 	tShortCutManager().add_translation("Track", tr("Track"));
 	tShortCutManager().add_translation("MoveCommand", tr("Move Command"));
@@ -139,6 +140,8 @@ TraversoCommands::TraversoCommands()
 	tShortCutManager().add_translation("ProcessingData", tr("Audio Processing Object"));
 	tShortCutManager().add_translation("ToggleBypass", tr("Toggle Bypass"));
 	tShortCutManager().add_translation("HoldCommand", tr("Hold Command"));
+    tShortCutManager().add_translation("Navigate", tr("Navigate"));
+    tShortCutManager().add_translation("Scroll", tr("Scroll"));
 
 	TFunction* function;
 
@@ -147,34 +150,34 @@ TraversoCommands::TraversoCommands()
 	function->setSlotSignature("up");
 	function->setDescription(tr("Up"));
 	function->commandName = "ArrowKeyBrowserUp";
-	addFunction(function, ArrowKeyBrowserCommand);
+    add_function(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
 	function->object = "SheetView::ArrowKeyBrowser";
 	function->setSlotSignature("down");
 	function->setDescription(tr("Down"));
 	function->commandName = "ArrowKeyBrowserDown";
-	addFunction(function, ArrowKeyBrowserCommand);
+    add_function(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
 	function->object = "SheetView::ArrowKeyBrowser";
 	function->setSlotSignature("left");
 	function->setDescription(tr("Left"));
 	function->commandName = "ArrowKeyBrowserLeft";
-	addFunction(function, ArrowKeyBrowserCommand);
+    add_function(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
 	function->object = "SheetView::ArrowKeyBrowser";
 	function->setSlotSignature("right");
 	function->setDescription(tr("Right"));
 	function->commandName = "ArrowKeyBrowserRight";
-	addFunction(function, ArrowKeyBrowserCommand);
+    add_function(function, ArrowKeyBrowserCommand);
 
 	function = new TFunction();
 	function->object = "AudioTrack";
 	function->setDescription(tr("Import Audio"));
 	function->commandName = "ImportAudio";
-	addFunction(function, ImportAudioCommand);
+    add_function(function, ImportAudioCommand);
 
 	function = new TFunction();
 	function->object = "AudioTrackView";
@@ -182,7 +185,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "FoldTrack";
 	function->useX = true;
 	function->arguments << "fold_track";
-	addFunction(function, MoveClipCommand);
+    add_function(function, MoveClipCommand);
 
 
 	function = new TFunction();
@@ -192,7 +195,7 @@ TraversoCommands::TraversoCommands()
 	function->useX = function->useY = true;
 	function->arguments << "move";
 	function->setInheritedBase("MoveBase");
-	addFunction(function, MoveClipCommand);
+    add_function(function, MoveClipCommand);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
@@ -200,7 +203,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "CopyClip";
 	function->useX = function->useY = true;
 	function->arguments << "copy";
-	addFunction(function, MoveClipCommand);
+    add_function(function, MoveClipCommand);
 
 	function = new TFunction();
 	function->object = "SheetView";
@@ -208,7 +211,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "FoldSheet";
 	function->useX = function->useY = true;
 	function->arguments << "fold_sheet";
-	addFunction(function, MoveClipCommand);
+    add_function(function, MoveClipCommand);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
@@ -216,7 +219,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "FoldMarkers";
 	function->useX = true;
 	function->arguments << "fold_markers";
-	addFunction(function, MoveClipCommand);
+    add_function(function, MoveClipCommand);
 
 	function = new TFunction();
 	function->object = "TrackView";
@@ -224,7 +227,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "MoveTrack";
 	function->useY = true;
 	function->setInheritedBase("MoveBase");
-	addFunction(function, MoveTrackCommand);
+    add_function(function, MoveTrackCommand);
 
 	function = new TFunction();
 	function->object = "CurveView";
@@ -232,28 +235,28 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "MoveCurveNodes";
 	function->useX = function->useY = true;
 	function->setInheritedBase("MoveBase");
-	addFunction(function, MoveCurveNodesCommand);
+    add_function(function, MoveCurveNodesCommand);
 
 	function = new TFunction();
 	function->object = "AudioClip";
 	function->setDescription(tr("Gain"));
 	function->commandName = "AudioClipGain";
 	function->setInheritedBase("GainBase");
-	addFunction(function, GainCommand);
+    add_function(function, GainCommand);
 
 	function = new TFunction();
 	function->object = "AudioTrack";
 	function->setDescription(tr("Gain"));
 	function->commandName = "AudioTrackGain";
 	function->setInheritedBase("GainBase");
-	addFunction(function, GainCommand);
+    add_function(function, GainCommand);
 
 	function = new TFunction();
 	function->object = "TBusTrack";
 	function->setDescription(tr("Gain"));
 	function->commandName = "BusTrackGain";
 	function->setInheritedBase("GainBase");
-	addFunction(function, GainCommand);
+    add_function(function, GainCommand);
 
 	function = new TFunction();
 	function->object = "SheetView";
@@ -261,14 +264,14 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "Zoom";
 	function->useX = true;
 	function->arguments << "HJogZoom" << "1.2" << "0.2";
-	addFunction(function, ZoomCommand);
+    add_function(function, ZoomCommand);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
 	function->setDescription(tr("Split"));
 	function->commandName = "SplitClip";
 	function->useX = true;
-	addFunction(function, SplitClipCommand);
+    add_function(function, SplitClipCommand);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
@@ -276,7 +279,7 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "TimeLineMoveMarker";
 	function->useX = true;
 	function->setInheritedBase("MoveBase");
-	addFunction(function, MoveMarkerCommand);
+    add_function(function, MoveMarkerCommand);
 
 	function = new TFunction();
 	function->object = "MarkerView";
@@ -284,31 +287,31 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "MoveMarker";
 	function->useX = true;
 	function->setInheritedBase("MoveBase");
-	addFunction(function, MoveMarkerCommand);
+    add_function(function, MoveMarkerCommand);
 
 	function = new TFunction();
 	function->object = "Track";
 	function->setDescription(tr("Track Pan"));
 	function->commandName = "TrackPan";
-	addFunction(function, TrackPanCommand);
+    add_function(function, TrackPanCommand);
 
 	function = new TFunction();
 	function->object = "AudioClip";
 	function->commandName = "RemoveClip";
 	function->setInheritedBase("DeleteBase");
-	addFunction(function, RemoveClipCommand);
+    add_function(function, RemoveClipCommand);
 
 	function = new TFunction();
 	function->object = "Track";
 	function->commandName = "RemoveTrack";
 	function->setInheritedBase("DeleteBase");
-	addFunction(function, RemoveTrackCommand);
+    add_function(function, RemoveTrackCommand);
 
 	function = new TFunction();
 	function->object = "PluginView";
 	function->commandName = "RemovePlugin";
 	function->setInheritedBase("DeleteBase");
-	addFunction(function, RemovePluginCommand);
+    add_function(function, RemovePluginCommand);
 
 
 	function = new TFunction();
@@ -316,25 +319,25 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "RemoveCurveNode";
 	function->setDescription("Remove Node(s)");
 	function->setInheritedBase("DeleteBase");
-	addFunction(function, RemoveClipNodeCommmand);
+    add_function(function, RemoveClipNodeCommmand);
 
 	function = new TFunction();
 	function->object = "TPanKnobView";
 	function->setDescription(tr("Panorama"));
 	function->commandName = "PanKnobPanorama";
-	addFunction(function, TrackPanCommand);
+    add_function(function, TrackPanCommand);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
 	function->setDescription(tr("Magnetic Cut"));
 	function->commandName = "CropClip";
-	addFunction(function, CropClipCommand);
+    add_function(function, CropClipCommand);
 
 	function = new TFunction();
 	function->object = "AudioClip";
 	function->setDescription(tr("External Processing"));
 	function->commandName = "AudioClipExternalProcessing";
-	addFunction(function, AudioClipExternalProcessingCommand);
+    add_function(function, AudioClipExternalProcessingCommand);
 
     function = new TFunction();
     function->object = "AudioClipView";
@@ -342,49 +345,45 @@ TraversoCommands::TraversoCommands()
     function->commandName = "MoveClipEdge";
     function->arguments << "false";
     function->useX = true;
-    addFunction(function, MoveEdgeCommand);
+    add_function(function, MoveEdgeCommand);
 
     function = new TFunction();
     function->object = "AudioClip";
     function->setDescription(tr("Normalize Clip"));
     function->commandName = "NormalizeClip";
-    addFunction(function, NormalizeClipCommand);
+    add_function(function, NormalizeClipCommand);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->setDescription(tr("Move Work Cursor"));
 	function->commandName = "WorkCursorMove";
-	addFunction(function, WorkCursorMoveCommand);
+    add_function(function, WorkCursorMoveCommand);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->setDescription(tr("Scroll"));
 	function->commandName = "Scroll";
-	addFunction(function, ScrollCommand);
+    add_function(function, ScrollCommand);
 
 
-    addFunction("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, "toggle_selected");
-
-// TODO:
-	// <Object objectname="SheetView" mousehint="LR" sortorder="6" pluginname="TraversoCommands" commandname="Shuttle" />
-	// <Object objectname="SheetView" mousehint="UD" sortorder="7" pluginname="TraversoCommands" commandname="ArmTracks"  arguments="" />
+    create_and_add_function("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, "toggle_selected");
 }
 
-void TraversoCommands::addFunction(TFunction *function, TraversoCommand command)
+void TraversoCommands::add_function(TFunction *function, TraversoCommand command)
 {
 	function->pluginname = "TraversoCommands";
 	m_dict.insert(function->commandName, command);
     tShortCutManager().addFunction(function);
 }
 
-void TraversoCommands::addFunction(const QString &object, const QString &description, const QString &commandName, TraversoCommand command, const QString &arguments)
+void TraversoCommands::create_and_add_function(const QString &object, const QString &description, const QString &commandName, TraversoCommand command, const QString &arguments)
 {
     auto function = new TFunction();
     function->object = object;
     function->setDescription(description);
     function->commandName = commandName;
     function->arguments << arguments;
-    addFunction(function, command);
+    add_function(function, command);
 }
 
 TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVariantList arguments)

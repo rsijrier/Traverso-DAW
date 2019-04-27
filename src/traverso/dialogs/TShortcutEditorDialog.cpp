@@ -236,6 +236,7 @@ void TShortcutEditorDialog::key1_combo_box_activated(int /*index*/)
 
         ui->shortcutsTreeWidget->addTopLevelItem(item);
 	}
+    ui->shortcutsTreeWidget->sortItems(0, Qt::SortOrder::AscendingOrder);
 }
 
 TFunction* TShortcutEditorDialog::getSelectedFunction()

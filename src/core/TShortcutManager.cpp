@@ -46,7 +46,7 @@ QList<TFunction*> TShortcut::getFunctionsForObject(const QString &objectName)
 
 QList<TFunction*> TShortcut::getFunctions()
 {
-	return objects.values();
+    return objects.values();
 }
 
 QString TFunction::getModifierSequence(bool fromInheritedBase)
@@ -244,7 +244,7 @@ void TShortcutManager::addFunction(TFunction *function)
 
 TFunction* TShortcutManager::getFunction(const QString &functionName) const
 {
-	TFunction* function = m_functions.value(functionName, 0);
+    TFunction* function = m_functions.value(functionName, nullptr);
 	if (!function)
 	{
 		printf("TShortcutManager::getFunction: Function %s not in database!!\n", functionName.toLatin1().data());
@@ -295,10 +295,10 @@ TShortcut* TShortcutManager::getShortcutForKey(const QString &keyString)
 
 	if (!t_KeyStringToKeyValue(keyValue, keyString)) {
 	       info().warning(tr("Shortcut Manager: Loaded keymap has this unrecognized key: %1").arg(keyString));
-	       return 0;
+           return nullptr;
 	}
 
-	TShortcut* shortcut = m_shortcuts.value(keyValue, 0);
+    TShortcut* shortcut = m_shortcuts.value(keyValue, nullptr);
 
 	if (!shortcut)
 	{
@@ -311,7 +311,7 @@ TShortcut* TShortcutManager::getShortcutForKey(const QString &keyString)
 
 TShortcut* TShortcutManager::getShortcutForKey(int key)
 {
-	TShortcut* shortcut = m_shortcuts.value(key, 0);
+    TShortcut* shortcut = m_shortcuts.value(key, nullptr);
 	return shortcut;
 }
 
@@ -368,6 +368,9 @@ void TShortcutManager::loadFunctions()
 //		}
 //	}
 
+    add_translation("ToggleBypassBase", tr("Toggle Bypass"));
+    m_classes.insert("ToggleBypassBase", QStringList() << "ToggleBypassBase");
+
     add_translation("ToggleVerticalBase", tr("Toggle Vertical"));
     m_classes.insert("ToggleVerticalBase", QStringList() << "ToggleVerticalBase");
 
@@ -412,10 +415,10 @@ void TShortcutManager::loadFunctions()
 	addFunction(function);
 
 	function = new TFunction();
-	function->object = "ToggleBypass";
-	function->slotsignature = "toggle_bypass";
-	function->setDescription(tr("Toggle Bypass"));
-	function->commandName = "ToggleBypass";
+    function->object = "ToggleBypassBase";
+    function->slotsignature = "toggle_bypass";
+    function->setDescription(tr("Toggle Bypass"));
+    function->commandName = "ToggleBypassBase";
 	addFunction(function);
 
 	function = new TFunction();
@@ -932,13 +935,13 @@ void TShortcutManager::loadFunctions()
 
 	function = new TFunction();
 	function->object = "FadeCurve";
-	function->setInheritedBase("ToggleBypass");
+    function->setInheritedBase("ToggleBypassBase");
 	function->commandName = "FadeCurveToggleBypass";
 	addFunction(function);
 
 	function = new TFunction();
 	function->object = "Plugin";
-	function->setInheritedBase("ToggleBypass");
+    function->setInheritedBase("ToggleBypassBase");
 	function->commandName = "PluginToggleBypass";
 	addFunction(function);
 
@@ -1405,6 +1408,7 @@ QString TShortcutManager::get_translation_for(const QString &entry)
 	QString key = entry;
 	key = key.remove("View");
 	if (!m_translations.contains(key)) {
+        qDebug("TShortcutManager::get_translation_for(%s) not in database", entry.toLatin1().data());
 		return QString("TShortcutManager: %1 not found!").arg(key);
 	}
 	return m_translations.value(key);

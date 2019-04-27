@@ -66,8 +66,8 @@ private:
 	};
 
 private:
-    void addFunction(TFunction* function, TraversoCommand command);
-    void addFunction(const QString& object, const QString& description, const QString& commandName, TraversoCommand command, const QString& arguments="");
+    void add_function(TFunction* function, TraversoCommand command);
+    void create_and_add_function(const QString& object, const QString& description, const QString& commandName, TraversoCommand command, const QString& arguments="");
 };
 
 #endif

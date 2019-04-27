@@ -42,7 +42,7 @@ public:
 	}
 
 	TFunction() {
-		m_inheritedFunction = 0;
+        m_inheritedFunction = nullptr;
 		useX = false;
 		useY = false;
 		sortorder = 0;
@@ -150,7 +150,7 @@ public:
 	void registerItemClass(const QString& item, const QString& className);
     void register_command_plugin(CommandPlugin* plugin, const QString& pluginName);
 	QString get_translation_for(const QString& entry);
-	QString createHtmlForClass(const QString& className, QObject* obj=0);
+    QString createHtmlForClass(const QString& className, QObject* obj=nullptr);
 	QList<QString> getClassNames() const;
 	QString getClassForObject(const QString& object) const;
 	bool classInherits(const QString& className, const QString &inherited);
