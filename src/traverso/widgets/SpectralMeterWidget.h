@@ -130,6 +130,7 @@ private:
 private slots:
 	void		update_data();
 	void		load_theme_data();
+    void        audiodevice_params_changed();
 
 public slots:
 	void		load_configuration();

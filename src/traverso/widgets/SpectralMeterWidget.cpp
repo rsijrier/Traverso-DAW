@@ -96,6 +96,7 @@ SpectralMeterView::SpectralMeterView(SpectralMeterWidget* widget)
 	}
 
 	connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
+    connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(audiodevice_params_changed()));
 }
 
 void SpectralMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -250,7 +251,12 @@ void SpectralMeterView::load_theme_data()
 	m_penGrid.setColor(themer()->get_color("FFTMeter:grid"));
 
         // force the bgPixmap to be recreated on the first paint event.
-        bgPixmap = QPixmap();
+    bgPixmap = QPixmap();
+}
+
+void SpectralMeterView::audiodevice_params_changed()
+{
+    sample_rate = audiodevice().get_sample_rate();
 }
 
 void SpectralMeterView::update_data()
