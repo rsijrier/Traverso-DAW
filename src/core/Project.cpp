@@ -744,15 +744,16 @@ int Project::disconnect_from_audio_device()
 
 void Project::add_meter(Plugin *meter)
 {
-    return;
-        SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
-        if (sm) {
-                m_spectralMeter = sm;
-        }
-        CorrelationMeter* cm = qobject_cast<CorrelationMeter*>(meter);
-        if (cm) {
-                m_correlationMeter = cm;
-        }
+    SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
+    if (sm) {
+        m_spectralMeter = sm;
+        TCommand::process_command(m_masterOut->add_plugin(m_spectralMeter));
+    }
+    CorrelationMeter* cm = qobject_cast<CorrelationMeter*>(meter);
+    if (cm) {
+        m_correlationMeter = cm;
+        TCommand::process_command(m_masterOut->add_plugin(m_correlationMeter));
+    }
 }
 
 /**
@@ -1733,14 +1734,6 @@ int Project::process( nframes_t nframes )
 
         apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->process(nframes);
-        }
-
-        if (m_correlationMeter) {
-                m_correlationMeter->process(m_masterOut->get_process_bus(), nframes);
-        }
-
-        if (m_spectralMeter) {
-                m_spectralMeter->process(m_masterOut->get_process_bus(), nframes);
         }
 
         // Mix the result into the AudioDevice "physical" buffers
