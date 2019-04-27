@@ -80,16 +80,17 @@ TShortcutEditorDialog::TShortcutEditorDialog(QWidget *parent)
     }
 
 
-	QMap<QString, QString> classNamesMap;
-	QMap<QString, QString> commandClassNamesMap;
+    QMap<QString, QString> classNamesMap;
+    QMap<QString, QString> baseClassNamesMap;
+    QMap<QString, QString> commandClassNamesMap;
 
 	foreach(QString className, tShortCutManager().getClassNames()) {
-		if (tShortCutManager().isCommandClass(className))
-		{
+        if (tShortCutManager().isCommandClass(className)) {
             commandClassNamesMap.insert(tShortCutManager().get_translation_for(className), className);
 		}
-		else
-		{
+        else if (className.contains("Base")) {
+            baseClassNamesMap.insert(tShortCutManager().get_translation_for(className), className);
+        } else {
             classNamesMap.insert(tShortCutManager().get_translation_for(className), className);
 		}
 	}
@@ -98,10 +99,15 @@ TShortcutEditorDialog::TShortcutEditorDialog(QWidget *parent)
 		ui->objectsComboBox->addItem(classNamesMap.key(className), className);
 	}
 
-	foreach(QString className, commandClassNamesMap)
-	{
+    foreach(QString className, baseClassNamesMap)
+    {
+        ui->objectsComboBox->addItem(baseClassNamesMap.key(className) + " " + tr("(Common Shortcut)"), className);
+    }
+
+    foreach(QString className, commandClassNamesMap)
+    {
         ui->objectsComboBox->addItem(commandClassNamesMap.key(className) + " " + tr("(Additional keys)"), className);
-	}
+    }
 
 	connect(ui->objectsComboBox, SIGNAL(activated(int)), this, SLOT(objects_combo_box_activated(int)));
 	connect(ui->shortcutsTreeWidget, SIGNAL(itemSelectionChanged()), this, SLOT(shortcut_tree_widget_item_activated()));
