@@ -50,7 +50,7 @@ CorrelationMeter::CorrelationMeter()
 	// or struct to zero
 	memset(&m_history, 0, sizeof(CorrelationMeterData));
 	
-	m_bufferreadouts = 0;
+    m_bufferreadouts = 0;
 
 	connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(calculate_fract()));
 }

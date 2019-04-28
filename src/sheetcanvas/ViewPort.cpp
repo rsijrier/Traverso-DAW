@@ -61,22 +61,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 	for classes that inherit ViewItem is: core class name + View.<br />
 	E.g. the ViewItem class that represents an AudioClip should be named AudioClipView.
 
-	All keyboard and mouse events by default are propagated to the InputEngine, which in <br />
-	turn will parse the events. In case the event sequence was recognized by the InputEngine <br />
-	it will ask a list of (pointed) ContextItem's from ContextPointer, which in turns <br />
-	call's the pure virtual function get_pointed_context_items(), which you have to reimplement.<br />
-	In the reimplemented function, you have to fill the supplied list with ViewItems that are <br />
-	under the mouse cursor, and if needed, ViewItem's that _always_ have to be taken into account. <br />
-	One can use the convenience functions of QGraphicsView for getting ViewItem's under the mouse cursor!
-
-	Since there can be a certain delay before a key sequence has been verified, the ContextPointer <br />
-	stores the position of the first event of a new key fact. This improves the pointed ViewItem <br />
-	detection a lot in case the mouse is moved during a key sequence.<br />
-	You should use these x/y coordinates in the get_pointed_context_items() function, see:<br />
-	ContextPointer::on_first_input_event_x(), ContextPointer::on_first_input_event_y()
+    All keyboard and mouse events by default are propagated to the InputEventDispatcher, which in <br />
+    turn will parse the events. In case the event sequence was recognized by the InputEventDispatcher <br />
+    it will ask a list of (pointed) ContextItem's from ContextPointer
 
 
- *	\sa ContextPointer, InputEventDispatcher
+ *	\sa ContextPointer, TInputEventDispatcher
  */
 
 ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
@@ -88,8 +78,20 @@ ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
     setFrameStyle(QFrame::NoFrame);
     setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
+    // be aware that if we use antialiazing we have to
+    // paint within 2 pixels of the viewitem boudary else
+    // make the bouding rect of that viewitem 2 pixels larger
     setOptimizationFlag(DontAdjustForAntialiasing);
+
+    // each viewitem has to call save/store on painter themselves
     setOptimizationFlag(DontSavePainterState);
+
+    // we do not rely on graphicsitem knowing if mouse hovers over it
+    // so disable tracking the mouse over items.
+    setInteractive(false);
+
+    // but we do enable mouse enter/leave/move events of course so we
+    // can inform cpointer and tinputeventdispatcher aoubt soft selected items
     setMouseTracking(true);
 }
 
@@ -124,7 +126,7 @@ bool ViewPort::event(QEvent * event)
 			keyReleaseEvent(ke);
 			return true;
 		}
-        }
+    }
 
 	return QGraphicsView::event(event);
 }
@@ -169,12 +171,14 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
         return;
     }
 
+
+    // here we detect which items are under the mouse cursor
     QList<ViewItem*> mouseTrackingItems;
 
     QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
     QList<ContextItem*> activeContextItems;
 
-    if (itemsUnderCursor.size())
+    if (!itemsUnderCursor.isEmpty())
     {
         foreach(QGraphicsItem* item, itemsUnderCursor)
         {
@@ -202,6 +206,7 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
         activeContextItems.append(m_sv);
     }
 
+    // update context pointer active context items list
     cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
 
     if (m_sv)
@@ -244,7 +249,9 @@ void ViewPort::enterEvent(QEvent* e)
     // TODO: setOverrideCursor screws up when showing context menus :(
     // for now, default to old solution by only setting BlankCursor
 //    QGuiApplication::setOverrideCursor(Qt::BlankCursor);
-    viewport()->setCursor(Qt::BlankCursor);
+    if (m_sv) {
+        viewport()->setCursor(Qt::BlankCursor);
+    }
 
 	cpointer().set_current_viewport(this);
     setFocus();

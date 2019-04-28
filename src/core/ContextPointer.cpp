@@ -380,10 +380,14 @@ void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &glo
 
 void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 {
-	foreach(ContextItem* oldItem, m_activeContextItems)
-	{
-		if (!items.contains(oldItem))
-		{
+    if (items == m_activeContextItems) {
+        // identical context items, do nothing
+        return;
+    }
+
+    // if item had active context set it to false
+    foreach(ContextItem* oldItem, m_activeContextItems) {
+		if (!items.contains(oldItem)){
 			oldItem->set_has_active_context(false);
 		}
 	}
@@ -395,16 +399,12 @@ void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 		item->set_has_active_context(true);
 	}
 
-	if (m_activeContextItems.isEmpty())
-	{
-		if (m_currentContext)
-		{
+    if (m_activeContextItems.isEmpty()) {
+		if (m_currentContext){
             m_currentContext = nullptr;
 			emit contextChanged();
 		}
-	}
-	else if (m_activeContextItems.first() != m_currentContext)
-	{
+    } else if (m_activeContextItems.first() != m_currentContext){
 		m_currentContext = m_activeContextItems.first();
 		emit contextChanged();
 	}

@@ -742,8 +742,11 @@ int Project::disconnect_from_audio_device()
         return 1;
 }
 
+// still crashes on project close/reload/traverso close
 void Project::add_meter(Plugin *meter)
 {
+    return;
+
     SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
     if (sm) {
         m_spectralMeter = sm;
