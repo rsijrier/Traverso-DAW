@@ -56,7 +56,7 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 		CurveNode* guinode = new CurveNode(m_guicurve, 
 				node->get_when() / m_sv->timeref_scalefactor,
 				node->get_value());
-		AddRemove* cmd = (AddRemove*) m_guicurve->add_node(guinode, false);
+        AddRemove* cmd = qobject_cast<AddRemove*>(m_guicurve->add_node(guinode, false));
 		cmd->set_instantanious(true);
 		TCommand::process_command(cmd);
 	}
@@ -82,30 +82,30 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 	Q_UNUSED(widget);
 	
 	
-	int pixelcount = (int) option->exposedRect.width();
+    int pixelcount = int(option->exposedRect.width());
 	
 	if (pixelcount == 0) {
 		return;
 	}
 
 	QPolygonF polygon;
-	int xstart = (int)option->exposedRect.x();
+    qreal xstart = option->exposedRect.x();
     if (xstart > 0) {
             xstart -= 1;
             pixelcount += 2;
     }
-    int vector_start = xstart;
-	int height = (int)m_boundingRect.height();
-	float vector[pixelcount];
-	
+    qreal vector_start = xstart;
+    qreal height = m_boundingRect.height();
+    auto buffer = QVarLengthArray<float>(pixelcount);
+
 	if (m_fadeCurve->get_fade_type() == FadeCurve::FadeOut && m_guicurve->get_range() > m_parentViewItem->boundingRect().width()) {
-		vector_start += (int) (m_guicurve->get_range() - m_parentViewItem->boundingRect().width());
+        vector_start += m_guicurve->get_range() - m_parentViewItem->boundingRect().width();
 	}
 	
-	m_guicurve->get_vector(vector_start, vector_start + pixelcount, vector, pixelcount);
+    m_guicurve->get_vector(vector_start, vector_start + pixelcount, buffer.data(), nframes_t(pixelcount));
 	
 	for (int i=0; i<pixelcount; i++) {
-		polygon <<  QPointF(xstart + i, height - (vector[i] * height) );
+        polygon <<  QPointF(xstart + i, height - (double(buffer[i]) * height) );
 	}
 	
 	
@@ -136,8 +136,8 @@ void FadeCurveView::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
 
 	if (m_holdactive) {
 		// Calculate and draw control points
-		int h = (int) m_boundingRect.height() - 1;
-		int w = (int) m_boundingRect.width() - 1;
+        qreal h = m_boundingRect.height() - 1;
+        qreal w = m_boundingRect.width() - 1;
 		QList<QPointF> points = m_fadeCurve->get_control_points();
         QPointF p1((points.at(1).x() * w + 0.5), h - (points.at(1).y() * h + 0.5));
         QPointF p2(w - ((1.0 - points.at(2).x()) * w + 0.5), ((1.0 - points.at(2).y()) * h + 0.5));
@@ -227,8 +227,8 @@ void FadeCurveView::calculate_bounding_rect()
 	APILinkedListNode* guinode = guinodes.first();
 	
 	while (node) {
-		CurveNode* cnode = (CurveNode*)node;
-		CurveNode* cguinode = (CurveNode*)guinode;
+        CurveNode* cnode = dynamic_cast<CurveNode*>(node);
+        CurveNode* cguinode = dynamic_cast<CurveNode*>(guinode);
 		
 		cguinode->set_when_and_value(cnode->get_when() / m_sv->timeref_scalefactor, cnode->get_value());
 		
@@ -240,9 +240,9 @@ void FadeCurveView::calculate_bounding_rect()
 	m_boundingRect = QRectF( 0, 0, range, m_parentViewItem->get_height() );
 	
 	if (m_fadeCurve->get_fade_type() == FadeCurve::FadeOut) {
-		int diff = 0;
+        qreal diff = 0;
 		if (m_boundingRect.width() > m_parentViewItem->boundingRect().width()) {
-			diff = (int)(m_boundingRect.width() - m_parentViewItem->boundingRect().width());
+            diff = m_boundingRect.width() - m_parentViewItem->boundingRect().width();
 		}
 		setPos(m_parentViewItem->boundingRect().width() - m_boundingRect.width() + diff, 0);
 	} else {
