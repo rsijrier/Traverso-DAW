@@ -1175,7 +1175,11 @@ int Project::export_project(ExportSpecification* spec)
 	PENTER;
 
         // lets first disconnect from audio device!
-        disconnect_from_audio_device();
+    if (disconnect_from_audio_device() == -1 ) {
+        // big problem but let's not crash and inform user we have problem
+        info().warning(tr("Cannot disconnect from audiodevice. Export will not work"));
+        return -1;
+    }
 	
 	if (!m_exportThread) {
 		m_exportThread = new ExportThread(this);
