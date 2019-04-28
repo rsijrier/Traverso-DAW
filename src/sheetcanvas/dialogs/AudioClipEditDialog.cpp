@@ -60,6 +60,8 @@ AudioClipEditDialog::AudioClipEditDialog(AudioClip* clip, QWidget* parent)
 	fadeOutModeBox->insertItem(2, "S-Shape");
 	fadeOutModeBox->insertItem(3, "Long");
 
+    clipGainSpinBox->setSuffix(" dB");
+
 	// Used to set gain and name
 	clip_state_changed();
 	
@@ -110,9 +112,10 @@ void AudioClipEditDialog::clip_state_changed()
 		clipNameLineEdit->setText(m_clip->get_name());
 	}
 	
-	clipGainSpinBox->setValue(coefficient_to_dB(m_clip->get_gain()));
-        sourceLineEdit->setText(m_clip->get_readsource()->get_filename());
-        sourceLineEdit->setToolTip(m_clip->get_readsource()->get_filename());
+    clipGainSpinBox->setValue(coefficient_to_dB(m_clip->get_gain()));
+    sourceLineEdit->setText(m_clip->get_readsource()->get_filename());
+    sourceLineEdit->setToolTip(m_clip->get_readsource()->get_filename());
+    sampleRateLable->setText(QString::number(m_clip->get_rate() / 1000.0, 'f', 1) + " KHz");
 }
 
 void AudioClipEditDialog::save_changes()
