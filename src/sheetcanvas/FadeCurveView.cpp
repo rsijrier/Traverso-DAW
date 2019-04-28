@@ -220,6 +220,8 @@ int FadeCurveView::get_vector(qreal xstart, int pixelcount, float * arg)
 
 void FadeCurveView::calculate_bounding_rect()
 {
+    prepareGeometryChange();
+
 	APILinkedList guinodes = m_guicurve->get_nodes();
 	APILinkedList nodes = m_fadeCurve->get_nodes();
 	

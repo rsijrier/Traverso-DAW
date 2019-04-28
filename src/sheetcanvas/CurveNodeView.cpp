@@ -45,7 +45,6 @@ CurveNodeView::CurveNodeView( SheetView * sv, CurveView* curveview, CurveNode * 
 	setFlags(QGraphicsItem::ItemIgnoresTransformations);
 
 	load_theme_data();
-	update_hard_soft_selected_state();
 
 	connect(m_node->m_curve, SIGNAL(nodePositionChanged()), this, SLOT(update_pos()));
 }
@@ -60,29 +59,13 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
         // TODO: Render to a pixmap, and just paint that, it should be much faster
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
+
+    if (m_curveview->ignore_context()) {
+        return;
+    }
 	
 	painter->save();
 
-	QPointF mapped = mapToParent(QPointF(0, 0));
-    double x = mapped.x();
-    double y = mapped.y();
-    double heightadjust = 0;
-    double widthadjust = 0;
-
-    if ( (y + m_boundingRect.height()) > m_parentViewItem->boundingRect().height() ) {
-        heightadjust = y - m_parentViewItem->boundingRect().height() + m_boundingRect.height();
-	}
-	
-    if ( (x + m_boundingRect.width()) > m_parentViewItem->boundingRect().width() ) {
-        widthadjust = x - m_parentViewItem->boundingRect().width() + m_boundingRect.width();
-	}
-		
-// 	printf("widthadjust is %d, heightadjust = %d\n", widthadjust, heightadjust);
-	if (x > 0) x = 0;
-	if (y > 0) y = 0;
-
-	QRectF rect = m_boundingRect.adjusted(- x, 0, - widthadjust, 0);
-//    painter->setClipRect(rect);
 	painter->setRenderHint(QPainter::Antialiasing);
 	
 	QColor color = m_color;
@@ -96,10 +79,10 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
     if (m_isHardSelected) {
         painter->setPen(hardSelectOutlineColor);
         painter->setBrush(color);
-        painter->drawRect(rect);
+        painter->drawRect(m_boundingRect);
     } else {
         QPainterPath path;
-        path.addEllipse(rect);
+        path.addEllipse(m_boundingRect);
         painter->fillPath(path, color);
     }
 	
@@ -109,7 +92,19 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 
 void CurveNodeView::calculate_bounding_rect()
 {
-	update_pos();
+    prepareGeometryChange();
+
+    int size = 9;//themer()->get_property("CurveNode:diameter", 6).toInt();
+
+    if (m_isSoftSelected) {
+        m_boundingRect.setWidth(size + 3);
+        m_boundingRect.setHeight(m_boundingRect.width());
+    } else {
+        m_boundingRect.setWidth(size);
+        m_boundingRect.setHeight(size);
+    }
+
+    update_pos();
 }
 
 
@@ -132,30 +127,14 @@ void CurveNodeView::update_pos( )
 void CurveNodeView::set_soft_selected(bool selected)
 {
 	m_isSoftSelected = selected;
-	update_hard_soft_selected_state();
+    calculate_bounding_rect();
 }
 
 void CurveNodeView::set_hard_selected(bool selected)
 {
 	m_isHardSelected = selected;
-	update_hard_soft_selected_state();
+    calculate_bounding_rect();
 }
-
-void CurveNodeView::update_hard_soft_selected_state()
-{
-    int size = 9;//themer()->get_property("CurveNode:diameter", 6).toInt();
-
-    if (m_isSoftSelected) {
-        m_boundingRect.setWidth(size + 3);
-        m_boundingRect.setHeight(m_boundingRect.width());
-	} else {
-		m_boundingRect.setWidth(size);
-		m_boundingRect.setHeight(size);
-	}
-
-	update_pos();
-}
-
 
 void CurveNodeView::load_theme_data()
 {

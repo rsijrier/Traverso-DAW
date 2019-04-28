@@ -56,8 +56,6 @@ private:
 	bool		m_isSoftSelected;
 	bool		m_isHardSelected;
 
-	void update_hard_soft_selected_state();
-
 public slots:
 	void update_pos();
 };
