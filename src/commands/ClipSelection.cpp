@@ -58,7 +58,7 @@ ClipSelection::ClipSelection( QList< AudioClip * > clips, AudioClipManager * man
 ClipSelection::~ClipSelection()
 {}
 
-int ClipSelection::begin_hold()
+int ClipSelection::do_action()
 {
     foreach(AudioClip* clip, m_clips) {
         if ( ! QMetaObject::invokeMethod(m_acmanager, m_slot, Q_ARG(AudioClip*, clip))) {
@@ -66,10 +66,5 @@ int ClipSelection::begin_hold()
         }
     }
 
-    return 1;
-}
-
-int ClipSelection::prepare_actions()
-{
     return 1;
 }

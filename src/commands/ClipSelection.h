@@ -39,8 +39,10 @@ public :
 	ClipSelection(QList<AudioClip*> clips, AudioClipManager* manager, const char* slot, const QString& des);
 	~ClipSelection();
 
-	int begin_hold();
-    int prepare_actions();
+    int prepare_actions() {return 1;}
+    int do_action();
+    bool is_hold_command() const {return false;}
+
 
 private :
 	QList<AudioClip* >	m_clips;
