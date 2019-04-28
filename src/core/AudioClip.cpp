@@ -631,7 +631,9 @@ int AudioClip::init_recording()
 
     m_sheet->get_diskio()->register_write_source(m_writer);
 
-    connect(m_writer, SIGNAL(exportFinished()), this, SLOT(finish_write_source()));
+    // Writers exportFinished() signal comes from DiskIO thread, so we have to connect by Qt::QueuedConnection
+    // or else we deadlock in DiskIO::do_work()
+    connect(m_writer, SIGNAL(exportFinished()), this, SLOT(finish_write_source()), Qt::QueuedConnection);
     connect(m_sheet, SIGNAL(transportStopped()), this, SLOT(finish_recording()));
 
     return 1;

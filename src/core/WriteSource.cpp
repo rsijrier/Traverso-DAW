@@ -361,6 +361,9 @@ int WriteSource::finish_export( )
 		m_diskio->unregister_write_source(this);
 	}
 
+    // FIXME (?)
+    // Be sure to connect to this signal using Qt::queuedConnection!
+    // This signal is emited from DiskIO thread!!!!
 	emit exportFinished();
 
 	return 1;
