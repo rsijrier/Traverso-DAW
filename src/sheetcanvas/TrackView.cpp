@@ -85,6 +85,7 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 {
         Q_UNUSED(widget);
 
+    painter->save();
 // 	printf("TrackView:: PAINT :: exposed rect is: x=%f, y=%f, w=%f, h=%f\n", option->exposedRect.x(), option->exposedRect.y(), option->exposedRect.width(), option->exposedRect.height());
 
 	int xstart = (int)option->exposedRect.x();
@@ -120,6 +121,7 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 			painter->drawLine(xstart, y, xstart+pixelcount, y);
 		}
 	}
+    painter->restore();
 }
 
 int TrackView::get_height( ) const

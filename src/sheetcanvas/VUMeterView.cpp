@@ -88,6 +88,7 @@ void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*opt
 {
         PENTER3;
 
+        painter->save();
 	QPen pen(themer()->get_color("VUMeter:levelseparator"));
 	pen.setWidth(m_vulevelspacing);
 	painter->setPen(pen);
@@ -104,7 +105,6 @@ void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*opt
 	painter->setPen(Qt::NoPen);
     painter->drawRect(m_boundingRect);
     if (m_audioTrack && m_audioTrack->armed()) {
-        painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
         painter->setBrush(Qt::transparent);
         QColor color = themer()->get_color("TrackPanel:recled");
@@ -114,8 +114,8 @@ void VUMeterView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*opt
         armedPen.setWidth(2);
         painter->setPen(armedPen);
         painter->drawRect(m_boundingRect);
-        painter->restore();
     }
+    painter->restore();
 }
 
 void VUMeterView::calculate_bounding_rect()
@@ -222,34 +222,36 @@ VUMeterRulerView::VUMeterRulerView(ViewItem* parent)
 
 void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
-        PENTER4;
+    PENTER4;
+    painter->save();
 
-        QString spm;
-        int deltaY;
+    QString spm;
+    int deltaY;
 
-        painter->setFont(m_font);
+    painter->setFont(m_font);
 
-        // offset is the space occupied by the 'over' LED
-        qreal levelRange = m_boundingRect.width();
+    // offset is the space occupied by the 'over' LED
+    qreal levelRange = m_boundingRect.width();
 
-        painter->setPen(m_colorActive);
+    painter->setPen(m_colorActive);
 
-        // draw the labels
-        for (uint j = 0; j < m_presetMark.size(); ++j) {
+    // draw the labels
+    for (uint j = 0; j < m_presetMark.size(); ++j) {
 
-                int idx = int(LUT_MULTIPLY * float(-m_presetMark[j] + 6));
+        int idx = int(LUT_MULTIPLY * float(-m_presetMark[j] + 6));
 
-                // check the LUT index (I had exceptions without that check)
-                if ((idx < 0) || (idx >= VUMeterView::VUMeterView_lut()->size())) {
-                        continue;
-                }
-
-                deltaY = int( VUMeterView::VUMeterView_lut()->at(idx)/115.0  * levelRange );
-                spm.sprintf("%2i", m_presetMark[j]);
-
-                painter->drawText(deltaY - m_fontLabelAscent + 2, m_fontLabelAscent + 3, spm);
-                painter->drawLine(deltaY, - 6, deltaY, TICK_LINE_LENGTH - 6);
+        // check the LUT index (I had exceptions without that check)
+        if ((idx < 0) || (idx >= VUMeterView::VUMeterView_lut()->size())) {
+            continue;
         }
+
+        deltaY = int( VUMeterView::VUMeterView_lut()->at(idx)/115.0  * levelRange );
+        spm.sprintf("%2i", m_presetMark[j]);
+
+        painter->drawText(deltaY - m_fontLabelAscent + 2, m_fontLabelAscent + 3, spm);
+        painter->drawLine(deltaY, - 6, deltaY, TICK_LINE_LENGTH - 6);
+    }
+    painter->restore();
 }
 
 void VUMeterRulerView::load_theme_data()
@@ -326,77 +328,79 @@ VUMeterLevelView::~VUMeterLevelView()
 
 void VUMeterLevelView::paint(QPainter* painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
-        PENTER4;
-        if (m_levelPixmap.width() != int(m_boundingRect.width())
-                || m_levelPixmap.height() != int(m_boundingRect.height())) {
-                resize_level_pixmap();
-        }
+    PENTER4;
+    painter->save();
+    if (m_levelPixmap.width() != int(m_boundingRect.width())
+            || m_levelPixmap.height() != int(m_boundingRect.height())) {
+        resize_level_pixmap();
+    }
 
-        // convert the peak value to dB and make sure it's in a valid range
-        float dBVal = float(coefficient_to_dB(m_peak));
-        if (dBVal > 6.0f) {
-                dBVal = 6.0f;
-        }
+    // convert the peak value to dB and make sure it's in a valid range
+    float dBVal = float(coefficient_to_dB(m_peak));
+    if (dBVal > 6.0f) {
+        dBVal = 6.0f;
+    }
 
-        // calculate smooth falloff
-        if (m_tailDeltaY - dBVal > m_maxFalloff) {
-                dBVal = m_tailDeltaY - m_maxFalloff;
-                m_tailDeltaY -= m_maxFalloff;
+    // calculate smooth falloff
+    if (m_tailDeltaY - dBVal > m_maxFalloff) {
+        dBVal = m_tailDeltaY - m_maxFalloff;
+        m_tailDeltaY -= m_maxFalloff;
+    } else {
+        m_tailDeltaY = dBVal;
+    }
+
+    // check for a new peak hold value
+    if (m_peakHoldFalling && (m_peakHoldValue >= -120.0f)) {
+        // smooth falloff, a little faster than the level meter, looks better
+        m_peakHoldValue -= 1.2f * m_maxFalloff;
+    }
+
+    if (m_peakHoldValue <= dBVal) {
+        m_peakHoldFalling = false;
+        m_peakHoldValue = dBVal;
+
+        // ehm, oops, this timer was moved to Interface
+        if (PEAK_HOLD_MODE == 1) {
+            //                        phTimer.start(PEAK_HOLD_TIME);
+        }
+    }
+
+    // convert dB values into widget position
+    int meterLevel = get_meter_position(dBVal);
+    int rmsLevel = get_meter_position(coefficient_to_dB(m_rms));
+    int peakHoldLevel = get_meter_position(m_peakHoldValue);
+
+    // draw levels
+    //        painter->drawPixmap(0, 0, clearPixmap, 0, 0, meterLevel, -m_boundingRect.height());
+
+    if (meterLevel > 0) {
+        if (m_orientation == Qt::Horizontal) {
+            painter->drawPixmap(0, 0, m_levelPixmap, 0, 0, meterLevel, int(m_boundingRect.height()));
         } else {
-                m_tailDeltaY = dBVal;
+            painter->drawPixmap(0, meterLevel, m_levelPixmap, 0, meterLevel, int(m_boundingRect.width()), int(m_boundingRect.height()) - meterLevel);
         }
+    }
 
-        // check for a new peak hold value
-        if (m_peakHoldFalling && (m_peakHoldValue >= -120.0f)) {
-                // smooth falloff, a little faster than the level meter, looks better
-                m_peakHoldValue -= 1.2f * m_maxFalloff;
+    // draw RMS lines
+    if (SHOW_RMS) {
+        painter->setPen(Qt::blue);
+        if (m_orientation == Qt::Horizontal) {
+            painter->drawLine(rmsLevel, 0, rmsLevel, int(m_boundingRect.height()) - 1);
+        } else {
+            painter->drawLine(2, rmsLevel, int(m_boundingRect.width()) - 3, rmsLevel);
         }
+    }
 
-        if (m_peakHoldValue <= dBVal) {
-                m_peakHoldFalling = false;
-                m_peakHoldValue = dBVal;
-
-                // ehm, oops, this timer was moved to Interface
-                if (PEAK_HOLD_MODE == 1) {
-//                        phTimer.start(PEAK_HOLD_TIME);
-                }
+    // draw Peak hold lines
+    if (PEAK_HOLD_MODE) {
+        painter->setPen(m_colOverLed);
+        if (m_orientation == Qt::Horizontal) {
+            painter->drawLine(peakHoldLevel, 0, peakHoldLevel, int(m_boundingRect.height() - 1));
+        } else {
+            painter->drawLine(0, peakHoldLevel, int(m_boundingRect.width() - 1), peakHoldLevel);
         }
-
-        // convert dB values into widget position
-        int meterLevel = get_meter_position(dBVal);
-        int rmsLevel = get_meter_position(coefficient_to_dB(m_rms));
-        int peakHoldLevel = get_meter_position(m_peakHoldValue);
-
-        // draw levels
-//        painter->drawPixmap(0, 0, clearPixmap, 0, 0, meterLevel, -m_boundingRect.height());
-
-        if (meterLevel > 0) {
-                if (m_orientation == Qt::Horizontal) {
-                        painter->drawPixmap(0, 0, m_levelPixmap, 0, 0, meterLevel, int(m_boundingRect.height()));
-                } else {
-                        painter->drawPixmap(0, meterLevel, m_levelPixmap, 0, meterLevel, int(m_boundingRect.width()), int(m_boundingRect.height()) - meterLevel);
-                }
-        }
-
-        // draw RMS lines
-        if (SHOW_RMS) {
-                painter->setPen(Qt::blue);
-                if (m_orientation == Qt::Horizontal) {
-                        painter->drawLine(rmsLevel, 0, rmsLevel, int(m_boundingRect.height()) - 1);
-                } else {
-                        painter->drawLine(2, rmsLevel, int(m_boundingRect.width()) - 3, rmsLevel);
-                }
-        }
-
-        // draw Peak hold lines
-        if (PEAK_HOLD_MODE) {
-                painter->setPen(m_colOverLed);
-                if (m_orientation == Qt::Horizontal) {
-                        painter->drawLine(peakHoldLevel, 0, peakHoldLevel, int(m_boundingRect.height() - 1));
-                } else {
-                        painter->drawLine(0, peakHoldLevel, int(m_boundingRect.width() - 1), peakHoldLevel);
-                }
-        }
+    }
+    painter->restore();
 }
 
 void VUMeterLevelView::resize_level_pixmap( )

@@ -312,6 +312,8 @@ void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsIte
 	Q_UNUSED(option);
 
 	QColor color = themer()->get_color("BusTrack:background");
+
+    painter->save();
 	painter->fillRect(m_boundingRect, color);
 
 	painter->setPen(themer()->get_color("TrackPanel:text"));
@@ -339,6 +341,7 @@ void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsIte
 	textY = y + halfFontHeight;
     painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
     painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), " -24 dB");
+    painter->restore();
 }
 
 void TTrackLanePanelView::calculate_bounding_rect()

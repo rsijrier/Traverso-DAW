@@ -36,6 +36,7 @@ TTextView::~TTextView()
 
 void TTextView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/)
 {
+    painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
 
     QColor color = themer()->get_color("TrackPanel:header:background");
@@ -47,6 +48,7 @@ void TTextView::paint(QPainter *painter, const QStyleOptionGraphicsItem */*optio
     painter->setFont(themer()->get_font("TrackPanel:fontscale:name"));
     painter->translate(10,0);
     painter->drawText(m_boundingRect, Qt::AlignVCenter, m_text);
+    painter->restore();
 }
 
 void TTextView::calculate_bounding_rect()

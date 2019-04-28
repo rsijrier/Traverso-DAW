@@ -39,10 +39,12 @@ void PositionIndicator::paint(QPainter * painter, const QStyleOptionGraphicsItem
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
 	
+    painter->save();
 	painter->drawPixmap(0, 0, m_background);
 	painter->setPen(Qt::black);
 	painter->setFont(themer()->get_font("TrackPanel:fontscale:name"));
     painter->drawText(m_boundingRect, Qt::AlignCenter, m_value);
+    painter->restore();
 }
 
 void PositionIndicator::calculate_bounding_rect()

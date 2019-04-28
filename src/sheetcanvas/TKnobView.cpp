@@ -42,6 +42,8 @@ void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * /*op
 
     int borderWidth = 2;
 
+    painter->save();
+
 	painter->setRenderHint(QPainter::Antialiasing);
 
 	QPen pen(QColor(100, 100, 100, 220));
@@ -84,6 +86,8 @@ void TKnobView::paint( QPainter * painter, const QStyleOptionGraphicsItem * /*op
 	font.setPixelSize(8);
 	painter->setFont(font);
     painter->drawText(0, -10, int(m_boundingRect.width()), 10, Qt::AlignHCenter, m_title);
+
+    painter->restore();
 }
 
 void TKnobView::set_width(int width)

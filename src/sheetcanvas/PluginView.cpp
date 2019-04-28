@@ -94,10 +94,12 @@ void PluginView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option
 	
 	QBrush brush(color);
 	QRect rect(0, 0, width, height); 
+    painter->save();
 	painter->fillRect(rect, brush);
 	painter->setPen(themer()->get_color("Plugin:text"));
 	painter->setFont(themer()->get_font("Plugin:fontscale:name"));
 	painter->drawText(rect, Qt::AlignCenter, m_name);
+    painter->restore();
 }
 
 
