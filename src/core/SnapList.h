@@ -43,7 +43,7 @@ public:
 
     TimeRef calculate_snap_diff(TimeRef leftlocation, TimeRef rightlocation);
 
-    void set_range(const TimeRef& start, const TimeRef& end, int scalefactor);
+    void set_range(const TimeRef& start, const TimeRef& end, qint64 scalefactor);
     void mark_dirty();
     bool was_dirty();
 

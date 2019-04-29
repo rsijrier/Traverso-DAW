@@ -484,10 +484,15 @@ void SheetView::hscrollbar_value_changed(int value)
 	// itself for the changed viewport / mouse coordinates.
 	// FIXME This is NOT a solution to set hold-cursors at the correct
 	// position in the viewport when it's scrolled programatically !!!!!
+    // FIXME 2: when moving a clip beyond the viewport it starts to scroll
+    // the view and so this function is called. It could crash Traverso
+    // in the bspTree of QGraphicsScene so it certainly is not good to have
+    // this here. for now disable calling ied().jog(), so far no behavioral change
+    // noticed.
 	if (ied().is_holding()) {
 		Shuttle* s = dynamic_cast<Shuttle*>(ied().get_holding_command());
 		if (!s) {
-			ied().jog();
+//			ied().jog();
 		}
 	} else {
 		m_clipsViewPort->horizontalScrollBar()->setValue(value);
@@ -680,15 +685,15 @@ void SheetView::update_shuttle_factor()
 
 	float normalizedX = (float) cpointer().x() / m_clipsViewPort->width();
 
-	if (normalizedX < 0.5) {
-		normalizedX = 0.5 - normalizedX;
+    if (normalizedX < 0.5f) {
+        normalizedX = 0.5f - normalizedX;
 		normalizedX *= 2;
 		direction = -1;
-	} else if (normalizedX > 0.5) {
-		normalizedX = normalizedX - 0.5;
+    } else if (normalizedX > 0.5f) {
+        normalizedX = normalizedX - 0.5f;
 		normalizedX *= 2;
-		if (normalizedX > 1.0) {
-			normalizedX *= 1.15;
+        if (normalizedX > 1.0f) {
+            normalizedX *= 1.15f;
 		}
 	}
 
@@ -710,13 +715,13 @@ void SheetView::update_shuttle_factor()
 	if (normalizedY < 0) normalizedY = 0;
 	if (normalizedY > 1) normalizedY = 1;
 
-	if (normalizedY > 0.35 && normalizedY < 0.65) {
+    if (normalizedY > 0.35f && normalizedY < 0.65f) {
 		normalizedY = 0;
-	} else if (normalizedY < 0.5) {
-		normalizedY = 0.5 - normalizedY;
+    } else if (normalizedY < 0.5f) {
+        normalizedY = 0.5f - normalizedY;
 		direction = -1;
-	} else if (normalizedY > 0.5) {
-		normalizedY = normalizedY - 0.5;
+    } else if (normalizedY > 0.5f) {
+        normalizedY = normalizedY - 0.5f;
 	}
 
 	normalizedY *= 2;
@@ -736,9 +741,9 @@ void SheetView::update_shuttle_factor()
 	}
 
 	if (direction > 0) {
-		m_shuttleYfactor = (int) (vec[0] * yscale);
+        m_shuttleYfactor = int(vec[0] * yscale);
 	} else {
-		m_shuttleYfactor = (int) (vec[0] * -yscale);
+        m_shuttleYfactor = int(vec[0] * -yscale);
 	}
 
 	if (m_dragShuttle) {
@@ -757,7 +762,7 @@ void SheetView::update_shuttle()
 	}
 
 	if (m_shuttleXfactor != 0 || m_shuttleYfactor != 0) {
-		ied().jog();
+        ied().jog();
 	}
 }
 
@@ -767,7 +772,7 @@ TCommand* SheetView::goto_begin()
 	stop_follow_play_head();
 	m_session->set_work_at(TimeRef());
 	center();
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 
@@ -777,7 +782,7 @@ TCommand* SheetView::goto_end()
 	TimeRef lastlocation = m_session->get_last_location();
 	m_session->set_work_at(lastlocation);
 	center();
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 
@@ -846,14 +851,14 @@ TCommand* SheetView::scroll_up( )
 	PENTER3;
 	set_vscrollbar_value(m_clipsViewPort->verticalScrollBar()->value() - int(m_meanTrackHeight * 0.75));
 
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 TCommand* SheetView::scroll_down( )
 {
 	PENTER3;
 	set_vscrollbar_value(m_clipsViewPort->verticalScrollBar()->value() + int(m_meanTrackHeight * 0.75));
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 TCommand* SheetView::scroll_right()
@@ -861,7 +866,7 @@ TCommand* SheetView::scroll_right()
 	PENTER3;
 	stop_follow_play_head();
 	set_hscrollbar_value(m_clipsViewPort->horizontalScrollBar()->value() + 50);
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 
@@ -870,7 +875,7 @@ TCommand* SheetView::scroll_left()
 	PENTER3;
 	stop_follow_play_head();
 	set_hscrollbar_value(m_clipsViewPort->horizontalScrollBar()->value() - 50);
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 int SheetView::hscrollbar_value() const
@@ -925,7 +930,7 @@ TCommand * SheetView::center_playhead( )
 
 	follow_play_head();
 
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 void SheetView::set_hscrollbar_value(int value)

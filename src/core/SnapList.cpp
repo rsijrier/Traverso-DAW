@@ -121,7 +121,7 @@ void SnapList::update_snaplist()
 	// sort the list
 	qSort(m_xposList);
 
-	int range = (int)((m_rangeEnd - m_rangeStart) / m_scalefactor);
+    int range = int((m_rangeEnd - m_rangeStart) / m_scalefactor);
 
 	// create a linear lookup table
 	for (int i = 0; i <= range; ++i) {
@@ -144,12 +144,12 @@ void SnapList::update_snaplist()
 
 		if (lastIndex > -1) {
 			if ( (m_xposList.at(i) - lastVal) < (2 * snaprange * m_scalefactor) ) {
-				ls = - (int) ((m_xposList.at(i) / m_scalefactor - lastVal / m_scalefactor) / 2);
+                ls = - int((m_xposList.at(i) / m_scalefactor - lastVal / m_scalefactor) / 2);
 			}
 		}
 
 		for (int j = ls; j <= snaprange; j++) {
-			int pos = (int)((m_xposList.at(i) - m_rangeStart) / m_scalefactor + j); // index in the LUT
+            int pos = int((m_xposList.at(i) - m_rangeStart) / m_scalefactor + j); // index in the LUT
 
 			if (pos < 0) {
 				continue;
@@ -187,7 +187,7 @@ TimeRef SnapList::get_snap_value(const TimeRef& pos, bool& didSnap)
 
     didSnap = false;
 
-    int i = (int)((pos - m_rangeStart) / m_scalefactor);
+    int i = int((pos - m_rangeStart) / m_scalefactor);
     SLPRINT("get_snap_value:: i is %d\n", i);
 
     // catch dangerous values:
@@ -224,7 +224,7 @@ bool SnapList::is_snap_value(const TimeRef& pos)
 		update_snaplist();
 	}
 	
-	int i = (int)((pos - m_rangeStart) / m_scalefactor);
+    int i = int((pos - m_rangeStart) / m_scalefactor);
 	SLPRINT("is_snap_value:: i is %d\n", i);
 	
 	// need to catch values outside the LUT. Return false in that case
@@ -248,7 +248,7 @@ qint64 SnapList::get_snap_diff(const TimeRef& pos)
 		update_snaplist();
 	}
 	
-	int i = (int)((pos - m_rangeStart) / m_scalefactor);
+    int i = int((pos - m_rangeStart) / m_scalefactor);
 	SLPRINT("get_snap_diff:: i is %d\n", i);
 	
 	// need to catch values outside the LUT. Return 0 in that case
@@ -264,7 +264,7 @@ qint64 SnapList::get_snap_diff(const TimeRef& pos)
 	return (pos - m_xposLut.at(i)).universal_frame();
 }
 
-void SnapList::set_range(const TimeRef& start, const TimeRef& end, int scalefactor)
+void SnapList::set_range(const TimeRef& start, const TimeRef& end, qint64 scalefactor)
 {
         SLPRINT("setting xstart %s, xend %s scalefactor %d\n", timeref_to_ms_3(start).toLatin1().data(), timeref_to_ms_3(end).toLatin1().data(), scalefactor);
 
@@ -284,7 +284,7 @@ TimeRef SnapList::next_snap_pos(const TimeRef& pos)
 		update_snaplist();
 	}
 	
-        int index = (int)(pos / m_scalefactor);
+        int index = int(pos / m_scalefactor);
 
         SLPRINT("next_snap_pos: index %d\n", index);
 	
@@ -328,7 +328,7 @@ TimeRef SnapList::prev_snap_pos(const TimeRef& pos)
 		return pos;
 	}
 	
-	int index = (int)(pos / m_scalefactor);
+    int index = int(pos / m_scalefactor);
 	
         if (index >= m_xposLut.size()) {
 		index = m_xposLut.size() - 1;
