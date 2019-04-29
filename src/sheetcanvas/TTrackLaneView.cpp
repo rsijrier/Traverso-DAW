@@ -86,7 +86,7 @@ void TTrackLaneView::move_to( int x, int y )
 	Q_UNUSED(x);
 	setPos(0, y);
 	if (m_panel) {
-		m_panel->setPos(-180, 0);
+        m_panel->setPos(-212, 0);
 	}
 }
 

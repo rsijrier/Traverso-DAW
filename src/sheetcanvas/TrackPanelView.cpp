@@ -183,7 +183,7 @@ void TrackPanelView::calculate_bounding_rect()
 
 void TrackPanelView::layout_panel_items()
 {
-    m_trackNameView->setPos(2, 2);
+    m_trackNameView->setPos(3, 3);
 
     qreal height =  m_boundingRect.height();
 
@@ -327,17 +327,17 @@ void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsIte
 	int height = m_laneView->get_height() - CurveView::BORDER_MARGIN;
 	int topBorderMargin = CurveView::BORDER_MARGIN / 2;
 
-    int y = int(1.0f - dB_to_scale_factor(0.0)) * height + topBorderMargin;
+    int y = int( (1.0f - dB_to_scale_factor(0.0)) * height + topBorderMargin);
 	int textY = y + halfFontHeight;
     painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
     painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), "  0 dB");
 
-    y = int(1.0f - dB_to_scale_factor(-6.0f)) * height + topBorderMargin;
+    y = int( (1.0f - dB_to_scale_factor(-6.0f)) * height + topBorderMargin);
 	textY = y + halfFontHeight;
     painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
     painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), " - 6 dB");
 
-    y = int(1.0f - dB_to_scale_factor(-24.0f)) * height + topBorderMargin;
+    y = int( (1.0f - dB_to_scale_factor(-24.0f)) * height + topBorderMargin);
 	textY = y + halfFontHeight;
     painter->drawLine(QLineF(m_boundingRect.width() - 4, y, m_boundingRect.width(), y));
     painter->drawText(QPointF(m_boundingRect.width() - xpos, textY), " -24 dB");
@@ -347,7 +347,7 @@ void TTrackLanePanelView::paint(QPainter* painter, const QStyleOptionGraphicsIte
 void TTrackLanePanelView::calculate_bounding_rect()
 {
 	prepareGeometryChange();
-	m_boundingRect = QRectF(0, 0, 175, m_laneView->get_height());
+    m_boundingRect = QRectF(0, 0, 210, m_laneView->get_height());
 }
 
 

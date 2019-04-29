@@ -633,7 +633,7 @@ CurveNodeView* CurveView::get_node_view_after(TimeRef location) const
 
 QString CurveView::get_name() const
 {
-    return "Volume";
+    return "Gain Envelope";
 }
 
 QList<CurveNodeView*> CurveView::get_selected_nodes()
