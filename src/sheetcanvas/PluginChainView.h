@@ -50,10 +50,6 @@ public slots:
         void add_new_pluginview(Plugin* plugin);
         void remove_pluginview(Plugin* plugin);
 	void scrollbar_value_changed(int value);
-	
-private slots:
-	void set_view_mode();
-
 };
 
 #endif

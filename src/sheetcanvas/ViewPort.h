@@ -46,11 +46,8 @@ public :
     // Set functions
     void setCursorText(const QString& text, int mseconds=-1);
     void set_holdcursor_pos(QPointF pos);
-    void set_current_mode(int mode);
     void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
     virtual void set_sheetview(SheetView* view) {m_sv = view;}
-
-    int get_current_mode() const {return m_mode;}
 
     inline QPointF map_to_scene(const QPoint& pos) const {
         return mapToScene(pos);
@@ -80,7 +77,6 @@ protected:
     SheetView* m_sv;
 
 private:
-    int         m_mode;
     QPoint      m_oldMousePos;
 };
 

@@ -99,8 +99,6 @@ AudioClipView::AudioClipView(SheetView* sv, AudioTrackView* parent, AudioClip* c
     connect(m_clip, SIGNAL(fadeRemoved(FadeCurve*)), this, SLOT(remove_fade_curve_view( FadeCurve*)));
     connect(m_clip, SIGNAL(positionChanged()), this, SLOT(position_changed()));
 
-    connect(m_sheet, SIGNAL(modeChanged()), this, SLOT(repaint()));
-
     if (m_clip->recording_state() == AudioClip::RECORDING) {
         start_recording();
         connect(m_clip, SIGNAL(recordingFinished(AudioClip*)), this, SLOT(finish_recording()));

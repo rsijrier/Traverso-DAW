@@ -141,9 +141,6 @@ public slots:
 	void set_temp_follow_state(bool state);
 	virtual void set_transport_pos(TimeRef location);
 
-	TCommand* set_editing_mode();
-	TCommand* set_effects_mode();
-	TCommand* toggle_effects_mode();
 	TCommand* toggle_solo();
 	TCommand* toggle_mute();
 	TCommand* toggle_arm();
@@ -166,7 +163,6 @@ signals:
 	void hzoomChanged();
 	void tempFollowChanged(bool state);
 	void lastFramePositionChanged();
-	void modeChanged();
 	void transportStarted();
 	void transportStopped();
 	void workingPosChanged();

@@ -379,35 +379,10 @@ void TSession::set_scrollbar_y(int y)
 	emit verticalScrollBarValueChanged();
 }
 
-
-TCommand* TSession::set_editing_mode( )
-{
-	m_mode = EDIT;
-	emit modeChanged();
-	return 0;
-}
-
-TCommand* TSession::set_effects_mode( )
-{
-	m_mode = EFFECTS;
-	emit modeChanged();
-	return 0;
-}
-
 void TSession::set_name(const QString& name)
  {
 	m_name = name;
 	emit propertyChanged();
-}
-
-TCommand* TSession::toggle_effects_mode()
-{
-	if (m_mode == EDIT) {
-		set_effects_mode();
-	} else {
-		set_editing_mode();
-	}
-	return 0;
 }
 
 TCommand* TSession::toggle_solo()

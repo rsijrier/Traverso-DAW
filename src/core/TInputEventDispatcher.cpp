@@ -191,18 +191,9 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
 			}
 
             if (shortCutFunction)
-			{
-				// Now that we found a match, we still have to check if
-				// the current mode is valid for this data!
-				QString currentmode = m_modes.key(cpointer().get_current_mode());
-				QString allmodes = m_modes.key(0);
-                if ( shortCutFunction->modes.size() && (! shortCutFunction->modes.contains(currentmode)) && (! shortCutFunction->modes.contains(allmodes))) {
-                    PMESG("%s on %s is not valid for mode %s", QS_C(shortCutFunction->getKeySequence()), contextItem->metaObject()->className(), QS_C(currentmode));
-					continue;
-				}
-
-				break;
-			}
+            {
+                break;
+            }
 
             metaObject = metaObject->superClass();
 		}

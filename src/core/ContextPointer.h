@@ -113,8 +113,6 @@ public:
      */
     qreal on_first_input_event_scene_y() const;
 
-    int get_current_mode() const;
-
     void set_jog_bypass_distance(int distance);
     void set_left_mouse_click_bypasses_jog(bool bypassOnLeftMouseClick);
     void mouse_button_left_pressed();

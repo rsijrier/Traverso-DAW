@@ -86,7 +86,6 @@ CDWritingDialog::CDWritingDialog( QWidget * parent )
 	}
 	
 	query_devices();
-        sheet_mode_changed(cdCurrentSheetButton->isChecked());
 }
 
 CDWritingDialog::~ CDWritingDialog( )
@@ -690,11 +689,13 @@ QString CDWritingDialog::get_device(int index)
 #endif
 }
 
-void CDWritingDialog::sheet_mode_changed(bool b)
-{
-        TimeRef t = TimeRef();
-        m_exportSpec->allSheets = !b;
-        t = m_project->get_cd_totaltime(m_exportSpec);
-        cdTotalTimeLabel->setText(timeref_to_cd(t));
-}
+//// TODO: uh, what does sheet mode have to do with cd writing ?
+/// modes are no longer there so find out what this was doing I guess ?
+//void CDWritingDialog::sheet_mode_changed(bool b)
+//{
+//        TimeRef t = TimeRef();
+//        m_exportSpec->allSheets = !b;
+//        t = m_project->get_cd_totaltime(m_exportSpec);
+//        cdTotalTimeLabel->setText(timeref_to_cd(t));
+//}
 

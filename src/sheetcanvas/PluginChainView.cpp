@@ -65,9 +65,6 @@ PluginChainView::PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* c
 	connect(chain, SIGNAL(pluginRemoved(Plugin*)), this, SLOT(remove_pluginview(Plugin*)));
 	connect(m_sv->get_clips_viewport()->horizontalScrollBar(), SIGNAL(valueChanged(int)),
 		this, SLOT(scrollbar_value_changed(int)));
-	connect(m_sv->get_sheet(), SIGNAL(modeChanged()), this, SLOT(set_view_mode()));
-
-	set_view_mode();
 }
 
 PluginChainView::~PluginChainView( )
@@ -88,7 +85,7 @@ void PluginChainView::add_new_pluginview( Plugin * plugin )
 	
 	m_pluginViews.append(view);
 	
-	show();
+    parentItem()->show();
 }
 
 void PluginChainView::remove_pluginview( Plugin * plugin )
@@ -111,7 +108,7 @@ void PluginChainView::remove_pluginview( Plugin * plugin )
 	}
 	
 	if (m_pluginViews.empty()) {
-		hide();
+        parentItem()->hide();
 	}
 	
 	m_parentViewItem->update();
@@ -129,20 +126,11 @@ void PluginChainView::scrollbar_value_changed(int value)
 	setPos(value, y());
 }
 
-void PluginChainView::set_view_mode()
-{
-	if (m_sv->get_sheet()->get_mode() == Sheet::EFFECTS) {
-		show();
-	} else {
-		hide();
-	}
-}
-
 void PluginChainView::calculate_bounding_rect()
 {
 	int y = (int)(m_parentViewItem->boundingRect().height());
 	m_boundingRect = QRectF(0, 0, 0, y);
-	setPos(pos().x(), - 2);
+    setPos(pos().x(), - 2);
 	ViewItem::calculate_bounding_rect();
 }
 

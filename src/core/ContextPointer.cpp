@@ -327,14 +327,6 @@ qreal ContextPointer::on_first_input_event_scene_y() const
     return m_viewPort->map_to_scene(m_mouseData->onFirstInputEventPos).y();
 }
 
-int ContextPointer::get_current_mode() const
-{
-    if (m_viewPort) {
-        return m_viewPort->get_current_mode();
-    }
-    return -1;
-}
-
 void ContextPointer::set_active_context_items_by_mouse_movement(const QList<ContextItem *> &items)
 {
 	set_active_context_items(items);

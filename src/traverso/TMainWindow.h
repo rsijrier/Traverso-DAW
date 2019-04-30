@@ -168,7 +168,6 @@ private:
         QToolBar*               m_sessionTabsToolbar;
 	QAction*		m_snapAction{};
 	QAction*		m_followAction{};
-	QAction*		m_effectAction{};
 	QMenu*			m_encodingMenu{};
 	QMenu*			m_resampleQualityMenu{};
         QList<QAction*>         m_projectMenuToolbarActions;
@@ -251,8 +250,6 @@ private slots:
 	void project_file_mismatch(QString rootdir, QString projectname);
 	void snap_state_changed(bool state);
 	void update_snap_state();
-	void effect_state_changed(bool state);
-	void update_effects_state();
 	void follow_state_changed(bool state);
 	void update_follow_state();
 	void update_temp_follow_state(bool state);

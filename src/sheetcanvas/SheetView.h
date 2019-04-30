@@ -202,8 +202,7 @@ private slots:
 	void add_new_track_view(Track*);
 	void remove_track_view(Track*);
 	void update_shuttle();
-	void sheet_mode_changed();
-	void hscrollbar_value_changed(int);
+    void hscrollbar_value_changed(int);
 	void hscrollbar_action(int);
 	void session_vertical_scrollbar_position_changed();
 	void session_horizontal_scrollbar_position_changed();

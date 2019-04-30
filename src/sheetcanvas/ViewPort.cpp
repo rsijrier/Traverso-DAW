@@ -72,7 +72,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 ViewPort::ViewPort(QGraphicsScene* scene, QWidget* parent)
     : QGraphicsView(scene, parent)
     , m_sv(nullptr)
-    , m_mode(0)
 {
     PENTERCONS;
     setFrameStyle(QFrame::NoFrame);
@@ -332,9 +331,4 @@ void ViewPort::setCursorText( const QString & text, int mseconds)
 void ViewPort::set_holdcursor_pos(QPointF pos)
 {
 	m_sv->set_canvas_cursor_pos(pos);
-}
-
-void ViewPort::set_current_mode(int mode)
-{
-	m_mode = mode;
 }

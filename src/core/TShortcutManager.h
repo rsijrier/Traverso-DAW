@@ -77,7 +77,6 @@ public:
 	void setAutoRepeatStartDelay(int delay) {m_autorepeatStartDelay = delay;}
 	void setSlotSignature(const QString& signature) {slotsignature = signature;}
 
-	QStringList modes;
 	QVariantList arguments;
 	QString object;
 	QString pluginname;

@@ -124,14 +124,11 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	// Needed for our childs TrackView, AudioClipView, TimeLines MarkerViews etc which are created below.
 	scale_factor_changed();
 
-	sheet_mode_changed();
-
 	connect(m_session, SIGNAL(hzoomChanged()), this, SLOT(scale_factor_changed()));
 	connect(m_session, SIGNAL(tempFollowChanged(bool)), this, SLOT(set_follow_state(bool)));
 	connect(m_session, SIGNAL(trackAdded(Track*)), this, SLOT(add_new_track_view(Track*)));
 	connect(m_session, SIGNAL(trackRemoved(Track*)), this, SLOT(remove_track_view(Track*)));
 	connect(m_session, SIGNAL(lastFramePositionChanged()), this, SLOT(update_scrollbars()));
-	connect(m_session, SIGNAL(modeChanged()), this, SLOT(sheet_mode_changed()));
 	connect(&m_shuttletimer, SIGNAL(timeout()), this, SLOT (update_shuttle()));
 	connect(m_hScrollBar, SIGNAL(sliderMoved(int)), this, SLOT(stop_follow_play_head()));
 	connect(m_hScrollBar, SIGNAL(actionTriggered(int)), this, SLOT(hscrollbar_action(int)));
@@ -199,14 +196,6 @@ void SheetView::scale_factor_changed( )
 	m_tlvp->scale_factor_changed();
 
 	update_tracks_bounding_rect();
-}
-
-void SheetView::sheet_mode_changed()
-{
-	int mode = m_session->get_mode();
-	m_clipsViewPort->set_current_mode(mode);
-	m_tlvp->set_current_mode(mode);
-	m_tpvp->set_current_mode(mode);
 }
 
 AudioTrackView* SheetView::get_audio_trackview_under( QPointF point )
@@ -992,10 +981,6 @@ void SheetView::browse_to_track(Track *track)
 
 void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 {
-	if (m_session->get_mode() == TSession::EFFECTS) {
-		m_session->set_editing_mode();
-	}
-
 	QList<ContextItem*> activeList;
 
 	activeList.append(acv);
@@ -1009,10 +994,6 @@ void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 
 void SheetView::browse_to_curve_view(CurveView *curveView)
 {
-	if (m_session->get_mode() == TSession::EDIT) {
-		m_session->set_effects_mode();
-	}
-
 	QList<ContextItem*> activeList;
 	AudioClipView* acv = static_cast<AudioClipView*>(curveView->parentItem());
 	activeList.append(curveView);

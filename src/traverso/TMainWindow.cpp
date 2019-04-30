@@ -116,11 +116,11 @@ HistoryWidget::~HistoryWidget()
 }
 
 
-TMainWindow* TMainWindow::m_instance = 0;
+TMainWindow* TMainWindow::m_instance = nullptr;
 
 TMainWindow* TMainWindow::instance()
 {
-	if (m_instance == 0) {
+    if (m_instance == nullptr) {
 		m_instance = new TMainWindow();
 	}
 
@@ -309,21 +309,21 @@ TMainWindow::TMainWindow()
 	m_welcomeWidget->setFocus(Qt::MouseFocusReason);
 
 	// Some default values.
-	m_project = 0;
+    m_project = nullptr;
 	m_previousCenterAreaWidgetIndex = 0;
-	m_currentSheetWidget = 0;
-	m_exportDialog = 0;
-	m_cdWritingDialog = 0;
-	m_settingsdialog = 0;
-	m_projectManagerDialog = 0;
-	m_openProjectDialog = 0;
-	m_newProjectDialog = 0;
-	m_shortcutEditorDialog = 0;
-	m_insertSilenceDialog = 0;
-	m_newSheetDialog = 0;
-	m_newTrackDialog = 0;
-	m_quickStart = 0;
-	m_restoreProjectBackupDialog = 0;
+    m_currentSheetWidget = nullptr;
+    m_exportDialog = nullptr;
+    m_cdWritingDialog = nullptr;
+    m_settingsdialog = nullptr;
+    m_projectManagerDialog = nullptr;
+    m_openProjectDialog = nullptr;
+    m_newProjectDialog = nullptr;
+    m_shortcutEditorDialog = nullptr;
+    m_insertSilenceDialog = nullptr;
+    m_newSheetDialog = nullptr;
+    m_newTrackDialog = nullptr;
+    m_quickStart = nullptr;
+    m_restoreProjectBackupDialog = nullptr;
 	m_vuLevelUpdateFrequency = 40;
 
 	create_menus();
@@ -457,7 +457,6 @@ void TMainWindow::add_session(TSession *session)
 	m_centerAreaWidget->addWidget(sheetWidget);
 
 	connect(session, SIGNAL(transportStopped()), this, SLOT(update_follow_state()));
-	connect(session, SIGNAL(modeChanged()), this, SLOT(update_effects_state()));
 	connect(session, SIGNAL(tempFollowChanged(bool)), this, SLOT(update_temp_follow_state(bool)));
 
 	Sheet* sheet = qobject_cast<Sheet*>(session);
@@ -495,7 +494,6 @@ void TMainWindow::show_session(TSession* session)
 
 	if (!session) {
 		m_snapAction->setEnabled(false);
-		m_effectAction->setEnabled(false);
 		m_followAction->setEnabled(false);
 
 		return;
@@ -507,9 +505,7 @@ void TMainWindow::show_session(TSession* session)
 		}
 
 		update_snap_state();
-		update_effects_state();
 		m_snapAction->setEnabled(true);
-		m_effectAction->setEnabled(true);
 		m_followAction->setEnabled(true);
 	}
 
@@ -843,14 +839,6 @@ void TMainWindow::create_menus( )
 	m_followAction->setToolTip(tr("Keep play cursor in view while playing or recording."));
 	m_editToolBar->addAction(m_followAction);
 	connect(m_followAction, SIGNAL(triggered(bool)), this, SLOT(follow_state_changed(bool)));
-
-	m_effectAction = menu->addAction(tr("&Show Effects"));
-	m_projectMenuToolbarActions.append(m_effectAction);
-	m_effectAction->setIcon(QIcon(":/effects"));
-	m_effectAction->setCheckable(true);
-	m_effectAction->setToolTip(tr("Show effect plugins and automation curves on tracks"));
-	m_editToolBar->addAction(m_effectAction);
-	connect(m_effectAction, SIGNAL(triggered(bool)), this, SLOT(effect_state_changed(bool)));
 
 	menu = m_mainMenuBar->addMenu(tr("&View"));
 	menu->installEventFilter(this);
@@ -1713,33 +1701,6 @@ void TMainWindow::follow_state_changed(bool state)
 		}
 	} else {
 		sheet->set_temp_follow_state(state);
-	}
-}
-
-// the view mode is a sheet property and should be stored in the sheet
-void TMainWindow::effect_state_changed(bool state)
-{
-	TSession* session = m_project->get_current_session();
-
-	if (state) {
-		session->set_effects_mode();
-	} else {
-		session->set_editing_mode();
-	}
-}
-
-void TMainWindow::update_effects_state()
-{
-	TSession* session = m_project->get_current_session();
-
-	if (!session) {
-		return;
-	}
-
-	if (session->get_mode() == Sheet::EDIT) {
-		m_effectAction->setChecked(false);
-	} else {
-		m_effectAction->setChecked(true);
 	}
 }
 
