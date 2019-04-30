@@ -61,8 +61,6 @@ TrackView::TrackView(SheetView* sv, Track * track)
 
 	m_isMoving = false;
 
-	m_pluginChainView = new PluginChainView(m_sv, this, m_track->get_plugin_chain());
-
 	connect(m_track, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
 	connect(m_track, SIGNAL(automationVisibilityChanged()), this, SLOT(automation_visibility_changed()));
 
@@ -71,6 +69,12 @@ TrackView::TrackView(SheetView* sv, Track * track)
 
 	m_volumeAutomationLaneView = new TTrackLaneView(this);
 	m_laneViews.append(m_volumeAutomationLaneView);
+
+    auto m_pluginsLaneview = new TTrackLaneView(this);
+    m_pluginsLaneview->set_height(30);
+    m_pluginsLaneview->hide();
+    m_laneViews.append(m_pluginsLaneview);
+    m_pluginChainView = new PluginChainView(m_sv, m_pluginsLaneview, m_track->get_plugin_chain());
 
 	m_curveView = new CurveView(m_sv, m_volumeAutomationLaneView, m_track->get_plugin_chain()->get_fader()->get_curve());
 	m_volumeAutomationLaneView->set_child_view(m_curveView);
@@ -144,14 +148,11 @@ TCommand* TrackView::add_new_plugin( )
         if (PluginSelectorDialog::instance()->exec() == QDialog::Accepted) {
                 Plugin* plugin = PluginSelectorDialog::instance()->get_selected_plugin();
                 if (plugin) {
-                        // Force showing into effects mode, just in case the user adds
-                        // a plugin in edit mode, which means it won't show up!
-                        m_sv->get_sheet()->set_effects_mode();
-                        return m_track->add_plugin(plugin);
+                    return m_track->add_plugin(plugin);
                 }
         }
 
-        return 0;
+        return nullptr;
 }
 
 void TrackView::add_lane_view(TTrackLaneView *laneView)
