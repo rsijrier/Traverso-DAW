@@ -742,20 +742,15 @@ int Project::disconnect_from_audio_device()
         return 1;
 }
 
-// still crashes on project close/reload/traverso close
 void Project::add_meter(Plugin *meter)
 {
-    return;
-
     SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
     if (sm) {
         m_spectralMeter = sm;
-        TCommand::process_command(m_masterOutBusTrack->add_plugin(m_spectralMeter));
     }
     CorrelationMeter* cm = qobject_cast<CorrelationMeter*>(meter);
     if (cm) {
         m_correlationMeter = cm;
-        TCommand::process_command(m_masterOutBusTrack->add_plugin(m_correlationMeter));
     }
 }
 
@@ -1741,6 +1736,23 @@ int Project::process( nframes_t nframes )
 
         apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->process(nframes);
+        }
+
+
+        // FIXME both Meter's are native plugins but are owned by their respective View's.
+        // adding them to MasterOutBusTracks means when closing Project they are saved as
+        // a plugin in the project file and so the project file becomes cluttered with
+        // new meters every time a project is saved and when Project is closed the Meter objects
+        // are destroyed in PluginChain destructor and so the Views have a dangling pointer.
+        // The correct solution is to have GUI support for Plugins and dock the Plugin GUI
+        // somewhere
+        // To process them here is a temporary solution since the m_masterOutBusTrack->process()
+        // is called after procssing the signal for the Meters hence we miss some signal processing.
+        if (m_correlationMeter) {
+                m_correlationMeter->process(m_masterOutBusTrack->get_process_bus(), nframes);
+        }
+        if (m_spectralMeter) {
+                m_spectralMeter->process(m_masterOutBusTrack->get_process_bus(), nframes);
         }
 
         // Mix the result into the AudioDevice "physical" buffers
