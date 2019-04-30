@@ -110,7 +110,7 @@ protected:
 	QList<AudioTrack*>      m_audioTracks;
 	QList<TBusTrack*>       m_busTracks;
 	QHash<qint64, Track* >	m_tracks;
-	TBusTrack*              m_masterOut{};
+	TBusTrack*              m_masterOutBusTrack{};
 	QHash<qint64, int>      m_trackHeights;
 
 	SnapList*	m_snaplist;

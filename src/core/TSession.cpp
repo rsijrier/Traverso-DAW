@@ -161,14 +161,14 @@ QDomNode TSession::get_state(QDomDocument doc)
 TBusTrack* TSession::get_master_out() const
 {
 	if (is_project_session()) {
-		return m_masterOut;
+		return m_masterOutBusTrack;
 	}
 
 	if (m_parentSession) {
 		return m_parentSession->get_master_out();
 	}
 
-	return m_masterOut;
+	return m_masterOutBusTrack;
 }
 QList<Track*> TSession::get_tracks() const
 {
@@ -185,8 +185,8 @@ QList<Track*> TSession::get_tracks() const
 
 Track* TSession::get_track(qint64 id) const
 {
-	if (m_masterOut && m_masterOut->get_id() == id) {
-		return m_masterOut;
+	if (m_masterOutBusTrack && m_masterOutBusTrack->get_id() == id) {
+		return m_masterOutBusTrack;
 	}
 
 	return m_tracks.value(id);

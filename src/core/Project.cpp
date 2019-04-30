@@ -96,20 +96,20 @@ Project::Project(const QString& title)
         m_audiodeviceClient->set_process_callback( MakeDelegate(this, &Project::process) );
         m_audiodeviceClient->set_transport_control_callback( MakeDelegate(this, &Project::transport_control) );
 
-        m_masterOut = new MasterOutSubGroup(this, "");
+        m_masterOutBusTrack = new MasterOutSubGroup(this, "");
         // FIXME: m_masterOut is a Track, but at this point in time, Track can't
         // get a reference to us via pm().get_project();
-        connect(m_masterOut, SIGNAL(routingConfigurationChanged()), this, SLOT(track_property_changed()));
+        connect(m_masterOutBusTrack, SIGNAL(routingConfigurationChanged()), this, SLOT(track_property_changed()));
 
 
-        AudioBus* bus = m_masterOut->get_process_bus();
-        for(int i=0; i<bus->get_channel_count(); i++) {
+        AudioBus* bus = m_masterOutBusTrack->get_process_bus();
+        for(uint i=0; i<bus->get_channel_count(); i++) {
                 if (AudioChannel* chan = bus->get_channel(i)) {
                         chan->set_buffer_size(2048);
                 }
         }
 
-        m_audiodeviceClient->masterOutBus = m_masterOut->get_process_bus();
+        m_audiodeviceClient->masterOutBus = m_masterOutBusTrack->get_process_bus();
 
 	cpointer().add_contextitem(this);
 
@@ -131,7 +131,7 @@ Project::~Project()
                 delete sheet;
         }
 
-        delete m_masterOut;
+        delete m_masterOutBusTrack;
         delete m_hs;
 }
 
@@ -349,18 +349,18 @@ int Project::load(const QString& projectfile)
 	prepare_audio_device(doc);
 
         QDomNode masterOutNode = docElem.firstChildElement("MasterOut");
-        m_masterOut->set_state(masterOutNode.firstChildElement());
+        m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
         // Force the proper name for our Master Bus
-        m_masterOut->set_name(tr("Master"));
+        m_masterOutBusTrack->set_name(tr("Master"));
 
         // If master out doesn't have post sends, the user won't hear anything!
         // add the first logical 'hardware' output channels as post send if the
         // driver != Jack, the Jack driver case is handled seperately.
-        if (!m_masterOut->get_post_sends().size()) {
+        if (!m_masterOutBusTrack->get_post_sends().size()) {
                 if (audiodevice().get_driver_type() != "Jack") {
                         AudioBus* bus = get_playback_bus("Playback 1-2");
                         if (bus) {
-                                m_masterOut->add_post_send(bus);
+                                m_masterOutBusTrack->add_post_send(bus);
                         }
                 }
         }
@@ -378,7 +378,7 @@ int Project::load(const QString& projectfile)
                         conf.id = MASTER_OUT_SOFTWARE_BUS_ID;
                         bus = create_software_audio_bus(conf);
 
-                        m_masterOut->add_post_send(MASTER_OUT_SOFTWARE_BUS_ID);
+                        m_masterOutBusTrack->add_post_send(MASTER_OUT_SOFTWARE_BUS_ID);
 
                 }
         }
@@ -620,7 +620,7 @@ QDomNode Project::get_state(QDomDocument doc, bool istemplate)
 
 
         QDomNode masterOutNode = doc.createElement("MasterOut");
-        masterOutNode.appendChild(m_masterOut->get_state(doc, istemplate));
+        masterOutNode.appendChild(m_masterOutBusTrack->get_state(doc, istemplate));
         projectNode.appendChild(masterOutNode);
 
 
@@ -750,12 +750,12 @@ void Project::add_meter(Plugin *meter)
     SpectralMeter* sm = qobject_cast<SpectralMeter*>(meter);
     if (sm) {
         m_spectralMeter = sm;
-        TCommand::process_command(m_masterOut->add_plugin(m_spectralMeter));
+        TCommand::process_command(m_masterOutBusTrack->add_plugin(m_spectralMeter));
     }
     CorrelationMeter* cm = qobject_cast<CorrelationMeter*>(meter);
     if (cm) {
         m_correlationMeter = cm;
-        TCommand::process_command(m_masterOut->add_plugin(m_correlationMeter));
+        TCommand::process_command(m_masterOutBusTrack->add_plugin(m_correlationMeter));
     }
 }
 
@@ -811,8 +811,8 @@ AudioBus* Project::get_capture_bus(const QString& name) const
 
 AudioBus* Project::get_audio_bus(qint64 id)
 {
-        if (m_masterOut->get_id() == id) {
-                return m_masterOut->get_process_bus();
+        if (m_masterOutBusTrack->get_id() == id) {
+                return m_masterOutBusTrack->get_process_bus();
         }
 
         foreach(Sheet* sheet, m_sheets) {
@@ -1744,7 +1744,7 @@ int Project::process( nframes_t nframes )
         }
 
         // Mix the result into the AudioDevice "physical" buffers
-        m_masterOut->process(nframes);
+        m_masterOutBusTrack->process(nframes);
 
         return result;
 }

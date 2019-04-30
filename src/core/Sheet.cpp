@@ -123,7 +123,7 @@ Sheet::~Sheet()
 	delete [] gainbuffer;
 
 	delete m_diskio;
-        delete m_masterOut;
+        delete m_masterOutBusTrack;
 	delete m_renderBus;
 	delete m_clipRenderBus;
 	delete m_hs;
@@ -176,8 +176,8 @@ void Sheet::init()
         busConfig.name = "Sheet Clip Render Bus";
         m_clipRenderBus = new AudioBus(busConfig);
 
-        m_masterOut = new MasterOutSubGroup(this, tr("Sheet Master"));
-        m_masterOut->set_gain(0.5);
+        m_masterOutBusTrack = new MasterOutSubGroup(this, tr("Sheet Master"));
+        m_masterOutBusTrack->set_gain(0.5);
         resize_buffer(audiodevice().get_buffer_size());
 
         m_resumeTransport = m_readyToRecord = false;
@@ -221,9 +221,9 @@ int Sheet::set_state( const QDomNode & node )
 
         
         QDomNode masterOutNode = node.firstChildElement("MasterOut");
-        m_masterOut->set_state(masterOutNode.firstChildElement());
+        m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
         // Force the proper name for our Master Bus
-        m_masterOut->set_name(tr("Sheet Master"));
+        m_masterOutBusTrack->set_name(tr("Sheet Master"));
 
         QDomNode busTracksNode = node.firstChildElement("BusTracks");
         QDomNode busTrackNode = busTracksNode.firstChild();
@@ -293,7 +293,7 @@ QDomNode Sheet::get_state(QDomDocument doc, bool istemplate)
 	sheetNode.appendChild(m_timeline->get_state(doc));
 
         QDomNode masterOutNode = doc.createElement("MasterOut");
-        masterOutNode.appendChild(m_masterOut->get_state(doc, istemplate));
+        masterOutNode.appendChild(m_masterOutBusTrack->get_state(doc, istemplate));
         sheetNode.appendChild(masterOutNode);
 
 	QDomNode tracksNode = doc.createElement("Tracks");
@@ -539,7 +539,7 @@ int Sheet::render(ExportSpecification* spec)
 	/* foreach output channel ... */
 
 	float* buf;
-	AudioBus* masterOutBus = m_masterOut->get_process_bus();
+	AudioBus* masterOutBus = m_masterOutBusTrack->get_process_bus();
 
 	for (chn = 0; chn < spec->channels; ++chn) {
 		buf = masterOutBus->get_buffer(chn, nframes);
@@ -600,7 +600,7 @@ void Sheet::set_gain(float gain)
     if (gain > 2.0f)
 		gain = 2.0;
 
-        m_masterOut->set_gain(gain);
+        m_masterOutBusTrack->set_gain(gain);
 
         emit stateChanged();
 }
@@ -658,7 +658,7 @@ void Sheet::solo_track(Track *track)
 
         // If the Track was a Bus Track, then also (un) solo all the AudioTracks
         // that have this Bus Track as the output bus.
-        if ((track->get_type() == Track::BUS) && !(track == m_masterOut)) {
+        if ((track->get_type() == Track::BUS) && !(track == m_masterOutBusTrack)) {
                 QList<AudioTrack*> busTrackAudioTracks;
                 foreach(AudioTrack* sgTrack, tracks) {
                         QList<TSend*> sends = sgTrack->get_post_sends();
@@ -731,7 +731,7 @@ int Sheet::process( nframes_t nframes )
     }
 
 	// zero the m_masterOut buffers
-        m_masterOut->get_process_bus()->silence_buffers(nframes);
+        m_masterOutBusTrack->get_process_bus()->silence_buffers(nframes);
         apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->get_process_bus()->silence_buffers(nframes);
         }
@@ -757,7 +757,7 @@ int Sheet::process( nframes_t nframes )
 	}
 
         // Mix the result into the AudioDevice "physical" buffers
-        m_masterOut->process(nframes);
+        m_masterOutBusTrack->process(nframes);
 	
 	return 1;
 }
@@ -765,7 +765,7 @@ int Sheet::process( nframes_t nframes )
 int Sheet::process_export( nframes_t nframes )
 {
 	// Get the masterout buffers, and fill with zero's
-        m_masterOut->get_process_bus()->silence_buffers(nframes);
+        m_masterOutBusTrack->get_process_bus()->silence_buffers(nframes);
         apill_foreach(TBusTrack* busTrack, TBusTrack*, m_rtBusTracks) {
                 busTrack->get_process_bus()->silence_buffers(nframes);
         }
@@ -781,8 +781,8 @@ int Sheet::process_export( nframes_t nframes )
 		busTrack->process(nframes);
 	}
 
-	Mixer::apply_gain_to_buffer(m_masterOut->get_process_bus()->get_buffer(0, nframes), nframes, m_masterOut->get_gain());
-	Mixer::apply_gain_to_buffer(m_masterOut->get_process_bus()->get_buffer(1, nframes), nframes, m_masterOut->get_gain());
+	Mixer::apply_gain_to_buffer(m_masterOutBusTrack->get_process_bus()->get_buffer(0, nframes), nframes, m_masterOutBusTrack->get_gain());
+	Mixer::apply_gain_to_buffer(m_masterOutBusTrack->get_process_bus()->get_buffer(1, nframes), nframes, m_masterOutBusTrack->get_gain());
 
 	// update the m_transportFrame
 // 	m_transportFrame += nframes;
@@ -801,7 +801,7 @@ void Sheet::resize_buffer(nframes_t size)
 	mixdown = new audio_sample_t[size];
 	gainbuffer = new audio_sample_t[size];
         QList<AudioBus*> buses;
-        buses.append(m_masterOut->get_process_bus());
+        buses.append(m_masterOutBusTrack->get_process_bus());
         buses.append(m_renderBus);
         buses.append(m_clipRenderBus);
         foreach(AudioBus* bus, buses) {
