@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2006 Remon Sijrier 
+Copyright (C) 2006-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -39,12 +39,8 @@ $Id: Tsar.h,v 1.4 2008/02/11 10:11:52 r_sijrier Exp $
     event.caller = cal; \
     event.argument = arg; \
     event.slotindex = -1; \
-    static int retrievedsignalindex; \
-    \
-    if ( ! retrievedsignalindex ) { \
-    retrievedsignalindex = cal->metaObject()->indexOfSignal(#signalSignature); \
+    int retrievedsignalindex = cal->metaObject()->indexOfSignal(#signalSignature); \
     Q_ASSERT(retrievedsignalindex >= 0); \
-    } \
     event.signalindex = retrievedsignalindex; \
     event.valid = true; \
     tsar().add_rt_event(event); \

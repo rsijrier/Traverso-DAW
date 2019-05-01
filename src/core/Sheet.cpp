@@ -1185,7 +1185,8 @@ void Sheet::start_seek()
 	m_diskio->prepare_for_seek();
 
 	// 'Tell' the diskio it should start a seek action.
-	RT_THREAD_EMIT(this, NULL, seekStart());
+    RT_THREAD_EMIT(this, nullptr, seekStart());
+
 }
 
 void Sheet::seek_finished()
