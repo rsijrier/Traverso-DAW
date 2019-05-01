@@ -379,7 +379,7 @@ void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &glo
  * and it's related Un/Redo. The canvas cursor will then be updated to
  * the correct contextitem that is below the cursor
 **/
-void ContextPointer::request_viewport_to_detect_items_under_cursor()
+void ContextPointer::request_viewport_to_detect_items_below_cursor()
 {
     if (!m_viewPort) {
         return;

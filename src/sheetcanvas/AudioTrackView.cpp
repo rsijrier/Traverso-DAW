@@ -209,5 +209,5 @@ void AudioTrackView::automation_visibility_changed()
     TrackView::automation_visibility_changed();
 
     // TODO: should be move to ContextItem::set_ignore_context() ?
-    cpointer().request_viewport_to_detect_items_under_cursor();
+    cpointer().request_viewport_to_detect_items_below_cursor();
 }

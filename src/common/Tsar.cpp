@@ -57,9 +57,9 @@ Tsar::Tsar()
 {
 	m_eventCounter = 0;
 
-        int guiThreadEventsBufferSize = 10000;
-        int audioThreadEventsBufferSize = 1000;
-	
+    size_t guiThreadEventsBufferSize = 10000;
+    size_t audioThreadEventsBufferSize = 1000;
+
 	m_events.append(new RingBufferNPT<TsarEvent>(guiThreadEventsBufferSize));
 	oldEvents = new RingBufferNPT<TsarEvent>(guiThreadEventsBufferSize);
 
@@ -137,7 +137,7 @@ void Tsar::process_events( )
 		RingBufferNPT<TsarEvent>* newEvents = m_events.at(i);
 		
 		int processedCount = 0;
-		int newEventCount = newEvents->read_space();
+        size_t newEventCount = newEvents->read_space();
 	
 		while((newEventCount > 0) && (processedCount < 50)) {
 #if defined (profile)
@@ -184,7 +184,7 @@ void Tsar::finish_processed_events( )
 	if (m_retryCount > 200)
 	{
 		if (audiodevice().get_driver_type() != "Null Driver") {
-			QMessageBox::critical( 0, 
+            QMessageBox::critical( nullptr,
 				tr("Traverso - Malfunction!"), 
 				tr("The Audiodriver Thread seems to be stalled/stopped, but Traverso didn't ask for it!\n"
 				"This effectively makes Traverso unusable, since it relies heavily on the AudioDriver Thread\n"
@@ -194,17 +194,17 @@ void Tsar::finish_processed_events( )
 				"* The audio chipset isn't supported (completely), you probably have to turn off some of it's features.\n"
 				"\nFor more information, see the Help file, section: \n\n AudioDriver: 'Thread stalled error'\n\n"),
 				"OK", 
-				0 );
+                nullptr );
                         AudioDeviceSetup ads;
                         ads.driverType = "Null Driver";
                         audiodevice().set_parameters(ads);
 			m_retryCount = 0;
 		} else {
-			QMessageBox::critical( 0, 
+            QMessageBox::critical( nullptr,
 				tr("Traverso - Fatal!"), 
 				tr("The Null AudioDriver stalled too, exiting application!"),
 				"OK", 
-				0 );
+                nullptr );
 			QCoreApplication::exit(-1);
 		}
 	}
@@ -252,12 +252,12 @@ TsarEvent Tsar::create_event( QObject* caller, void* argument, const char* slotS
 	}
 	
 	if (qstrlen(signalSignature) > 0) {
-                index = caller->metaObject()->indexOfMethod(signalSignature);
-		if (index < 0) {
+        index = caller->metaObject()->indexOfMethod(signalSignature);
+        if (index < 0) {
             PWARN(QString("Signal signature contains whitespaces, please remove to avoid unneeded processing (%1::%2)").arg(caller->metaObject()->className()).arg(signalSignature).toLatin1().data());
 			QByteArray norm = QMetaObject::normalizedSignature(signalSignature);
-                        index = caller->metaObject()->indexOfMethod(norm.constData());
-		}
+            index = caller->metaObject()->indexOfMethod(norm.constData());
+        }
 		event.signalindex = index; 
 	} else {
 		event.signalindex = -1; 
@@ -283,7 +283,7 @@ void Tsar::process_event_slot(const TsarEvent& event )
 	// If there is an object to be added, do the magic to call the slot :-)
 	if (event.slotindex > -1) {
 
-		void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&event.argument)) };
+        void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(&event.argument)) };
 		
 		// This equals QMetaObject::invokeMethod(), without type checking. But we know that the types
 		// are the correct ones, and will be casted just fine!
@@ -308,7 +308,7 @@ void Tsar::process_event_signal(const TsarEvent & event )
 	// In case the signalindex > -1, emit the signal!
 	if (event.signalindex > -1) {
 
-                void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&event.argument)) };
+                void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(&event.argument)) };
 
                 // This equals QMetaObject::invokeMethod(), without type checking. But we know that the types
                 // are the correct ones, and will be casted just fine!
