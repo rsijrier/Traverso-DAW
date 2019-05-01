@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>New Track(s)</string>
+   <string>Create New Track or Bus</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
@@ -52,7 +52,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Title</string>
+           <string>Name</string>
           </property>
          </widget>
         </item>

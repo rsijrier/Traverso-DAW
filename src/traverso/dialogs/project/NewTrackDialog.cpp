@@ -72,7 +72,7 @@ void NewTrackDialog::showEvent(QShowEvent */*event*/)
 void NewTrackDialog::create_track()
 {
 	if (! m_project) {
-		info().information(tr("I can't create a new Track if there is no Project loaded!!"));
+        info().information(tr("New Track cannot be created if there is no Project loaded!!"));
 		return;
 	}
 	

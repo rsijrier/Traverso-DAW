@@ -128,7 +128,7 @@ void SettingsDialog::createIcons()
 	
 	QListWidgetItem* keyboardButton = new QListWidgetItem(contentsWidget);
 	keyboardButton->setIcon(QIcon(":/keyboard"));
-    keyboardButton->setText(tr("Input Devices"));
+    keyboardButton->setText(tr("Shortcuts"));
 	keyboardButton->setTextAlignment(Qt::AlignHCenter);
 	keyboardButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 	keyboardButton->setSizeHint(QSize(100, 50));

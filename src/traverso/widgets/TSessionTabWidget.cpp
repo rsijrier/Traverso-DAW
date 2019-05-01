@@ -78,6 +78,7 @@ TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
         m_childLayout->addWidget(m_nameLabel);
         m_childLayout->addStretch(1);
         m_childLayout->addWidget(m_arrowButton);
+        m_childLayout->addSpacing(4);
         m_childLayout->setMargin(0);
 
         QAction* action;
@@ -95,7 +96,7 @@ TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
                         action = m_arrowButtonMenu->addSeparator();
                 }
 
-                action = m_arrowButtonMenu->addAction(tr("New Track..."));
+                action = m_arrowButtonMenu->addAction(tr("New Track / Bus..."));
                 action->setIcon(find_pixmap(":/new"));
                 connect(action, SIGNAL(triggered()), this, SLOT(add_track_action_triggered()));
 
@@ -293,6 +294,7 @@ void TSessionTabWidget::button_clicked()
 {
         if (pm().get_project()->get_current_session() != m_session) {
                 pm().get_project()->set_current_session(m_session->get_id());
+                enterEvent(nullptr);
         } else {
                 arrow_button_clicked();
         }
