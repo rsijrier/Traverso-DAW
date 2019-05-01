@@ -249,8 +249,11 @@ int AddRemove::do_action()
 	} else {
 		tsar().add_event(m_doActionEvent);
 	}
-	
-	return 1;
+
+    // update the cursor to the context item that was below the item we are removing here
+    cpointer().request_viewport_to_detect_items_under_cursor();
+
+    return 1;
 }
 
 int AddRemove::undo_action()
@@ -278,8 +281,13 @@ int AddRemove::undo_action()
 		PMESG("Using direct add/remove/signaling");
 		tsar().add_event(m_undoActionEvent);
 	}
-	
-	return 1;
+
+    // update the cursor to the context item that we are adding here
+    // in case the mouse cursor did not move and the position of this object
+    // is below the mouse cursor position
+    cpointer().request_viewport_to_detect_items_under_cursor();
+
+    return 1;
 }
 
 /**

@@ -170,8 +170,14 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
         return;
     }
 
-
     // here we detect which items are under the mouse cursor
+    detect_items_under_cursor();
+
+    event->accept();
+}
+
+void ViewPort::detect_items_under_cursor()
+{
     QList<ViewItem*> mouseTrackingItems;
 
     QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
@@ -219,8 +225,6 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
     for(auto item : mouseTrackingItems) {
         item->mouse_hover_move_event();
     }
-
-    event->accept();
 }
 
 void ViewPort::tabletEvent(QTabletEvent * event)

@@ -370,6 +370,24 @@ void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &glo
     }
 }
 
+/**
+ * Requests the current set viewport to update the list
+ * of contextitems below the mouse cursor even if the
+ * mouse did not move (including keyboard navigation)
+
+ * Use case: call when removing/adding a scene object by using Delete
+ * and it's related Un/Redo. The canvas cursor will then be updated to
+ * the correct contextitem that is below the cursor
+**/
+void ContextPointer::request_viewport_to_detect_items_under_cursor()
+{
+    if (!m_viewPort) {
+        return;
+    }
+    set_active_context_items(QList<ContextItem*>());
+    m_viewPort->detect_items_under_cursor();
+}
+
 void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)
 {
     if (items == m_activeContextItems) {

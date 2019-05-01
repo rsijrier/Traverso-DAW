@@ -56,7 +56,7 @@ public :
     void grab_mouse();
     void release_mouse();
 
-
+    void detect_items_under_cursor();
 
 
 

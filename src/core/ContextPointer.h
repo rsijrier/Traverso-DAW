@@ -145,6 +145,7 @@ public:
     QPoint get_global_mouse_pos() const;
 
     void update_mouse_positions(const QPoint &pos, const QPoint &globalPos);
+    void request_viewport_to_detect_items_under_cursor();
 
 
 private:

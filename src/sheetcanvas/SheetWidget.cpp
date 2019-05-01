@@ -138,7 +138,7 @@ SheetWidget::SheetWidget(TSession* sheet, QWidget* parent)
 	if (!m_session) {
 		return;
 	}
-	m_scene = new QGraphicsScene();
+    m_scene = new QGraphicsScene();
 	m_vScrollBar = new QScrollBar(this);
 	m_hScrollBar = new QScrollBar(this);
 	m_hScrollBar->setOrientation(Qt::Horizontal);

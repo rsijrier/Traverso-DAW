@@ -16,6 +16,7 @@ public:
     virtual void setCanvasCursorShape(const QString& cursor, int alignment=Qt::AlignCenter) = 0;
     virtual void setCursorText(const QString& text, int mseconds) = 0;
     virtual void set_holdcursor_pos(QPointF pos) = 0;
+    virtual void detect_items_under_cursor() = 0;
 
     virtual void grab_mouse() = 0;
     virtual void release_mouse() = 0;
