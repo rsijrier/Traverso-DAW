@@ -70,12 +70,6 @@ TrackView::TrackView(SheetView* sv, Track * track)
 	m_volumeAutomationLaneView = new TTrackLaneView(this);
 	m_laneViews.append(m_volumeAutomationLaneView);
 
-    auto m_pluginsLaneview = new TTrackLaneView(this);
-    m_pluginsLaneview->set_height(30);
-    m_pluginsLaneview->hide();
-    m_laneViews.append(m_pluginsLaneview);
-    m_pluginChainView = new PluginChainView(m_sv, m_pluginsLaneview, m_track->get_plugin_chain());
-
 	m_curveView = new CurveView(m_sv, m_volumeAutomationLaneView, m_track->get_plugin_chain()->get_fader()->get_curve());
 	m_volumeAutomationLaneView->set_child_view(m_curveView);
 
@@ -115,16 +109,19 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 		painter->drawLine(xstart, get_total_height() - m_bottomborderwidth - 1, xstart+pixelcount, get_total_height() - m_bottomborderwidth - 1);
 	}
 
-	if (m_visibleLanes > 1) {
-		QPen pen;
-		pen.setColor(themer()->get_color("Track:laneseperator"));
-		painter->setPen(pen);
-		for (int i = 1; i<m_laneViews.size(); ++i) {
-			TTrackLaneView* laneView = m_laneViews.at(i);
-			int y =  laneView->pos().y() - 1;
-			painter->drawLine(xstart, y, xstart+pixelcount, y);
-		}
-	}
+    if (m_visibleLanes > 1) {
+        QPen pen;
+        pen.setColor(themer()->get_color("Track:laneseperator"));
+        painter->setPen(pen);
+        for (int i = 1; i<m_laneViews.size(); ++i) {
+            TTrackLaneView* laneView = m_laneViews.at(i);
+            if (!laneView->isVisible()) {
+                continue;
+            }
+            int y =  laneView->pos().y() - 1;
+            painter->drawLine(xstart, y, xstart+pixelcount, y);
+        }
+    }
     painter->restore();
 }
 

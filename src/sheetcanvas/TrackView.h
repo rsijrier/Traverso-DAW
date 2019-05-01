@@ -39,7 +39,6 @@ class TrackView : public ViewItem
 
 public:
 	TrackView(SheetView* sv, Track* track);
-	TrackView(ViewItem* parentView, Track* track);
 	~TrackView();
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
