@@ -24,8 +24,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TBusTrack.h"
 
+#include "PluginChainView.h"
 #include "TrackPanelView.h"
 #include "SheetView.h"
+#include "TTrackLaneView.h"
 #include "Themer.h"
 
 #include <Debugger.h>
@@ -33,14 +35,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 TBusTrackView::TBusTrackView(SheetView* sv, TBusTrack* group)
         : TrackView(sv, group)
 {
-        PENTERCONS;
+    PENTERCONS;
 
-        m_sv = sv;
+    m_sv = sv;
 
-        load_theme_data();
+    load_theme_data();
 
-        m_panel = new TBusTrackPanelView(this);
-        calculate_bounding_rect();
+    m_pluginChainView = new PluginChainView(m_sv, m_primaryLaneView, m_track->get_plugin_chain());
+
+    m_panel = new TBusTrackPanelView(this);
+    calculate_bounding_rect();
 
 	automation_visibility_changed();
 }

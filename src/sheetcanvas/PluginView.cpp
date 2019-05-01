@@ -49,8 +49,8 @@ PluginView::PluginView(PluginChainView* parent, PluginChain* chain, Plugin* plug
 	
 	m_propertiesDialog = nullptr;
 
-        setZValue(parent->zValue() + 2);
-	
+    setZValue(parent->zValue() + 2);
+
 	m_name = plugin->get_name();
 	
 	QFontMetrics fm(themer()->get_font("Plugin:fontscale:name"));
@@ -84,12 +84,12 @@ void PluginView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option
 
 	int height, width;
         if (has_active_context()) {
-		height = (int)m_boundingRect.height() + 1;
-		width = (int)m_boundingRect.width() + 1;
+        height = int(m_boundingRect.height()) + 1;
+        width = int(m_boundingRect.width()) + 1;
 		color = color.light(120);
 	} else {
-		height = (int)m_boundingRect.height();
-		width = (int)m_boundingRect.width();
+        height = int(m_boundingRect.height());
+        width = int(m_boundingRect.width());
 	}
 	
 	QBrush brush(color);
@@ -110,7 +110,7 @@ TCommand * PluginView::edit_properties( )
 		m_propertiesDialog->setWindowTitle(m_name);
 	} 
 	m_propertiesDialog->show();
-	return (TCommand*) nullptr;
+    return nullptr;
 }
 
 TCommand* PluginView::remove_plugin()
@@ -135,13 +135,13 @@ void PluginView::repaint( )
 
 void PluginView::calculate_bounding_rect()
 {
-	int height = 25;
-	int parentheight = (int)m_parentViewItem->boundingRect().height();
-	if (parentheight < 30) {
-		height = parentheight - 4;
-	}
-	int y = parentheight - height;
-	m_boundingRect = QRectF(0, 0, m_textwidth + 8, height);
+    int height = 24;
+    int parentheight = int(m_parentViewItem->boundingRect().height());
+    if (parentheight < 30) {
+        height = parentheight - 3;
+    }
+    int y = parentheight - height;
+    m_boundingRect = QRectF(0, 0, m_textwidth + 8, height);
 	setPos(x(), y);
 }
 
