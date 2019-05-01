@@ -131,7 +131,7 @@
         <color alpha="255" red="255" blue="90" name="TrackPanel:muteled" green="255"/>
         <color alpha="255" red="135" blue="255" name="AudioClip:wavemacroview:outline:curvemode" green="130"/>
         <color alpha="255" red="199" blue="211" name="PluginSlider:background" green="228"/>
-        <color alpha="150" red="255" blue="255" name="Curve:inactive" green="0"/>
+        <color alpha="120" red="255" blue="255" name="Curve:inactive" green="0"/>
         <color alpha="255" red="80" blue="120" name="AudioClip:wavemacroview:outline" green="80"/>
         <color alpha="255" red="255" blue="0" name="GainSlider:6db" green="0"/>
         <color alpha="255" red="82" blue="123" name="CorrelationMeter:centerline" green="80"/>

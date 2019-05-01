@@ -105,12 +105,15 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 
     QPen pen;
 
-    QColor penColor = themer()->get_color("Curve:active");
+    QColor penColor;
     if (ignore_context()) {
-        penColor.setAlpha(75);
+        penColor = themer()->get_color("Curve:inactive");
+        pen.setWidth(1);
+    } else {
+         penColor = themer()->get_color("Curve:active");
+         pen.setWidth(2);
     }
     pen.setColor(penColor);
-    pen.setWidth(2);
     painter->setPen(pen);
     //	painter->setClipRect(m_boundingRect);
 
