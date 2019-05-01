@@ -37,7 +37,7 @@
 Zoom::Zoom(SheetView* sv, const QVariantList& args)
 	: TCommand("Zoom")
 {
-	m_tv = sv->get_trackview_under(cpointer().scene_pos());
+	m_tv = sv->get_trackview_at_scene_pos(cpointer().scene_pos());
 	m_sv = sv;
     m_canvasCursorFollowsMouseCursor = false;
 

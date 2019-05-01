@@ -117,8 +117,8 @@ MoveClip::MoveClip(ViewItem* view, const QVariantList& args)
 		
 		TimeRef currentLocation = TimeRef(cpointer().on_first_input_event_scene_x() * d->sv->timeref_scalefactor);
 		
-        if (d->sv->get_audio_trackview_under(cpointer().scene_pos())) {
-            d->pointedTrackIndex = d->sv->get_audio_trackview_under(cpointer().scene_pos())->get_track()->get_sort_index();
+        if (d->sv->get_audio_trackview_at_scene_pos(cpointer().scene_pos())) {
+            d->pointedTrackIndex = d->sv->get_audio_trackview_at_scene_pos(cpointer().scene_pos())->get_track()->get_sort_index();
 		} else {
 			d->pointedTrackIndex = 0;
 		}
@@ -298,7 +298,7 @@ int MoveClip::jog()
 		return 0;
 	}
 	
-    AudioTrackView* trackView = d->sv->get_audio_trackview_under(cpointer().scene_pos());
+    AudioTrackView* trackView = d->sv->get_audio_trackview_at_scene_pos(cpointer().scene_pos());
 	int deltaTrackIndex = 0;
 	if (trackView/* && !(m_actionType == FOLD_SHEET)*/) {
         deltaTrackIndex = trackView->get_track()->get_sort_index() - d->pointedTrackIndex;

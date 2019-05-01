@@ -88,8 +88,8 @@ public :
 	PlayHead* get_play_cursor() const {return m_playCursor;}
 	WorkCursor* get_work_cursor() const {return m_workCursor;}
 
-	AudioTrackView* get_audio_trackview_under(QPointF point);
-	TrackView* get_trackview_under(QPointF point);
+    AudioTrackView* get_audio_trackview_at_scene_pos(QPointF point);
+    TrackView* get_trackview_at_scene_pos(QPointF point);
 	QList<TrackView*> get_track_views() const;
 	int get_track_height(Track* track) const;
 	static QHash<QString, QString>* cursor_dict();

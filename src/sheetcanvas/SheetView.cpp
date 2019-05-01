@@ -198,7 +198,7 @@ void SheetView::scale_factor_changed( )
 	update_tracks_bounding_rect();
 }
 
-AudioTrackView* SheetView::get_audio_trackview_under( QPointF point )
+AudioTrackView* SheetView::get_audio_trackview_at_scene_pos( QPointF point )
 {
     AudioTrackView* view = nullptr;
 	QList<QGraphicsItem*> views = m_clipsViewPort->items(m_clipsViewPort->mapFromScene(point));
@@ -213,7 +213,7 @@ AudioTrackView* SheetView::get_audio_trackview_under( QPointF point )
 
 }
 
-TrackView* SheetView::get_trackview_under( QPointF point )
+TrackView* SheetView::get_trackview_at_scene_pos( QPointF point )
 {
 	QList<QGraphicsItem*> views = m_clipsViewPort->items(m_clipsViewPort->mapFromScene(point));
 
