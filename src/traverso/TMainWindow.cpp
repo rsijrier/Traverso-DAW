@@ -664,6 +664,7 @@ void TMainWindow::changeEvent(QEvent *event)
 			// clean up the ie after Alt-Tab
 			// if problems remain, maybe ie().reset() will help...
 			ied().reject_current_hold_actions();
+            break;
 		default:
 			break;
 	}

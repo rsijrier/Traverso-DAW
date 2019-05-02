@@ -505,9 +505,9 @@ void TInputEventDispatcher::reset()
 
 void TInputEventDispatcher::reject_current_hold_actions()
 {
-	m_activeModifierKeys.clear();
-	clear_hold_modifier_keys();
-	// Fake an escape key press, so if a hold action was
+    m_activeModifierKeys.clear();
+    clear_hold_modifier_keys();
+    // Fake an escape key press, so if a hold action was
 	// running it will be canceled!
 	if (is_holding()) {
 		process_press_event(Qt::Key_Escape);

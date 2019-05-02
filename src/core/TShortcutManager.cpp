@@ -435,14 +435,7 @@ void TShortcutManager::loadFunctions()
 	function->commandName = "EditPropertiesBase";
 	addFunction(function);
 
-	function = new TFunction();
-	function->object = "AudioTrack";
-	function->slotsignature = "toggle_show_clip_volume_automation";
-	function->m_description = tr("Clip Volume Automation");
-	function->commandName = "AudioTrackShowClipVolumeAutomation";
-	addFunction(function);
-
-	function = new TFunction();
+    function = new TFunction();
 	function->object = "AudioTrack";
 	function->slotsignature = "toggle_arm";
 	function->m_description = tr("Record: On/Off");
@@ -510,13 +503,6 @@ void TShortcutManager::loadFunctions()
 	function->slotsignature = "quick_start";
 	function->m_description = tr("Show Help");
 	function->commandName = "ShowHelp";
-	addFunction(function);
-
-	function = new TFunction();
-	function->object = "Track";
-	function->slotsignature = "toggle_show_track_volume_automation";
-	function->m_description = tr("Track Volume Automation");
-	function->commandName = "TrackShowVolumeAutomation";
 	addFunction(function);
 
 	function = new TFunction();
@@ -1138,7 +1124,22 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Browse to last Track in current View"));
 	function->commandName = "MainWindowNavigateToLastTrack";
 	addFunction(function);
+
+
+    createAndAddFunction("ProcessingData", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
+
 }
+
+void TShortcutManager::createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName)
+{
+    auto function = new TFunction();
+    function->object = object;
+    function->m_description = description;
+    function->slotsignature = slotSignature;
+    function->commandName = commandName;
+    addFunction(function);
+}
+
 
 void TShortcutManager::saveFunction(TFunction *function)
 {

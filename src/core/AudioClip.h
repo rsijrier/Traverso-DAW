@@ -59,7 +59,7 @@ public:
 	};
 	
 	void set_audio_source(ReadSource* source);
-        int init_recording();
+    int init_recording();
 	int process(nframes_t nframes);
 	
 	void set_track_start_location(const TimeRef& location);
@@ -106,17 +106,17 @@ public:
 
 	int recording_state() const;
 
-        float calculate_normalization_factor(float targetdB = 0.0);
+    float calculate_normalization_factor(float targetdB = 0.0);
 
-        void removed_from_track();
+    void removed_from_track();
 
 
 private:
-        Sheet*                  m_sheet;
-        AudioTrack* 		m_track;
-	ReadSource*		m_readSource;
-        WriteSource*		m_writer;
-	APILinkedList		m_fades;
+    Sheet*          m_sheet;
+    AudioTrack* 	m_track;
+    ReadSource*		m_readSource;
+    WriteSource*	m_writer;
+    APILinkedList	m_fades;
 	Peak* 			m_peak;
 	FadeCurve*		fadeIn;
 	FadeCurve*		fadeOut;
@@ -133,8 +133,8 @@ private:
 	bool			m_isLocked;
 	bool			m_isReadSourceValid;
 	bool			m_isMoving;
-        bool                    m_syncDuringDrag;
-	RecordingStatus		m_recordingStatus;
+    bool            m_syncDuringDrag;
+    RecordingStatus m_recordingStatus;
 	
 	qint64			m_readSourceId;
 	qint64			m_sheetId;
@@ -171,13 +171,14 @@ public slots:
 	TCommand* reset_fade_in();
 	TCommand* reset_fade_out();
 	TCommand* reset_fade_both();
-        TCommand* normalize();
+    TCommand* normalize();
 	TCommand* lock();
+    TCommand* toggle_show_gain_automation_curve();
 
 private slots:
 	void private_add_fade(FadeCurve* fade);
 	void private_remove_fade(FadeCurve* fade);
-        void update_global_configuration();
+    void update_global_configuration();
 };
 
 

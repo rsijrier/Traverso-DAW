@@ -67,6 +67,7 @@ public:
 	int getAutoRepeatStartDelay() const;
 	TFunction* getInheritedFunction() const {return m_inheritedFunction;}
 
+
 	bool usesAutoRepeat() const {return m_usesAutoRepeat;}
 	bool usesInheritedBase() const {return m_usesInheritedBase;}
 
@@ -135,6 +136,7 @@ class TShortcutManager : public QObject
 	Q_OBJECT
 public:
 
+    void createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName);
 	void addFunction(TFunction* function);
 	TFunction* getFunction(const QString& function) const;
 

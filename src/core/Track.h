@@ -112,7 +112,7 @@ private:
 public slots:
         TCommand* solo();
 	TCommand* toggle_presend();
-	TCommand* toggle_show_track_volume_automation();
+    TCommand* toggle_show_gain_automation_curve();
 
 private slots:
         void private_add_post_send(TSend*);

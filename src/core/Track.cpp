@@ -192,7 +192,7 @@ TCommand* Track::toggle_presend()
     return  nullptr;
 }
 
-TCommand* Track::toggle_show_track_volume_automation()
+TCommand* Track::toggle_show_gain_automation_curve()
 {
 	m_showTrackVolumeAutomation = !m_showTrackVolumeAutomation;
 	emit automationVisibilityChanged();
