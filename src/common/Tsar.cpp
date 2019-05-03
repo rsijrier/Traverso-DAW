@@ -155,10 +155,10 @@ void Tsar::process_events( )
 			++processedCount;
 	
 #if defined (profile)
-			int processtime = (int) (get_microseconds() - starttime);
+            int processtime = int(get_microseconds() - starttime);
 			printf("called %s::%s, (signal: %s) \n", event.caller->metaObject()->className(), 
-			(event.slotindex >= 0) ? event.caller->metaObject()->method(event.slotindex).signature() : "", 
-                        (event.signalindex >= 0) ? event.caller->metaObject()->method(event.signalindex).signature() : "");
+            (event.slotindex >= 0) ? event.caller->metaObject()->method(event.slotindex).methodSignature().data() : "",
+                        (event.signalindex >= 0) ? event.caller->metaObject()->method(event.signalindex).methodSignature().data() : "");
 			printf("Process time: %d useconds\n\n", processtime);
 #endif
 		}

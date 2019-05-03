@@ -398,7 +398,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                         cpointer().setCursorText(tr("Press Enter or %1 to accept, Esc to reject").arg(keyString));
                     }
 				} else {
-					PERROR("hold action begin_hold() failed!");
+                    PWARN("hold action begin_hold() returned -1");
 					// OOPSSS, something went wrong when making the Command
 					// set following stuff to zero to make finish_hold do nothing
                     delete command;
