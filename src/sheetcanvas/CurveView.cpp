@@ -106,12 +106,12 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
     QPen pen;
 
     QColor penColor;
+    // NOTE: setting penwidth to 2 increases cpu load by at least 5 times for this function
+    pen.setWidth(1);
     if (ignore_context()) {
         penColor = themer()->get_color("Curve:inactive");
-        pen.setWidth(1);
     } else {
          penColor = themer()->get_color("Curve:active");
-         pen.setWidth(2);
     }
     pen.setColor(penColor);
     painter->setPen(pen);
@@ -175,7 +175,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
                            nframes_t(pixelcount));
 
     for (int i=0; i<pixelcount; i+=3) {
-        polygon <<  QPointF(xstart + i, height - (buffer.at(i) * height) );
+        polygon <<  QPointF(xstart + i, height - qreal(buffer.at(i) * height) );
     }
 
     // Depending on the zoom level, curve nodes can end up to be aligned
@@ -190,15 +190,10 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         }
     }
 
-    // Which means we have to sort the polygon *sigh* (rather cpu costly, but what can I do?)
+    // Which means we have to sort the polygon
     qSort(polygon.begin(), polygon.end(), smallerpoint);
 
-    /*	for (int i=0; i<polygon.size(); ++i) {
-        printf("polygin %d, x=%d, y=%d\n", i, (int)polygon.at(i).x(), (int)polygon.at(i).y());
-    }*/
-
     painter->drawPolyline(polygon);
-
     painter->restore();
 }
 

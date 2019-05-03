@@ -73,7 +73,7 @@
 	<color alpha="170" red="255" blue="242" name="Timeline:text" green="254"/>
 	<color alpha="255" red="255" blue="255" name="Plugin:text" green="255"/>
 	<color alpha="255" red="255" blue="0" name="AudioClip:sampleoverload" green="0"/>
-        <color alpha="200" red="153" blue="21" name="Curve:active" green="101"/>
+        <color alpha="255" red="153" blue="21" name="Curve:active" green="101"/>
         <color alpha="140" red="153" blue="21" name="Curve:inactive" green="101"/>
         <color alpha="20" red="178" blue="182" name="AudioClip:channelseperator:selected" green="191"/>
 	<color alpha="235" red="82" blue="165" name="AudioClip:wavemacroview:brush:curvemode" green="130"/>
