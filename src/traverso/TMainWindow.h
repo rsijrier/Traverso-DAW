@@ -225,7 +225,7 @@ public slots :
         TCommand* show_open_project_dialog();
         TCommand* show_project_manager_dialog();
         TCommand* show_restore_project_backup_dialog(QString projectdir);
-        TCommand* show_insertsilence_dialog();
+        TCommand* show_insertsilence_dialog(AudioTrack *track=nullptr);
         TCommand* show_marker_dialog();
         TCommand* show_newsheet_dialog();
         TCommand* show_newtrack_dialog();

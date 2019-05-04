@@ -820,7 +820,7 @@ void TMainWindow::create_menus( )
 	m_projectMenuToolbarActions.append(action);
 	action->setIcon(QIcon(":/import-silence"));
 	m_editToolBar->addAction(action);
-	connect(action, SIGNAL(triggered()), this, SLOT(show_insertsilence_dialog()));
+    connect(action, SIGNAL(triggered()), this, SLOT(show_insertsilence_dialog()));
 
 	menu->addSeparator();
 	m_editToolBar->addSeparator();
@@ -1429,17 +1429,17 @@ TCommand * TMainWindow::show_newproject_dialog()
 	return 0;
 }
 
-TCommand * TMainWindow::show_insertsilence_dialog()
+TCommand * TMainWindow::show_insertsilence_dialog(AudioTrack *track)
 {
 	if (! m_insertSilenceDialog) {
 		m_insertSilenceDialog = new InsertSilenceDialog(this);
 	}
 
-	m_insertSilenceDialog->setTrack(0);
+    m_insertSilenceDialog->setTrack(track);
 	m_insertSilenceDialog->focusInput();
 	m_insertSilenceDialog->show();
 
-	return 0;
+    return ied().succes();
 }
 
 

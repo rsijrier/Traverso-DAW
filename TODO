@@ -1,6 +1,6 @@
 TOBEDONE FOR 0.50.x
 
-* Select Clip does not work from context menu, it waits for enter/escape to finish hold commmand
+* import silence creates non movable AudioClip
 * Setting input bus for AudioTrack: update vumeter monitoring  on the newly added bus, not the configuration on the old bus
 * CurveView does not seem to overlap AudioClipView, cursor changes to early to AudioClipView from CurveView when
   moving to edge of CurveView

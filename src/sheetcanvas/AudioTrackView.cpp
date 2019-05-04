@@ -128,9 +128,7 @@ void AudioTrackView::load_theme_data()
 
 TCommand* AudioTrackView::insert_silence()
 {
-    TMainWindow::instance()->show_insertsilence_dialog();
-    TMainWindow::instance()->set_insertsilence_track(m_track);
-    return nullptr;
+    return TMainWindow::instance()->show_insertsilence_dialog(m_track);
 }
 
 void AudioTrackView::to_front(AudioClipView * view)
