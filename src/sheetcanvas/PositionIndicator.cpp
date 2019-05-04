@@ -53,7 +53,7 @@ void PositionIndicator::calculate_bounding_rect()
     QFontMetrics fm(themer()->get_font("TrackPanel:fontscale:name"));
     QRect rect = fm.boundingRect(m_value);
     m_boundingRect = QRectF(0, 0, rect.width() + 16, rect.height() + 8);
-	
+
     m_background = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
 	m_background.fill(QColor(Qt::transparent));
 	

@@ -64,11 +64,11 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
     if (m_curveview->ignore_context()) {
         return;
     }
-	
+
 	painter->save();
 
 	painter->setRenderHint(QPainter::Antialiasing);
-	
+
 	QColor color = m_color;
     QColor hardSelectOutlineColor(Qt::white);
 
@@ -95,10 +95,10 @@ void CurveNodeView::calculate_bounding_rect()
 {
     prepareGeometryChange();
 
-    int size = 9;//themer()->get_property("CurveNode:diameter", 6).toInt();
+    int size = 8;//themer()->get_property("CurveNode:diameter", 6).toInt();
 
     if (m_isSoftSelected) {
-        m_boundingRect.setWidth(size + 3);
+        m_boundingRect.setWidth(size + 2);
         m_boundingRect.setHeight(m_boundingRect.width());
     } else {
         m_boundingRect.setWidth(size);
@@ -118,7 +118,7 @@ void CurveNodeView::update_pos( )
 {
 	qreal halfwidth = (m_boundingRect.width() / 2);
 	qreal parentheight = m_parentViewItem->get_height();
-	qreal when = ((TimeRef(m_node->get_when()) - m_curveview->get_start_offset()) / m_sv->timeref_scalefactor) - halfwidth;
+    qreal when = ((TimeRef(m_node->get_when()) - m_curveview->get_start_offset()) / m_sv->timeref_scalefactor) - halfwidth;
 	qreal value = parentheight - (m_node->get_value() * parentheight + halfwidth);
 	setPos(when, value);
 		
