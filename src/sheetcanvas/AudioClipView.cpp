@@ -439,13 +439,10 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
             }
 
             if (m_paintWithOutline) {
-                if (m_sheet->get_mode() == Sheet::EDIT) {
-                    p->setPen(themer()->get_color("AudioClip:wavemacroview:outline"));
-                } else  {
-                    p->setPen(themer()->get_color("AudioClip:wavemacroview:outline:curvemode"));
-                }
                 if (m_clip->is_muted()) {
                     p->setPen(themer()->get_color("AudioClip:wavemacroview:outline:muted"));
+                } else {
+                    p->setPen(themer()->get_color("AudioClip:wavemacroview:outline"));
                 }
             } else {
                 p->setPen(Qt::NoPen);
