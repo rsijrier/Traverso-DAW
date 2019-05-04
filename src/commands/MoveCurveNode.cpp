@@ -193,7 +193,7 @@ int MoveCurveNode::check_and_apply_when_and_value_diffs()
         // Use a delegate (or something similar) in the future that set's the correct value.
 	if (m_nodeDatas.size() == 1) {
 		float dbFactor = coefficient_to_dB(m_nodeDatas.first().origValue + m_valueDiff);
-		cpointer().setCursorText(QByteArray::number(dbFactor, 'f', 2).append(" dB"));
+        cpointer().setCursorText(QByteArray::number(dbFactor, 'f', 1).append(" dB"));
 	}
 
     return do_action();
