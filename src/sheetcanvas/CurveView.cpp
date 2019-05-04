@@ -112,6 +112,8 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         penColor = themer()->get_color("Curve:inactive");
     } else {
          penColor = themer()->get_color("Curve:active");
+         QColor backgroundColor(0, 0, 0, 30);
+         painter->fillRect(option->exposedRect, QBrush(backgroundColor));
     }
     pen.setColor(penColor);
     painter->setPen(pen);
@@ -447,7 +449,7 @@ TCommand* CurveView::drag_node()
     TimeRef startLocation = TimeRef(selectedNodes.first()->get_when());
     TimeRef endLocation  = TimeRef(selectedNodes.last()->get_when());
     TimeRef minWhenDiff = min - startLocation;
-    TimeRef maxWhenDiff = max - endLocation;
+    TimeRef maxWhenDiff = max - endLocation + m_startoffset;
 
 
     double maxValue = DBL_MIN;
