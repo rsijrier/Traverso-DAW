@@ -54,6 +54,7 @@ private:
 	QTimer			m_timer;
 
 	void create_cursor_pixmap(const QString& shape);
+    void update_textitem_pos();
 
 private slots:
 	void timer_timeout();
