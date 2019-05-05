@@ -56,8 +56,8 @@ public:
 
 private:
     RingBufferNPT<CorrelationMeterData>*	m_databuffer;
-    CorrelationMeterData			m_history;
-    qreal					m_fract;
+    CorrelationMeterData			m_history{};
+    qreal					m_fract{};
     int					m_bufferreadouts;
 
 private slots:

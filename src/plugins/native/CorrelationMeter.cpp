@@ -25,8 +25,8 @@ $Id: CorrelationMeter.cpp,v 1.6 2008/02/10 23:47:06 n_doebelin Exp $
 #include <AudioBus.h>
 #include <AudioDevice.h>
 #include <Debugger.h>
-#include <math.h>
-#include <limits.h>
+#include <cmath>
+#include <climits>
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -38,7 +38,6 @@ $Id: CorrelationMeter.cpp,v 1.6 2008/02/10 23:47:06 n_doebelin Exp $
 
 
 CorrelationMeter::CorrelationMeter()
-	: Plugin()
 {
 	// constructs a ringbuffer that can hold 150 CorrelationMeterData structs
 	m_databuffer = new RingBufferNPT<CorrelationMeterData>(RINGBUFFER_SIZE);
@@ -125,19 +124,19 @@ void CorrelationMeter::process(AudioBus* bus, nframes_t nframes)
     if ((a1sq == 0.0) || (a2sq == 0.0)) {
 		r = 1.0;
 	} else {
-        r = a1a2 / (sqrtf64(a1sq) * sqrtf64(a2sq));
+        r = a1a2 / (sqrtf(a1sq) * sqrtf(a2sq));
 	}
 
 	// calculate RMS of the levels
-    levelLeft = sqrtf64(levelLeft / nframes);
-    levelRight = sqrtf64(levelRight / nframes);
+    levelLeft = sqrtf(levelLeft / nframes);
+    levelRight = sqrtf(levelRight / nframes);
 
 	// And we store this in a CorrelationMeterData struct
 	// and write this struct into the data ringbuffer,
 	// to be processed later in get_data()
 	// levelLeft and levelRight are also needed to calculate the
 	// correct direction in get_data(), so we store that too!
-	CorrelationMeterData data;
+    CorrelationMeterData data{};
 	data.r = r;
 	data.levelLeft = levelLeft;
 	data.levelRight = levelRight;
@@ -178,7 +177,7 @@ int CorrelationMeter::get_data(qreal& r, qreal& direction)
     int readcount = int(m_databuffer->read_space());
 
 	// Create an empty CorrelationMeterData struct data,
-	CorrelationMeterData data;
+    CorrelationMeterData data{};
 
 	// We need to know the 'history' of these variables to get a smooth
 	// and consistent (independend of buffersizes) stereometer behaviour.
