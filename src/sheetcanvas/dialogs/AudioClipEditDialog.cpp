@@ -40,6 +40,7 @@ AudioClipEditDialog::AudioClipEditDialog(AudioClip* clip, QWidget* parent)
 	: QDialog(parent), m_clip(clip)
 {
 	setupUi(this);
+    setAttribute(Qt::WA_DeleteOnClose);
 
 	locked = false;
 	
@@ -96,7 +97,11 @@ AudioClipEditDialog::AudioClipEditDialog(AudioClip* clip, QWidget* parent)
 	
 	connect(externalProcessingButton, SIGNAL(clicked()), this, SLOT(external_processing()));
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(save_changes()));
-	connect(buttonBox, SIGNAL(rejected()), this, SLOT(cancel_changes()));
+    connect(buttonBox, SIGNAL(rejected()), this, SLOT(cancel_changes()));
+}
+
+AudioClipEditDialog::~AudioClipEditDialog()
+{
 }
 
 
@@ -156,7 +161,6 @@ void AudioClipEditDialog::clip_position_changed()
 
 void AudioClipEditDialog::fadein_length_changed()
 {
-	if (ied().is_holding()) return;
 	if (locked) return;
 	
 	TimeRef ref(qint64(m_clip->get_fade_in()->get_range()));

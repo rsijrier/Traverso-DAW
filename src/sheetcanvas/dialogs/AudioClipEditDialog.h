@@ -38,7 +38,7 @@ class AudioClipEditDialog : public QDialog, protected Ui::AudioClipEditDialog
 
 public:
 	AudioClipEditDialog(AudioClip* clip, QWidget* parent);
-	~AudioClipEditDialog() {}
+    ~AudioClipEditDialog();
 
 private:
 	AudioClip* m_clip;

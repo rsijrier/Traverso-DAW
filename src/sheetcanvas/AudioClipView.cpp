@@ -708,11 +708,15 @@ void AudioClipView::calculate_bounding_rect()
     m_height = m_parentViewItem->get_height();
     m_boundingRect = QRectF(0, 0, (double(m_clip->get_length().universal_frame()) / m_sv->timeref_scalefactor), m_height);
 
-    if  (!m_clip->get_channel_count()) {
-        return;
+    uint channelCount = m_clip->get_channel_count();
+
+    // A silent clip readsource on purpose has 0 channels
+    // catch and deal with this to avoid a division by 0 below
+    if  (channelCount == 0) {
+        channelCount = 1;
     }
 
-    if ((m_height / m_clip->get_channel_count()) < 30) {
+    if ((m_height / int(channelCount)) < 30) {
         m_classicView = false;
     } else {
         m_classicView = ! config().get_property("Themer", "paintaudiorectified", false).toBool();
@@ -909,9 +913,9 @@ TCommand * AudioClipView::set_audio_file()
 
 TCommand * AudioClipView::edit_properties()
 {
-    AudioClipEditDialog editdialog(m_clip, TMainWindow::instance());
+    auto editdialog = new AudioClipEditDialog(m_clip, TMainWindow::instance());
 
-    editdialog.exec();
+    editdialog->show();
 
     return nullptr;
 }
