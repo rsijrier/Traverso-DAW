@@ -721,7 +721,7 @@ int Sheet::process( nframes_t nframes )
 	}
 
 	if (m_stopTransport) {
-		m_transport = false;
+        m_transport = 0;
 		m_realtimepath = false;
 		m_stopTransport = false;
 		
@@ -1060,7 +1060,7 @@ void Sheet::initiate_seek_start(TimeRef location)
 void Sheet::start_transport_rolling(bool realtime)
 {
 	m_realtimepath = true;
-	m_transport = 1;
+    t_atomic_int_set(&m_transport, 1);
 	
 	if (realtime) {
         RT_THREAD_EMIT(this, nullptr, transportStarted());
@@ -1176,7 +1176,7 @@ void Sheet::start_seek()
 		m_resumeTransport = true;
 	}
 
-	m_transport = false;
+    m_transport = 0;
 	m_startSeek = 0;
 	
 	// only sets a boolean flag, save to call.

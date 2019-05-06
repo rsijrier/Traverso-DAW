@@ -275,12 +275,12 @@ QPoint TSession::get_scrollbar_xy()
 	return point;
 }
 
-int TSession::is_transport_rolling() const
+bool TSession::is_transport_rolling() const
 {
 	if (m_parentSession) {
 		return m_parentSession->is_transport_rolling();
 	}
-	return m_transport;
+    return m_transport == 1;
 }
 
 bool TSession::is_child_session() const
@@ -307,7 +307,7 @@ void TSession::set_hzoom( qreal hzoom )
 	// (yet) for zoomlevels other then powers of 2, so we force that for now.
 	// NOTE: Remove those 2 lines when floating point zoomlevel is implemented!
 	int highbit;
-	hzoom = nearest_power_of_two(hzoom, highbit);
+    hzoom = nearest_power_of_two(ulong(hzoom), highbit);
 
 
 	if (hzoom > Peak::max_zoom_value()) {
@@ -318,7 +318,7 @@ void TSession::set_hzoom( qreal hzoom )
 		hzoom = 1.0;
 	}
 
-	if (m_hzoom == hzoom) {
+    if (qFuzzyCompare(m_hzoom, hzoom)) {
 		return;
 	}
 
@@ -332,12 +332,6 @@ void TSession::set_work_at(TimeRef location, bool isFolder)
 	if (m_parentSession) {
         m_parentSession->set_work_at(location, isFolder);
     }
-}
-
-void TSession::set_edit_point_location(const EditPointLocation& editPoint)
-{
-	m_editPointLocation.location = editPoint.location;
-	m_editPointLocation.sceneY = editPoint.sceneY;
 }
 
 void TSession::set_transport_pos(TimeRef location)
@@ -404,7 +398,7 @@ TCommand* TSession::toggle_solo()
 		track->set_muted_by_solo(false);
 	}
 
-	return (TCommand*) 0;
+    return nullptr;
 }
 
 TCommand* TSession::toggle_mute()
@@ -422,7 +416,7 @@ TCommand* TSession::toggle_mute()
 		track->set_muted(!hasMute);
 	}
 
-	return (TCommand*) 0;
+    return nullptr;
 }
 
 TCommand* TSession::toggle_arm()
@@ -444,7 +438,7 @@ TCommand* TSession::toggle_arm()
 		}
 	}
 
-	return (TCommand*) 0;
+    return nullptr;
 }
 
 
@@ -453,7 +447,7 @@ TCommand* TSession::start_transport()
 	if (m_parentSession) {
 		return m_parentSession->start_transport();
 	}
-	return 0;
+    return nullptr;
 }
 
 
@@ -462,7 +456,7 @@ TCommand* TSession::add_track(Track* track, bool historable)
 	if (is_child_session()) {
 		set_track_height(track->get_id(), m_parentSession->get_track_height(track->get_id()));
 		private_track_added(track);
-		return 0;
+        return nullptr;
 	}
 
 	return new AddRemove(this, track, historable, this,
@@ -476,7 +470,7 @@ TCommand* TSession::remove_track(Track* track, bool historable)
 {
 	if (m_parentSession) {
 		private_track_removed(track);
-		return 0;
+        return nullptr;
 	}
 
 	return new AddRemove(this, track, historable, this,
@@ -518,10 +512,10 @@ void TSession::private_track_added(Track *track)
 {
 	switch(track->get_type()) {
 	case Track::AUDIOTRACK:
-		m_audioTracks.append((AudioTrack*)track);
+        m_audioTracks.append(qobject_cast<AudioTrack*>(track));
 		break;
 	case Track::BUS:
-		m_busTracks.append((TBusTrack*)track);
+        m_busTracks.append(qobject_cast<TBusTrack*>(track));
 		break;
 	default:
         qFatal("TSession::private_track_added() Unknown Track type, this is a programming error!");
@@ -540,10 +534,10 @@ void TSession::private_track_removed(Track *track)
 {
 	switch(track->get_type()) {
 	case Track::AUDIOTRACK:
-		m_audioTracks.removeAll((AudioTrack*)track);
+        m_audioTracks.removeAll(qobject_cast<AudioTrack*>(track));
 		break;
 	case Track::BUS:
-		m_busTracks.removeAll((TBusTrack*)track);
+        m_busTracks.removeAll(qobject_cast<TBusTrack*>(track));
 		break;
 	default:
         qFatal("TSession::private_track_removed() Unknown Track type, this is a programming error!");

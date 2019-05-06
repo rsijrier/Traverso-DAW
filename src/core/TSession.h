@@ -35,17 +35,12 @@ class TBusTrack;
 class Track;
 class TimeLine;
 
-struct EditPointLocation {
-	TimeRef location;
-	int     sceneY;
-};
-
 class TSession : public ContextItem
 {
 	Q_OBJECT
 
 public:
-	TSession(TSession* parentSession = 0);
+    TSession(TSession* parentSession = nullptr);
 
 	QDomNode get_state(QDomDocument doc);
 	int set_state( const QDomNode & node );
@@ -54,9 +49,8 @@ public:
 	qreal get_hzoom() const;
 	QPoint get_scrollbar_xy();
 	int get_mode() const {return m_mode;}
-	int is_transport_rolling() const;
+    bool is_transport_rolling() const;
 	TimeRef get_work_location() const;
-	EditPointLocation get_edit_point_location() {return m_editPointLocation;}
 	virtual TimeRef get_last_location() const;
 	TimeRef get_new_transport_location() const {return m_newTransportLocation;}
 	virtual TimeRef get_transport_location() const;
@@ -77,7 +71,6 @@ public:
 
 	void set_hzoom(qreal hzoom);
     virtual void set_work_at(TimeRef location, bool isFolder=false);
-    void set_edit_point_location(const EditPointLocation& editPoint);
 	void set_scrollbar_xy(int x, int y);
 	void set_scrollbar_x(int x);
 	void set_scrollbar_y(int y);
@@ -116,7 +109,6 @@ protected:
 	SnapList*	m_snaplist;
 	Snappable*	m_workSnap;
 	TimeLine*	m_timeline;
-	EditPointLocation m_editPointLocation;
 	QString         m_name;
 
 	int		m_mode{};
