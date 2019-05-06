@@ -26,6 +26,7 @@ $Id: FileHelpers.cpp,v 1.10 2007/11/05 15:49:30 r_sijrier Exp $
 #include <unistd.h>
 
 #include "TConfig.h"
+#include "Information.h"
 #include <QDir>
 #include <Utils.h>
 #include <QObject>
@@ -43,19 +44,19 @@ int FileHelper::remove_recursively(const QString& pName)
 	QFileInfo fileInfo(name);
 
 	if (!fileInfo.exists()) {
-//		PERROR("File does not exist! %s", QS_C(name));
+        info().warning(tr("File does not exist! %1").arg(name));
 		return -1;
 	}
 
 	if (!fileInfo.isWritable()) {
-//		PERROR("failed to remove %s: you don't have write access to it\n", name.toLatin1().data());
+        info().warning(tr("failed to remove %s: you don't have write access to it").arg(name));
 		return -1;
 	}
 
 	if(fileInfo.isFile()) {
 		QFile file(name);
 		if (!file.remove()) {
-//			PERROR("failed to remove file %s\n", name.toLatin1().data());
+            info().warning(tr("failed to remove file %1").arg(name));
 			return -1;
 		}
 		return 1;
@@ -69,14 +70,14 @@ int FileHelper::remove_recursively(const QString& pName)
 			if ((fi.fileName() != ".") && (fi.fileName() != "..")) {
 				QString nextFileName = pName + "/" + fi.fileName();
 				if (remove_recursively(nextFileName) < 0) {
-//					PERROR("failed to remove directory %s\n", nextFileName.toLatin1().data());
+                    info().warning(tr("failed to remove directory %1").arg(nextFileName));
 					return -1;
 				}
 			}
 		}
 
 		if (!dir.rmdir(name)) {
-//			PERROR("failed to remove directory %s\n", name.toLatin1().data());
+            info().warning(tr("failed to remove directory %1").arg(name));
 			return -1;
 		}
 
@@ -89,7 +90,7 @@ int FileHelper::remove_recursively(const QString& pName)
 
 int FileHelper::copy_recursively(const QString& pNameFrom, const QString& pNameTo)
 {
-#if defined (Q_WS_X11) || defined (Q_WS_MAC)
+#if defined (Q_OS_UNIX) || defined (Q_OS_MAC)
 	QString nameFrom = config().get_property("Project", "directory", "/directory/unknown").toString();
 	QString nameTo(nameFrom);
 
@@ -100,25 +101,25 @@ int FileHelper::copy_recursively(const QString& pNameFrom, const QString& pNameT
 	QFileInfo fileToInfo(nameTo);
 
 	if (!fileFromInfo.exists()) {
-		PERROR("File or directory %s doesn't exist\n", pNameFrom.toLatin1().data());
+        info().warning(tr("File or directory %1 doesn't exist\n").arg(pNameFrom));
 		return -1;
 	}
 	if (fileToInfo.exists()) {
-		PERROR("File or directory %s already exists", pNameTo.toLatin1().data());
+        info().warning(tr("File or directory %1 already exists").arg(pNameTo));
 		return -1;
 	}
 
 	if(fileFromInfo.isFile()) {
 		QFile fileFrom(nameFrom);
 		if (!fileFrom.open(QIODevice::ReadOnly)) {
-			PERROR("failed to open file %s for reading\n", nameFrom.toLatin1().data());
+            info().warning(tr("failed to open file %1 for reading\n").arg(nameFrom));
 			return -1;
 		}
 
 		QFile fileTo(nameTo);
 		if (!fileTo.open(QIODevice::WriteOnly)) {
 			fileFrom.close();
-			PERROR("failed to open file for writting%s\n", nameFrom.toLatin1().data());
+            info().warning(tr("failed to open file for writting %1").arg(nameFrom));
 			return -1;
 		}
 
@@ -145,7 +146,7 @@ int FileHelper::copy_recursively(const QString& pNameFrom, const QString& pNameT
 			if (nRead < 0) {
 				fileFrom.close();
 				fileTo.close();
-				PERROR("Error while reading file %s\n", nameFrom.toLatin1().data());
+                info().warning(tr("Error while reading file %1").arg(nameFrom));
 				return -1;
 			}
 			if (nRead == 0)
@@ -153,7 +154,7 @@ int FileHelper::copy_recursively(const QString& pNameFrom, const QString& pNameT
 			if (write(fileDescTo, buffer, nRead) < 0) {
 				fileFrom.close();
 				fileTo.close();
-				PERROR("Error while writing file %s\n", nameTo.toLatin1().data());
+                info().warning(tr("Error while writing file %1").arg(nameTo));
 				return -1;
 			}
 		}
@@ -166,8 +167,9 @@ int FileHelper::copy_recursively(const QString& pNameFrom, const QString& pNameT
 	} else if(fileFromInfo.isDir()) {
 		QDir dirFrom(nameFrom);
 		QDir dirTo(nameTo);
-		if (!dirTo.mkdir(nameTo)) {
-			PERROR("failed to create directory %s\n", nameTo.toLatin1().data());
+        if (!dirTo.mkdir(nameTo)) {
+
+            info().warning(tr("failed to create directory %1").arg(nameTo));
 			return -1;
 		}
 

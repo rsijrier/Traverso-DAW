@@ -24,9 +24,12 @@ $Id: FileHelpers.h,v 1.4 2007/10/06 14:17:58 r_sijrier Exp $
 #define FILE_HELPER_H
 
 #include <QString>
+#include <QObject>
 
-class FileHelper
+class FileHelper : QObject
 {
+    Q_OBJECT
+
 public:
 
 	static int remove_recursively(const QString& pName);
