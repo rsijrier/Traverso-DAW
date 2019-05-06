@@ -32,7 +32,7 @@
 #include "Utils.h"
 
 
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 #define CDRDAO_BIN	"cdrdao.exe"
 #else
 #define CDRDAO_BIN	"cdrdao"
@@ -156,9 +156,9 @@ void CDWritingDialog::query_devices()
 	m_writingState = QUERY_DEVICE;
 	cdDeviceComboBox->clear();
 
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	m_burnprocess->start(CDRDAO_BIN, QStringList() << "scanbus");
-#elif defined (Q_WS_MAC)
+#elif defined (Q_OS_MAC)
 	cdDeviceComboBox->clear();
 	cdDeviceComboBox->addItem("IODVDServices");
 	cdDeviceComboBox->addItem("IODVDServices/2");
@@ -191,7 +191,7 @@ void CDWritingDialog::unlock_device()
 
 	QStringList args;
 	args  << "unlock" << "--device" << device;
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	m_burnprocess->start(qApp->applicationDirPath() + "/cdrdao", args);
 #else
 	m_burnprocess->start(CDRDAO_BIN, args);
@@ -425,7 +425,7 @@ void CDWritingDialog::write_to_cd()
 	
 	printf("%s arguments: %s\n", QS_C(burnprogram), QS_C(arguments.join(" ")));
 
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	m_burnprocess->start(qApp->applicationDirPath() + "/cdrdao", arguments);
 #else
 	m_burnprocess->start(burnprogram, arguments);
@@ -505,7 +505,7 @@ void CDWritingDialog::read_standard_output()
 				update_cdburn_status(tr("Cannot access CD Writer, is it in use ?"), ERROR_MESSAGE);
 				return;
 			}
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 			if (QString(data).contains(QRegExp("[0-9],[0-9],[0-9]"))) {
 #else
 			if (data.contains("/dev/") || data.contains("dev=")) {
@@ -566,7 +566,7 @@ void CDWritingDialog::read_standard_output()
 	if (sout.contains("Disk seems to be written")) {
 		int index = cdDeviceComboBox->currentIndex();
 		if (index != -1) {
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 			// No idea if this works.....
 			QProcess::execute("rsm.exe", QStringList() << "eject" << "/n0");
 #else
@@ -682,7 +682,7 @@ void CDWritingDialog::set_was_closed()
 
 QString CDWritingDialog::get_device(int index)
 {
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	return cdDeviceComboBox->currentText();
 #else
 	return cdDeviceComboBox->itemData(index).toString();

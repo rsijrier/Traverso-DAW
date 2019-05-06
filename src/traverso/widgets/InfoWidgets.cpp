@@ -45,9 +45,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QAction>
 
 
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 #include <windows.h>
-#elif defined (Q_WS_MAC)
+#elif defined (Q_OS_MAC)
 #include <sys/param.h>
 #include <sys/mount.h>
 #else
@@ -61,7 +61,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 static const int SONG_TOOLBAR_HEIGHT = 27;
 #else
 static const int SONG_TOOLBAR_HEIGHT = 24;
@@ -300,7 +300,7 @@ void HDDSpaceInfo::update_status( )
 	
 	double space = 0.0;
 	
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	__int64 freebytestocaller, totalbytes, freebytes; 
 	if (! GetDiskFreeSpaceEx ((const CHAR*)(QS_C(m_project->get_root_dir())),
 					(PULARGE_INTEGER)&freebytestocaller,

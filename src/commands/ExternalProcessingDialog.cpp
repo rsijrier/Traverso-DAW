@@ -237,7 +237,7 @@ void ExternalProcessingDialog::command_lineedit_text_changed(const QString & tex
 {
 	m_program = text.simplified();
 	if (m_program == "sox") {
-		#if defined (Q_WS_MAC)
+		#if defined (Q_OS_MAC)
 			m_program = qApp->applicationDirPath() + "/sox";
 		#endif
 

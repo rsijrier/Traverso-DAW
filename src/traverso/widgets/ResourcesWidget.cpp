@@ -65,7 +65,7 @@ void FileWidget::showEvent( QShowEvent * event ) {
 		
 	m_box = new QComboBox(this);
 	m_box->addItem("", "");
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	m_box->addItem(tr("My Computer"), "");
 	m_box->addItem(tr("My Documents"), QDir::homePath() + "\\" + tr("My Documents"));
 #else
@@ -120,7 +120,7 @@ void FileWidget::dir_up_button_clicked()
 {
 	QDir dir(m_dirModel->filePath(m_dirView->rootIndex()));
 	
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	if (m_dirModel->filePath(m_dirView->rootIndex()) == "") {
 		return;
 	}
@@ -130,7 +130,7 @@ void FileWidget::dir_up_button_clicked()
 	dir.cdUp();
 	QString text = dir.canonicalPath();
 	
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	if (oldDir == dir.canonicalPath()) {
 		dir.setPath("");
 		text = tr("My Computer");

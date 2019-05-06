@@ -146,13 +146,13 @@ void AudioDriverConfigPage::reset_default_config()
 #endif
 	
 #if defined (PORTAUDIO_SUPPORT)
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 	config().set_property("Hardware", "pahostapi", "alsa");
 #endif
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	config().set_property("Hardware", "pahostapi", "coreaudio");
 #endif
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	config().set_property("Hardware", "pahostapi", "wmme");
 #endif
 #endif //end PORTAUDIO_SUPPORT
@@ -169,7 +169,7 @@ void AudioDriverConfigPage::load_config( )
 {
 	int samplerate = config().get_property("Hardware", "samplerate", 44100).toInt();
     int buffersize = config().get_property("Hardware", "buffersize", 512).toInt();
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 	QString driverType = config().get_property("Hardware", "drivertype", "ALSA").toString();
 #else
 	QString driverType = config().get_property("Hardware", "drivertype", "PortAudio").toString();
@@ -238,20 +238,20 @@ void AudioDriverConfigPage::load_config( )
 	m_portaudiodrivers->driverCombo->clear();
 	QString defaulthostapi = "";
 
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 	m_portaudiodrivers->driverCombo->addItem("ALSA", "alsa");
 	m_portaudiodrivers->driverCombo->addItem("Jack", "jack");
 	m_portaudiodrivers->driverCombo->addItem("OSS", "oss");
 	defaulthostapi = "jack";
 #endif
 
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	m_portaudiodrivers->driverCombo->addItem("Core Audio", "coreaudio");
 	m_portaudiodrivers->driverCombo->addItem("Jack", "jack");
 	defaulthostapi = "coreaudio";
 #endif
 
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
 	m_portaudiodrivers->driverCombo->addItem("MME", "wmme");
 	m_portaudiodrivers->driverCombo->addItem("Direct Sound", "directsound");
         m_portaudiodrivers->driverCombo->addItem("WASAPI", "wasapi");

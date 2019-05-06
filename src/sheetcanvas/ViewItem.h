@@ -35,7 +35,7 @@ class SheetView;
 // Canvas width should be 2^31, but it doesn't work ok
 // 2^30 works ok, so let's use that, still gives a lot 
 // of headroom for real large recordings
-#if ! defined (Q_WS_WIN)
+#if ! defined (Q_OS_WIN)
 #define MAX_CANVAS_WIDTH 1073741824
 #define MAX_CANVAS_HEIGHT 1073741824
 #else		

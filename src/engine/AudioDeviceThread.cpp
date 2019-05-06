@@ -25,7 +25,7 @@ $Id: AudioDeviceThread.cpp,v 1.21 2007/10/20 17:38:19 r_sijrier Exp $
 #include "AudioDevice.h"
 #include "TAudioDriver.h"
 
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 #include <dlfcn.h>
 #include <sys/resource.h>
 #include <sched.h>
@@ -52,7 +52,7 @@ public:
 protected:
 	void run() override
 	{
-#if defined (Q_WS_X11) || defined (Q_WS_MAC)
+#if defined (Q_OS_UNIX) || defined (Q_OS_MAC)
 		struct sched_param param;
 		param.sched_priority = 90;
 		if (pthread_setschedparam (pthread_self(), SCHED_FIFO, &param) != 0) {}
@@ -66,7 +66,7 @@ protected:
 			if (guardedThread->watchdogCheck == 0) {
 				qCritical("WatchDog timed out!");
 //				guardedThread->terminate();
-#if defined (Q_WS_X11) || defined (Q_WS_MAC)
+#if defined (Q_OS_UNIX) || defined (Q_OS_MAC)
 				kill (-getpgrp(), SIGABRT);
 #endif
 			}
@@ -118,7 +118,7 @@ void AudioDeviceThread::run()
 int AudioDeviceThread::become_realtime( bool realtime )
 {
 	m_realTime = realtime;
-#if defined (Q_WS_X11) || defined (Q_WS_MAC)
+#if defined (Q_OS_UNIX) || defined (Q_OS_MAC)
 
 	/* RTC stuff */
 	if (realtime) {
@@ -143,13 +143,13 @@ int AudioDeviceThread::become_realtime( bool realtime )
 }
 
 
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 typedef int* (*setaffinity_func_type)(pid_t,unsigned int,cpu_set_t *);
 #endif
 
 void AudioDeviceThread::run_on_cpu( int cpu )
 {
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 	void *setaffinity_handle = dlopen(NULL, RTLD_LAZY);// NULL might not be portable to platforms other than linux - tajmorton@gmail.com
 	
 	setaffinity_func_type setaffinity_func;
@@ -160,13 +160,13 @@ void AudioDeviceThread::run_on_cpu( int cpu )
 		CPU_ZERO(&mask);
 		CPU_SET(cpu, &mask);
 		if (setaffinity_func(0, sizeof(mask), &mask)) {
-			PWARN("Unable to set CPU affinity\n");
+            printf("AudioDeviceThread: Unable to set CPU affinity\n");
 		} else {
-			PMESG("Running AudioDeviceThread on CPU %d\n", cpu);
+            printf("AudioDeviceThread: Running on CPU %d\n", cpu);
 		}
 	}
 	else {
-		PWARN("Unable to set CPU affinity (glibc is too old)\n");
+        printf("AudioDeviceThread: Unable to set CPU affinity (glibc is too old)\n");
 	}
 #endif
 }

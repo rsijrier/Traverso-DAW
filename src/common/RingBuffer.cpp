@@ -30,9 +30,9 @@
 #include <string.h>
 #ifdef USE_MLOCK
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include <sys/types.h>
-#endif /* Q_WS_MAC */
+#endif /* Q_OS_MAC */
 
 #include <sys/mman.h>
 #endif /* USE_MLOCK */

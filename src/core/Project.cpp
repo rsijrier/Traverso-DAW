@@ -666,7 +666,7 @@ void Project::prepare_audio_device(QDomDocument doc)
 //        ads.jackChannels.append(m_softwareAudioChannels.values());
 
         if (ads.driverType.isEmpty() || ads.driverType.isNull()) {
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
                 ads.driverType = config().get_property("Hardware", "drivertype", "ALSA").toString();
 #else
                 ads.driverType = config().get_property("Hardware", "drivertype", "PortAudio").toString();
@@ -700,11 +700,11 @@ void Project::prepare_audio_device(QDomDocument doc)
 #if defined (PORTAUDIO_SUPPORT)
         if (ads.driverType == "PortAudio") {
                 if (ads.cardDevice.isEmpty()) {
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
                         ads.cardDevice = config().get_property("Hardware", "pahostapi", "alsa").toString();
-#elif defined (Q_WS_MAC)
+#elif defined (Q_OS_MAC)
                         ads.cardDevice = config().get_property("Hardware", "pahostapi", "coreaudio").toString();
-#elif defined (Q_WS_WIN)
+#elif defined (Q_OS_WIN)
                         ads.cardDevice = config().get_property("Hardware", "pahostapi", "wmme").toString();
 #endif
                 }
@@ -726,7 +726,7 @@ int Project::disconnect_from_audio_device()
         int count = 0;
         while(m_audiodeviceClient->is_connected()) {
                 printf("Project: Waiting to be disconnected from Audio Device\n");
-#if defined (Q_WS_WIN)
+#if defined (Q_OS_WIN)
                 Sleep(20);
 #else
                 usleep(20 * 1000);

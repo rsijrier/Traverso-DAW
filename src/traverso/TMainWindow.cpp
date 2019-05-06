@@ -234,7 +234,7 @@ TMainWindow::TMainWindow()
 //        m_mainMenuToolBar->setStyleSheet("margin-top: 0px; margin-bottom: 0px;");
 	m_mainMenuToolBar->setMovable(false);
 
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	// OS X is a lot pickier about menu bars. If we don't use
 	// QMainWindow::menuBar(), the menus won't be shown at all.
 	// If possible, I would recommend using the same solution
@@ -265,7 +265,7 @@ TMainWindow::TMainWindow()
 	m_transportConsole = new TransportConsoleWidget(this);
 	m_transportConsole->setObjectName("Transport Console");
 
-#if defined (Q_WS_MAC)
+#if defined (Q_OS_MAC)
 	// this is important only when setUnifiedTitleAndToolBarOnMac() is true,
 	// because in that case the toolbars in the TopToolBarArea can't be moved
 	// and buttons outside the window area are not accessible at all.
@@ -874,7 +874,7 @@ void TMainWindow::create_menus( )
 
 	// if unifiedTitleAndToolBarOnMac == true we don't want the main toolbars
 	// to be hidden. thus only add the menu entries on systems != OS X
-#if !defined (Q_WS_MAC)
+#if !defined (Q_OS_MAC)
 	menu->addAction(m_projectToolBar->toggleViewAction());
 	m_projectToolBar->toggleViewAction()->setText(tr("Project"));
 

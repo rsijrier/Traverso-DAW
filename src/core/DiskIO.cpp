@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Sheet.h"
 #include <QThread>
 
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -66,7 +66,7 @@ const char *to_prio[] = { "none", "realtime", "best-effort", "idle", };
 #define IOPRIO_CLASS_SHIFT	13
 #define IOPRIO_PRIO_MASK	0xff
 
-#endif // endif Q_WS_X11
+#endif // endif Q_OS_UNIX
 
 #include "AbstractAudioReader.h"
 #include "AudioSource.h"
@@ -106,7 +106,7 @@ protected:
 
 void DiskIOThread::run()
 {
-#if defined (Q_WS_X11)
+#if defined (Q_OS_UNIX)
     if (IOPRIO_SUPPORT) {
         // When using the cfq scheduler we are able to set the priority of the io for what it's worth though :-)
         int ioprio = 0, ioprio_class = IOPRIO_CLASS_RT;
@@ -121,8 +121,7 @@ void DiskIOThread::run()
             ioprio = syscall (__NR_ioprio_get, IOPRIO_WHO_PROCESS, getpid());
             ioprio_class = ioprio >> IOPRIO_CLASS_SHIFT;
             ioprio = ioprio & IOPRIO_PRIO_MASK;
-            PMESG("Using prioritized disk I/O (Only effective with the cfq scheduler)");
-            PMESG("%s: prio %d", to_prio[ioprio_class], ioprio);
+            printf("DiskIOThread: Using prioritized disk I/O using %s prio %d (Only effective with the cfq scheduler)\n", to_prio[ioprio_class], ioprio);
         }
     }
 #endif

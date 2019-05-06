@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <AudioDevice.h>
 #include <Utils.h>
 
-#if defined Q_WS_MAC
+#if defined Q_OS_MAC
 	#include <cmath>
 	extern "C" int isnan(double);
 #endif

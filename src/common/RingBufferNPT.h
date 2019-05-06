@@ -23,7 +23,7 @@
 
 #include <stdio.h>
 
-#if ! defined (Q_WS_WIN)
+#if ! defined (Q_OS_WIN)
 #include <sys/mman.h>
 #endif
 
