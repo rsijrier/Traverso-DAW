@@ -106,7 +106,10 @@ int Track::set_state( const QDomNode & node )
         m_showTrackVolumeAutomation = e.attribute("showtrackvolumeautomation", 0).toInt();
 
         m_sortIndex = e.attribute( "sortindex", "-1" ).toInt();
-        m_name = e.attribute( "name", "" );
+        // Sheet/Project Master tracks can have their name set before set_state() is called
+        if (m_name.isEmpty()) {
+            m_name = e.attribute( "name", "" );
+        }
         set_muted(e.attribute( "mute", "" ).toInt());
         set_solo(e.attribute( "solo", "" ).toInt());
         set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
@@ -154,10 +157,9 @@ int Track::set_state( const QDomNode & node )
         // for newly created tracks
         // What about reviewing the whole create_project() and then load_project() scheme?
         if (m_postSends.isEmpty() && ! m_session->is_project_session()) {
-                QString busOutName = e.attribute( "OutputBus", tr("Sheet Master"));
                 Project* project = pm().get_project();
                 if (m_session && project) {
-                    if (m_name == "") {
+                    if (m_name == "Sheet Master") {
                         add_post_send(project->get_master_out()->get_id());
                     } else {
                         add_post_send(m_session->get_master_out()->get_id());

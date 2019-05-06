@@ -221,9 +221,9 @@ int Sheet::set_state( const QDomNode & node )
 
         
         QDomNode masterOutNode = node.firstChildElement("MasterOut");
+        // Force the proper name for our Master Bus Track
+        m_masterOutBusTrack->set_name("Sheet Master");
         m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
-        // Force the proper name for our Master Bus
-        m_masterOutBusTrack->set_name(tr("Sheet Master"));
 
         QDomNode busTracksNode = node.firstChildElement("BusTracks");
         QDomNode busTrackNode = busTracksNode.firstChild();
