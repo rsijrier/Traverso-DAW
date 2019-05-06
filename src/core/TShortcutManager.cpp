@@ -196,15 +196,15 @@ int TFunction::getAutoRepeatStartDelay() const
 
 void TShortcutManager::makeShortcutKeyHumanReadable(QString& keyfact)
 {
-	keyfact.replace(QString("MOUSESCROLLVERTICALUP"), tr("Scroll Up"));
+    keyfact.replace(QString("MOUSESCROLLVERTICALUP"), tr("Scroll Up"));
 	keyfact.replace(QString("MOUSESCROLLVERTICALDOWN"), tr("Scroll Down"));
 	keyfact.replace(QString("MOUSEBUTTONRIGHT"), tr("Right Button"));
 	keyfact.replace(QString("MOUSEBUTTONLEFT"), tr("Left Button"));
 	keyfact.replace(QString("MOUSEBUTTONMIDDLE"), tr("Center Button"));
-	keyfact.replace(QString("UPARROW"), tr("Up Arrow"));
-	keyfact.replace(QString("DOWNARROW"), tr("Down Arrow"));
-	keyfact.replace(QString("LEFTARROW"), tr("Left Arrow"));
-	keyfact.replace(QString("RIGHTARROW"), tr("Right Arrow"));
+    keyfact.replace(QString("UPARROW"), tr("Up"));
+    keyfact.replace(QString("DOWNARROW"), tr("Down"));
+    keyfact.replace(QString("LEFTARROW"), tr("Left"));
+    keyfact.replace(QString("RIGHTARROW"), tr("Right"));
 	keyfact.replace(QString("DELETE"), "Delete");
 	keyfact.replace(QString("MINUS"), "-");
 	keyfact.replace(QString("PLUS"), "+");
@@ -231,7 +231,7 @@ TShortcutManager::TShortcutManager()
 	cpointer().add_contextitem(this);
 }
 
-void TShortcutManager::addFunction(TFunction *function)
+void TShortcutManager::registerFunction(TFunction *function)
 {
 	if (m_functions.contains(function->commandName))
 	{
@@ -394,284 +394,284 @@ void TShortcutManager::loadFunctions()
     function->object = "ToggleVerticalBase";
     function->setDescription(tr("Toggle Vertical"));
     function->commandName = "ToggleVerticalBase";
-    addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "GainBase";
 	function->setDescription(tr("Gain"));
 	function->commandName = "GainBase";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveBase";
 	function->m_description = tr("Move");
 	function->commandName = "MoveBase";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "DeleteBase";
 	function->m_description = tr("Remove");
 	function->commandName = "DeleteBase";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
     function->object = "ToggleBypassBase";
     function->slotsignature = "toggle_bypass";
     function->setDescription(tr("Toggle Bypass"));
     function->commandName = "ToggleBypassBase";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "toggle_snap_on_off";
 	function->setDescription(tr("Toggle Snap on/off"));
 	function->commandName = "MoveCommandToggleSnap";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "EditPropertiesBase";
 	function->slotsignature = "edit_properties";
 	function->setDescription(tr("Edit Properties"));
 	function->commandName = "EditPropertiesBase";
-	addFunction(function);
+    registerFunction(function);
 
     function = new TFunction();
 	function->object = "AudioTrack";
 	function->slotsignature = "toggle_arm";
 	function->m_description = tr("Record: On/Off");
 	function->commandName = "AudioTrackToggleRecord";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "AudioTrack";
 	function->slotsignature = "silence_others";
 	function->m_description = tr("Silence other tracks");
 	function->commandName = "AudioTrackSilenceOthers";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurve";
 	function->slotsignature = "set_mode";
 	function->m_description = tr("Cycle Shape");
 	function->commandName = "FadeCurveCycleShape";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_right";
 	function->m_description = tr("Move Right");
 	function->commandName = "MoveCommandRight";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_left";
 	function->m_description = tr("Move Left");
 	function->commandName = "MoveCommandLeft";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_up";
 	function->m_description = tr("Move Up");
 	function->commandName = "MoveCommandUp";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_down";
 	function->m_description = tr("Move Down");
 	function->commandName = "MoveCommandDown";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_faster";
 	function->m_description = tr("Move Faster");
 	function->commandName = "MoveCommandFaster";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "move_slower";
 	function->m_description = tr("Move Slower");
 	function->commandName = "MoveCommandSlower";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "quick_start";
 	function->m_description = tr("Show Help");
 	function->commandName = "ShowHelp";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "full_screen";
 	function->m_description = tr("Full Screen");
 	function->commandName = "MainWindowShowFullScreen";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TShortcutManager";
 	function->slotsignature = "export_keymap";
 	function->m_description = tr("Export keymap");
 	function->commandName = "ExportShortcutMap";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackView";
 	function->slotsignature = "add_new_plugin";
 	function->m_description = tr("Add new Plugin");
 	function->commandName = "TrackAddPlugin";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TPanKnobView";
 	function->slotsignature = "pan_left";
 	function->m_description = tr("Pan to Left");
 	function->commandName = "PanKnobPanLeft";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TPanKnobView";
 	function->slotsignature = "pan_right";
 	function->m_description = tr("Pan to Right");
 	function->commandName = "PanKnobPanRight";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "hzoom_out";
 	function->setDescription(tr("Out"));
 	function->commandName = "ZoomOut";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "hzoom_in";
 	function->setDescription(tr("In"));
 	function->commandName = "ZoomIn";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPan";
 	function->slotsignature = "pan_left";
 	function->m_description = tr("Pan to Left");
 	function->commandName = "TrackPanLeft";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPan";
 	function->slotsignature = "pan_right";
 	function->m_description = tr("Pan to Right");
 	function->commandName = "TrackPanRight";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Gain";
 	function->slotsignature = "increase_gain";
 	function->m_description = tr("Increase");
 	function->commandName = "GainIncrease";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Gain";
 	function->slotsignature = "decrease_gain";
 	function->m_description = tr("Decrease");
 	function->commandName = "GainDecrease";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveTrack";
 	function->slotsignature = "move_up";
 	function->m_description = tr("Move Up");
 	function->commandName = "MoveTrackUp";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveTrack";
 	function->slotsignature = "move_down";
 	function->m_description = tr("Move Down");
 	function->commandName = "MoveTrackDown";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "scroll_up";
 	function->m_description =tr("Up");
 	function->commandName = "ViewScrollUp";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "scroll_down";
 	function->m_description = tr("Down");
 	function->commandName = "ViewScrollDown";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "track_vzoom_out";
 	function->m_description = tr("Track Vertical Zoom Out");
 	function->commandName = "ZoomTrackVerticalOut";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "track_vzoom_in";
 	function->m_description = tr("Track Vertical Zoom In");
 	function->commandName = "ZoomTrackVerticalIn";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "to_upper_context_level";
 	function->m_description = tr("One Layer Up");
 	function->commandName = "NavigateToUpperContext";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "to_lower_context_level";
 	function->m_description = tr("One Layer Down");
 	function->commandName = "NavigateToLowerContext";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
 	function->slotsignature = "fade_range";
 	function->m_description = tr("Adjust Length");
 	function->commandName = "AudioClipFadeLength";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TTransport";
 	function->slotsignature = "start_transport";
 	function->m_description = tr("Play (Start/Stop)");
 	function->commandName = "TransportPlayStartStop";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TTransport";
 	function->slotsignature = "set_recordable_and_start_transport";
 	function->m_description = tr("Start Recording");
 	function->commandName = "TransportSetRecordingPlayStart";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TTransport";
 	function->slotsignature = "to_start";
 	function->setDescription(tr("To start"));
 	function->commandName = "TransportToStart";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TTransport";
 	function->slotsignature = "to_end";
 	function->setDescription(tr("To end"));
 	function->commandName = "TransportToEnd";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TTransport";
@@ -679,257 +679,257 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Set Play Position"));
 	function->commandName = "TransportSetPosition";
 	function->useX = true;
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackView";
 	function->setInheritedBase("EditPropertiesBase");
 	function->commandName = "EditTrackProperties";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->setInheritedBase("EditPropertiesBase");
 	function->commandName = "EditSongProperties";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "PluginView";
 	function->setInheritedBase("EditPropertiesBase");
 	function->commandName = "EditPluginProperties";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SpectralMeterView";
 	function->setInheritedBase("EditPropertiesBase");
 	function->commandName = "EditSpectralMeterProperties";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
 	function->setInheritedBase("EditPropertiesBase");
 	function->commandName = "EditAudioClipProperties";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "toggle_expand_all_tracks";
 	function->m_description = tr("Expand/Collapse Tracks");
 	function->commandName = "ZoomToggleExpandAllTracks";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPanelLed";
 	function->slotsignature = "toggle";
 	function->m_description = tr("Toggle On/Off");
 	function->commandName = "PanelLedToggle";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CurveView";
 	function->slotsignature = "add_node";
 	function->m_description = tr("New Node");
 	function->commandName = "AddCurveNode";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCommand";
 	function->slotsignature = "numerical_input";
 	function->m_description = tr("Moving Speed");
 	function->commandName = "MoveCommandSpeed";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TCommand";
 	function->m_description = tr("Reject");
 	function->commandName = "RejectHoldCommand";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TCommand";
 	function->m_description = tr("Accept");
 	function->commandName = "AcceptHoldCommand";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Gain";
 	function->slotsignature = "numerical_input";
 	function->m_description = tr("Input dB value");
 	function->commandName = "GainNumericalInput";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "numerical_input";
 	function->m_description = tr("Track Height");
 	function->commandName = "ZoomNumericalInput";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurveView";
 	function->slotsignature = "select_fade_shape";
 	function->m_description = tr("Select Preset");
 	function->commandName = "FadeSelectPreset";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "show_newtrack_dialog";
 	function->m_description = tr("New Track Dialog");
 	function->commandName = "ShowNewTrackDialog";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "browse_to_time_line";
 	function->m_description = tr("To Timeline");
 	function->commandName = "NavigateToTimeLine";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPanelGain";
 	function->slotsignature = "gain_decrement";
 	function->m_description = tr("Decrease");
 	function->commandName = "TrackPanelGainDecrement";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPanelGain";
 	function->slotsignature = "gain_increment";
 	function->m_description = tr("Increase");
 	function->commandName = "TrackPanelGainIncrement";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CropClip";
 	function->slotsignature = "adjust_left";
 	function->m_description = tr("Adjust Left");
     function->commandName = "CropClipAdjustLeft";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CropClip";
 	function->slotsignature = "adjust_right";
 	function->m_description = tr("Adjust Right");
 	function->commandName = "CropClipAdjustRight";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "touch";
 	function->m_description = tr("Set");
 	function->commandName = "WorkCursorTouch";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
 	function->slotsignature = "playhead_to_marker";
 	function->m_description = tr("Playhead to Marker");
 	function->commandName = "TimeLinePlayheadToMarker";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "AudioClipView";
 	function->slotsignature = "set_audio_file";
 	function->m_description = tr("Reset Audio File");
 	function->commandName = "AudioClipSetAudioFile";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurve";
 	function->slotsignature = "toggle_raster";
 	function->m_description = tr("Toggle Raster");
 	function->commandName = "FadeCurveToggleRaster";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TrackPan";
 	function->slotsignature = "reset_pan";
 	function->m_description = tr("Reset");
 	function->commandName = "TrackPanReset";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SpectralMeterView";
 	function->slotsignature = "reset";
 	function->m_description = tr("Reset average curve");
 	function->commandName = "SpectralMeterResetAverageCurve";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "AudioClip";
 	function->slotsignature = "lock";
 	function->m_description = tr("Lock");
 	function->commandName = "AudioClipLock";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CorrelationMeterView";
 	function->slotsignature = "set_mode";
 	function->m_description = tr("Toggle display range");
 	function->commandName = "CorrelationMeterToggleDisplayRange";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SpectralMeterView";
 	function->slotsignature = "set_mode";
 	function->m_description = tr("Toggle average curve");
 	function->commandName = "SpectralMeterToggleDisplayRange";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
 	function->slotsignature = "add_marker";
 	function->m_description = tr("Add Marker");
 	function->commandName = "TimeLineAddMarker";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "add_marker";
 	function->m_description = tr("Add Marker");
 	function->commandName = "SheetAddMarker";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "add_marker_at_playhead";
 	function->m_description = tr("Add Marker at Playhead");
 	function->commandName = "SheetAddMarkerAtPlayhead";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
 	function->slotsignature = "add_marker_at_playhead";
 	function->m_description = tr("Add Marker at Playhead");
 	function->commandName = "TimeLineAddMarkerAtPlayhead";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "add_marker_at_work_cursor";
 	function->m_description = tr("Add Marker at Work Cursor");
 	function->commandName = "SheetAddMarkerAtWorkCursor";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
 	function->slotsignature = "add_marker_at_work_cursor";
 	function->m_description = tr("Add Marker at Work Cursor");
 	function->commandName = "TimeLineAddMarkerAtWorkCursor";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurve";
     function->setInheritedBase("ToggleBypassBase");
 	function->commandName = "FadeCurveToggleBypass";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Plugin";
     function->setInheritedBase("ToggleBypassBase");
 	function->commandName = "PluginToggleBypass";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurveView";
@@ -937,70 +937,70 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Adjust Bend"));
 	function->useY = true;
 	function->commandName = "FadeCurveBend";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
 	function->slotsignature = "TMainWindow::show_marker_dialog";
 	function->setDescription(tr("Edit Markers"));
 	function->commandName = "TimeLineShowMarkerDialog";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "show_context_menu";
 	function->setDescription(tr("Context Menu"));
 	function->commandName = "ShowContextMenu";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "HoldCommand";
 	function->slotsignature = "TMainWindow::show_context_menu";
 	function->setDescription(tr("Context Menu"));
 	function->commandName = "HoldCommandShowContextMenu";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "show_project_manager_dialog";
 	function->setDescription(tr("Show Project Management Dialog"));
 	function->commandName = "MainWindowShowProjectManagementDialog";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "ProcessingData";
 	function->slotsignature = "mute";
 	function->setDescription(tr("Mute"));
 	function->commandName = "Mute";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Track";
 	function->slotsignature = "solo";
 	function->setDescription(tr("Solo"));
 	function->commandName = "Solo";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CurveView";
 	function->slotsignature = "toggle_select_all_nodes";
 	function->setDescription(tr("Select All Nodes"));
 	function->commandName = "CurveSelectAllNodes";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "ProjectManager";
 	function->slotsignature = "save_project";
 	function->setDescription(tr("Save Project"));
 	function->commandName = "ProjectSave";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "CurveView";
 	function->slotsignature = "select_lazy_selected_node";
 	function->setDescription(tr("Select Node"));
 	function->commandName = "CurveSelectNode";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "FadeCurveView";
@@ -1008,63 +1008,63 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Adjust Strength"));
 	function->commandName = "FadeCurveStrenght";
 	function->useX = true;
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "goto_end";
 	function->setDescription(tr("To end"));
 	function->commandName = "WorkCursorToEnd";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveTrack";
 	function->slotsignature = "to_bottom";
 	function->setDescription(tr("To Bottom"));
 	function->commandName = "MoveTrackToBottom";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "goto_begin";
 	function->setDescription(tr("To start"));
 	function->commandName = "WorkCursorToStart";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveTrack";
 	function->slotsignature = "to_top";
 	function->setDescription(tr("To Top"));
 	function->commandName = "MoveTrackToTop";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "PlayHeadMove";
 	function->slotsignature = "move_to_work_cursor";
 	function->setDescription(tr("To Work Cursor"));
 	function->commandName = "PlayHeadMoveToWorkCursor";
-	addFunction(function);
+    registerFunction(function);
 
     function = new TFunction();
     function->object = "PlayHeadMove";
     function->slotsignature = "move_to_start";
     function->setDescription(tr("To Start"));
     function->commandName = "PlayHeadMoveToStart";
-    addFunction(function);
+    registerFunction(function);
 
     function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "touch_play_cursor";
 	function->setDescription(tr("Set"));
 	function->commandName = "SheetSetPlayPosition";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "SheetView";
 	function->slotsignature = "center_playhead";
 	function->setDescription(tr("Center"));
 	function->commandName = "SheetCenterPlayhead";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "Zoom";
@@ -1072,7 +1072,7 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Toggle Vertical / Horizontal"));
 	function->commandName = "ZoomToggleVerticalHorizontal";
     function->setInheritedBase("ToggleVerticalBase");
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveClip";
@@ -1080,7 +1080,7 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Toggle Vertical Only"));
 	function->commandName = "MoveClipToggleVerticalOnly";
     function->setInheritedBase("ToggleVerticalBase");
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "MoveCurveNode";
@@ -1088,42 +1088,42 @@ void TShortcutManager::loadFunctions()
 	function->setDescription(tr("Toggle Vertical Only"));
 	function->commandName = "MoveCurveNodeToggleVerticalOnly";
     function->setInheritedBase("ToggleVerticalBase");
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "WorkCursorMove";
 	function->slotsignature = "move_to_play_cursor";
 	function->setDescription(tr("To Playhead"));
 	function->commandName = "WorkCursorMoveToPlayhead";
-	addFunction(function);
+    registerFunction(function);
 
     function = new TFunction();
     function->object = "WorkCursorMove";
     function->slotsignature = "move_to_start";
     function->setDescription(tr("To Start"));
     function->commandName = "WorkCursorMoveToStart";
-    addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "show_track_finder";
 	function->setDescription(tr("Activate Track Finder"));
 	function->commandName = "MainWindowActivateTrackFinder";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "browse_to_first_track_in_active_sheet";
 	function->setDescription(tr("Browse to first Track in current View"));
 	function->commandName = "MainWindowNavigateToFirstTrack";
-	addFunction(function);
+    registerFunction(function);
 
 	function = new TFunction();
 	function->object = "TMainWindow";
 	function->slotsignature = "browse_to_last_track_in_active_sheet";
 	function->setDescription(tr("Browse to last Track in current View"));
 	function->commandName = "MainWindowNavigateToLastTrack";
-	addFunction(function);
+    registerFunction(function);
 
 
     createAndAddFunction("ProcessingData", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
@@ -1138,7 +1138,7 @@ void TShortcutManager::createAndAddFunction(const QString &object, const QString
     function->m_description = description;
     function->slotsignature = slotSignature;
     function->commandName = commandName;
-    addFunction(function);
+    registerFunction(function);
 }
 
 

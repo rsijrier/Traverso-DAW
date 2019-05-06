@@ -67,7 +67,9 @@ private:
 
 private:
     void add_function(TFunction* function, TraversoCommand command);
-    void create_and_add_function(const QString& object, const QString& description, const QString& commandName, TraversoCommand command, const QString& arguments="");
+    void create_and_add_function(const QString& object, const QString& description, const QString& commandName, TraversoCommand command);
+    void create_and_add_function(const QString& object, const QString& description, const QString& commandName,
+                                 TraversoCommand command, QStringList arguments, const QString& inheritedBase="", bool useX=false, bool useY=false);
 };
 
 #endif

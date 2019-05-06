@@ -1,6 +1,5 @@
 TOBEDONE FOR 0.50.x
 
-* Q_WS_XXX no longer available in Qt5
 * Setting input bus for AudioTrack: update vumeter monitoring  on the newly added bus, not the configuration on the old bus
 * CurveView does not seem to overlap AudioClipView, cursor changes to early to AudioClipView from CurveView when
   moving to edge of CurveView

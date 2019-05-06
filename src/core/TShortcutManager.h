@@ -43,8 +43,12 @@ public:
 
 	TFunction() {
         m_inheritedFunction = nullptr;
+        // used for cursor hinting. usually means displaying a horizontal arrow cursor
+        // to indicate horizontal movement
 		useX = false;
-		useY = false;
+        // used for cursor hinting. usually means displaying a vertical arrow cursor
+        // to indicate vertical movement
+        useY = false;
 		sortorder = 0;
 		m_usesAutoRepeat = false;
 		m_autorepeatInterval = -1;
@@ -137,7 +141,7 @@ class TShortcutManager : public QObject
 public:
 
     void createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName);
-	void addFunction(TFunction* function);
+	void registerFunction(TFunction* function);
 	TFunction* getFunction(const QString& function) const;
 
     QList<TFunction* > getFunctionsFor(QString className);

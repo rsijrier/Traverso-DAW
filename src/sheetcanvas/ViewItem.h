@@ -76,6 +76,12 @@ public:
         }
     }
 
+    /**
+     *  Reimplement and make sure to call painter->save() and painter->restore()
+     *	since we do this ourselves as a means of performance optimization
+     */
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget) = 0;
+
     virtual int type() const;
     virtual void set_ignore_context(bool ignoreContext) {m_ignoreContext = ignoreContext;}
     virtual int get_height() const {return int(m_boundingRect.height());}

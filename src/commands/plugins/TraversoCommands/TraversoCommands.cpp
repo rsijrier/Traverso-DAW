@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TraversoCommands.h"
 
 #include <QInputDialog>
+#include <QStringList>
 
 #include "libtraversocore.h"
 #include "libtraversosheetcanvas.h"
@@ -189,23 +190,6 @@ TraversoCommands::TraversoCommands()
 
 
 	function = new TFunction();
-	function->object = "AudioClipView";
-	function->setDescription(tr("Move"));
-	function->commandName = "MoveClip";
-	function->useX = function->useY = true;
-	function->arguments << "move";
-	function->setInheritedBase("MoveBase");
-    add_function(function, MoveClipCommand);
-
-	function = new TFunction();
-	function->object = "AudioClipView";
-	function->setDescription(tr("Copy"));
-	function->commandName = "CopyClip";
-	function->useX = function->useY = true;
-	function->arguments << "copy";
-    add_function(function, MoveClipCommand);
-
-	function = new TFunction();
 	function->object = "SheetView";
 	function->setDescription(tr("Fold Sheet"));
 	function->commandName = "FoldSheet";
@@ -238,13 +222,6 @@ TraversoCommands::TraversoCommands()
     add_function(function, MoveCurveNodesCommand);
 
 	function = new TFunction();
-	function->object = "AudioClip";
-	function->setDescription(tr("Gain"));
-	function->commandName = "AudioClipGain";
-	function->setInheritedBase("GainBase");
-    add_function(function, GainCommand);
-
-	function = new TFunction();
 	function->object = "AudioTrack";
 	function->setDescription(tr("Gain"));
 	function->commandName = "AudioTrackGain";
@@ -265,13 +242,6 @@ TraversoCommands::TraversoCommands()
 	function->useX = true;
 	function->arguments << "HJogZoom" << "1.2" << "0.2";
     add_function(function, ZoomCommand);
-
-	function = new TFunction();
-	function->object = "AudioClipView";
-	function->setDescription(tr("Split"));
-	function->commandName = "SplitClip";
-	function->useX = true;
-    add_function(function, SplitClipCommand);
 
 	function = new TFunction();
 	function->object = "TimeLineView";
@@ -295,11 +265,6 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "TrackPan";
     add_function(function, TrackPanCommand);
 
-	function = new TFunction();
-	function->object = "AudioClip";
-	function->commandName = "RemoveClip";
-	function->setInheritedBase("DeleteBase");
-    add_function(function, RemoveClipCommand);
 
 	function = new TFunction();
 	function->object = "Track";
@@ -327,62 +292,47 @@ TraversoCommands::TraversoCommands()
 	function->commandName = "PanKnobPanorama";
     add_function(function, TrackPanCommand);
 
-	function = new TFunction();
-	function->object = "AudioClipView";
-	function->setDescription(tr("Magnetic Cut"));
-	function->commandName = "CropClip";
-    add_function(function, CropClipCommand);
+    create_and_add_function("AudioClipView", tr("Copy"), "CopyClip", MoveClipCommand, QStringList() << "copy", "", true, true);
+    create_and_add_function("AudioClipView", tr("Split"), "SplitClip", SplitClipCommand, QStringList(), "", true);
+    create_and_add_function("AudioClipView", tr("Magnetic Cut"), "CropClip", CropClipCommand);
+    create_and_add_function("AudioClipView", tr("Move"), "MoveClip", MoveClipCommand, QStringList(), "MoveBase", true, true);
+    create_and_add_function("AudioClipView", tr("Move Edge"), "MoveClipEdge", MoveEdgeCommand, QStringList() << "false", "", true);
 
-	function = new TFunction();
-	function->object = "AudioClip";
-	function->setDescription(tr("External Processing"));
-	function->commandName = "AudioClipExternalProcessing";
-    add_function(function, AudioClipExternalProcessingCommand);
+    create_and_add_function("AudioClip", tr("External Processing"), "AudioClipExternalProcessing", AudioClipExternalProcessingCommand);
+    create_and_add_function("AudioClip", tr("Gain"), "AudioClipGain", GainCommand, QStringList(), "GainBase");
+    create_and_add_function("AudioClip", tr("Normalize Clip"), "NormalizeClip", NormalizeClipCommand);
+    create_and_add_function("AudioClip", tr("Remove AudioClip"), "RemoveClip", RemoveClipCommand, QStringList(), "DeleteBase");
+    create_and_add_function("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, QStringList() << "toggle_selected");
 
-    function = new TFunction();
-    function->object = "AudioClipView";
-    function->setDescription(tr("Move Edge"));
-    function->commandName = "MoveClipEdge";
-    function->arguments << "false";
-    function->useX = true;
-    add_function(function, MoveEdgeCommand);
-
-    function = new TFunction();
-    function->object = "AudioClip";
-    function->setDescription(tr("Normalize Clip"));
-    function->commandName = "NormalizeClip";
-    add_function(function, NormalizeClipCommand);
-
-	function = new TFunction();
-	function->object = "SheetView";
-	function->setDescription(tr("Move Work Cursor"));
-	function->commandName = "WorkCursorMove";
-    add_function(function, WorkCursorMoveCommand);
-
-	function = new TFunction();
-	function->object = "SheetView";
-	function->setDescription(tr("Scroll"));
-	function->commandName = "Scroll";
-    add_function(function, ScrollCommand);
-
-
-    create_and_add_function("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, "toggle_selected");
+    create_and_add_function("SheetView", tr("Move Work Cursor"), "WorkCursorMove", WorkCursorMoveCommand);
+    create_and_add_function("SheetView", tr("Scroll"), "Scroll", ScrollCommand);
 }
 
 void TraversoCommands::add_function(TFunction *function, TraversoCommand command)
 {
 	function->pluginname = "TraversoCommands";
 	m_dict.insert(function->commandName, command);
-    tShortCutManager().addFunction(function);
+    tShortCutManager().registerFunction(function);
 }
 
-void TraversoCommands::create_and_add_function(const QString &object, const QString &description, const QString &commandName, TraversoCommand command, const QString &arguments)
+void TraversoCommands::create_and_add_function(const QString &object, const QString &description, const QString &commandName, TraversoCommands::TraversoCommand command)
+{
+    create_and_add_function(object, description, commandName, command, QStringList());
+}
+
+void TraversoCommands::create_and_add_function(const QString &object, const QString &description, const QString &commandName, TraversoCommand command,
+                                               QStringList arguments, const QString &inheritedBase, bool useX, bool useY)
 {
     auto function = new TFunction();
     function->object = object;
     function->setDescription(description);
     function->commandName = commandName;
     function->arguments << arguments;
+    function->useX = useX;
+    function->useY = useY;
+    if (!inheritedBase.isEmpty()) {
+        function->setInheritedBase(inheritedBase);
+    }
     add_function(function, command);
 }
 
@@ -504,7 +454,7 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
 				return 0;
 			}
 
-			return view->remove_plugin();
+            return view->remove_plugin();
 		}
 
 		case RemoveClipNodeCommmand:
@@ -560,7 +510,7 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
 
 		case MoveClipCommand:
 		{
-			ViewItem* view = qobject_cast<ViewItem*>(obj);
+            AudioClipView* view = qobject_cast<AudioClipView*>(obj);
 			if (!view) {
 				PERROR("TraversoCommands: Supplied QObject was not an AudioClipView! "
 					"MoveClipCommand needs an AudioClipView as argument");
