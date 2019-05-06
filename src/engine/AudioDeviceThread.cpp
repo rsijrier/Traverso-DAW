@@ -150,12 +150,11 @@ typedef int* (*setaffinity_func_type)(pid_t,unsigned int,cpu_set_t *);
 void AudioDeviceThread::run_on_cpu( int cpu )
 {
 #if defined (Q_OS_UNIX)
-	void *setaffinity_handle = dlopen(NULL, RTLD_LAZY);// NULL might not be portable to platforms other than linux - tajmorton@gmail.com
+    void *setaffinity_handle = dlopen(nullptr, RTLD_LAZY);
 	
-	setaffinity_func_type setaffinity_func;
-	setaffinity_func = (setaffinity_func_type) dlsym(setaffinity_handle, "sched_setaffinity");
+    setaffinity_func_type setaffinity_func = reinterpret_cast<setaffinity_func_type>(dlsym(setaffinity_handle, "sched_setaffinity"));
 	
-	if (setaffinity_func != NULL) {
+    if (setaffinity_func != nullptr) {
 		cpu_set_t mask;
 		CPU_ZERO(&mask);
 		CPU_SET(cpu, &mask);
