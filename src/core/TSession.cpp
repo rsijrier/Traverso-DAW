@@ -158,14 +158,14 @@ QDomNode TSession::get_state(QDomDocument doc)
 
 
 
-TBusTrack* TSession::get_master_out() const
+TBusTrack* TSession::get_master_out_bus_track() const
 {
 	if (is_project_session()) {
 		return m_masterOutBusTrack;
 	}
 
 	if (m_parentSession) {
-		return m_parentSession->get_master_out();
+        return m_parentSession->get_master_out_bus_track();
 	}
 
 	return m_masterOutBusTrack;

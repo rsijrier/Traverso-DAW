@@ -1740,8 +1740,8 @@ TCommand* TMainWindow::show_track_finder()
 
 	foreach(Sheet* sheet, sheets) {
 		QList<Track*> tracks = sheet->get_tracks();
-		tracks.append(sheet->get_master_out());
-		tracks.append(m_project->get_master_out());
+		tracks.append(sheet->get_master_out_bus_track());
+		tracks.append(m_project->get_master_out_bus_track());
 		foreach(Track* track, tracks) {
 			QStandardItem* sItem = new QStandardItem(track->get_name());
 			sItem->setData(track->get_id(), Qt::UserRole);
@@ -1851,7 +1851,7 @@ void TMainWindow::update_vu_levels_peak()
 
 	QList<Track*> tracks = m_project->get_sheet_tracks();
 	tracks.append(m_project->get_tracks());
-	tracks.append(m_project->get_master_out());
+	tracks.append(m_project->get_master_out_bus_track());
 	for(int i = 0; i< tracks.size(); i++) {
 		VUMonitors monitors = tracks.at(i)->get_vumonitors();
 		for (int j=0; j<monitors.size(); ++j) {

@@ -811,8 +811,8 @@ AudioBus* Project::get_audio_bus(qint64 id)
         }
 
         foreach(Sheet* sheet, m_sheets) {
-                if (sheet->get_master_out()->get_id() == id) {
-                        return sheet->get_master_out()->get_process_bus();
+                if (sheet->get_master_out_bus_track()->get_id() == id) {
+                        return sheet->get_master_out_bus_track()->get_process_bus();
                 }
                 foreach(TBusTrack* group, sheet->get_bus_tracks()) {
                         if (group->get_id() == id) {
@@ -879,7 +879,7 @@ QList<TSend*> Project::get_inputs_for_bus_track(TBusTrack *busTrack) const
         tracks.append(get_tracks());
         foreach(Sheet* sheet, m_sheets) {
                 tracks.append(sheet->get_tracks());
-                tracks.append(sheet->get_master_out());
+                tracks.append(sheet->get_master_out_bus_track());
         }
 
         foreach(Track* track, tracks) {
@@ -899,7 +899,7 @@ QList<Track*> Project::get_sheet_tracks() const
         QList<Track*> tracks;
         foreach(Sheet* sheet, m_sheets) {
                 tracks.append(sheet->get_tracks());
-                tracks.append(sheet->get_master_out());
+                tracks.append(sheet->get_master_out_bus_track());
         }
         return tracks;
 }

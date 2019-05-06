@@ -67,7 +67,7 @@ public:
 	QString get_name() const {return m_name;}
 	int get_track_height(qint64 trackId) const {return m_trackHeights.value(trackId, 150);}
 
-	TBusTrack* get_master_out() const;
+	TBusTrack* get_master_out_bus_track() const;
 	virtual QList<Track*> get_tracks() const;
 	QList<TBusTrack*> get_bus_tracks() const;
 	QList<TSession*> get_child_sessions() const {return m_childSessions;}

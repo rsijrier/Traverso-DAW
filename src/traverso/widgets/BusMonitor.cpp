@@ -146,10 +146,10 @@ void BusMonitor::create_vu_meters( )
     }
 
     if (m_sheet) {
-        AudioBus* bus = m_sheet->get_master_out()->get_process_bus();
+        AudioBus* bus = m_sheet->get_master_out_bus_track()->get_process_bus();
         m_masterOutMeter = new VUMeter(this, bus);
         m_layout->addWidget(m_masterOutMeter);
-        bus = m_sheet->get_project()->get_master_out()->get_process_bus();
+        bus = m_sheet->get_project()->get_master_out_bus_track()->get_process_bus();
         m_projectMaster = new VUMeter(this, bus);
         m_layout->addWidget(m_projectMaster);
     }

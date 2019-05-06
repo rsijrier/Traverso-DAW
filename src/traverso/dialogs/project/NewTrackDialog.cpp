@@ -207,9 +207,9 @@ void NewTrackDialog::update_buses_comboboxes()
         item->setFlags(Qt::NoItemFlags);
 
         QList<TBusTrack*> subs;
-        subs.append(session->get_master_out());
+        subs.append(session->get_master_out_bus_track());
         subs.append(session->get_bus_tracks());
-        subs.append(m_project->get_master_out());
+        subs.append(m_project->get_master_out_bus_track());
         foreach(TBusTrack* sg, subs) {
             QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
             item->setText(sg->get_name());

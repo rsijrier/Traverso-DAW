@@ -438,7 +438,7 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
 				return 0;
 			}
 
-			if (track == activeSession->get_master_out()) {
+            if (track == activeSession->get_master_out_bus_track()) {
 				info().information(tr("It is not possible to remove the Master Out track!"));
 				return 0;
 			}

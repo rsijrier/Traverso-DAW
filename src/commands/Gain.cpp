@@ -78,7 +78,7 @@ Gain::Gain(ContextItem* context, const QVariantList& args)
         if (sheet) {
             // if context == sheet, then use sheets master out
             // as the gain object as sheet itself doesn't apply any gain.
-            m_gainObject = sheet->get_master_out();
+            m_gainObject = sheet->get_master_out_bus_track();
             if (qFuzzyCompare(m_origGain, 0.5f)) {
                 m_newGain = 1.0;
             }

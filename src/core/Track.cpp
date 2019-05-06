@@ -160,9 +160,9 @@ int Track::set_state( const QDomNode & node )
                 Project* project = pm().get_project();
                 if (m_session && project) {
                     if (m_name == "Sheet Master") {
-                        add_post_send(project->get_master_out()->get_id());
+                        add_post_send(project->get_master_out_bus_track()->get_id());
                     } else {
-                        add_post_send(m_session->get_master_out()->get_id());
+                        add_post_send(m_session->get_master_out_bus_track()->get_id());
 
                     }
                 }

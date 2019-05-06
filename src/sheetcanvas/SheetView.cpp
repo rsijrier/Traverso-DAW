@@ -99,10 +99,10 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	Sheet* sheet = qobject_cast<Sheet*>(m_session);
 
 	if (m_session->is_project_session()) {
-		m_projectMasterOutView = new TBusTrackView(this, pm().get_project()->get_master_out());
+		m_projectMasterOutView = new TBusTrackView(this, pm().get_project()->get_master_out_bus_track());
 	}
 	if (sheet) {
-		m_sheetMasterOutView = new TBusTrackView(this, m_session->get_master_out());
+		m_sheetMasterOutView = new TBusTrackView(this, m_session->get_master_out_bus_track());
 	}
 
 	connect(m_session, SIGNAL(workingPosChanged()), m_workCursor, SLOT(update_position()));
@@ -236,7 +236,7 @@ TrackView* SheetView::get_trackview_at_scene_pos( QPointF point )
 void SheetView::move_trackview_up(TrackView *trackView)
 {
 	int index = trackView->get_track()->get_sort_index();
-	if (index == 0 || trackView->get_track() == m_session->get_master_out()) {
+	if (index == 0 || trackView->get_track() == m_session->get_master_out_bus_track()) {
 		// can't move any further up
 		return;
 	}
@@ -274,7 +274,7 @@ void SheetView::move_trackview_up(TrackView *trackView)
 void SheetView::move_trackview_down(TrackView *trackView)
 {
 	int index = trackView->get_track()->get_sort_index();
-	if (index >= m_audioTrackViews.size() || trackView->get_track() == m_session->get_master_out()) {
+	if (index >= m_audioTrackViews.size() || trackView->get_track() == m_session->get_master_out_bus_track()) {
 		// can't move any further down
 		return;
 	}
