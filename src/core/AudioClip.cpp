@@ -87,7 +87,7 @@ AudioClip::AudioClip(const QString& name)
     fadeIn = nullptr;
     fadeOut = nullptr;
     m_fader->automate_port(0, true);
-    m_maxGainAmplification = 4.0f;
+    m_maxGainAmplification = dB_to_scale_factor(24);
 
     // read in the configuration from the global configuration settings.
     update_global_configuration();
