@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TCommand.h"
 #include "Fade.h"
 #include "SheetView.h"
-#include "LineView.h"
 #include "AudioClip.h"
 #include "ResourcesManager.h"
 #include "ProjectManager.h"
@@ -37,6 +36,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
  #include <QGraphicsRectItem>
+
+class CropItemView : public QGraphicsRectItem
+{
+public:
+    CropItemView(QGraphicsItem* parent) : QGraphicsRectItem(parent) {}
+    virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem */*option*/, QWidget */*widget*/);
+};
+
+
+void CropItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) {
+    painter->save();
+    painter->fillRect(rect(), brush());
+    painter->restore();
+}
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -50,6 +63,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 
+
 CropClip::CropClip(AudioClipView* view)
 	: TCommand(view->get_context(), tr("AudioClip: Magnetic Cut"))
 	, m_cv(view)
@@ -57,8 +71,8 @@ CropClip::CropClip(AudioClipView* view)
 	m_clip = view->get_clip();
 	m_track = m_clip->get_track();
 
-	m_selection = new QGraphicsRectItem(m_cv);
-	m_selection->setBrush(QColor(0, 0, 255, 100));
+    m_selection = new CropItemView(m_cv);
+    m_selection->setBrush(QColor(100, 100, 100, 100));
 	m_selection->setPen(QPen(Qt::NoPen));
 	// Set the selection Z value to something sufficiently high
 	// to be _always_ on top of all the child views of m_cv
@@ -80,7 +94,7 @@ int CropClip::prepare_actions()
 	leftClip->set_track_start_location(m_clip->get_track_start_location());
 	leftClip->set_right_edge(TimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_track_start_location());
 	if (leftClip->get_fade_out()) {
-		FadeRange* cmd = (FadeRange*)leftClip->reset_fade_out();
+        auto cmd = leftClip->reset_fade_out();
 		cmd->set_historable(false);
 		TCommand::process_command(cmd);
 	}
@@ -89,7 +103,7 @@ int CropClip::prepare_actions()
 	rightClip->set_left_edge(TimeRef(x2 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_track_start_location());
 	rightClip->set_track_start_location(leftClip->get_track_end_location());
 	if (rightClip->get_fade_in()) {
-		FadeRange* cmd = (FadeRange*)rightClip->reset_fade_in();
+        auto cmd = rightClip->reset_fade_in();
 		cmd->set_historable(false);
 		TCommand::process_command(cmd);
 	}
