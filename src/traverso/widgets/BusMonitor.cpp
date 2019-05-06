@@ -41,11 +41,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 BusMonitor::BusMonitor(QWidget* parent)
-	: QWidget( parent)
+    : QWidget( parent)
 {
-	PENTERCONS;
-	
-	setAutoFillBackground(false);
+    PENTERCONS;
+
+    setAutoFillBackground(false);
     m_masterOutMeter = nullptr;
     m_projectMaster = nullptr;
     m_sheet = nullptr;
@@ -62,143 +62,143 @@ BusMonitor::BusMonitor(QWidget* parent)
 
 BusMonitor::~BusMonitor()
 {
-	PENTERDES;
+    PENTERDES;
 }
 
 QSize BusMonitor::sizeHint() const
 {
-	int width = 0;
-	foreach(QWidget* widget, outMeters) {
-		if (! widget->isHidden()) {
-			width += widget->width();
-		}
-	}
-	return QSize(width, 140);
+    int width = 0;
+    foreach(QWidget* widget, outMeters) {
+        if (! widget->isHidden()) {
+            width += widget->width();
+        }
+    }
+    return QSize(width, 140);
 }
 
 QSize BusMonitor::minimumSizeHint() const
 {
-        return QSize(50, 50);
+    return QSize(50, 50);
 }
 
 void BusMonitor::create_vu_meters( )
 {
-	PENTER;
+    PENTER;
 
-        if (!pm().get_project()) {
-                return;
-        }
+    if (!pm().get_project()) {
+        return;
+    }
 
-        if (m_layout) delete m_layout;
+    if (m_layout) delete m_layout;
 
-        m_layout = new QHBoxLayout(this);
-        m_layout->setMargin(0);
-        setLayout(m_layout);
+    m_layout = new QHBoxLayout(this);
+    m_layout->setMargin(0);
+    setLayout(m_layout);
 
-	while( ! inMeters.isEmpty() ) {
-		VUMeter* meter = inMeters.takeFirst();
-                m_layout->removeWidget( meter );
-		delete meter;
-	}
+    while( ! inMeters.isEmpty() ) {
+        VUMeter* meter = inMeters.takeFirst();
+        m_layout->removeWidget( meter );
+        delete meter;
+    }
 
-	while ( ! outMeters.isEmpty() ) {
-		VUMeter* meter = outMeters.takeFirst();
-                m_layout->removeWidget( meter );
-		delete meter;
-	}
-	
-        m_layout->addStretch(1);
+    while ( ! outMeters.isEmpty() ) {
+        VUMeter* meter = outMeters.takeFirst();
+        m_layout->removeWidget( meter );
+        delete meter;
+    }
+
+    m_layout->addStretch(1);
 
 
-        //FIXME: restarting the Driver crashes here!!!!!
+    //FIXME: restarting the Driver crashes here!!!!!
 
-        QStringList list = pm().get_project()->get_capture_buses_names();
-//        foreach(QString name, list) {
-//                AudioBus* bus = pm().get_project()->get_capture_bus(name);
-//                if (!bus) continue;
-//		VUMeter* meter = new VUMeter( this, bus );
-//		connect(bus, SIGNAL(monitoringPeaksStarted()), meter, SLOT(peak_monitoring_started()));
-//		connect(bus, SIGNAL(monitoringPeaksStopped()), meter, SLOT(peak_monitoring_stopped()));
-//                m_layout->addWidget(meter);
-//		inMeters.append(meter);
-//		meter->hide();
-//	}
+    QStringList list = pm().get_project()->get_capture_buses_names();
+    //        foreach(QString name, list) {
+    //                AudioBus* bus = pm().get_project()->get_capture_bus(name);
+    //                if (!bus) continue;
+    //		VUMeter* meter = new VUMeter( this, bus );
+    //		connect(bus, SIGNAL(monitoringPeaksStarted()), meter, SLOT(peak_monitoring_started()));
+    //		connect(bus, SIGNAL(monitoringPeaksStopped()), meter, SLOT(peak_monitoring_stopped()));
+    //                m_layout->addWidget(meter);
+    //		inMeters.append(meter);
+    //		meter->hide();
+    //	}
 
-        // TODO: show playback VU's on demand or ??
-        list = pm().get_project()->get_playback_buses_names();
-        if (list.size()) {
-//                VUMeter* meter = new VUMeter( this, audiodevice().get_playback_bus(list.at(0)));
-//		layout->addWidget(meter);
-//		outMeters.append(meter);
-	}
-	
-        m_layout->addSpacing(4);
+    // TODO: show playback VU's on demand or ??
+    list = pm().get_project()->get_playback_buses_names();
+    if (list.size()) {
+        //                VUMeter* meter = new VUMeter( this, audiodevice().get_playback_bus(list.at(0)));
+        //		layout->addWidget(meter);
+        //		outMeters.append(meter);
+    }
 
-        if (m_masterOutMeter) {
-                m_layout->removeWidget(m_masterOutMeter);
-                delete m_masterOutMeter;
-                m_masterOutMeter = nullptr;
-        }
-        if (m_projectMaster) {
-                m_layout->removeWidget(m_projectMaster);
-                delete m_projectMaster;
-                m_projectMaster = nullptr;
-        }
+    m_layout->addSpacing(4);
 
-        if (m_sheet) {
-                AudioBus* bus = m_sheet->get_master_out()->get_process_bus();
-                m_masterOutMeter = new VUMeter(this, bus);
-                m_layout->addWidget(m_masterOutMeter);
-                bus = m_sheet->get_project()->get_master_out()->get_process_bus();
-                m_projectMaster = new VUMeter(this, bus);
-                m_layout->addWidget(m_projectMaster);
-        }
+    if (m_masterOutMeter) {
+        m_layout->removeWidget(m_masterOutMeter);
+        delete m_masterOutMeter;
+        m_masterOutMeter = nullptr;
+    }
+    if (m_projectMaster) {
+        m_layout->removeWidget(m_projectMaster);
+        delete m_projectMaster;
+        m_projectMaster = nullptr;
+    }
+
+    if (m_sheet) {
+        AudioBus* bus = m_sheet->get_master_out()->get_process_bus();
+        m_masterOutMeter = new VUMeter(this, bus);
+        m_layout->addWidget(m_masterOutMeter);
+        bus = m_sheet->get_project()->get_master_out()->get_process_bus();
+        m_projectMaster = new VUMeter(this, bus);
+        m_layout->addWidget(m_projectMaster);
+    }
 
 }
 
 void BusMonitor::set_project(Project * project)
 {
-	Q_UNUSED(project);
-	
-        if (project) {
-                connect(project, SIGNAL(currentSessionChanged(TSession*)), this, SLOT(set_session(TSession*)));
-        }
-        m_sheet = 0;
+    Q_UNUSED(project);
+
+    if (project) {
+        connect(project, SIGNAL(currentSessionChanged(TSession*)), this, SLOT(set_session(TSession*)));
+    }
+    m_sheet = 0;
 }
 
 void BusMonitor::set_session(TSession* session)
 {
-        Project* project = qobject_cast<Project*>(session);
-        if (project) {
-                return;
-        }
+    Project* project = qobject_cast<Project*>(session);
+    if (project) {
+        return;
+    }
 
-        if (session) {
-                m_sheet = qobject_cast<Sheet*>(session);
-                if (!m_sheet) {
-                        m_sheet = qobject_cast<Sheet*>(session->get_parent_session());
-                }
+    if (session) {
+        m_sheet = qobject_cast<Sheet*>(session);
+        if (!m_sheet) {
+            m_sheet = qobject_cast<Sheet*>(session->get_parent_session());
         }
+    }
 
-        create_vu_meters();
+    create_vu_meters();
 }
 
 void BusMonitor::keyPressEvent(QKeyEvent * event)
 {
-	if (event->isAutoRepeat()) {
-		return;
-	} else if (event->key() == Qt::Key_R) {
-		reset_vu_meters();
-	} else {
+    if (event->isAutoRepeat()) {
+        return;
+    } else if (event->key() == Qt::Key_R) {
+        reset_vu_meters();
+    } else {
         QWidget::keyPressEvent(event);
-	}
+    }
 }
 
 void BusMonitor::mousePressEvent(QMouseEvent * event)
 {
-	if (event->button() == Qt::RightButton) {
-		show_menu();
-	}
+    if (event->button() == Qt::RightButton) {
+        show_menu();
+    }
 }
 
 void BusMonitor::reset_vu_meters()
@@ -209,33 +209,37 @@ void BusMonitor::reset_vu_meters()
     foreach(VUMeter* meter, outMeters) {
         meter->reset();
     }
-        if (m_masterOutMeter) {
-                m_masterOutMeter->reset();
-        }
-        if (m_projectMaster) {
-            m_projectMaster->reset();
-        }
+    if (m_masterOutMeter) {
+        m_masterOutMeter->reset();
+    }
+    if (m_projectMaster) {
+        m_projectMaster->reset();
+    }
 }
 
 void BusMonitor::show_menu()
 {
-	if (!m_menu) {
-		m_menu = new QMenu(this);
-		QAction* action = m_menu->addAction("Bus Monitor");
-		QFont font(themer()->get_font("ContextMenu:fontscale:actions"));
-		font.setBold(true);
-		action->setFont(font);
-		action->setEnabled(false);
-		m_menu->addSeparator();
-		action = m_menu->addAction("Reset VU's  < R >");
-		connect(action, SIGNAL(triggered(bool)), this, SLOT(reset_vu_meters()));
-	}
+    if (!m_menu) {
+        m_menu = new QMenu(this);
+        QAction* action = m_menu->addAction("Bus Monitor");
+        QFont font(themer()->get_font("ContextMenu:fontscale:actions"));
+        font.setBold(true);
+        action->setFont(font);
+        action->setEnabled(false);
+        m_menu->addSeparator();
+        action = m_menu->addAction("Reset VU's");
+        action->setShortcut(QKeySequence("R"));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+        action->setShortcutVisibleInContextMenu(true);
+#endif
+        connect(action, SIGNAL(triggered(bool)), this, SLOT(reset_vu_meters()));
+    }
 
-	m_menu->exec(QCursor::pos());
+    m_menu->exec(QCursor::pos());
 }
 
 void BusMonitor::enterEvent(QEvent *)
 {
-        setFocus();
+    setFocus();
 }
 
