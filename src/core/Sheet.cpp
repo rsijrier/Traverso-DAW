@@ -874,8 +874,6 @@ void Sheet::set_audio_sources_dir(const QString &dir)
                         info().critical(tr("Cannot create dir %1").arg(m_audioSourcesDir));
                 }
         }
-
-        printf("created new audiosrouces dir here: %s\n", m_audioSourcesDir.toLatin1().data());
 }
 
 void Sheet::handle_diskio_readbuffer_underrun( )
