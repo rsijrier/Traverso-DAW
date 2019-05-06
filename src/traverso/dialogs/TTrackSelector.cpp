@@ -40,7 +40,7 @@ TTrackSelector::TTrackSelector(QWidget* parent, TSession* parentSession, TSessio
         }
 
         if (childSession->get_name().isEmpty()) {
-                nameLineEdit->setText(tr("Work View"));
+                nameLineEdit->setText(tr("WorkSpace"));
                 nameLineEdit->selectAll();
         } else {
                 nameLineEdit->setText(childSession->get_name());

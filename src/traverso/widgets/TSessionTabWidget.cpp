@@ -64,7 +64,7 @@ TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
         m_arrowButton->setStyleSheet("background-color: none; border: none; margin: 0;");
         update_arrow_button_shortcut_and_icon();
 
-        // IMPORTANT: this menu needs MainWindow as parent, if the 'close view'
+        // IMPORTANT: this menu needs MainWindow as parent, if the 'close space'
         // action is triggered, mouse events are dispatched correctly by Qt so
         // that the menu close vs view deletion vs context pointer set_view_port()
         // is processed in the correct order.
@@ -106,9 +106,9 @@ TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
                         connect(action, SIGNAL(triggered()), TMainWindow::instance(), SLOT(show_newsheet_dialog()));
                 }
 
-                action = m_arrowButtonMenu->addAction(tr("New Work View..."));
+                action = m_arrowButtonMenu->addAction(tr("New WorkSpace..."));
                 action->setIcon(find_pixmap(":/new"));
-                connect(action, SIGNAL(triggered()), this, SLOT(add_new_work_view_action_triggered()));
+                connect(action, SIGNAL(triggered()), this, SLOT(add_new_work_space_action_triggered()));
 
                 if (m_session->is_project_session()) {
 
@@ -140,7 +140,7 @@ TSessionTabWidget::TSessionTabWidget(QToolBar* toolBar, TSession *session)
                 connect(action, SIGNAL(triggered()), this, SLOT(add_track_action_triggered()));
 
                 m_arrowButtonMenu->addSeparator();
-                action = m_arrowButtonMenu->addAction(QIcon(":/exit"), tr("Close View"));
+                action = m_arrowButtonMenu->addAction(QIcon(":/exit"), tr("Close WorkSpace"));
                 action->setIcon(QIcon(":/exit"));
                 connect(action, SIGNAL(triggered()), this, SLOT(close_action_triggered()));
 
@@ -337,7 +337,7 @@ void TSessionTabWidget::add_track_action_triggered()
         TMainWindow::instance()->show_newtrack_dialog();
 }
 
-void TSessionTabWidget::add_new_work_view_action_triggered()
+void TSessionTabWidget::add_new_work_space_action_triggered()
 {
         TMainWindow::instance()->show_add_child_session_dialog();
 }
