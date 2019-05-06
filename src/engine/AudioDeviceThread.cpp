@@ -160,13 +160,13 @@ void AudioDeviceThread::run_on_cpu( int cpu )
 		CPU_ZERO(&mask);
 		CPU_SET(cpu, &mask);
 		if (setaffinity_func(0, sizeof(mask), &mask)) {
-            printf("AudioDeviceThread: Unable to set CPU affinity\n");
+            printf("AudioThread: Unable to set CPU affinity\n");
 		} else {
-            printf("AudioDeviceThread: Running on CPU %d\n", cpu);
+            printf("AudioThread: Running on CPU %d\n", cpu);
 		}
 	}
 	else {
-        printf("AudioDeviceThread: Unable to set CPU affinity (glibc is too old)\n");
+        printf("AudioDevice: Unable to set CPU affinity (glibc is too old)\n");
 	}
 #endif
 }
