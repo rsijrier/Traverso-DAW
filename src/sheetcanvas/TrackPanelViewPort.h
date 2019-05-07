@@ -32,7 +32,7 @@ class TrackPanelViewPort : public ViewPort
 public:
 	TrackPanelViewPort(QGraphicsScene* scene, SheetWidget* sw);
 	~TrackPanelViewPort() {};
-	
+
 private:
 	SheetWidget*	m_sw;
 };

@@ -289,7 +289,17 @@ void ViewPort::keyPressEvent( QKeyEvent * e)
 void ViewPort::keyReleaseEvent( QKeyEvent * e)
 {
 	ied().catch_key_release(e);
-	e->accept();
+    e->accept();
+}
+
+void ViewPort::dragEnterEvent(QDragEnterEvent *event)
+{
+    event->accept();
+}
+
+void ViewPort::dragMoveEvent(QDragMoveEvent *event)
+{
+    event->ignore();
 }
 
 void ViewPort::mousePressEvent( QMouseEvent * e )

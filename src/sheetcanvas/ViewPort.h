@@ -72,6 +72,10 @@ protected:
     virtual void wheelEvent ( QWheelEvent* e );
     virtual void keyPressEvent ( QKeyEvent* e);
     virtual void keyReleaseEvent ( QKeyEvent* e);
+    virtual void dragEnterEvent(QDragEnterEvent *event);
+    virtual void dragMoveEvent(QDragMoveEvent *event);
+
+
     void tabletEvent ( QTabletEvent * event );
 
     SheetView* m_sv;

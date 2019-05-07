@@ -91,13 +91,13 @@ void ClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 	}
 	
 	// and who knows, it could have been a D&D drop from a filemanager...
-	if (event->mimeData()->hasUrls()) {
+    if (event->mimeData()->hasUrls()) {
 
 		foreach(QUrl url, event->mimeData()->urls()) {
 			QString fileName = url.toLocalFile();
 			
 			if (fileName.isEmpty()) {
-				continue;
+                continue;
 			}
 			
 			Import* import = new Import(fileName);
@@ -106,7 +106,7 @@ void ClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 			// If a readsource fails to init, the D&D should be
 			// marked as failed, cleanup allready created imports,
 			// and clear the import list.
-			if (import->create_readsource() == -1) {
+            if (import->create_readsource() == -1) {
 				foreach(Import* import, m_imports) {
 					delete import;
 				}
@@ -116,9 +116,9 @@ void ClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 		}
 	}
 	
-	if (!m_imports.empty() || !m_resourcesImport.empty()) {
-		event->acceptProposedAction();
-	}
+    if (!m_imports.empty() || !m_resourcesImport.empty()) {
+        event->accept();
+    }
 }
 
 void ClipsViewPort::dropEvent(QDropEvent* event )
@@ -139,7 +139,7 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 		AudioClip* clip = resources_manager()->get_clip(id);
 		if (clip) {
 			bool hadSheet = clip->has_sheet();
-                        clip->set_sheet(((Sheet*)m_sw->get_sheet()));
+            clip->set_sheet(m_sw->get_sheet());
 			clip->set_track(m_importTrack);
 			if (!hadSheet) {
 				clip->set_state(clip->get_dom_node());
@@ -179,16 +179,16 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 
 void ClipsViewPort::dragMoveEvent( QDragMoveEvent * event )
 {
-	Q_UNUSED(event)
-			
 	Project* project = pm().get_project();
 	if (!project) {
+        event->ignore();
 		return;
 	}
 	
-        Sheet* sheet = qobject_cast<Sheet*>(project->get_current_session());
-	
+    Sheet* sheet = qobject_cast<Sheet*>(project->get_current_session());
+
 	if (!sheet) {
+        event->ignore();
 		return;
 	}
 	
@@ -198,15 +198,15 @@ void ClipsViewPort::dragMoveEvent( QDragMoveEvent * event )
 	
 	// no mouse move events during D&D move events...
 	// So we need to calculate the scene pos ourselves.
-	QPointF mouseposTosScene = mapFromGlobal(QCursor::pos());
-	
-	QList<QGraphicsItem *> itemlist = items((int)mouseposTosScene.x(), (int)mouseposTosScene.y());
+    QList<QGraphicsItem *> itemlist = items(mapFromGlobal(QCursor::pos()));
 	foreach(QGraphicsItem* obj, itemlist) {
 		AudioTrackView* tv = dynamic_cast<AudioTrackView*>(obj);
 		if (tv) {
 			m_importTrack = tv->get_track();
+            event->accept();
 			return;
-		}
+        }
 	}
+    event->ignore();
 }
 

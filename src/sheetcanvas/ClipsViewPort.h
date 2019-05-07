@@ -41,11 +41,12 @@ public:
 	
 
 protected:
-        void resizeEvent(QResizeEvent* e);
+    void resizeEvent(QResizeEvent* e);
 	void paintEvent( QPaintEvent* e);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dropEvent(QDropEvent *event);
-        void dragMoveEvent(QDragMoveEvent *event);
+    void dragMoveEvent(QDragMoveEvent *event);
+
 private:
 	SheetWidget*	m_sw;
 	QList<Import*>	m_imports;
