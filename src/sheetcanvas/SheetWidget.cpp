@@ -64,11 +64,11 @@ SheetPanelViewPort::SheetPanelViewPort(QGraphicsScene * scene, SheetWidget * sw)
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-        m_spv = new SheetPanelView(scene, sw->get_sheet());
+        m_spv = new SheetPanelView(scene, sw->get_session());
         load_theme();
 
         QHBoxLayout* m_mainLayout = new QHBoxLayout(this);
-        m_mainLayout->addWidget(new TTimeLabel(this, sw->get_sheet()));
+        m_mainLayout->addWidget(new TTimeLabel(this, sw->get_session()));
         setLayout(m_mainLayout);
 
         connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme()));
@@ -80,7 +80,7 @@ void SheetPanelViewPort::load_theme()
         setBackgroundBrush(themer()->get_color("Timeline:background"));
 }
 
-TTimeLabel::TTimeLabel(QWidget* parent, TSession* session)
+TTimeLabel::TTimeLabel(QWidget* parent, TSession *session)
         : QPushButton(parent)
         , m_session(session)
 {
@@ -251,9 +251,14 @@ void SheetWidget::load_theme_data()
 	
 }
 
-TSession * SheetWidget::get_sheet() const
+Sheet* SheetWidget::get_sheet() const
 {
-	return m_session;
+    return qobject_cast<Sheet*>(m_session);
+}
+
+TSession *SheetWidget::get_session() const
+{
+    return m_session;
 }
 
 SheetView * SheetWidget::get_sheetview() const

@@ -85,7 +85,7 @@ public:
 
 private:
         QTimer		m_updateTimer;
-        TSession*	m_session;
+        TSession*   m_session;
 
 
 private slots:
@@ -101,7 +101,8 @@ public:
         SheetWidget(TSession* sheet, QWidget* parent=0);
 	~SheetWidget();
 	
-        TSession* get_sheet() const;
+        Sheet* get_sheet() const;
+        TSession* get_session() const;
 	SheetView* get_sheetview() const;
 	
 protected:

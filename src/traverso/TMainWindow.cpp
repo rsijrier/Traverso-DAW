@@ -377,7 +377,7 @@ void TMainWindow::set_project(Project* project)
 	PENTER;
 
 	foreach(SheetWidget* sw, m_sheetWidgets) {
-		remove_session(sw->get_sheet());
+        remove_session(sw->get_session());
 	}
 
 	m_project = project;
@@ -510,7 +510,7 @@ void TMainWindow::show_session(TSession* session)
 	}
 
 	if (m_currentSheetWidget && m_project && m_project->sheets_are_track_folder()) {
-		sheetWidget->get_sheet()->set_hzoom(m_currentSheetWidget->get_sheet()->get_hzoom());
+        sheetWidget->get_session()->set_hzoom(m_currentSheetWidget->get_session()->get_hzoom());
 		sheetWidget->get_sheetview()->set_hscrollbar_value(m_currentSheetWidget->get_sheetview()->hscrollbar_value());
 	}
 
@@ -1302,7 +1302,7 @@ void TMainWindow::import_audio()
 		return;
 	}
 
-	Sheet* sheet = qobject_cast<Sheet*>(m_currentSheetWidget->get_sheet());
+    Sheet* sheet = m_currentSheetWidget->get_sheet();
 	if (!sheet || !sheet->get_audio_track_count()) {
 		return;
 	}
@@ -1767,7 +1767,7 @@ void TMainWindow::track_finder_model_index_changed(const QModelIndex& index)
 	qlonglong id = index.data(Qt::UserRole).toLongLong();
 
 	foreach(SheetWidget* sw, m_sheetWidgets) {
-		Sheet* sheet = qobject_cast<Sheet*>(sw->get_sheet());
+        Sheet* sheet = sw->get_sheet();
 		if (!sheet) return;
 		Track* track = sheet->get_track(id);
 		if (track) {
