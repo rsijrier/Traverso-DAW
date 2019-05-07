@@ -489,8 +489,12 @@ void TMainWindow::remove_session(TSession* session)
 void TMainWindow::show_session(TSession* session)
 {
 	PENTER;
+    // no reason to set same session again
+    if (m_currentSheetWidget && m_currentSheetWidget->get_session() == session) {
+        return;
+    }
 
-	SheetWidget* sheetWidget = 0;
+    SheetWidget* sheetWidget = nullptr;
 
 	if (!session) {
 		m_snapAction->setEnabled(false);
@@ -1767,11 +1771,11 @@ void TMainWindow::track_finder_model_index_changed(const QModelIndex& index)
 	qlonglong id = index.data(Qt::UserRole).toLongLong();
 
 	foreach(SheetWidget* sw, m_sheetWidgets) {
-        Sheet* sheet = sw->get_sheet();
-		if (!sheet) return;
-		Track* track = sheet->get_track(id);
+        TSession* session = sw->get_session();
+        if (!session) return;
+        Track* track = session->get_track(id);
 		if (track) {
-			show_session(sheet);
+            show_session(session);
 			sw->setFocus();
 			sw->get_sheetview()->browse_to_track(track);
 			break;
