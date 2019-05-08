@@ -244,88 +244,87 @@ void AudioTrack::add_input_bus(AudioBus *bus)
 //
 int AudioTrack::process( nframes_t nframes )
 {
-        int processResult = 0;
+    int processResult = 0;
 
-        if ( (m_isMuted || m_mutedBySolo) && ( ! m_isArmed) ) {
-                return 0;
-        }
+    if ( (m_isMuted || m_mutedBySolo) && ( ! m_isArmed) ) {
+        return 0;
+    }
 
-        // Get the 'render bus' from sheet, a bit hackish solution, but
-        // it avoids to have a dedicated render bus for each Track,
-        // or buffers located on the heap...
-        m_processBus->silence_buffers(nframes);
+    // Get the 'render bus' from sheet, a bit hackish solution, but
+    // it avoids to have a dedicated render bus for each Track,
+    // or buffers located on the heap...
+    m_processBus->silence_buffers(nframes);
 
-        int result;
-        float panFactor;
+    int result;
+    float panFactor;
 
-        // Read in clip data into process bus.
-        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
-                if (m_isArmed && clip->recording_state() == AudioClip::NO_RECORDING) {
-                        if (m_isMuted || m_mutedBySolo) {
-                                continue;
-                        }
-                }
-
-
-                result = clip->process(nframes);
-
-                if (result <= 0) {
-                        continue;
-                }
-
-                processResult |= result;
-        }
-
-        // Then do the pre-send:
-        process_pre_sends(nframes);
-
-
-        // Then apply the pre fader plugins;
-        m_pluginChain->process_pre_fader(m_processBus, nframes);
-
-
-        // Obviously fader here, pan, gain, gain automation
-        if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
-                panFactor = 1 - m_pan;
-                Mixer::apply_gain_to_buffer(m_processBus->get_buffer(0, nframes), nframes, panFactor);
-        }
-
-        if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
-                panFactor = 1 + m_pan;
-                Mixer::apply_gain_to_buffer(m_processBus->get_buffer(1, nframes), nframes, panFactor);
+    // Read in clip data into process bus.
+    apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
+        if (m_isArmed && clip->recording_state() == AudioClip::NO_RECORDING) {
+            if (m_isMuted || m_mutedBySolo) {
+                continue;
+            }
         }
 
 
-        // gain automation curve only understands audio_sample_t** atm
-        // so wrap the process buffers into a audio_sample_t**
+        result = clip->process(nframes);
 
-        // FIXME make it future proof so it can deal with any amount of channels?
-        audio_sample_t* mixdown[6];
-
-        for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
-                mixdown[chan] = m_processBus->get_buffer(chan, nframes);
+        if (result <= 0) {
+            continue;
         }
 
-        TimeRef location = m_sheet->get_transport_location();
-        TimeRef endlocation = location + TimeRef(nframes, audiodevice().get_sample_rate());
-        m_fader->process_gain(mixdown, location, endlocation, nframes, m_processBus->get_channel_count());
+        processResult |= result;
+    }
+
+    // Then do the pre-send:
+    process_pre_sends(nframes);
 
 
-        // Post fader plugins now
-        processResult |= m_pluginChain->process_post_fader(m_processBus, nframes);
+    // Then apply the pre fader plugins;
+    m_pluginChain->process_pre_fader(m_processBus, nframes);
 
-        // TODO: is there a situation where we still want to call process_post_sends
-        // even if processresult == 0?
-        if (processResult) {
-                if (!m_isArmed) {
-                        m_processBus->process_monitoring(m_vumonitors);
-                }
+
+    // Apply PAN
+    if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
+        panFactor = 1 - m_pan;
+        Mixer::apply_gain_to_buffer(m_processBus->get_buffer(0, nframes), nframes, panFactor);
+    }
+
+    if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
+        panFactor = 1 + m_pan;
+        Mixer::apply_gain_to_buffer(m_processBus->get_buffer(1, nframes), nframes, panFactor);
+    }
+
+
+    // gain automation curve only understands audio_sample_t** atm
+    // so wrap the process buffers into a audio_sample_t**
+    // FIXME make it future proof so it can deal with any amount of channels?
+    audio_sample_t* mixdown[6];
+    for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
+        mixdown[chan] = m_processBus->get_buffer(chan, nframes);
+    }
+
+    TimeRef location = m_sheet->get_transport_location();
+    TimeRef endlocation = location + TimeRef(nframes, audiodevice().get_sample_rate());
+    // Apply fader Gain/envelope
+    m_fader->process_gain(mixdown, location, endlocation, nframes, m_processBus->get_channel_count());
+
+
+    // Post fader plugins now
+    processResult |= m_pluginChain->process_post_fader(m_processBus, nframes);
+
+    // TODO: is there a situation where we still want to call process_post_sends
+    // even if processresult == 0?
+    if (processResult) {
+        if (!m_isArmed) {
+            m_processBus->process_monitoring(m_vumonitors);
+        }
 
         // And finally do the post sends
-                process_post_sends(nframes);
-        }
+        process_post_sends(nframes);
+    }
 
-        return processResult;
+    return processResult;
 }
 
 
