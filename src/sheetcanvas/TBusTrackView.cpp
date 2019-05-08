@@ -41,7 +41,12 @@ TBusTrackView::TBusTrackView(SheetView* sv, TBusTrack* group)
 
     load_theme_data();
 
-    m_pluginChainView = new PluginChainView(m_sv, m_primaryLaneView, m_track->get_plugin_chain());
+    auto pluginsLaneview = new TTrackLaneView(this);
+    pluginsLaneview->set_height(28);
+    pluginsLaneview->hide();
+    add_lane_view(pluginsLaneview);
+
+    m_pluginChainView = new PluginChainView(m_sv, pluginsLaneview, m_track->get_plugin_chain());
 
     m_panel = new TBusTrackPanelView(this);
     calculate_bounding_rect();
