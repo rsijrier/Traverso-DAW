@@ -81,8 +81,8 @@ QString GainEnvelope::get_name()
 
 void GainEnvelope::set_session(TSession * session)
 {
-        m_session = session;
-	set_history_stack(m_session->get_history_stack());
+    m_session = session;
+    set_history_stack(m_session->get_history_stack());
 	if (get_curve()) {
                 get_curve()->set_sheet(session);
 	}
@@ -90,18 +90,18 @@ void GainEnvelope::set_session(TSession * session)
 
 void GainEnvelope::process(AudioBus * bus, nframes_t nframes)
 {
-        for (int chan=0; chan<bus->get_channel_count(); ++chan) {
-                Mixer::apply_gain_to_buffer(bus->get_buffer(chan, nframes), nframes, get_gain());
-        }
+    for (int chan=0; chan<bus->get_channel_count(); ++chan) {
+        Mixer::apply_gain_to_buffer(bus->get_buffer(chan, nframes), nframes, get_gain());
+    }
 }
 
 Curve * GainEnvelope::get_curve()
 {
-        if (m_controlPorts.size() && !m_controlPorts.at(0)->get_curve()) {
-                // no automation was setup it seems, do it now!
-                automate_port(0, true);
-        }
-	return m_controlPorts.at(0)->get_curve();
+    if (m_controlPorts.size() && !m_controlPorts.at(0)->get_curve()) {
+        // no automation was setup it seems, do it now!
+        automate_port(0, true);
+    }
+    return m_controlPorts.at(0)->get_curve();
 }
 
 
