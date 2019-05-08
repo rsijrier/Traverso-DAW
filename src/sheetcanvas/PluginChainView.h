@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2007 Remon Sijrier
+    Copyright (C) 2006-2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -24,7 +24,6 @@
 
 
 #include "ViewItem.h"
-#include <QString>
 
 class SheetView;
 class Plugin;
@@ -33,23 +32,23 @@ class PluginView;
 
 class PluginChainView : public ViewItem
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-        PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* chain);
-        ~PluginChainView();
+    PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* chain);
+    ~PluginChainView();
 
-        void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-	void calculate_bounding_rect();
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void calculate_bounding_rect();
 
 private:
-	PluginChain* m_pluginchain;
-        QList<PluginView* >	m_pluginViews;
+    PluginChain* m_pluginchain;
+    QList<PluginView* >	m_pluginViews;
 
 public slots:
-        void add_new_pluginview(Plugin* plugin);
-        void remove_pluginview(Plugin* plugin);
-	void scrollbar_value_changed(int value);
+    void add_new_plugin(Plugin* plugin);
+    void remove_plugin(Plugin* plugin);
+    void scrollbar_value_changed(int value);
 };
 
 #endif

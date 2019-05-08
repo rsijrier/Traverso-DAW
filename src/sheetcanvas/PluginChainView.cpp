@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2007 Remon Sijrier
+    Copyright (C) 2006-2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -23,21 +23,11 @@
 
 #include <QScrollBar>
 
-#include "AudioTrackView.h"
 #include "SheetView.h"
 #include "ClipsViewPort.h"
 #include "PluginView.h"
-#include "Themer.h"
-#include <PluginChain.h>
-#include <Plugin.h>
-
-#include <Track.h>
-#include "Sheet.h"
-
-#if defined (LV2_SUPPORT)
-#include <LV2Plugin.h>
-#endif
-#include <PluginChain.h>
+#include "PluginChain.h"
+#include "Plugin.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -54,15 +44,12 @@ PluginChainView::PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* c
     m_sv = sv;
     calculate_bounding_rect();
 
-
-    //        add_new_pluginview(chain->get_fader());
-
-    foreach(Plugin* plugin, chain->get_plugin_list()) {
-        add_new_pluginview(plugin);
+    apill_foreach(Plugin* plugin, Plugin*, chain->get_plugins()) {
+        add_new_plugin(plugin);
     }
 
-    connect(chain, SIGNAL(pluginAdded(Plugin*)), this, SLOT(add_new_pluginview(Plugin*)));
-    connect(chain, SIGNAL(pluginRemoved(Plugin*)), this, SLOT(remove_pluginview(Plugin*)));
+    connect(chain, SIGNAL(pluginAdded(Plugin*)), this, SLOT(add_new_plugin(Plugin*)));
+    connect(chain, SIGNAL(pluginRemoved(Plugin*)), this, SLOT(remove_plugin(Plugin*)));
     connect(m_sv->get_clips_viewport()->horizontalScrollBar(), SIGNAL(valueChanged(int)),
             this, SLOT(scrollbar_value_changed(int)));
 }
@@ -72,7 +59,7 @@ PluginChainView::~PluginChainView( )
     PENTERDES2;
 }
 
-void PluginChainView::add_new_pluginview( Plugin * plugin )
+void PluginChainView::add_new_plugin( Plugin * plugin )
 {
     PluginView* view = new PluginView(this, m_pluginchain, plugin, m_pluginViews.size());
 
@@ -85,10 +72,12 @@ void PluginChainView::add_new_pluginview( Plugin * plugin )
 
     m_pluginViews.append(view);
 
-    parentItem()->show();
+    if (m_pluginViews.size() > 1) {
+        parentItem()->show();
+    }
 }
 
-void PluginChainView::remove_pluginview( Plugin * plugin )
+void PluginChainView::remove_plugin( Plugin * plugin )
 {
     foreach(PluginView* view, m_pluginViews) {
         if (view->get_plugin() == plugin) {
@@ -107,7 +96,7 @@ void PluginChainView::remove_pluginview( Plugin * plugin )
         x += int(view->boundingRect().width()) + 6;
     }
 
-    if (m_pluginViews.empty()) {
+    if (m_pluginViews.size() == 1) {
         parentItem()->hide();
     }
 

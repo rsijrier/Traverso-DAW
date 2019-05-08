@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "defines.h"
+#include "APILinkedList.h"
 
 class AudioBus;
 class PluginChain;
@@ -49,13 +50,15 @@ struct PluginInfo {
     QString uri;
 };
 
-class Plugin : public ContextItem
+class Plugin : public ContextItem, public APILinkedListNode
 {
     Q_OBJECT
 
 public:
     Plugin(TSession* session = nullptr);
     virtual ~Plugin(){}
+
+    virtual bool is_smaller_then(APILinkedListNode* node);
 
     virtual int init() {return 1;}
     virtual	QDomNode get_state(QDomDocument doc);

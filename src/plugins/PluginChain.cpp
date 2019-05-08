@@ -31,32 +31,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "GainEnvelope.h"
 #include "Curve.h"
 #include "Mixer.h"
+#include "Information.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
 PluginChain::PluginChain(ContextItem * parent)
-	: ContextItem(parent)
+    : PluginChain(parent, nullptr)
 {
-	m_fader = new GainEnvelope(nullptr);
 }
 
 PluginChain::PluginChain(ContextItem* parent, TSession* session)
 	: ContextItem(parent)
 {
         m_fader = new GainEnvelope(session);
+        private_add_plugin(m_fader);
         set_session(session);
 }
 
 PluginChain::~ PluginChain()
 {
 	PENTERDES;
-	foreach(Plugin* plugin, m_pluginList) {
-		delete plugin;
+    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+        delete plugin;
 	}
 	
-	delete m_fader;
+//	delete m_fader;
 }
 
 
@@ -64,11 +65,14 @@ QDomNode PluginChain::get_state(QDomDocument doc)
 {
 	QDomNode pluginsNode = doc.createElement("Plugins");
 	
-	foreach(Plugin* plugin, m_pluginList) {
+    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+        if (plugin == m_fader) {
+            continue;
+        }
 		pluginsNode.appendChild(plugin->get_state(doc));
 	}
 	
-	pluginsNode.appendChild(m_fader->get_state(doc));
+    pluginsNode.appendChild(m_fader->get_state(doc));
 	
 	return pluginsNode;
 }
@@ -111,34 +115,40 @@ TCommand* PluginChain::add_plugin(Plugin * plugin, bool historable)
 
 TCommand* PluginChain::remove_plugin(Plugin* plugin, bool historable)
 {
-        return new AddRemove( this, plugin, historable, m_session,
-		"private_remove_plugin(Plugin*)", "pluginRemoved(Plugin*)",
-		"private_add_plugin(Plugin*)", "pluginAdded(Plugin*)",
-		tr("Remove Plugin (%1)").arg(plugin->get_name()));
+    if (plugin == m_fader) {
+        // do not remove fader we always have one
+        info().information(tr("Gain Envelope (Fader) is not removable"));
+        return ied().failure();
+    }
+
+    return new AddRemove( this, plugin, historable, m_session,
+                          "private_remove_plugin(Plugin*)", "pluginRemoved(Plugin*)",
+                          "private_add_plugin(Plugin*)", "pluginAdded(Plugin*)",
+                          tr("Remove Plugin (%1)").arg(plugin->get_name()));
 }
 
 
 void PluginChain::private_add_plugin( Plugin * plugin )
 {
-	m_pluginList.append(plugin);
+    m_plugins.append(plugin);
 }
 
 
 void PluginChain::private_remove_plugin( Plugin * plugin )
 {
-	int index = m_pluginList.indexOf(plugin);
-	
-	if (index >=0 ) {
-		m_pluginList.removeAt(index);
-	} else {
+    if (!m_plugins.remove(plugin)) {
 		PERROR("Plugin not found in list, this is invalid plugin remove!!!!!");
 	}
 }
 
 void PluginChain::set_session(TSession * session)
 {
-        m_session = session;
-        set_history_stack(m_session->get_history_stack());
-        m_fader->set_session(session);
+    if (!session) {
+        return;
+    }
+
+    m_session = session;
+    set_history_stack(m_session->get_history_stack());
+    m_fader->set_session(session);
 }
 

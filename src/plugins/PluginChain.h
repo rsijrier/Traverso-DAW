@@ -52,11 +52,11 @@ public:
 	
         void set_session(TSession* session);
 	
-	QList<Plugin* > get_plugin_list() {return m_pluginList;}
+    APILinkedList get_plugins() {return m_plugins;}
 	GainEnvelope* get_fader() const {return m_fader;}
 	
 private:
-	QList<Plugin* >	m_pluginList;
+    APILinkedList	m_plugins;
 	GainEnvelope*	m_fader;
         TSession*	m_session{};
 	
@@ -73,24 +73,28 @@ private slots:
 
 inline void PluginChain::process_pre_fader(AudioBus * bus, unsigned long nframes)
 {
-	return;
-	for (int i=0; i<m_pluginList.size(); ++i) {
-		Plugin* plugin = m_pluginList.at(i);
-		if (plugin == m_fader) return;
+    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+        if (plugin == m_fader) {
+            return;
+        }
 		plugin->process(bus, nframes);
 	}
 }
 
 inline int PluginChain::process_post_fader(AudioBus * bus, unsigned long nframes)
 {
-	if (!m_pluginList.size()) {
+    if (!m_plugins.size()) {
 		return 0;
 	}
 	
-	for (int i=0; i<m_pluginList.size(); ++i) {
-		Plugin* plugin = m_pluginList.at(i);
-// 		if (plugin == m_fader) continue;
-		plugin->process(bus, nframes);
+    bool faderWasReached = false;
+
+    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+        if (faderWasReached) {
+            plugin->process(bus, nframes);
+        } else if (plugin == m_fader) {
+            faderWasReached = true;
+        }
 	}
 	
 	return 1;
