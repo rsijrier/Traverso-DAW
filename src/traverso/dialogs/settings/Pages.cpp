@@ -136,7 +136,7 @@ void AudioDriverConfigPage::reset_default_config()
 #if defined (ALSA_SUPPORT)
 	config().set_property("Hardware", "drivertype", "ALSA");
         config().set_property("Hardware", "carddevice", "default");
-    config().set_property("Hardware", "numberofperiods", 2);
+    config().set_property("Hardware", "numberofperiods", 3);
 	config().set_property("Hardware", "DitherShape", "None");
 #elif defined (JACK_SUPPORT)
 	if (libjack_is_present)
