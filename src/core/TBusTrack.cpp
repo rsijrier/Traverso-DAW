@@ -106,50 +106,45 @@ void TBusTrack::set_name( const QString & name )
 
 int TBusTrack::process(nframes_t nframes)
 {
-        if (m_isMuted || (get_gain() == 0.0f) ) {
-                return 0;
-        }
+    if (m_isMuted || (get_gain() == 0.0f) ) {
+        return 0;
+    }
 
-        process_pre_sends(nframes);
+    process_pre_sends(nframes);
 
-        m_pluginChain->process_pre_fader(m_processBus, nframes);
+    m_pluginChain->process_pre_fader(m_processBus, nframes);
 
-        m_fader->process(m_processBus, nframes);
+    float panFactor;
 
-        float panFactor;
+    if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
+        panFactor = 1 - m_pan;
+        Mixer::apply_gain_to_buffer(m_processBus->get_buffer(0, nframes), nframes, panFactor);
+    }
 
-        if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
-                panFactor = 1 - m_pan;
-                Mixer::apply_gain_to_buffer(m_processBus->get_buffer(0, nframes), nframes, panFactor);
-        }
+    if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
+        panFactor = 1 + m_pan;
+        Mixer::apply_gain_to_buffer(m_processBus->get_buffer(1, nframes), nframes, panFactor);
+    }
 
-        if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
-                panFactor = 1 + m_pan;
-                Mixer::apply_gain_to_buffer(m_processBus->get_buffer(1, nframes), nframes, panFactor);
-        }
-
-	// gain automation curve only understands audio_sample_t** atm
-	// so wrap the process buffers into a audio_sample_t**
-
-        // FIXME make it future proof so it can deal with any amount of channels?
-        audio_sample_t* mixdown[6];
-
+    // gain automation curve only understands audio_sample_t** atm
+    // so wrap the process buffers into a audio_sample_t**
+    // FIXME make it future proof so it can deal with any amount of channels?
+    audio_sample_t* mixdown[6];
     for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
-		mixdown[chan] = m_processBus->get_buffer(chan, nframes);
-	}
+        mixdown[chan] = m_processBus->get_buffer(chan, nframes);
+    }
+    TimeRef location = m_session->get_transport_location();
+    TimeRef endlocation = location + TimeRef(nframes, audiodevice().get_sample_rate());
 
-	TimeRef location = m_session->get_transport_location();
-	TimeRef endlocation = location + TimeRef(nframes, audiodevice().get_sample_rate());
-	m_fader->process_gain(mixdown, location, endlocation, nframes, m_processBus->get_channel_count());
+    m_fader->process_gain(mixdown, location, endlocation, nframes, m_processBus->get_channel_count());
 
+    m_pluginChain->process_post_fader(m_processBus, nframes);
 
-        m_pluginChain->process_post_fader(m_processBus, nframes);
+    m_processBus->process_monitoring(m_vumonitors);
 
-        m_processBus->process_monitoring(m_vumonitors);
+    process_post_sends(nframes);
 
-        process_post_sends(nframes);
+    m_processBus->silence_buffers(nframes);
 
-        m_processBus->silence_buffers(nframes);
-
-        return 1;
+    return 1;
 }
