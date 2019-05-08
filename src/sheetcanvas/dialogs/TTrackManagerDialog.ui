@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>829</width>
-    <height>419</height>
+    <width>897</width>
+    <height>461</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -407,7 +407,7 @@
       <widget class="QGroupBox" name="pluginsGroupBox_2">
        <property name="minimumSize">
         <size>
-         <width>140</width>
+         <width>160</width>
          <height>0</height>
         </size>
        </property>
@@ -471,7 +471,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QListView" name="pluginsListView_2">
+         <widget class="QListWidget" name="preFaderPluginsListWidget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -480,7 +480,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>120</width>
+            <width>130</width>
             <height>0</height>
            </size>
           </property>
@@ -588,7 +588,7 @@
       <widget class="QGroupBox" name="pluginsGroupBox">
        <property name="minimumSize">
         <size>
-         <width>140</width>
+         <width>160</width>
          <height>0</height>
         </size>
        </property>
@@ -658,7 +658,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QListView" name="pluginsListView">
+         <widget class="QListWidget" name="postFaderPluginsListWidget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -667,7 +667,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>120</width>
+            <width>130</width>
             <height>0</height>
            </size>
           </property>

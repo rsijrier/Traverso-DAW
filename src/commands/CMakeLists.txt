@@ -25,6 +25,7 @@ MoveClip.cpp
 MoveCurveNode.cpp
 MoveEdge.cpp
 MoveMarker.cpp
+MovePlugin.cpp
 MoveTrack.cpp
 PCommand.cpp
 SplitClip.cpp

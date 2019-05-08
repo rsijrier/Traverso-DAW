@@ -44,11 +44,11 @@ PluginChainView::PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* c
     m_sv = sv;
     calculate_bounding_rect();
 
-    apill_foreach(Plugin* plugin, Plugin*, chain->get_plugins()) {
-        add_new_plugin(plugin);
+    for(auto plugin : chain->get_plugins()) {
+        add_plugin(plugin);
     }
 
-    connect(chain, SIGNAL(pluginAdded(Plugin*)), this, SLOT(add_new_plugin(Plugin*)));
+    connect(chain, SIGNAL(pluginAdded(Plugin*)), this, SLOT(add_plugin(Plugin*)));
     connect(chain, SIGNAL(pluginRemoved(Plugin*)), this, SLOT(remove_plugin(Plugin*)));
     connect(m_sv->get_clips_viewport()->horizontalScrollBar(), SIGNAL(valueChanged(int)),
             this, SLOT(scrollbar_value_changed(int)));
@@ -59,7 +59,7 @@ PluginChainView::~PluginChainView( )
     PENTERDES2;
 }
 
-void PluginChainView::add_new_plugin( Plugin * plugin )
+void PluginChainView::add_plugin( Plugin * plugin )
 {
     PluginView* view = new PluginView(this, m_pluginchain, plugin, m_pluginViews.size());
 

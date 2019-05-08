@@ -34,70 +34,74 @@ class AudioBus;
 
 class PluginChain : public ContextItem
 {
-	Q_OBJECT
-	
+    Q_OBJECT
+
 public:
-	PluginChain(ContextItem* parent);
-        PluginChain(ContextItem* parent, TSession* session);
-	~PluginChain();
-	
-	QDomNode get_state(QDomDocument doc);
-	int set_state(const QDomNode & node );
-	
-	TCommand* add_plugin(Plugin* plugin, bool historable=true);
-	TCommand* remove_plugin(Plugin* plugin, bool historable=true);
-	void process_pre_fader(AudioBus* bus, unsigned long nframes);
-	int process_post_fader(AudioBus* bus, unsigned long nframes);
-// 	void process_fader(audio_sample_t* buffer, nframes_t pos, nframes_t nframes) {m_fader->process_gain(buffer, pos, nframes);}
-	
-        void set_session(TSession* session);
-	
-    APILinkedList get_plugins() {return m_plugins;}
-	GainEnvelope* get_fader() const {return m_fader;}
-	
+    PluginChain(ContextItem* parent, TSession* session=nullptr);
+    ~PluginChain();
+
+    QDomNode get_state(QDomDocument doc);
+    int set_state(const QDomNode & node );
+
+    TCommand* add_plugin(Plugin* plugin, bool historable=true);
+    TCommand* remove_plugin(Plugin* plugin, bool historable=true);
+    void process_pre_fader(AudioBus* bus, unsigned long nframes);
+    int process_post_fader(AudioBus* bus, unsigned long nframes);
+    // 	void process_fader(audio_sample_t* buffer, nframes_t pos, nframes_t nframes) {m_fader->process_gain(buffer, pos, nframes);}
+
+    void set_session(TSession* session);
+
+    QList<Plugin*>  get_plugins() const {return m_plugins;}
+    QList<Plugin*>  get_pre_fader_plugins();
+    QList<Plugin*>  get_post_fader_plugins();
+    GainEnvelope*   get_fader() const {return m_fader;}
+
 private:
-    APILinkedList	m_plugins;
-	GainEnvelope*	m_fader;
-        TSession*	m_session{};
-	
-signals:
-	void pluginAdded(Plugin* plugin);
-	void pluginRemoved(Plugin* plugin);
+    APILinkedList	m_rtPlugins;
+    QList<Plugin*>  m_plugins;
+    GainEnvelope*	m_fader;
+    TSession*	m_session{};
 
 private slots:
-	void private_add_plugin(Plugin* plugin);
-	void private_remove_plugin(Plugin* plugin);
+    void private_add_plugin(Plugin* plugin);
+    void private_remove_plugin(Plugin* plugin);
+    void private_plugin_added(Plugin* plugin);
+    void private_plugin_removed(Plugin* plugin);
 
-
+signals:
+    void pluginAdded(Plugin* plugin);
+    void pluginRemoved(Plugin* plugin);
+    void privatePluginRemoved(Plugin*);
+    void privatePluginAdded(Plugin*);
 };
 
 inline void PluginChain::process_pre_fader(AudioBus * bus, unsigned long nframes)
 {
-    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
         if (plugin == m_fader) {
             return;
         }
-		plugin->process(bus, nframes);
-	}
+        plugin->process(bus, nframes);
+    }
 }
 
 inline int PluginChain::process_post_fader(AudioBus * bus, unsigned long nframes)
 {
-    if (!m_plugins.size()) {
-		return 0;
-	}
-	
+    if (!m_rtPlugins.size()) {
+        return 0;
+    }
+
     bool faderWasReached = false;
 
-    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
         if (faderWasReached) {
             plugin->process(bus, nframes);
         } else if (plugin == m_fader) {
             faderWasReached = true;
         }
-	}
-	
-	return 1;
+    }
+
+    return 1;
 }
 
 #endif

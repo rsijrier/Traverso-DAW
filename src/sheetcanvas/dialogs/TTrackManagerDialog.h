@@ -54,6 +54,7 @@ private:
 
 private slots:
         void update_routing_input_output_widget_view();
+        void update_pre_post_fader_plugins_widget_view();
         void update_gain_indicator();
         void update_pan_indicator();
         void accept();

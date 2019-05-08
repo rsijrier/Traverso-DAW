@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Track.h"
 #include "ProjectManager.h"
 #include "Project.h"
+#include "Plugin.h"
+#include "PluginChain.h"
 #include "Sheet.h"
 #include "TBusTrack.h"
 #include "Utils.h"
@@ -55,6 +57,8 @@ TTrackManagerDialog::TTrackManagerDialog(Track *track, QWidget *parent)
         create_pre_sends_menu();
 
         update_routing_input_output_widget_view();
+        update_pre_post_fader_plugins_widget_view();
+
         trackPanSlider->setValue(int(m_track->get_pan() * 64));
         trackGainSlider->setValue(int(coefficient_to_dB(m_track->get_gain()) * 10.f));
 
@@ -327,7 +331,6 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                         QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                         item->setText(send->get_from_name());
                         item->setData(Qt::UserRole, send->get_id());
-                        routingInputListWidget->addItem(item);
                 }
         }
 
@@ -339,7 +342,6 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                         if (!bus->is_valid()) {
                                 item->setTextColor(QColor(Qt::lightGray));
                         }
-                        routingInputListWidget->addItem(item);
                 }
         }
 
@@ -355,7 +357,6 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                         item->setTextColor(QColor(Qt::lightGray));
                 }
                 item->setData(Qt::UserRole, send->get_id());
-                routingOutputListWidget->addItem(item);
         }
 
         preSendsListWidget->clear();
@@ -368,8 +369,27 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                         item->setTextColor(QColor(Qt::lightGray));
                 }
                 item->setData(Qt::UserRole, send->get_id());
-                preSendsListWidget->addItem(item);
         }
+}
+
+void TTrackManagerDialog::update_pre_post_fader_plugins_widget_view()
+{
+    postFaderPluginsListWidget->clear();
+    QList<Plugin*> postFaderPlugins = m_track->get_plugin_chain()->get_post_fader_plugins();
+    foreach(Plugin* plugin, postFaderPlugins) {
+            QListWidgetItem* item = new QListWidgetItem(postFaderPluginsListWidget);
+            item->setText(plugin->get_name());
+            item->setData(Qt::UserRole, plugin->get_id());
+    }
+
+
+    preFaderPluginsListWidget->clear();
+    QList<Plugin*> preFaderPlugins = m_track->get_plugin_chain()->get_pre_fader_plugins();
+    foreach(Plugin* plugin, preFaderPlugins) {
+            QListWidgetItem* item = new QListWidgetItem(preFaderPluginsListWidget);
+            item->setText(plugin->get_name());
+            item->setData(Qt::UserRole, plugin->get_id());
+    }
 }
 
 void TTrackManagerDialog::on_routingInputRemoveButton_clicked()

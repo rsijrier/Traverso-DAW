@@ -37,23 +37,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-PluginChain::PluginChain(ContextItem * parent)
-    : PluginChain(parent, nullptr)
-{
-}
-
 PluginChain::PluginChain(ContextItem* parent, TSession* session)
 	: ContextItem(parent)
 {
-        m_fader = new GainEnvelope(session);
-        private_add_plugin(m_fader);
-        set_session(session);
+    m_fader = new GainEnvelope(session);
+    private_add_plugin(m_fader);
+    private_plugin_added(m_fader);
+
+    set_session(session);
+
+    connect(this, SIGNAL(privatePluginAdded(Plugin*)), this, SLOT(private_plugin_added(Plugin*)));
+    connect(this, SIGNAL(privatePluginRemoved(Plugin*)), this, SLOT(private_plugin_removed(Plugin*)));
 }
 
 PluginChain::~ PluginChain()
 {
 	PENTERDES;
-    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
         delete plugin;
 	}
 	
@@ -65,7 +65,7 @@ QDomNode PluginChain::get_state(QDomDocument doc)
 {
 	QDomNode pluginsNode = doc.createElement("Plugins");
 	
-    apill_foreach(Plugin* plugin, Plugin*, m_plugins) {
+    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
         if (plugin == m_fader) {
             continue;
         }
@@ -104,12 +104,12 @@ int PluginChain::set_state( const QDomNode & node )
 
 TCommand* PluginChain::add_plugin(Plugin * plugin, bool historable)
 {
-	plugin->set_history_stack(get_history_stack());
-	
-        return new AddRemove( this, plugin, historable, m_session,
-		"private_add_plugin(Plugin*)", "pluginAdded(Plugin*)",
-		"private_remove_plugin(Plugin*)", "pluginRemoved(Plugin*)",
-		tr("Add Plugin (%1)").arg(plugin->get_name()));
+    plugin->set_history_stack(get_history_stack());
+
+    return new AddRemove( this, plugin, historable, m_session,
+                          "private_add_plugin(Plugin*)", "privatePluginAdded(Plugin*)",
+                          "private_remove_plugin(Plugin*)", "privatePluginRemoved(Plugin*)",
+                          tr("Add Plugin (%1)").arg(plugin->get_name()));
 }
 
 
@@ -122,23 +122,35 @@ TCommand* PluginChain::remove_plugin(Plugin* plugin, bool historable)
     }
 
     return new AddRemove( this, plugin, historable, m_session,
-                          "private_remove_plugin(Plugin*)", "pluginRemoved(Plugin*)",
-                          "private_add_plugin(Plugin*)", "pluginAdded(Plugin*)",
+                          "private_remove_plugin(Plugin*)", "privatePluginRemoved(Plugin*)",
+                          "private_add_plugin(Plugin*)", "privatePluginAdded(Plugin*)",
                           tr("Remove Plugin (%1)").arg(plugin->get_name()));
 }
 
 
 void PluginChain::private_add_plugin( Plugin * plugin )
 {
-    m_plugins.append(plugin);
+    m_rtPlugins.append(plugin);
 }
 
 
 void PluginChain::private_remove_plugin( Plugin * plugin )
 {
-    if (!m_plugins.remove(plugin)) {
+    if (!m_rtPlugins.remove(plugin)) {
 		PERROR("Plugin not found in list, this is invalid plugin remove!!!!!");
-	}
+    }
+}
+
+void PluginChain::private_plugin_added(Plugin *plugin)
+{
+    m_plugins.append(plugin);
+    emit pluginAdded(plugin);
+}
+
+void PluginChain::private_plugin_removed(Plugin *plugin)
+{
+    m_plugins.removeAll(plugin);
+    emit pluginRemoved(plugin);
 }
 
 void PluginChain::set_session(TSession * session)
@@ -150,5 +162,35 @@ void PluginChain::set_session(TSession * session)
     m_session = session;
     set_history_stack(m_session->get_history_stack());
     m_fader->set_session(session);
+}
+
+QList<Plugin *> PluginChain::get_pre_fader_plugins()
+{
+    QList<Plugin*> preFaderPlugins;
+    for(Plugin* plugin : m_plugins) {
+        if (plugin == m_fader) {
+            return preFaderPlugins;
+        } else {
+            preFaderPlugins.append(plugin);
+        }
+    }
+
+    return preFaderPlugins;
+}
+
+QList<Plugin *> PluginChain::get_post_fader_plugins()
+{
+    QList<Plugin*> postFaderPlugins;
+    bool faderWasReached = false;
+
+    for(Plugin* plugin : m_plugins) {
+        if (faderWasReached) {
+            postFaderPlugins.append(plugin);
+        } else if (plugin == m_fader) {
+            faderWasReached = true;
+        }
+    }
+
+    return postFaderPlugins;
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2006-2019 Remon Sijrier
+    Copyright (C) 2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -19,39 +19,37 @@
 
 */
 
-#ifndef PLUGIN_CHAIN_VIEW_H
-#define PLUGIN_CHAIN_VIEW_H
+#ifndef MOVEPLUGIN_H
+#define MOVEPLUGIN_H
 
 
-#include "ViewItem.h"
+#include "TCommand.h"
 
-class SheetView;
-class Plugin;
-class PluginChain;
 class PluginView;
 
-class PluginChainView : public ViewItem
+class MovePlugin : public TCommand
 {
     Q_OBJECT
 
-public:
-    PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* chain);
-    ~PluginChainView();
+public :
+    MovePlugin(PluginView* view);
+    ~MovePlugin();
 
-    void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-    void calculate_bounding_rect();
+    int begin_hold();
+    int finish_hold();
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    void cancel_action();
+    int jog();
 
 private:
-    PluginChain* m_pluginchain;
-    QList<PluginView* >	m_pluginViews;
+    PluginView*      m_pluginView;
 
 public slots:
-    void add_plugin(Plugin* plugin);
-    void remove_plugin(Plugin* plugin);
-    void scrollbar_value_changed(int value);
+    void move_left();
+    void move_right();
 };
 
-#endif
 
-//eof
-
+#endif // MOVEPLUGIN_H

@@ -2,6 +2,7 @@
 #include "MoveClip.h"
 #include "MoveCurveNode.h"
 #include "MoveMarker.h"
+#include "MovePlugin.h"
 #include "MoveTrack.h"
 #include "MoveEdge.h"
 #include "WorkCursorMove.h"

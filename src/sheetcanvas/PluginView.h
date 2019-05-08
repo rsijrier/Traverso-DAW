@@ -35,34 +35,36 @@ class PluginChain;
 
 class PluginView : public ViewItem
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-	PluginView(PluginChainView* pcv, PluginChain* chain, Plugin* plugin, int index);
-        ~PluginView();
+    PluginView(PluginChainView* pcv, PluginChain* chain, Plugin* plugin, int index);
+    ~PluginView();
 
-	Plugin* get_plugin();
-        void set_index(int index);
+    Plugin* get_plugin();
+    void set_index(int index);
+    void set_moving(bool move);
 
-        void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-	void calculate_bounding_rect();
+    void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void calculate_bounding_rect();
 
 private:
-	PluginChain*	m_pluginchain;
-	Plugin*		m_plugin;
+    PluginChain*	m_pluginchain;
+    Plugin*         m_plugin;
 
-        int 		m_index;
-	int		m_textwidth;
-        QString		m_name;
-	
-        PluginPropertiesDialog* m_propertiesDialog;
+    int             m_index;
+    bool            m_moving;
+    int             m_textwidth;
+    QString         m_name;
+
+    PluginPropertiesDialog* m_propertiesDialog;
 
 public slots:
-	TCommand* edit_properties();
-        TCommand* remove_plugin();
-        
+    TCommand* edit_properties();
+    TCommand* remove_plugin();
+
 private slots:
-	void repaint();
+    void repaint();
 };
 
 #endif

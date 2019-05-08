@@ -44,7 +44,7 @@ private:
 		AddNewAudioTrackCommand,
 		RemoveClipCommand,
 		RemoveTrackCommand,
-		RemoveClipNodeCommmand,
+        RemoveCurveNodeCommmand,
 		RemovePluginCommand,
 		AudioClipExternalProcessingCommand,
 		ClipSelectionCommand,
@@ -62,7 +62,8 @@ private:
 		WorkCursorMoveCommand,
 		MoveEdgeCommand,
 		MoveCurveNodesCommand,
-		MoveMarkerCommand
+        MoveMarkerCommand,
+        MovePluginCommand
 	};
 
 private:

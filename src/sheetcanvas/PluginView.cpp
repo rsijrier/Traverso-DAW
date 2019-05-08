@@ -44,6 +44,7 @@ PluginView::PluginView(PluginChainView* parent, PluginChain* chain, Plugin* plug
 	, m_pluginchain(chain)
 	, m_plugin(plugin)
 	, m_index(index)
+    , m_moving(false)
 {
 	PENTERCONS;
 	
@@ -82,23 +83,19 @@ void PluginView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option
 		color = themer()->get_color("Plugin:background");
 	}
 
-	int height, width;
-        if (has_active_context()) {
-        height = int(m_boundingRect.height()) + 1;
-        width = int(m_boundingRect.width()) + 1;
-		color = color.light(120);
-	} else {
-        height = int(m_boundingRect.height());
-        width = int(m_boundingRect.width());
-	}
-	
-	QBrush brush(color);
-	QRect rect(0, 0, width, height); 
+    if (has_active_context()) {
+        color = color.light(120);
+    }
+
     painter->save();
-	painter->fillRect(rect, brush);
+    if(m_moving) {
+        painter->setPen(Qt::white);
+    }
+    painter->setBrush(color);
+    painter->drawRect(m_boundingRect);
 	painter->setPen(themer()->get_color("Plugin:text"));
 	painter->setFont(themer()->get_font("Plugin:fontscale:name"));
-	painter->drawText(rect, Qt::AlignCenter, m_name);
+    painter->drawText(m_boundingRect, Qt::AlignCenter, m_name);
     painter->restore();
 }
 
@@ -125,7 +122,13 @@ Plugin * PluginView::get_plugin( )
 
 void PluginView::set_index(int index)
 {
-	m_index = index;
+    m_index = index;
+}
+
+void PluginView::set_moving(bool move)
+{
+    m_moving = move;
+    update();
 }
 
 void PluginView::repaint( )
