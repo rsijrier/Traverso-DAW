@@ -84,11 +84,11 @@ private :
 	
 	struct Data {
 		SheetView* 	sv;
-		int 		sceneXStartPos;
-		int		pointedTrackIndex;
+        qreal 		sceneXStartPos;
+        int 		pointedTrackIndex;
 		bool		verticalOnly;
 		Zoom*		zoom;
-                TimeRef         relativeWorkCursorPos;
+        TimeRef     relativeWorkCursorPos;
 	};
 	
 	Data* d;
