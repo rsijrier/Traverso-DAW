@@ -513,6 +513,9 @@ int AlsaDriver::configure_stream(char *device_name,
             if ((err = snd_pcm_hw_params_set_access (handle, hw_params, SND_PCM_ACCESS_MMAP_COMPLEX)) < 0) {
                 printf("AlsaDriver: mmap-based access is not possible for the %s "
                        "stream of this audio interface\n", stream_name);
+
+                device->driverSetupMessage(tr("Memory-based access is not possible for Device %1, unable to configure driver").arg(device_name), AudioDevice::DRIVER_SETUP_FAILURE);
+
                 return -1;
             }
         }
@@ -547,7 +550,7 @@ int AlsaDriver::configure_stream(char *device_name,
 
     if (requestedFrameRate != frame_rate) {
         device->driverSetupMessage(tr("Requested framerate of %1 not supported by soundcard, setting to nearest framerate of %2 instead").
-                                   arg(requestedFrameRate).arg(frame_rate), AudioDevice::DRIVER_SETUP_INFO);
+                                   arg(requestedFrameRate).arg(frame_rate), AudioDevice::DRIVER_SETUP_WARNING);
     }
 
     if (!*nchns) {
