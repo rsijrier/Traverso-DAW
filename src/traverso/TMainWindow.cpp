@@ -1339,10 +1339,7 @@ void TMainWindow::import_audio()
 	}
 
 	// append the clips to the selected track
-	TimeRef position = TimeRef();
-	if (!track->get_audioclips().isEmpty()) {
-		position = (track->get_audioclips().last())->get_track_end_location();
-	}
+    TimeRef position = track->get_end_location();
 
 	TimeLine* tl = sheet->get_timeline();
 	int n = tl->get_markers().size() + 1;
@@ -1352,9 +1349,8 @@ void TMainWindow::import_audio()
 
 	while(!files.isEmpty()) {
 		QString file = files.takeFirst();
-		Import* import = new Import(file);
-		import->set_track(track);
-		import->set_position(position);
+        Import* import = new Import(track, file);
+        import->set_position(position);
 
 		QFileInfo fi(file);
 		Marker* m = new Marker(tl, position);
