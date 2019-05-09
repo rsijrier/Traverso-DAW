@@ -438,7 +438,7 @@ void AudioDriverConfigPage::driver_setup_message(QString message, int severity)
               "<style type=\"text/css\">\n"
               "p {font-size: 11px; }\n"
               ".failure {color: red; font-weight: bold;}\n"
-              ".warning {color: darkRed; font-weight: bold;}\n"
+              ".warning {color: #ffae42; font-weight: bold;}\n"
               ".success {color: green; font-weight: bold;}\n"
               "</style>\n"
               "</head>\n<body>\n");
