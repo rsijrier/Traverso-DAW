@@ -52,6 +52,10 @@ public :
         Sheet* get_sheet() const {return m_sheet;}
         QDomNode get_state(QDomDocument doc, bool istemplate=false);
         QList<AudioClip*> get_audioclips() const {return  m_audioClips;}
+
+        // Return the rightmost AudioClip track end location
+        TimeRef get_end_location() const;
+
         void get_render_range(TimeRef& startlocation, TimeRef& endlocation);
 	bool show_clip_volume_automation() const {return m_showClipVolumeAutomation;}
 

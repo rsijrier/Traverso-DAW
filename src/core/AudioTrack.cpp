@@ -116,6 +116,15 @@ QDomNode AudioTrack::get_state( QDomDocument doc, bool istemplate)
         return node;
 }
 
+TimeRef AudioTrack::get_end_location() const
+{
+    TimeRef endLocation{};
+    if (!m_audioClips.isEmpty()) {
+        endLocation = m_audioClips.last()->get_track_end_location();
+    }
+    return endLocation;
+}
+
 
 int AudioTrack::set_state( const QDomNode & node )
 {
