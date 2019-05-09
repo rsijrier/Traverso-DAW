@@ -38,7 +38,7 @@ PluginSlider::PluginSlider(PluginControlPort* port)
 	if (m_port->get_hint() == PluginPort::INT_CONTROL) {
 		m_stepvalue = 1;
 	} else {
-		m_stepvalue = (m_max - m_min) / 16;
+        m_stepvalue = (m_max - m_min) / 100;
 	}
 }
 
