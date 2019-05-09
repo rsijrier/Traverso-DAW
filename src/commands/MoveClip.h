@@ -63,6 +63,7 @@ public :
 	
 private :
 	enum ActionType {
+        UNDEFINED,
 		MOVE,
 		COPY,
 		FOLD_TRACK,

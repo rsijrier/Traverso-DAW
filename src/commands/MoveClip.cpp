@@ -55,11 +55,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 MoveClip::MoveClip(ViewItem* view, const QVariantList& args)
         : MoveCommand(view->get_context(), "")
-	, d(new Data)
+        , m_actionType(UNDEFINED)
+    , d(new Data)
 {
-	QString action = "move"; // default action!
+    QString action = "No action supplied in args";
 	
-	if (!args.empty()) {
+    if (!args.isEmpty()) {
 		action = args.at(0).toString();
 	}
 	if (args.size() > 1) {
@@ -91,7 +92,8 @@ MoveClip::MoveClip(ViewItem* view, const QVariantList& args)
 		des = tr("Fold Markers");
 		m_actionType = FOLD_MARKERS;
 	} else {
-//		PERROR("MoveClip: Unknown action type: %s", QS_C(action));
+        PERROR(QString("MoveClip: Unknown action type: %1").arg(action));
+        m_actionType = UNDEFINED;
 	}
 	
 	setText(des);
@@ -137,7 +139,7 @@ MoveClip::MoveClip(ViewItem* view, const QVariantList& args)
 		
 		if (m_actionType == FOLD_SHEET || m_actionType == FOLD_TRACK) {
 			foreach(AudioTrack* track, tracks) {
-				QList<AudioClip*> clips = track->get_cliplist();
+				QList<AudioClip*> clips = track->get_audioclips();
 				foreach(AudioClip* clip, clips) {
 					if (clip->get_track_end_location() > currentLocation) {
 						movingClips.append(clip);
@@ -271,7 +273,6 @@ int MoveClip::do_action()
 int MoveClip::undo_action()
 {
 	PENTER;
-	
 	if (m_actionType == COPY) {
 		m_group.remove_all_clips_from_tracks();
 	} else {
