@@ -288,7 +288,7 @@ TraversoCommands::TraversoCommands()
     create_and_add_function("AudioClipView", tr("Copy"), "CopyClip", MoveClipCommand, QStringList() << "copy", "", true, true);
     create_and_add_function("AudioClipView", tr("Split"), "SplitClip", SplitClipCommand, QStringList(), "", true);
     create_and_add_function("AudioClipView", tr("Magnetic Cut"), "CropClip", CropClipCommand);
-    create_and_add_function("AudioClipView", tr("Move"), "MoveClip", MoveClipCommand, QStringList(), "MoveBase", true, true);
+    create_and_add_function("AudioClipView", tr("Move"), "MoveClip", MoveClipCommand, QStringList() << "move", "MoveBase", true, true);
     create_and_add_function("AudioClipView", tr("Move Edge"), "MoveClipEdge", MoveEdgeCommand, QStringList() << "false", "", true);
 
     create_and_add_function("AudioClip", tr("External Processing"), "AudioClipExternalProcessing", AudioClipExternalProcessingCommand);
@@ -323,7 +323,9 @@ void TraversoCommands::create_and_add_function(const QString &object, const QStr
     function->object = object;
     function->setDescription(description);
     function->commandName = commandName;
-    function->arguments << arguments;
+    if (!arguments.isEmpty()) {
+        function->arguments << arguments;
+    }
     function->useX = useX;
     function->useY = useY;
     if (!inheritedBase.isEmpty()) {
