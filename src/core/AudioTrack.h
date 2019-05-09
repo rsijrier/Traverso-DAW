@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007 Remon Sijrier
+Copyright (C) 2005-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QList>
 
 #include "ContextItem.h"
-#include "GainEnvelope.h"
 #include "Track.h"
 
 #include "defines.h"
@@ -52,9 +51,8 @@ public :
         AudioClip* get_clip_before(const TimeRef& pos);
         Sheet* get_sheet() const {return m_sheet;}
         QDomNode get_state(QDomDocument doc, bool istemplate=false);
-        QList<AudioClip*> get_cliplist() const;
+        QList<AudioClip*> get_audioclips() const {return  m_audioClips;}
         void get_render_range(TimeRef& startlocation, TimeRef& endlocation);
-        int get_total_clips();
 	bool show_clip_volume_automation() const {return m_showClipVolumeAutomation;}
 
         int set_state( const QDomNode& node );
@@ -69,7 +67,13 @@ protected:
 
 private :
         Sheet*          m_sheet;
-        APILinkedList 	m_clips;
+
+        // only to be accessed/modified by AudioThread
+        APILinkedList 	m_rtAudioClips;
+
+        // only to be accessed from GUI thread
+        QList<AudioClip*>   m_audioClips;
+
         int             m_numtakes{};
         bool            m_isArmed{};
 	bool		m_showClipVolumeAutomation{};
@@ -80,6 +84,9 @@ private :
 signals:
         void audioClipAdded(AudioClip* clip);
         void audioClipRemoved(AudioClip* clip);
+
+        void privateAudioClipAdded(AudioClip* clip);
+        void privateAudioClipRemoved(AudioClip* clip);
 
         void armedChanged(bool isArmed);
 
@@ -93,7 +100,10 @@ public slots:
 private slots:
         void private_add_clip(AudioClip* clip);
         void private_remove_clip(AudioClip* clip);
+        void private_audioclip_added(AudioClip* clip);
+        void private_audioclip_removed(AudioClip* clip);
 
+        void private_clip_position_changed(AudioClip* clip);
 };
 
 #endif

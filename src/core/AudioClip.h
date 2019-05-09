@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "ContextItem.h"
-#include "ProcessingData.h"
+#include "TAudioProcessingNode.h"
 #include "Snappable.h"
 #include "defines.h"
 #include "GainEnvelope.h"
@@ -42,7 +42,7 @@ class AudioBus;
 class FadeCurve;
 class PluginChain;
 
-class AudioClip : public ProcessingData, public Snappable
+class AudioClip : public TAudioProcessingNode, public Snappable
 {
 	Q_OBJECT
 
@@ -102,6 +102,7 @@ public:
 	bool has_sheet() const;
 	bool is_readsource_invalid() const {return !m_isReadSourceValid;}
 	bool is_smaller_then(APILinkedListNode* node) {return ((AudioClip*)node)->get_track_start_location() > get_track_start_location();}
+    static bool isLeftMostClip(const AudioClip* left, const AudioClip* right) {return left->get_track_start_location() < right->get_track_start_location();}
 	bool is_moving() const {return m_isMoving;}
 
 	int recording_state() const;

@@ -27,8 +27,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Sheet.h"
 #include "AudioClip.h"
 #include "AudioClipManager.h"
-#include <AudioBus.h>
-#include <AudioDevice.h>
+#include "AudioBus.h"
+#include "AudioDevice.h"
 #include "PluginChain.h"
 #include "Information.h"
 #include "ProjectManager.h"
@@ -81,6 +81,9 @@ void AudioTrack::init()
         m_type = AUDIOTRACK;
         m_isArmed = false;
         m_processBus = m_sheet->get_render_bus();
+
+        connect(this, SIGNAL(privateAudioClipAdded(AudioClip*)), this, SLOT(private_audioclip_added(AudioClip*)));
+        connect(this, SIGNAL(privateAudioClipRemoved(AudioClip*)), this, SLOT(private_audioclip_removed(AudioClip*)));
 }
 
 QDomNode AudioTrack::get_state( QDomDocument doc, bool istemplate)
@@ -96,7 +99,7 @@ QDomNode AudioTrack::get_state( QDomDocument doc, bool istemplate)
         if (! istemplate ) {
                 QDomNode clips = doc.createElement("Clips");
 
-                apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
+                for(AudioClip* clip: m_audioClips) {
                         if (clip->get_length() == qint64(0)) {
                                 PERROR("Clip length is 0! This shouldn't happen!!!!");
                                 continue;
@@ -141,7 +144,9 @@ int AudioTrack::set_state( const QDomNode & node )
                         clip->set_track(this);
                         clip->set_state(clip->get_dom_node());
                         m_sheet->get_audioclip_manager()->add_clip(clip);
+
                         private_add_clip(clip);
+                        private_audioclip_added(clip);
 
                         clipNode = clipNode.nextSibling();
                 }
@@ -172,7 +177,6 @@ bool AudioTrack::armed()
         return m_isArmed;
 }
 
-#include "Project.h"
 AudioClip* AudioTrack::init_recording()
 {
         PENTER2;
@@ -259,7 +263,7 @@ int AudioTrack::process( nframes_t nframes )
     float panFactor;
 
     // Read in clip data into process bus.
-    apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
+    apill_foreach(AudioClip* clip, AudioClip*, m_rtAudioClips) {
         if (m_isArmed && clip->recording_state() == AudioClip::NO_RECORDING) {
             if (m_isMuted || m_mutedBySolo) {
                 continue;
@@ -348,13 +352,14 @@ TCommand* AudioTrack::silence_others( )
 
 void AudioTrack::get_render_range(TimeRef& startlocation, TimeRef& endlocation )
 {
-        if(m_clips.size() == 0)
+        if(m_audioClips.isEmpty()) {
                 return;
+        }
 
         endlocation = TimeRef();
         startlocation = LLONG_MAX;
 
-        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
+        for(AudioClip* clip : m_audioClips) {
                 if (! clip->is_muted() ) {
                         if (clip->get_track_end_location() > endlocation) {
                                 endlocation = clip->get_track_end_location();
@@ -368,31 +373,14 @@ void AudioTrack::get_render_range(TimeRef& startlocation, TimeRef& endlocation )
 
 }
 
-
-void AudioTrack::clip_position_changed(AudioClip * clip)
-{
-        m_clips.sort(clip);
-}
-
-
-QList< AudioClip * > AudioTrack::get_cliplist() const
-{
-        QList<AudioClip*> list;
-        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
-                list.append(clip);
-        }
-        return list;
-}
-
-
 AudioClip* AudioTrack::get_clip_after(const TimeRef& pos)
 {
-        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
-                if (clip->get_track_start_location() > pos) {
-                        return clip;
-                }
+    for(AudioClip* clip : m_audioClips) {
+        if (clip->get_track_start_location() > pos) {
+            return clip;
         }
-        return nullptr;
+    }
+    return nullptr;
 }
 
 AudioClip* AudioTrack::get_clip_before(const TimeRef& pos)
@@ -400,7 +388,7 @@ AudioClip* AudioTrack::get_clip_before(const TimeRef& pos)
         TimeRef shortestDistance(LONG_LONG_MAX);
         AudioClip* nearest = nullptr;
 
-        apill_foreach(AudioClip* clip, AudioClip*, m_clips) {
+        for(AudioClip* clip : m_audioClips) {
                 if (clip->get_track_start_location() < pos) {
                         TimeRef diff = pos - clip->get_track_start_location();
                         if (diff < shortestDistance) {
@@ -424,8 +412,8 @@ TCommand* AudioTrack::remove_clip(AudioClip* clip, bool historable, bool ismove)
         clip->removed_from_track();
 
         return new AddRemove(this, clip, historable, m_sheet,
-                "private_remove_clip(AudioClip*)", "audioClipRemoved(AudioClip*)",
-                "private_add_clip(AudioClip*)", "audioClipAdded(AudioClip*)",
+                "private_remove_clip(AudioClip*)", "privateAudioClipRemoved(AudioClip*)",
+                "private_add_clip(AudioClip*)", "privateAudioClipAdded(AudioClip*)",
                 tr("Remove Clip"));
 }
 
@@ -438,24 +426,48 @@ TCommand* AudioTrack::add_clip(AudioClip* clip, bool historable, bool ismove)
                 m_sheet->get_audioclip_manager()->add_clip(clip);
         }
         return new AddRemove(this, clip, historable, m_sheet,
-                "private_add_clip(AudioClip*)", "audioClipAdded(AudioClip*)",
-                "private_remove_clip(AudioClip*)", "audioClipRemoved(AudioClip*)",
+                "private_add_clip(AudioClip*)", "privateAudioClipAdded(AudioClip*)",
+                "private_remove_clip(AudioClip*)", "privateAudioClipRemoved(AudioClip*)",
                 tr("Add Clip"));
 }
 
 void AudioTrack::private_add_clip(AudioClip* clip)
 {
-        m_clips.add_and_sort(clip);
+    m_rtAudioClips.add_and_sort(clip);
 }
 
 void AudioTrack::private_remove_clip(AudioClip* clip)
 {
-        m_clips.remove(clip);
+    m_rtAudioClips.remove(clip);
 }
 
-int AudioTrack::get_total_clips()
+void AudioTrack::private_audioclip_added(AudioClip *clip)
 {
-        return m_clips.size();
+    m_audioClips.append(clip);
+    qSort(m_audioClips.begin(), m_audioClips.end(), AudioClip::isLeftMostClip);
+    emit audioClipAdded(clip);
+}
+
+void AudioTrack::private_audioclip_removed(AudioClip* clip)
+{
+    m_audioClips.removeAll(clip);
+    emit audioClipRemoved(clip);
+}
+
+void AudioTrack::clip_position_changed(AudioClip * clip)
+{
+    qSort(m_audioClips.begin(), m_audioClips.end(), AudioClip::isLeftMostClip);
+
+    if (m_sheet && m_sheet->is_transport_rolling()) {
+        THREAD_SAVE_INVOKE(this, clip, private_clip_position_changed(AudioClip*));
+    } else {
+        private_clip_position_changed(clip);
+    }
+}
+
+void AudioTrack::private_clip_position_changed(AudioClip *clip)
+{
+    m_rtAudioClips.sort(clip);
 }
 
 TCommand* AudioTrack::toggle_show_clip_volume_automation()

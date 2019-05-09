@@ -372,32 +372,18 @@ void AudioClip::set_track_start_location(const TimeRef& location)
     // set_track_end_location will emit positionChanged(), so we
     // don't emit it in this function to avoid emitting it twice
     // (although it seems more logical to emit it here, there are
-    // accasions where only set_track_end_location() is called, and
+    // situations where only set_track_end_location() is called, and
     // then we also want to emit positionChanged())
     set_track_end_location(m_trackStartLocation + m_length);
 }
 
 void AudioClip::set_track_end_location(const TimeRef& location)
 {
-    // 	PWARN("m_trackEndLocation is %d", endFrame);
     m_trackEndLocation = location;
 
-    if (!is_moving()) {
-        // TODO find out if we also have to call this even during moving?
-        // And somehow Track itself should manage this, and not from here!
-        // The purpose of this call is to keep the AudioClip list in track
-        // sorted on the clips track start location.
-        if (m_track) {
-            if (m_sheet && m_sheet->is_transport_rolling()) {
-                THREAD_SAVE_INVOKE(m_track, this, clip_position_changed(AudioClip*));
-            } else {
-                m_track->clip_position_changed(this);
-            }
-        }
-
-        if (m_sheet) {
-            m_sheet->get_snap_list()->mark_dirty();
-        }
+    if ( (!is_moving()) && m_sheet) {
+        m_sheet->get_snap_list()->mark_dirty();
+        m_track->clip_position_changed(this);
     }
 
     emit positionChanged();
@@ -1002,5 +988,15 @@ void AudioClip::set_as_moving(bool moving)
     m_isMoving = moving;
     set_snappable(!m_isMoving);
     set_sources_active_state();
+
+    // if moving is false, then the user stopped moving this audioclip
+    // this is the point where we have to emit positionChanged() to notify
+    // AudioTrack and GUI of the changed clip position
+    if (!moving) {
+        emit positionChanged();
+        if (m_track) {
+            m_track->clip_position_changed(this);
+        }
+    }
 }
 

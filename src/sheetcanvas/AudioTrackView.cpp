@@ -65,7 +65,7 @@ AudioTrackView::AudioTrackView(SheetView* sv, AudioTrack * track)
     connect(m_track, SIGNAL(audioClipAdded(AudioClip*)), this, SLOT(add_new_audioclipview(AudioClip*)));
     connect(m_track, SIGNAL(audioClipRemoved(AudioClip*)), this, SLOT(remove_audioclipview(AudioClip*)));
 
-    foreach(AudioClip* clip, m_track->get_cliplist()) {
+    foreach(AudioClip* clip, m_track->get_audioclips()) {
         add_new_audioclipview(clip);
     }
 
