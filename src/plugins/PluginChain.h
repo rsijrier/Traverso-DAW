@@ -45,9 +45,8 @@ public:
 
     TCommand* add_plugin(Plugin* plugin, bool historable=true);
     TCommand* remove_plugin(Plugin* plugin, bool historable=true);
-    void process_pre_fader(AudioBus* bus, unsigned long nframes);
-    int process_post_fader(AudioBus* bus, unsigned long nframes);
-    // 	void process_fader(audio_sample_t* buffer, nframes_t pos, nframes_t nframes) {m_fader->process_gain(buffer, pos, nframes);}
+    void process_pre_fader(AudioBus* bus, nframes_t nframes);
+    int process_post_fader(AudioBus* bus, nframes_t nframes);
 
     void set_session(TSession* session);
 
@@ -75,7 +74,7 @@ signals:
     void privatePluginAdded(Plugin*);
 };
 
-inline void PluginChain::process_pre_fader(AudioBus * bus, unsigned long nframes)
+inline void PluginChain::process_pre_fader(AudioBus * bus, nframes_t nframes)
 {
     apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
         if (plugin == m_fader) {
@@ -85,7 +84,7 @@ inline void PluginChain::process_pre_fader(AudioBus * bus, unsigned long nframes
     }
 }
 
-inline int PluginChain::process_post_fader(AudioBus * bus, unsigned long nframes)
+inline int PluginChain::process_post_fader(AudioBus * bus, nframes_t nframes)
 {
     if (!m_rtPlugins.size()) {
         return 0;
