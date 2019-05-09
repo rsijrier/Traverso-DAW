@@ -50,7 +50,7 @@ TrackView::TrackView(SheetView* sv, Track * track)
         PENTERCONS;
 	m_sv = sv;
 	m_track = track;
-
+    m_animation = new QPropertyAnimation(this, "yPosition");
 	setZValue(sv->zValue() + 1);
 
 	setFlags(QGraphicsItem::ItemUsesExtendedStyleOption);
@@ -174,8 +174,25 @@ void TrackView::set_moving(bool move)
 void TrackView::move_to( int x, int y )
 {
 	Q_UNUSED(x);
-	setPos(0, y);
-    m_panel->setPos(-m_sv->get_trackpanel_view_port()->width(), y);
+//	setPos(0, y);
+    if (m_animation->state() == QPropertyAnimation::Running) {
+        m_animation->stop();
+    }
+    m_animation->setStartValue(getYPosition());
+    m_animation->setEndValue(y);
+    m_animation->setDuration(150);
+    m_animation->start();
+}
+
+bool TrackView::animatedMoveRunning() const
+{
+    return m_animation->state() == QPropertyAnimation::Running;
+}
+
+void TrackView::setYPosition(qreal position)
+{
+    setPos(0, position);
+    m_panel->setPos(-m_sv->get_trackpanel_view_port()->width(), position);
 }
 
 void TrackView::layout_lanes()

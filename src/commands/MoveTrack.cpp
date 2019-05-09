@@ -97,11 +97,13 @@ void MoveTrack::cancel_action()
 int MoveTrack::jog()
 {
 
-    if (int(m_trackView->scenePos().y() + m_trackView->boundingRect().height()) < cpointer().scene_y()) {
-        m_sv->move_trackview_down(m_trackView);
+    if (m_trackView->animatedMoveRunning()) {
+        return 1;
     }
 
-    if (int(m_trackView->scenePos().y()) > (cpointer().scene_y())) {
+    if ((m_trackView->scenePos().y() + m_trackView->boundingRect().height()) < cpointer().scene_y()) {
+        m_sv->move_trackview_down(m_trackView);
+    } else if ((m_trackView->scenePos().y()) > (cpointer().scene_y())) {
         m_sv->move_trackview_up(m_trackView);
     }
 

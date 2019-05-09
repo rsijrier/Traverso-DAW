@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define TRACK_VIEW_H
 
 #include "ViewItem.h"
+#include <QPropertyAnimation>
 
 class AudioClip;
 class AudioTrack;
@@ -36,20 +37,22 @@ class TTrackLaneView;
 class TrackView : public ViewItem
 {
         Q_OBJECT
+    Q_PROPERTY(qreal yPosition READ getYPosition WRITE setYPosition)
 
 public:
 	TrackView(SheetView* sv, Track* track);
 	~TrackView();
 
-        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-        Track* get_track() const {return m_track;}
-        TrackPanelView* get_panel_view() const {return m_panel;}
-	TTrackLaneView* get_primary_lane_view() const {return m_primaryLaneView;}
+    Track* get_track() const {return m_track;}
+    TrackPanelView* get_panel_view() const {return m_panel;}
+    TTrackLaneView* get_primary_lane_view() const {return m_primaryLaneView;}
 
-        void set_moving(bool move);
+    void set_moving(bool move);
 	void move_to(int x, int y);
-        bool is_moving() const {return m_isMoving;}
+    bool is_moving() const {return m_isMoving;}
+    bool animatedMoveRunning() const;
     virtual int get_height() const;
 	virtual void set_height(int height);
 	int get_total_height();
@@ -79,10 +82,12 @@ protected:
 
 private:
 	QList<TTrackLaneView*>	m_laneViews;
+    QPropertyAnimation*     m_animation;
 	int	m_laneSpacing{};
 	int	m_cliptopmargin{};
 	int	m_clipbottommargin{};
 	int	m_visibleLanes;
+    qreal m_yPosition;
 
 public slots:
         TCommand* edit_properties();
@@ -93,6 +98,8 @@ protected slots:
 
 private slots:
         void active_context_changed() {update();}
+        void setYPosition(qreal pos);
+        qreal getYPosition() const {return scenePos().y();}
 
 signals:
 	void totalTrackHeightChanged();
