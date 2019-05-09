@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2006 Remon Sijrier
+Copyright (C) 2006-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -23,14 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Plugin.h"
 #include "PluginManager.h"
-#include <Tsar.h>
 #include "TInputEventDispatcher.h"
-#include <Sheet.h>
-#include <AddRemove.h>
-#include "AudioBus.h"
+#include "TSession.h"
+#include "AddRemove.h"
 #include "GainEnvelope.h"
-#include "Curve.h"
-#include "Mixer.h"
 #include "Information.h"
 
 // Always put me below _all_ includes, this is needed
@@ -53,11 +49,9 @@ PluginChain::PluginChain(ContextItem* parent, TSession* session)
 PluginChain::~ PluginChain()
 {
 	PENTERDES;
-    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
+    for(auto plugin : m_plugins) {
         delete plugin;
 	}
-	
-//	delete m_fader;
 }
 
 
@@ -65,7 +59,7 @@ QDomNode PluginChain::get_state(QDomDocument doc)
 {
 	QDomNode pluginsNode = doc.createElement("Plugins");
 	
-    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
+    for(Plugin* plugin : m_plugins) {
         if (plugin == m_fader) {
             continue;
         }
@@ -93,6 +87,7 @@ int PluginChain::set_state( const QDomNode & node )
 			}
 			plugin->set_history_stack(get_history_stack());
 			private_add_plugin(plugin);
+            private_plugin_added(plugin);
 		}
 		
 		pluginNode = pluginNode.nextSibling();

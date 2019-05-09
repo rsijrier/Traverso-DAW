@@ -374,7 +374,7 @@ void LV2ControlPort::init()
 			m_hint = LOG_CONTROL;
 		} else  if (string == "http://lv2plug.in/ns/lv2core#integer") {
 			m_hint = INT_CONTROL;
-		}
+        }
 	}
 }
 
