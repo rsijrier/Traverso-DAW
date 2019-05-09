@@ -50,7 +50,7 @@ Gain::Gain(ContextItem* context, const QVariantList& args)
 
     audio_sample_t gain = -1;
     QString des = "";
-    ProcessingData* data = qobject_cast<ProcessingData*>(m_gainObject);
+    TAudioProcessingNode* data = qobject_cast<TAudioProcessingNode*>(m_gainObject);
     QString name;
     if (data) {
         name = data->get_name();

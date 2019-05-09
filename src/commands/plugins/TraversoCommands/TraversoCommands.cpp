@@ -97,6 +97,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("MoveEdge", tr("Move Clip Edge"));
     tShortCutManager().add_translation("MoveMarker", tr("Move Marker"));
     tShortCutManager().add_translation("MoveTrack", tr("Move Track"));
+    tShortCutManager().add_translation("MovePlugin", tr("Move Plugin"));
     tShortCutManager().add_translation("PlayHeadMove", tr("Move Play Head"));
     tShortCutManager().add_translation("Shuttle", tr("Shuttle"));
     tShortCutManager().add_translation("SplitClip", tr("Split Clip"));
@@ -139,7 +140,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("Track", tr("Track"));
     tShortCutManager().add_translation("MoveCommand", tr("Move Command"));
     tShortCutManager().add_translation("EditProperties", tr("Edit Properties"));
-    tShortCutManager().add_translation("ProcessingData", tr("Audio Processing Object"));
+    tShortCutManager().add_translation("TAudioProcessingNode", tr("Audio Processing Node"));
     tShortCutManager().add_translation("ToggleBypass", tr("Toggle Bypass"));
     tShortCutManager().add_translation("HoldCommand", tr("Hold Command"));
     tShortCutManager().add_translation("Navigate", tr("Navigate"));

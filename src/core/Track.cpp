@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 Track::Track(TSession* session)
-        : ProcessingData(session)
+        : TAudioProcessingNode(session)
 {
         m_sortIndex = -1;
 	m_isSolo = m_mutedBySolo = m_isMuted = false;
@@ -236,7 +236,7 @@ void Track::set_sort_index( int index )
 
 void Track::set_name( const QString & name )
 {
-        ProcessingData::set_name(name);
+        TAudioProcessingNode::set_name(name);
 
         // 'broadcast' our name change
         if (pm().get_project()) {

@@ -40,7 +40,7 @@ TInputEventDispatcher.cpp
 Peak.cpp
 Project.cpp
 ProjectManager.cpp
-ProcessingData.cpp
+TAudioProcessingNode.cpp
 ReadSource.cpp
 ResourcesManager.cpp
 TBusTrack.cpp

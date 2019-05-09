@@ -24,13 +24,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "ViewItem.h"
 
-class ProcessingData;
+class TAudioProcessingNode;
 class AudioClip;
 class Track;
 class PDPanelView;
 class PluginChainView;
 
-class ProcessingDataView : public ViewItem
+class TAudioProcessingNodeView : public ViewItem
 {
         Q_OBJECT
         Q_CLASSINFO("edit_properties", tr("Edit properties"))
@@ -38,12 +38,12 @@ class ProcessingDataView : public ViewItem
         Q_CLASSINFO("select_bus", tr("Select Bus"))
 
 public:
-        ProcessingDataView(SheetView* sv, ProcessingData* pd);
-        ~ProcessingDataView();
+        TAudioProcessingNodeView(SheetView* sv, TAudioProcessingNode* pd);
+        ~TAudioProcessingNodeView();
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
-        ProcessingData* get_processing_data() const {return m_pd;}
+        TAudioProcessingNode* get_processing_data() const {return m_pd;}
         PDPanelView* get_panel_view() const {return m_panel;}
 
         virtual int get_childview_y_offset() const;
@@ -55,7 +55,7 @@ public:
         void load_theme_data();
 
 protected:
-        ProcessingData*		m_pd;
+        TAudioProcessingNode*		m_pd;
         PDPanelView*		m_panel;
         PluginChainView*	m_pluginChainView;
         int			m_height;

@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 
-#include "ProcessingData.h"
+#include "TAudioProcessingNode.h"
 
 #include <cmath>
 
@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Debugger.h"
 
-ProcessingData::ProcessingData(TSession *session)
+TAudioProcessingNode::TAudioProcessingNode(TSession *session)
         : ContextItem(session)
         , m_session(session)
 {
@@ -53,14 +53,14 @@ ProcessingData::ProcessingData(TSession *session)
 }
 
 
-void ProcessingData::set_name( const QString & name )
+void TAudioProcessingNode::set_name( const QString & name )
 {
         m_name = name;
         emit stateChanged();
 }
 
 
-void ProcessingData::set_pan(float pan)
+void TAudioProcessingNode::set_pan(float pan)
 {
         if ( pan < -1.0f ) {
                 m_pan=-1.0;
@@ -81,14 +81,14 @@ void ProcessingData::set_pan(float pan)
 
 
 
-void ProcessingData::set_muted( bool muted )
+void TAudioProcessingNode::set_muted( bool muted )
 {
         m_isMuted = muted;
         emit muteChanged(m_isMuted);
         emit audibleStateChanged();
 }
 
-TCommand* ProcessingData::mute()
+TCommand* TAudioProcessingNode::mute()
 {
         PENTER;
         set_muted(!m_isMuted);
@@ -96,18 +96,18 @@ TCommand* ProcessingData::mute()
         return nullptr;
 }
 
-TCommand* ProcessingData::add_plugin( Plugin * plugin )
+TCommand* TAudioProcessingNode::add_plugin( Plugin * plugin )
 {
         return m_pluginChain->add_plugin(plugin);
 }
 
-TCommand* ProcessingData::remove_plugin( Plugin * plugin )
+TCommand* TAudioProcessingNode::remove_plugin( Plugin * plugin )
 {
         return m_pluginChain->remove_plugin(plugin);
 }
 
 
-void ProcessingData::set_gain(float gain)
+void TAudioProcessingNode::set_gain(float gain)
 {
         if (gain < 0.0f)
                 gain = 0.0;

@@ -968,7 +968,7 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "ProcessingData";
+	function->object = "TAudioProcessingNode";
 	function->slotsignature = "mute";
 	function->setDescription(tr("Mute"));
 	function->commandName = "Mute";
@@ -1126,7 +1126,7 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 
-    createAndAddFunction("ProcessingData", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
+    createAndAddFunction("TAudioProcessingNode", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
     createAndAddFunction("AudioTrackView", tr("Insert Silence"), "insert_silence", "AudioTrackInsertSilence");
 
 }

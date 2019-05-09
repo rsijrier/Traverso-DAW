@@ -34,13 +34,13 @@ class PluginChain;
 class TSession;
 
 
-class ProcessingData : public ContextItem, public APILinkedListNode
+class TAudioProcessingNode : public ContextItem, public APILinkedListNode
 {
         Q_OBJECT
 
 public:
-        ProcessingData (TSession* session=0);
-        virtual ~ProcessingData () {}
+        TAudioProcessingNode (TSession* session=0);
+        virtual ~TAudioProcessingNode () {}
 	
         TCommand* add_plugin(Plugin* plugin);
         TCommand* remove_plugin(Plugin* plugin);
@@ -85,7 +85,7 @@ signals:
         void panChanged();
 };
 
-inline float ProcessingData::get_gain( ) const
+inline float TAudioProcessingNode::get_gain( ) const
 {
 	return m_fader->get_gain();
 }

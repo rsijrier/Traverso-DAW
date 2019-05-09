@@ -23,12 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #ifndef TRACK_H
 #define TRACK_H
 
-#include "ProcessingData.h"
+#include "TAudioProcessingNode.h"
 #include "defines.h"
 
 class TSend;
 
-class Track : public ProcessingData
+class Track : public TAudioProcessingNode
 {
         Q_OBJECT
 
