@@ -37,6 +37,8 @@ class TSession;
 class TAudioProcessingNode : public ContextItem, public APILinkedListNode
 {
         Q_OBJECT
+    Q_PROPERTY(qreal gain READ get_gain WRITE set_gain)
+
 
 public:
         TAudioProcessingNode (TSession* session=0);

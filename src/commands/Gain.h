@@ -25,6 +25,7 @@
 #include "TCommand.h"
 #include <QPoint>
 #include <QVariantList>
+#include <QPropertyAnimation>
 
 class ContextItem;
 
@@ -52,9 +53,12 @@ public :
 
 private :
         ContextItem*	m_gainObject;
+        QPropertyAnimation  m_animation;
         float 		m_origGain{};
         float 		m_newGain;
         QPointF		m_origPos;
+
+        void set_gain_animated(float startGain, float endGain);
 	
 	int get_gain_from_object(float& gain);
 	

@@ -117,13 +117,30 @@ int Gain::finish_hold()
     return 1;
 }
 
+void Gain::set_gain_animated(float startGain, float endGain)
+{
+    if (m_animation.state() == QPropertyAnimation::Running) {
+        m_animation.stop();
+    }
+
+    m_animation.setPropertyName("gain");
+    m_animation.setTargetObject(m_gainObject);
+    m_animation.setStartValue(startGain);
+    m_animation.setEndValue(endGain);
+    m_animation.setDuration(300);
+    m_animation.start();
+}
+
 int Gain::do_action()
 {
     PENTER;
-    if ( ! QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain))) {
-        PWARN("Gain::do_action QMetaObject::invokeMethod failed");
-        return 0;
+    float gain;
+    get_gain_from_object(gain);
+    if (qFuzzyCompare(m_newGain, gain)) {
+        return 1;
     }
+
+    set_gain_animated(m_origGain, m_newGain);
 
     return 1;
 }
@@ -131,11 +148,8 @@ int Gain::do_action()
 int Gain::undo_action()
 {
     PENTER;
-    if ( ! QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_origGain)) ) {
-        PWARN("Gain::undo_action QMetaObject::invokeMethod failed");
-        return 0;
-    }
 
+    set_gain_animated(m_newGain, m_origGain);
     return 1;
 }
 
@@ -193,7 +207,6 @@ void Gain::set_cursor_shape(int useX, int useY)
 
     cpointer().setCursorShape(":/cursorGain");
 }
-
 
 void Gain::increase_gain(  )
 {
