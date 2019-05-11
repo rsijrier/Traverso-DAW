@@ -20,6 +20,7 @@ Crop.cpp
 ExternalProcessingDialog.cpp
 Fade.cpp
 Gain.cpp
+TGainGroupCommand.cpp
 Import.cpp
 MoveClip.cpp
 MoveCurveNode.cpp

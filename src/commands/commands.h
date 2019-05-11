@@ -23,3 +23,4 @@
 #include "Crop.h"
 #include "Shuttle.h"
 #include "ArrowKeyBrowser.h"
+#include "TGainGroupCommand.h"

@@ -569,14 +569,14 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "Gain";
+    function->object = "TGainGroupCommand";
 	function->slotsignature = "increase_gain";
 	function->m_description = tr("Increase");
 	function->commandName = "GainIncrease";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "Gain";
+    function->object = "TGainGroupCommand";
 	function->slotsignature = "decrease_gain";
 	function->m_description = tr("Decrease");
 	function->commandName = "GainDecrease";

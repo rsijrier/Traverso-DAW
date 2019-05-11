@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2010-2019 Remon Sijrier
+    Copyright (C) 2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -16,49 +16,53 @@
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
-
 */
 
-#ifndef GAIN_H
-#define GAIN_H
+#ifndef T_GAIN_GROUP_COMMAND_H
+#define T_GAIN_GROUP_COMMAND_H
 
 #include "TCommand.h"
+#include <QPoint>
 
-#include <QPointer>
-#include <QPropertyAnimation>
+class Gain;
 
-class ContextItem;
-
-
-class Gain : public TCommand
+class TGainGroupCommand : public TCommand
 {
     Q_OBJECT
 
 public :
-    Gain(ContextItem* context, const QVariantList& args);
-    ~Gain();
+    TGainGroupCommand(ContextItem* context, const QVariantList& args);
+    ~TGainGroupCommand();
 
+    int begin_hold();
+    int finish_hold();
+    void cancel_action();
+    void process_collected_number(const QString & collected);
+    void set_cursor_shape(int useX, int useY);
+
+    int jog();
+
+    bool is_hold_command() const {return true;}
     int prepare_actions();
     int do_action();
     int undo_action();
-    void cancel_action();
 
-    int process_mouse_move(qreal diffY);
+    bool restoreCursorPosition() const {return true;}
+
+    void add_command(Gain* cmd);
+
+private:
+    QList<Gain* >	m_gainCommands;
+    QPointF         m_origPos;
+    ContextItem*    m_contextItem;
+
+
+public slots:
     void increase_gain();
     void decrease_gain();
-    void set_gain_by_collected_number(float newGain);
-
-    static float get_gain_from_object(QObject* object);
-
-private :
-    ContextItem*        m_gainObject;
-    QPointer<QPropertyAnimation>  m_animation;
-    float 		m_origGain;
-    float 		m_newGain;
-
-    void set_gain_animated(float startGain, float endGain);
-    void apply_new_gain_to_object(float dBFactor);
 };
 
 #endif
+
+
 

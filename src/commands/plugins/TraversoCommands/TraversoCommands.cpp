@@ -353,9 +353,27 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         if (!item) {
             PERROR("TraversoCommands: Supplied QObject was not a ContextItem, "
                    "GainCommand only works with ContextItem objects!!");
-            return 0;
+            return nullptr;
         }
-        return new Gain(item, arguments);
+
+        auto group = new TGainGroupCommand(item, arguments);
+
+        AudioClip* clip = qobject_cast<AudioClip*>(item);
+        if (clip && clip->is_selected()) {
+
+            QList<AudioClip* > selection;
+            clip->get_sheet()->get_audioclip_manager()->get_selected_clips(selection);
+
+
+            for(auto audioProcessingNode : selection) {
+                group->add_command(new Gain(audioProcessingNode, arguments));
+            }
+        } else {
+            group->add_command(new Gain(item, arguments));
+        }
+
+
+        return group;
     }
 
     case TrackPanCommand:
