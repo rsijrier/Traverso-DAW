@@ -53,13 +53,16 @@ public :
 
 private:
     QList<Gain* >	m_gainCommands;
+    Gain*           m_primaryGain;
     QPointF         m_origPos;
     ContextItem*    m_contextItem;
+    bool            m_primaryGainOnly;
 
 
 public slots:
     void increase_gain();
     void decrease_gain();
+    void toggle_primary_gain_only();
 };
 
 #endif

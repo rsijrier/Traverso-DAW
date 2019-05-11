@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2010 Remon Sijrier
+Copyright (C) 2010-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -23,12 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "ContextItem.h"
 #include "ContextPointer.h"
-#include "Mixer.h"
-#include <ViewPort.h>
-#include <Track.h>
 #include "Sheet.h"
 #include "TBusTrack.h"
 #include "Utils.h"
+#include "Mixer.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -36,60 +34,30 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 /**
  *	\class Gain
-    \brief Change (jog) the Gain of an AudioTrack, BusTrack or AudioClip, or set to a pre-defined value
+    \brief Change (jog) the Gain of an TAudioProcessingNode, or set to a pre-defined value
 
     \sa TraversoCommands
  */
 
 
-Gain::Gain(ContextItem* context, const QVariantList& args)
+Gain::Gain(ContextItem* context, const QVariantList& /*args*/)
     : TCommand(context, "")
 {
     m_gainObject = context;
-    m_canvasCursorFollowsMouseCursor = false;
+    m_newGain = m_origGain = get_gain_from_object(m_gainObject);
 
-    audio_sample_t gain = -1;
-    QString des = "";
-    TAudioProcessingNode* data = qobject_cast<TAudioProcessingNode*>(m_gainObject);
-    QString name;
-    if (data) {
-        name = data->get_name();
-    }
-
-    if (!args.empty()) {
-        gain = audio_sample_t(args.at(0).toDouble());
-        des = QString(context->metaObject()->className()) + ": Reset gain";
-    } else {
-        des = "Gain (" + QString(context->metaObject()->className()) + " " + name + ")";
-    }
-
-    setText(des);
-
-    if (gain >= 0) {
-        m_newGain = gain;
-        get_gain_from_object(m_origGain);
-    }
-
-    Track* track = qobject_cast<Track*>(context);
-    if (track && qFuzzyCompare(m_origGain, 0.5f)) {
-        m_newGain = 1.0;
-    } else {
-        Sheet* sheet = qobject_cast<Sheet*>(context);
-        if (sheet) {
-            // if context == sheet, then use sheets master out
-            // as the gain object as sheet itself doesn't apply any gain.
-            m_gainObject = sheet->get_master_out_bus_track();
-            if (qFuzzyCompare(m_origGain, 0.5f)) {
-                m_newGain = 1.0;
-            }
-        }
-
+    Sheet* sheet = qobject_cast<Sheet*>(context);
+    if (sheet) {
+        // if context == sheet, then use sheets master out
+        // as the gain object as sheet itself doesn't apply any gain.
+        m_gainObject = sheet->get_master_out_bus_track();
     }
 }
 
-
 Gain::~Gain()
-{}
+{
+    PENTERDES;
+}
 
 int Gain::prepare_actions()
 {
@@ -100,46 +68,47 @@ int Gain::prepare_actions()
     return 1;
 }
 
-int Gain::begin_hold()
-{
-    if ( ! get_gain_from_object(m_origGain)) {
-        return -1;
-    }
-    m_newGain = m_origGain;
-    m_origPos = cpointer().scene_pos();
-
-    cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
-    return 1;
-}
-
-int Gain::finish_hold()
-{
-    return 1;
-}
-
 void Gain::set_gain_animated(float startGain, float endGain)
 {
-    if (m_animation.state() == QPropertyAnimation::Running) {
-        m_animation.stop();
+    PENTER;
+    if (m_animation.isNull()) {
+        m_animation = new QPropertyAnimation();
     }
 
-    m_animation.setPropertyName("gain");
-    m_animation.setTargetObject(m_gainObject);
-    m_animation.setStartValue(startGain);
-    m_animation.setEndValue(endGain);
-    m_animation.setDuration(300);
-    m_animation.start();
+    if (m_animation->state() == QPropertyAnimation::Running) {
+        m_animation->stop();
+    }
+
+    m_animation->setPropertyName("gain");
+    m_animation->setTargetObject(m_gainObject);
+    m_animation->setStartValue(startGain);
+    m_animation->setEndValue(endGain);
+    m_animation->setDuration(300);
+    m_animation->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void Gain::apply_new_gain_to_object(float dBFactor)
+{
+    m_newGain = dB_to_scale_factor(dBFactor);
+    QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
+    // the gainobject is able to refuse the new value, so we set our
+    // newGain value to the value the gainobject internally decided to go for
+    m_newGain = get_gain_from_object(m_gainObject);
 }
 
 int Gain::do_action()
 {
     PENTER;
-    float gain;
-    get_gain_from_object(gain);
-    if (qFuzzyCompare(m_newGain, gain)) {
+
+    // We already set the new gain value during process_mouse_move()
+    // however, do_action() is always called from the TInputEventDispatcher
+    // So do not start the animated gain setting since it will start from
+    // the m_oldgain value.
+    if (qFuzzyCompare(m_newGain, get_gain_from_object(m_gainObject))) {
         return 1;
     }
 
+    // so this will only be reached after an undo/redo sequence
     set_gain_animated(m_origGain, m_newGain);
 
     return 1;
@@ -150,140 +119,61 @@ int Gain::undo_action()
     PENTER;
 
     set_gain_animated(m_newGain, m_origGain);
+
     return 1;
 }
 
-
 void Gain::cancel_action()
 {
-    finish_hold();
     undo_action();
-}
-
-void Gain::process_collected_number(const QString & collected)
-{
-    if (collected.size() == 0) {
-        cpointer().setCursorText(" dB");
-        return;
-    }
-
-    bool ok;
-    audio_sample_t dbFactor = audio_sample_t(collected.toDouble(&ok));
-    if (!ok) {
-        if (collected.contains(".") || collected.contains("-")) {
-            QString s = collected;
-            s.append(" dB");
-            cpointer().setCursorText(s);
-        }
-        return;
-    }
-
-    int rightfromdot = 0;
-    if (collected.contains(".")) {
-        rightfromdot = collected.size() - collected.lastIndexOf(".") - 1;
-    }
-
-    m_newGain = dB_to_scale_factor(dbFactor);
-
-    if (m_newGain < 0.0f)
-        m_newGain = 0.0;
-    if (m_newGain > 2.0f)
-        m_newGain = 2.0;
-
-    // Update the vieport's hold cursor with the _actuall_ gain value!
-    if(rightfromdot) {
-        cpointer().setCursorText(QByteArray::number(double(dbFactor), 'f', rightfromdot).append(" dB"));
-    } else {
-        cpointer().setCursorText(QByteArray::number(double(dbFactor)).append(" dB"));
-    }
-
-}
-
-
-void Gain::set_cursor_shape(int useX, int useY)
-{
-    Q_UNUSED(useX);
-    Q_UNUSED(useY);
-
-    cpointer().setCursorShape(":/cursorGain");
 }
 
 void Gain::increase_gain(  )
 {
     audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor += 0.2f;
-    m_newGain = dB_to_scale_factor(dbFactor);
-    QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
-
-    // now we get the new gain value from gainObject, since we don't know if
-    // gainobject accepted the change or not!
-    get_gain_from_object(m_newGain);
-
-    // Update the vieport's hold cursor with the _actuall_ gain value!
-    cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
+    apply_new_gain_to_object(dbFactor);
 }
 
 void Gain::decrease_gain()
 {
     audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor -= 0.2f;
-    m_newGain = dB_to_scale_factor(dbFactor);
-
-    QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
-
-    // now we get the new gain value from gainObject, since we don't know if
-    // gainobject accepted the change or not!
-    get_gain_from_object(m_newGain);
-
-    // Update the vieport's hold cursor with the _actuall_ gain value!
-    cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
+    apply_new_gain_to_object(dbFactor);
 }
 
-
-int Gain::jog()
+void Gain::set_gain_by_collected_number(float newGain)
 {
-    PENTER;
+    m_newGain = newGain;
+}
 
+int Gain::process_mouse_move(qreal diffY)
+{
     qreal of = 0;
-
     audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
 
-    qreal diff;
-
-    diff = m_origPos.y() - cpointer().scene_y();
 
     if (dbFactor > -1) {
-        of = diff * 0.05;
+        of = diffY * 0.05;
     }
     if (dbFactor <= -1) {
-        of = diff * ((1 - double(dB_to_scale_factor(dbFactor))) / 3);
+        of = diffY * ((1 - double(dB_to_scale_factor(dbFactor))) / 3);
     }
 
+    apply_new_gain_to_object( dbFactor + float(of) );
 
-    m_newGain = dB_to_scale_factor( dbFactor + float(of) );
-
-    // Set the gain for gainObject
-    QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
-
-    // now we get the new gain value from gainObject, since we don't know if
-    // gainobject accepted the change or not!
-    int result = get_gain_from_object(m_newGain);
-
-    // Update the vieport's hold cursor!
-    cpointer().setCursorPos(m_origPos);
-    cpointer().setCursorText(coefficient_to_dbstring(m_newGain));
-
-    return result;
+    return 1;
 }
 
-int Gain::get_gain_from_object(float& gain)
+float Gain::get_gain_from_object(QObject *object)
 {
-    if ( ! QMetaObject::invokeMethod(m_gainObject, "get_gain",
+    float gain = 1.0f;
+
+    if ( ! QMetaObject::invokeMethod(object, "get_gain",
                                      Qt::DirectConnection,
                                      Q_RETURN_ARG(float, gain)) ) {
         PWARN("Gain::get_gain_from_object QMetaObject::invokeMethod failed");
-        return 0;
     }
 
-    return 1;
+    return gain;
 }

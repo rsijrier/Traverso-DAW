@@ -32,7 +32,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 TGainGroupCommand::TGainGroupCommand(ContextItem *context, const QVariantList &args)
     : TCommand (context)
+    , m_primaryGain(nullptr)
     , m_contextItem(context)
+    , m_primaryGainOnly(false)
 {
     m_canvasCursorFollowsMouseCursor = false;
 
@@ -128,8 +130,12 @@ void TGainGroupCommand::process_collected_number(const QString &collected)
         cpointer().setCursorText(QByteArray::number(double(dbFactor)).append(" dB"));
     }
 
-    foreach(Gain* gain, m_gainCommands) {
-        gain->set_gain_by_collected_number(newGain);
+    if (m_primaryGainOnly) {
+        m_primaryGain->set_gain_by_collected_number(newGain);
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->set_gain_by_collected_number(newGain);
+        }
     }
 }
 
@@ -137,8 +143,12 @@ int TGainGroupCommand::jog()
 {
     qreal diff = m_origPos.y() - cpointer().scene_y();
 
-    foreach(Gain* gain, m_gainCommands) {
-        gain->process_mouse_move(diff);
+    if (m_primaryGainOnly) {
+        m_primaryGain->process_mouse_move(diff);
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->process_mouse_move(diff);
+        }
     }
 
     cpointer().setCursorPos(m_origPos);
@@ -168,8 +178,12 @@ int TGainGroupCommand::prepare_actions()
 
 int TGainGroupCommand::do_action()
 {
-    foreach(Gain* gain, m_gainCommands) {
-        gain->do_action();
+    if (m_primaryGainOnly) {
+        m_primaryGain->do_action();
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->do_action();
+        }
     }
 
     return 1;
@@ -177,8 +191,12 @@ int TGainGroupCommand::do_action()
 
 int TGainGroupCommand::undo_action()
 {
-    foreach(Gain* gain, m_gainCommands) {
-        gain->undo_action();
+    if (m_primaryGainOnly) {
+        m_primaryGain->undo_action();
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->undo_action();
+        }
     }
 
     return 1;
@@ -186,17 +204,27 @@ int TGainGroupCommand::undo_action()
 
 void TGainGroupCommand::add_command(Gain *cmd) {
     Q_ASSERT(cmd);
+
+    if (!m_primaryGain) {
+        m_primaryGain = cmd;
+    }
+
     if (m_gainCommands.contains(cmd)) {
         return;
     }
+
     m_gainCommands.append(cmd);
 }
 
 
 void TGainGroupCommand::increase_gain(  )
 {
-    foreach(Gain* gain, m_gainCommands) {
-        gain->increase_gain();
+    if (m_primaryGainOnly) {
+        m_primaryGain->increase_gain();
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->increase_gain();
+        }
     }
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
@@ -205,12 +233,21 @@ void TGainGroupCommand::increase_gain(  )
 
 void TGainGroupCommand::decrease_gain()
 {
-    foreach(Gain* gain, m_gainCommands) {
-        gain->decrease_gain();
+    if (m_primaryGainOnly) {
+        m_primaryGain->decrease_gain();
+    } else {
+        foreach(Gain* gain, m_gainCommands) {
+            gain->decrease_gain();
+        }
     }
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
     cpointer().setCursorText(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+}
+
+void TGainGroupCommand::toggle_primary_gain_only()
+{
+    m_primaryGainOnly = !m_primaryGainOnly;
 }
 
 // eof

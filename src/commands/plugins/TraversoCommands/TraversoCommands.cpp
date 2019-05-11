@@ -66,7 +66,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_meta_object(&FadeCurveView::staticMetaObject);
     tShortCutManager().add_meta_object(&TMainWindow::staticMetaObject);
     tShortCutManager().add_meta_object(&ProjectManager::staticMetaObject);
-    tShortCutManager().add_meta_object(&Gain::staticMetaObject);
+    tShortCutManager().add_meta_object(&TGainGroupCommand::staticMetaObject);
     tShortCutManager().add_meta_object(&MoveTrack::staticMetaObject);
     tShortCutManager().add_meta_object(&MoveClip::staticMetaObject);
     tShortCutManager().add_meta_object(&MovePlugin::staticMetaObject);
@@ -91,7 +91,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("ArmTracks", tr("Arm Tracks"));
     tShortCutManager().add_translation("CropClip", tr("Cut Clip (Magnetic)"));
     tShortCutManager().add_translation("Fade", tr("Fade In/Out"));
-    tShortCutManager().add_translation("Gain", tr("Gain"));
+    tShortCutManager().add_translation("TGainGroupCommand", tr("Gain"));
     tShortCutManager().add_translation("MoveClip", tr("Move Clip"));
     tShortCutManager().add_translation("MoveCurveNode", tr("Move Node"));
     tShortCutManager().add_translation("MoveEdge", tr("Move Clip Edge"));
@@ -364,8 +364,14 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
             QList<AudioClip* > selection;
             clip->get_sheet()->get_audioclip_manager()->get_selected_clips(selection);
 
+            // always the contextitem first so it will be the primary gain object
+            group->add_command(new Gain(item, arguments));
 
             for(auto audioProcessingNode : selection) {
+                // only add the context item once
+                if (audioProcessingNode == item) {
+                    continue;
+                }
                 group->add_command(new Gain(audioProcessingNode, arguments));
             }
         } else {

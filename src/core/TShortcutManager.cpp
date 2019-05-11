@@ -1129,6 +1129,9 @@ void TShortcutManager::loadFunctions()
     createAndAddFunction("TAudioProcessingNode", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
     createAndAddFunction("AudioTrackView", tr("Insert Silence"), "insert_silence", "AudioTrackInsertSilence");
 
+    createAndAddFunction("TGainGroupCommand", tr("Toggle Selection"), "toggle_primary_gain_only", "GainToggleSelection");
+
+
 }
 
 void TShortcutManager::createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName)
