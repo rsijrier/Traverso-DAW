@@ -22,7 +22,7 @@
 #ifndef MOVECLIPACTION_H
 #define MOVECLIPACTION_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 
 #include <QPoint>
 #include <QVariantList>
@@ -42,7 +42,7 @@ typedef struct {
 	TimeRef origin;
 } MarkerAndOrigin;
 
-class MoveClip : public MoveCommand
+class MoveClip : public TMoveCommand
 {
 	Q_OBJECT
 	
@@ -82,8 +82,7 @@ private :
 	int		m_origTrackIndex;
 	int		m_newTrackIndex;
 	
-	struct Data {
-		SheetView* 	sv;
+    struct MoveClipData {
         qreal 		sceneXStartPos;
         int 		pointedTrackIndex;
 		bool		verticalOnly;
@@ -91,7 +90,7 @@ private :
         TimeRef     relativeWorkCursorPos;
 	};
 	
-	Data* d;
+    MoveClipData* mcd;
 
 	void do_prev_next_snap(TimeRef trackStartLocation, TimeRef trackEndLocation);
 	void do_move();

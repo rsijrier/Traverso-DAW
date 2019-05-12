@@ -36,9 +36,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // FIXME: MoveEdge::jog() continuously calls Snaplist::mark_dirty()
 
 MoveEdge::MoveEdge(AudioClipView* cv, SheetView* sv, const QByteArray& whichEdge)
-	: MoveCommand(cv->get_clip(), tr("Move Clip Edge"))
+    : TMoveCommand(sv, cv->get_clip(), tr("Move Clip Edge"))
 {
-	m_sv = sv;
 	m_clip = cv->get_clip();
 	m_edge = whichEdge;
 }
@@ -74,7 +73,7 @@ int MoveEdge::begin_hold()
 	}
 
 	m_clip->set_snappable(false);
-	m_sv->stop_follow_play_head();
+    d->sv->stop_follow_play_head();
 
 	return 1;
 }
@@ -125,19 +124,19 @@ int MoveEdge::undo_action()
 
 int MoveEdge::jog()
 {
-	m_newPos = TimeRef(cpointer().scene_x() * m_sv->timeref_scalefactor);
+    m_newPos = TimeRef(cpointer().scene_x() * d->sv->timeref_scalefactor);
 
-	if (m_sv->get_sheet()->is_snap_on()) {
-		SnapList* slist = m_sv->get_sheet()->get_snap_list();
+    if (d->sv->get_sheet()->is_snap_on()) {
+        SnapList* slist = d->sv->get_sheet()->get_snap_list();
 		m_newPos = slist->get_snap_value(m_newPos);
 	}
 
-	if (m_edge == "set_right_edge" && m_newPos < (m_otherEdgePos + (2 * m_sv->timeref_scalefactor)) ) {
-		m_newPos = m_otherEdgePos + (2 * m_sv->timeref_scalefactor);
+    if (m_edge == "set_right_edge" && m_newPos < (m_otherEdgePos + (2 * d->sv->timeref_scalefactor)) ) {
+        m_newPos = m_otherEdgePos + (2 * d->sv->timeref_scalefactor);
 	}
 
-	if (m_edge == "set_left_edge" && m_newPos > (m_otherEdgePos - (2 * m_sv->timeref_scalefactor)) ) {
-		m_newPos = m_otherEdgePos - (2 * m_sv->timeref_scalefactor);
+    if (m_edge == "set_left_edge" && m_newPos > (m_otherEdgePos - (2 * d->sv->timeref_scalefactor)) ) {
+        m_newPos = m_otherEdgePos - (2 * d->sv->timeref_scalefactor);
 	}
 
 	if (m_edge == "set_right_edge") {
@@ -150,7 +149,7 @@ int MoveEdge::jog()
 		m_newPos = m_clip->get_track_start_location();
 	}
 
-	cpointer().setCursorText(timeref_to_text(m_newPos, m_sv->timeref_scalefactor));
+    cpointer().setCursorText(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
 
 	return 1;
 }
@@ -158,28 +157,28 @@ int MoveEdge::jog()
 
 void MoveEdge::move_left()
 {
-	if (m_doSnap)
+    if (d->doSnap)
 	{
         return prev_snap_pos();
 	}
-	m_newPos = m_newPos - (m_sv->timeref_scalefactor * m_speed);
+    m_newPos = m_newPos - (d->sv->timeref_scalefactor * d->speed);
 	do_keyboard_move();
 }
 
 void MoveEdge::move_right()
 {
-	if (m_doSnap)
+    if (d->doSnap)
 	{
         return next_snap_pos();
 	}
-	m_newPos = m_newPos + (m_sv->timeref_scalefactor * m_speed);
+    m_newPos = m_newPos + (d->sv->timeref_scalefactor * d->speed);
 	do_keyboard_move();
 }
 
 void MoveEdge::next_snap_pos()
 {
 	
-	SnapList* slist = m_sv->get_sheet()->get_snap_list();
+    SnapList* slist = d->sv->get_sheet()->get_snap_list();
 	m_newPos = slist->next_snap_pos(m_newPos);
 	do_keyboard_move();
 }
@@ -187,7 +186,7 @@ void MoveEdge::next_snap_pos()
 void MoveEdge::prev_snap_pos()
 {
 	
-	SnapList* slist = m_sv->get_sheet()->get_snap_list();
+    SnapList* slist = d->sv->get_sheet()->get_snap_list();
 	m_newPos = slist->prev_snap_pos(m_newPos);
 	do_keyboard_move();
 }
@@ -206,7 +205,7 @@ void MoveEdge::do_keyboard_move()
 		m_newPos = m_clip->get_track_start_location();
 	}
 
-	cpointer().setCursorText(timeref_to_text(m_newPos, m_sv->timeref_scalefactor));
+    cpointer().setCursorText(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
 }
 
 // eof

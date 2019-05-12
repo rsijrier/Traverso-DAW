@@ -27,9 +27,8 @@
 #include "QScrollBar"
 
 Scroll::Scroll(SheetView* sv, QVariantList args)
-	: MoveCommand("Scroll")
+    : TMoveCommand(sv, nullptr, "Scroll")
 {
-	m_sv = sv;
 	m_dx = m_dy = 0;
 	
 	if (!args.empty()) {
@@ -49,9 +48,9 @@ int Scroll::prepare_actions()
 
 int Scroll::begin_hold()
 {
-        m_sv->start_shuttle(true, true);
-	m_sv->set_shuttle_factor_values(m_dx, m_dy);
-	if (m_dx) {
+    set_shuttle_factor_values(m_dx, m_dy);
+
+    if (m_dx) {
 		cpointer().setCursorShape("LR");
 	} else {
 		cpointer().setCursorShape("UD");
@@ -63,8 +62,6 @@ int Scroll::begin_hold()
 
 int Scroll::finish_hold()
 {
-	m_sv->start_shuttle(false);
-
 	return 1;
 }
 
@@ -80,24 +77,24 @@ int Scroll::undo_action( )
 
 void Scroll::move_up()
 {
-	int step = m_sv->getVScrollBar()->pageStep();
-	m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() - step * m_speed);
+    int step = d->sv->getVScrollBar()->pageStep();
+    d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() - step * d->speed);
 }
 
 void Scroll::move_down()
 {
-	int step = m_sv->getVScrollBar()->pageStep();
-	m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() + step * m_speed);
+    int step = d->sv->getVScrollBar()->pageStep();
+    d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() + step * d->speed);
 }
 
 void Scroll::move_left()
 {
-	m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() - (m_speed * 5));
+    d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() - (d->speed * 5));
 }
 
 void Scroll::move_right()
 {
-	m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() + (m_speed * 5));
+    d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() + (d->speed * 5));
 }
 
 

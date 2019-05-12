@@ -92,15 +92,13 @@ public :
     TrackView* get_trackview_at_scene_pos(QPointF point);
 	QList<TrackView*> get_track_views() const;
 	int get_track_height(Track* track) const;
+    float get_mean_track_height() const {return m_meanTrackHeight;}
 	static QHash<QString, QString>* cursor_dict();
 
 	QScrollBar* getVScrollBar() {return m_vScrollBar;}
 	QScrollBar* getHScrollBar() {return m_hScrollBar;}
 
 	void load_theme_data();
-	void start_shuttle(bool start, bool drag=false);
-	void update_shuttle_factor();
-	void set_shuttle_factor_values(int x, int y);
 	void vzoom(qreal scale);
 	void hzoom(qreal scale);
 	void clipviewport_resize_event();
@@ -129,31 +127,28 @@ public :
 
 	qint64		timeref_scalefactor;
 
+    float getMeanTrackHeight() const;
+
 private:
-	TSession*		m_session;
-	Curve*			m_shuttleCurve;
-	Curve*			m_dragShuttleCurve;
-	PlayHead*		m_playCursor;
+    TSession*           m_session;
+    PlayHead*           m_playCursor;
 	ClipsViewPort* 		m_clipsViewPort;
 	TrackPanelViewPort*	m_tpvp;
 	TimeLineViewPort*	m_tlvp;
 	QList<TrackView*>	m_audioTrackViews;
 	QList<TrackView*>	m_busTrackViews;
-	TrackView*              m_sheetMasterOutView;
-	TrackView*              m_projectMasterOutView;
-	WorkCursor*		m_workCursor;
-	TCanvasCursor*            m_editCursor;
-	int			m_shuttleXfactor{};
-	int			m_shuttleYfactor{};
-	int			m_sceneHeight{};
-	float                   m_meanTrackHeight{};
-	bool			m_dragShuttle{};
-	QTimer			m_shuttletimer;
-	QScrollBar*		m_vScrollBar;
-	QScrollBar*		m_hScrollBar;
-	bool			m_actOnPlayHead;
-	bool			m_viewportReady;
-	static QHash<QString, QString> m_cursorsDict;
+    TrackView*          m_sheetMasterOutView;
+    TrackView*          m_projectMasterOutView;
+    WorkCursor*         m_workCursor;
+    TCanvasCursor*      m_editCursor;
+    int                 m_sceneHeight{};
+    float               m_meanTrackHeight{};
+    QScrollBar*         m_vScrollBar;
+    QScrollBar*         m_hScrollBar;
+    bool                m_actOnPlayHead;
+    bool                m_viewportReady;
+
+    static QHash<QString, QString> m_cursorsDict;
 
 	// Themeing data
 	int	m_trackSeperatingHeight{};
@@ -201,7 +196,6 @@ private slots:
 	void scale_factor_changed();
 	void add_new_track_view(Track*);
 	void remove_track_view(Track*);
-	void update_shuttle();
     void hscrollbar_value_changed(int);
 	void hscrollbar_action(int);
 	void session_vertical_scrollbar_position_changed();

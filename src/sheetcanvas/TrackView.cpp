@@ -99,7 +99,7 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 		painter->fillRect(xstart, get_total_height() - m_bottomborderwidth, pixelcount+1, m_bottomborderwidth, color);
 	}
 
-	if (m_isMoving || m_track->has_active_context()) {
+    if (m_track->has_active_context()) {
 		QPen pen;
 		int penwidth = 1;
 		pen.setWidth(penwidth);
@@ -108,6 +108,10 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 		painter->drawLine(xstart, m_topborderwidth, xstart+pixelcount, m_topborderwidth);
 		painter->drawLine(xstart, get_total_height() - m_bottomborderwidth - 1, xstart+pixelcount, get_total_height() - m_bottomborderwidth - 1);
 	}
+
+    if (m_isMoving) {
+        painter->fillRect(option->exposedRect, themer()->get_color("Track:mousehover"));
+    }
 
     if (m_visibleLanes > 1) {
         QPen pen;

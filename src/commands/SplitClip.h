@@ -22,7 +22,7 @@
 #ifndef SPLITCLIPACTION_H
 #define SPLITCLIPACTION_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 #include "defines.h"
 
 class AudioClip;
@@ -32,7 +32,7 @@ class TSession;
 class AudioClipView;
 class LineView;
 
-class SplitClip : public MoveCommand
+class SplitClip : public TMoveCommand
 {
         Q_OBJECT
 public :
@@ -51,7 +51,6 @@ public :
 	int jog();
 	
 private :
-	SheetView* m_sv;
         TSession*  m_session;
 	AudioClipView* m_cv;
         AudioTrack* m_track;

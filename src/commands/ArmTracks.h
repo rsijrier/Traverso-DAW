@@ -21,14 +21,14 @@
 #ifndef ARM_TRACKS_H
 #define ARM_TRACKS_H
 
-#include "TCommand.h"
+#include "TMoveCommand.h"
 
 #include <QList>
 
 class SheetView;
 class AudioTrack;
 
-class ArmTracks : public TCommand
+class ArmTracks : public TMoveCommand
 {
         Q_OBJECT
 
@@ -45,7 +45,6 @@ public :
 	int jog();
 	
 private:
-	SheetView* m_sv;
 	QList<AudioTrack* > m_tracks;
 };
 

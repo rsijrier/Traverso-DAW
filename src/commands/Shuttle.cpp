@@ -24,47 +24,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "SheetView.h"
 
 Shuttle::Shuttle(SheetView* sv)
-        : MoveCommand("Shuttle")
-        , m_sv(sv)
+    : TMoveCommand(sv, nullptr, "Shuttle")
 {
     m_canvasCursorFollowsMouseCursor = false;
 }
 
 int Shuttle::begin_hold()
 {
-        m_sv->update_shuttle_factor();
-//        m_sv->start_shuttle(true);
         return 1;
 }
 
 int Shuttle::finish_hold()
 {
-//        m_sv->start_shuttle(false);
         return 1;
 }
 
 int Shuttle::jog()
 {
-        m_sv->update_shuttle_factor();
         return 1;
 }
 
 void Shuttle::move_up()
 {
-        m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() - 5);
+        d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() - 5);
 }
 
 void Shuttle::move_down()
 {
-        m_sv->set_vscrollbar_value(m_sv->vscrollbar_value() + 5);
+        d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() + 5);
 }
 
 void Shuttle::move_left()
 {
-        m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() - (m_speed * 5));
+        d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() - (d->speed * 5));
 }
 
 void Shuttle::move_right()
 {
-        m_sv->set_hscrollbar_value(m_sv->hscrollbar_value() + (m_speed * 5));
+        d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() + (d->speed * 5));
 }

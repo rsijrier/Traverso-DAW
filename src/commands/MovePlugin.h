@@ -45,6 +45,8 @@ public :
 
 private:
     PluginView*      m_pluginView;
+    qreal            m_sceneXStartPos;
+    qreal           m_pluginViewOrigXPos;
 
 public slots:
     void move_left();

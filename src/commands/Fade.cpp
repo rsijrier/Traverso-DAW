@@ -44,30 +44,25 @@ static const float RASTER_SIZE		= 0.05;
 
 
 FadeRange::FadeRange(AudioClip* clip, FadeCurve* curve, qint64 scalefactor)
-        : MoveCommand(clip, "")
-	, d(new Private())
+        : TMoveCommand(nullptr, clip, "")
+    , frp(new FadeRangePrivate())
 {
     m_canvasCursorFollowsMouseCursor = false;
 	m_curve = curve;
-	d->direction = (m_curve->get_fade_type() == FadeCurve::FadeIn) ? 1 : -1;
-	d->scalefactor = scalefactor;
-        d->clip = clip;
-        d->sheet = clip->get_sheet();
-	setText( (d->direction == 1) ? tr("Fade In: length") : tr("Fade Out: length"));
+    frp->direction = (m_curve->get_fade_type() == FadeCurve::FadeIn) ? 1 : -1;
+    frp->scalefactor = scalefactor;
+    frp->clip = clip;
+    frp->sheet = clip->get_sheet();
+    setText( (frp->direction == 1) ? tr("Fade In: length") : tr("Fade Out: length"));
 }
 
 
 FadeRange::FadeRange(AudioClip* clip, FadeCurve* curve, double newRange)
-        : MoveCommand(clip, "")
-	, d(new Private())
+    : FadeRange(clip, curve, qint64(newRange))
 {
-	m_curve = curve;
-	d->direction = (m_curve->get_fade_type() == FadeCurve::FadeIn) ? 1 : -1;
-        d->clip = clip;
-        d->sheet = clip->get_sheet();
-        m_origRange = m_curve->get_range();
-	m_newRange = newRange;
-	setText( (d->direction == 1) ? tr("Fade In: remove") : tr("Fade Out: remove"));
+    m_origRange = m_curve->get_range();
+    m_newRange = newRange;
+    setText( (frp->direction == 1) ? tr("Fade In: remove") : tr("Fade Out: remove"));
 }
 
 
@@ -81,7 +76,7 @@ int FadeRange::prepare_actions()
 
 int FadeRange::begin_hold()
 {
-	d->origX = cpointer().on_first_input_event_x();
+    frp->origX = cpointer().on_first_input_event_x();
 	m_newRange = m_origRange = m_curve->get_range();
 	return 1;
 }
@@ -89,8 +84,8 @@ int FadeRange::begin_hold()
 
 int FadeRange::finish_hold()
 {
-	delete d;
-    d = nullptr;
+    delete frp;
+    frp = nullptr;
 	return 1;
 }
 
@@ -126,8 +121,8 @@ void FadeRange::set_cursor_shape(int useX, int useY)
 
 int FadeRange::jog()
 {
-	int dx = (d->origX - (cpointer().x()) ) * d->direction;
-	m_newRange = m_origRange - ( dx * d->scalefactor);
+    int dx = (frp->origX - (cpointer().x()) ) * frp->direction;
+    m_newRange = m_origRange - ( dx * frp->scalefactor);
 	
 	if (m_newRange < 1) {
 		m_newRange = 1;
@@ -145,37 +140,37 @@ int FadeRange::jog()
 void FadeRange::move_left()
 {
 
-        if (m_doSnap) {
+        if (d->doSnap) {
                 return prev_snap_pos();
         }
-        do_keyboard_move(m_newRange - (d->scalefactor * m_speed * d->direction));
+        do_keyboard_move(m_newRange - (frp->scalefactor * d->speed * frp->direction));
 }
 
 
 void FadeRange::move_right()
 {
 
-        if (m_doSnap) {
+        if (d->doSnap) {
                 return next_snap_pos();
         }
 
-        do_keyboard_move(m_newRange + (d->scalefactor * m_speed * d->direction));
+        do_keyboard_move(m_newRange + (frp->scalefactor * d->speed * frp->direction));
 }
 
 
 void FadeRange::next_snap_pos()
 {
 
-        TimeRef snap = d->sheet->get_snap_list()->next_snap_pos(d->clip->get_track_start_location() + m_newRange);
-        TimeRef newpos = snap - d->clip->get_track_start_location();
+        TimeRef snap = frp->sheet->get_snap_list()->next_snap_pos(frp->clip->get_track_start_location() + m_newRange);
+        TimeRef newpos = snap - frp->clip->get_track_start_location();
         do_keyboard_move(newpos.universal_frame());
 }
 
 void FadeRange::prev_snap_pos()
 {
 
-        TimeRef snap = d->sheet->get_snap_list()->prev_snap_pos(d->clip->get_track_start_location() + m_newRange);
-        TimeRef newpos = snap - d->clip->get_track_start_location();
+        TimeRef snap = frp->sheet->get_snap_list()->prev_snap_pos(frp->clip->get_track_start_location() + m_newRange);
+        TimeRef newpos = snap - frp->clip->get_track_start_location();
         do_keyboard_move(newpos.universal_frame());
 }
 

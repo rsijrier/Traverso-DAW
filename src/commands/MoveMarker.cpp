@@ -33,12 +33,12 @@
 #include "Debugger.h"
 
 MoveMarker::MoveMarker(MarkerView* mview, qint64 scalefactor, const QString& des)
-	: MoveCommand(mview->get_marker(), des)
+    : TMoveCommand(mview->get_sheetview(), mview->get_marker(), des)
 {
-	d = new Data;
-	d->view = mview;
-	m_marker= d->view->get_marker();
-	d->scalefactor = scalefactor;
+    mmd = new MoveMarkerData;
+    mmd->view = mview;
+    m_marker= mmd->view->get_marker();
+    mmd->scalefactor = scalefactor;
 }
 
 int MoveMarker::prepare_actions()
@@ -50,17 +50,15 @@ int MoveMarker::begin_hold()
 {
 	m_origWhen = m_newWhen = m_marker->get_when();
     m_marker->set_snappable(false);
-	d->view->get_sheetview()->start_shuttle(true, true);
-	d->view->set_dragging(true);
+    mmd->view->set_dragging(true);
 	return 1;
 }
 
 int MoveMarker::finish_hold()
 {
-	d->view->get_sheetview()->start_shuttle(false);
-	d->view->set_dragging(false);
-	delete d;
-    d = nullptr;
+    mmd->view->set_dragging(false);
+    delete mmd;
+    mmd = nullptr;
 
 	return 1;
 }
@@ -88,13 +86,13 @@ void MoveMarker::cancel_action()
 
 void MoveMarker::move_left()
 {
-	if (m_doSnap) {
+    if (d->doSnap) {
         return prev_snap_pos();
 	}
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	// Move 1 pixel to the left
-	TimeRef newpos = TimeRef(m_newWhen - (d->scalefactor * m_speed));
+    TimeRef newpos = TimeRef(m_newWhen - (mmd->scalefactor * d->speed));
 	if (newpos < TimeRef()) {
 		newpos = TimeRef();
 	}
@@ -104,13 +102,13 @@ void MoveMarker::move_left()
 
 void MoveMarker::move_right()
 {
-	if (m_doSnap) {
+    if (d->doSnap) {
         return next_snap_pos();
 	}
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	// Move 1 pixel to the right
-	m_newWhen = m_newWhen + (d->scalefactor * m_speed);
+    m_newWhen = m_newWhen + (mmd->scalefactor * d->speed);
 	m_marker->set_when(m_newWhen);
 }
 
@@ -135,11 +133,11 @@ void MoveMarker::prev_snap_pos()
 
 int MoveMarker::jog()
 {
-	TimeRef newpos = TimeRef(cpointer().scene_x() * d->scalefactor);
+    TimeRef newpos = TimeRef(cpointer().scene_x() * mmd->scalefactor);
 
     bool didSnap = false;
 
-	if (m_doSnap) {
+    if (d->doSnap) {
 		SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
         newpos = slist->get_snap_value(newpos, didSnap);
 	}
@@ -152,15 +150,12 @@ int MoveMarker::jog()
 	m_marker->set_when(m_newWhen);
     if (didSnap) {
         QPointF scenePos = cpointer().scene_pos();
-        scenePos.setX(d->view->x());
+        scenePos.setX(mmd->view->x());
         cpointer().setCursorPos(scenePos);
     } else {
         cpointer().setCursorPos(cpointer().scene_pos());
     }
 
 //	d->view->set_position(int(m_newWhen / d->scalefactor));
-
-	d->view->get_sheetview()->update_shuttle_factor();
-
 	return 1;
 }

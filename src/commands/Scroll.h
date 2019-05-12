@@ -22,14 +22,14 @@
 #ifndef SCROLL_H
 #define SCROLL_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 
 #include <QVariantList>
 
 class SheetView;
 class QPoint;
 
-class Scroll : public MoveCommand
+class Scroll : public TMoveCommand
 {
 	Q_OBJECT
 
@@ -44,7 +44,6 @@ public :
 	int undo_action();
 
 private :
-        SheetView* m_sv;
 	int m_dx;
 	int m_dy;
 

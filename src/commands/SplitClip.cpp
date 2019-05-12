@@ -35,12 +35,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 SplitClip::SplitClip(AudioClipView* view)
-        : MoveCommand(view->get_clip(), tr("Split Clip"))
+        : TMoveCommand(view->get_sheetview(), view->get_clip(), tr("Split Clip"))
 {
     m_canvasCursorFollowsMouseCursor = false;
 	m_clip = view->get_clip();
-	m_sv = view->get_sheetview();
-        m_session = m_sv->get_sheet();
+    m_session = d->sv->get_sheet();
 	m_cv = view;
 	m_track = m_clip->get_track();
 	leftClip = nullptr;
@@ -53,7 +52,7 @@ SplitClip::SplitClip(AudioClipView* view)
 int SplitClip::prepare_actions()
 {
 	if (m_splitPoint == qint64(0)) {
-		m_splitPoint = TimeRef(cpointer().scene_x() * m_sv->timeref_scalefactor);
+        m_splitPoint = TimeRef(cpointer().scene_x() * d->sv->timeref_scalefactor);
 	}
 
 	if (m_splitPoint <= m_clip->get_track_start_location() || m_splitPoint >= m_clip->get_track_start_location() + m_clip->get_length()) {
@@ -111,7 +110,6 @@ int SplitClip::undo_action()
 
 int SplitClip::begin_hold()
 {
-	m_sv->start_shuttle(true, true);
 	m_splitcursor = new LineView(m_cv);
 	m_splitcursor->set_color(themer()->get_color("AudioClip:contour"));
 	m_cv->scene()->addItem(m_splitcursor);
@@ -123,7 +121,6 @@ int SplitClip::finish_hold()
 	delete m_splitcursor;
     m_splitcursor = nullptr;
 	m_cv->update();
-	m_sv->start_shuttle(false);
 	return 1;
 }
 
@@ -149,14 +146,14 @@ int SplitClip::jog()
 		x = 0;
 	}
 
-	m_splitPoint = x * m_sv->timeref_scalefactor;
+    m_splitPoint = x * d->sv->timeref_scalefactor;
 
 	if (m_clip->get_sheet()->is_snap_on()) {
 		SnapList* slist = m_clip->get_sheet()->get_snap_list();
 		m_splitPoint = slist->get_snap_value(m_splitPoint);
 	}
 	
-	QPointF point = m_cv->mapFromScene(m_splitPoint / m_sv->timeref_scalefactor, cpointer().y());
+    QPointF point = m_cv->mapFromScene(m_splitPoint / d->sv->timeref_scalefactor, cpointer().y());
 	int xpos = (int) point.x();
 	if (xpos < 0) {
 		xpos = 0;
@@ -165,9 +162,8 @@ int SplitClip::jog()
 		xpos = (int)m_cv->boundingRect().width();
 	}
 	m_splitcursor->setPos(xpos, 0);
-	m_sv->update_shuttle_factor();
 
-    cpointer().setCursorText(timeref_to_text(m_splitPoint, m_sv->timeref_scalefactor));
+    cpointer().setCursorText(timeref_to_text(m_splitPoint, d->sv->timeref_scalefactor));
 	
 	return 1;
 }
@@ -176,20 +172,20 @@ int SplitClip::jog()
 void SplitClip::move_left()
 {
         
-        if (m_doSnap) {
+        if (d->doSnap) {
                 return prev_snap_pos();
         }
-        do_keyboard_move(m_splitPoint - (m_sv->timeref_scalefactor * m_speed));
+        do_keyboard_move(m_splitPoint - (d->sv->timeref_scalefactor * d->speed));
 }
 
 
 void SplitClip::move_right()
 {
         
-        if (m_doSnap) {
+        if (d->doSnap) {
                 return next_snap_pos();
         }
-        do_keyboard_move(m_splitPoint + (m_sv->timeref_scalefactor * m_speed));
+        do_keyboard_move(m_splitPoint + (d->sv->timeref_scalefactor * d->speed));
 }
 
 
@@ -216,7 +212,7 @@ void SplitClip::do_keyboard_move(TimeRef location)
                 m_splitPoint = m_clip->get_track_end_location();
         }
 
-        QPointF pos = m_cv->mapFromScene(m_splitPoint / m_sv->timeref_scalefactor, m_splitcursor->scenePos().y());
+        QPointF pos = m_cv->mapFromScene(m_splitPoint / d->sv->timeref_scalefactor, m_splitcursor->scenePos().y());
         m_splitcursor->setPos(pos);
 }
 

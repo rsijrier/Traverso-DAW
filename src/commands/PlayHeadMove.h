@@ -22,14 +22,14 @@
 #ifndef PLAYHEAD_MOVE_H
 #define PLAYHEAD_MOVE_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 #include "defines.h"
 
 class TSession;
 class SheetView;
 class PlayHead;
 
-class PlayHeadMove : public MoveCommand
+class PlayHeadMove : public TMoveCommand
 {
 	Q_OBJECT
 
@@ -48,7 +48,6 @@ public :
 private :
 	PlayHead*	m_playhead;
         TSession*	m_session;
-	SheetView*	m_sv;
 	bool		m_resync;
 	int		m_origXPos{};
 	int		m_newXPos{};

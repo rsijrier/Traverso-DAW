@@ -37,8 +37,8 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
 	double	minValueDiff,
 	double	maxValueDiff,
 	const QString& des)
-	: MoveCommand(curve, des)
-	, d(new MoveCurveNode::Data)
+    : TMoveCommand(nullptr, curve, des)
+    , mcnd(new MoveCurveNode::MoveCurveNodeData)
 {
 	foreach(CurveNode* node, nodes) {
 		CurveNodeData curveData{};
@@ -48,21 +48,21 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
 		m_nodeDatas.append(curveData);
 	}
 
-	d->height = height;
-	d->minWhenDiff = minWhenDiff;
-	d->maxWhenDiff = maxWhenDiff;
-	d->minValueDiff = minValueDiff;
-	d->maxValueDiff = maxValueDiff;
-        d->scalefactor = scalefactor;
-        d->verticalOnly = false;
+    mcnd->height = height;
+    mcnd->minWhenDiff = minWhenDiff;
+    mcnd->maxWhenDiff = maxWhenDiff;
+    mcnd->minValueDiff = minValueDiff;
+    mcnd->maxValueDiff = maxValueDiff;
+        mcnd->scalefactor = scalefactor;
+        mcnd->verticalOnly = false;
 
     m_valueDiff = 0.0;
 }
 
 void MoveCurveNode::toggle_vertical_only()
 {
-	d->verticalOnly = !d->verticalOnly;
-	if (d->verticalOnly)
+    mcnd->verticalOnly = !mcnd->verticalOnly;
+    if (mcnd->verticalOnly)
 	{
 		cpointer().setCursorText(tr("Vertical On"), 1000);
 
@@ -80,21 +80,21 @@ int MoveCurveNode::prepare_actions()
 
 int MoveCurveNode::finish_hold()
 {
-        delete d;
-    d = nullptr;
+        delete mcnd;
+    mcnd = nullptr;
         return 1;
 }
 
 void MoveCurveNode::cancel_action()
 {
-        delete d;
-    d = nullptr;
+        delete mcnd;
+    mcnd = nullptr;
         undo_action();
 }
 
 int MoveCurveNode::begin_hold()
 {
-        d->mousepos = QPoint(cpointer().on_first_input_event_x(), cpointer().on_first_input_event_y());
+        mcnd->mousepos = QPoint(cpointer().on_first_input_event_x(), cpointer().on_first_input_event_y());
 	check_and_apply_when_and_value_diffs();
         return 1;
 }
@@ -120,28 +120,28 @@ int MoveCurveNode::undo_action()
 
 void MoveCurveNode::move_up()
 {
-	m_valueDiff += m_speed / d->height;
+    m_valueDiff += d->speed / mcnd->height;
 
 	check_and_apply_when_and_value_diffs();
 }
 
 void MoveCurveNode::move_down()
 {
-	m_valueDiff -= m_speed / d->height;
+    m_valueDiff -= d->speed / mcnd->height;
 
 	check_and_apply_when_and_value_diffs();
 }
 
 void MoveCurveNode::move_left()
 {
-	m_whenDiff -= d->scalefactor * m_speed;
+    m_whenDiff -= mcnd->scalefactor * d->speed;
 
 	check_and_apply_when_and_value_diffs();
 }
 
 void MoveCurveNode::move_right()
 {
-	m_whenDiff += d->scalefactor * m_speed;
+    m_whenDiff += mcnd->scalefactor * d->speed;
 
 	check_and_apply_when_and_value_diffs();
 }
@@ -156,37 +156,37 @@ int MoveCurveNode::jog()
 	QPoint mousepos = cpointer().pos();
 
 	int dx, dy;
-	dx = mousepos.x() - d->mousepos.x();
-	dy = mousepos.y() - d->mousepos.y();
+    dx = mousepos.x() - mcnd->mousepos.x();
+    dy = mousepos.y() - mcnd->mousepos.y();
 
-	d->mousepos = mousepos;
+    mcnd->mousepos = mousepos;
 
-	m_whenDiff += dx * d->scalefactor;
-	m_valueDiff -= dy / d->height;
+    m_whenDiff += dx * mcnd->scalefactor;
+    m_valueDiff -= dy / mcnd->height;
 
 	return check_and_apply_when_and_value_diffs();
 }
 
 int MoveCurveNode::check_and_apply_when_and_value_diffs()
 {
-	if (d->verticalOnly) {
+    if (mcnd->verticalOnly) {
 		m_whenDiff = TimeRef();
 	}
 
-	if (m_whenDiff > d->maxWhenDiff) {
-		m_whenDiff = d->maxWhenDiff;
+    if (m_whenDiff > mcnd->maxWhenDiff) {
+        m_whenDiff = mcnd->maxWhenDiff;
 	}
 
-	if (m_whenDiff < d->minWhenDiff) {
-		m_whenDiff = d->minWhenDiff;
+    if (m_whenDiff < mcnd->minWhenDiff) {
+        m_whenDiff = mcnd->minWhenDiff;
 	}
 
-	if (m_valueDiff > d->maxValueDiff) {
-		m_valueDiff = d->maxValueDiff;
+    if (m_valueDiff > mcnd->maxValueDiff) {
+        m_valueDiff = mcnd->maxValueDiff;
 	}
 
-	if (m_valueDiff < d->minValueDiff) {
-		m_valueDiff = d->minValueDiff;
+    if (m_valueDiff < mcnd->minValueDiff) {
+        m_valueDiff = mcnd->minValueDiff;
 	}
 
         // NOTE: this obviously only makes sense when the Node == GainEnvelope Node

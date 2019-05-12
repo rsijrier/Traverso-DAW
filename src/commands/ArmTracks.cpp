@@ -36,8 +36,7 @@ $Id: ArmTracks.cpp,v 1.4 2008/01/21 16:22:11 r_sijrier Exp $
 
 
 ArmTracks::ArmTracks(SheetView* view)
-	: TCommand(view->get_sheet(), tr("Arm Tracks"))
-	, m_sv(view)
+    : TMoveCommand(view, nullptr, ("Arm Tracks"))
 {
 }
 
@@ -52,13 +51,11 @@ int ArmTracks::prepare_actions()
 
 int ArmTracks::begin_hold()
 {
-	m_sv->start_shuttle(true, true);
-	return 1;
+    return 1;
 }
 
 int ArmTracks::finish_hold()
 {
-	m_sv->start_shuttle(false);
 	return 1;
 }
 
@@ -74,7 +71,7 @@ int ArmTracks::undo_action()
 
 int ArmTracks::jog()
 {
-    AudioTrackView* view = m_sv->get_audio_trackview_at_scene_pos(cpointer().scene_pos());
+    AudioTrackView* view = d->sv->get_audio_trackview_at_scene_pos(cpointer().scene_pos());
 	
 	if ( ! view ) {
 		return 0;
@@ -86,8 +83,6 @@ int ArmTracks::jog()
 		m_tracks.append(track);
 		track->arm();
 	}
-	
-	m_sv->update_shuttle_factor();
 	
 	return 1;
 }

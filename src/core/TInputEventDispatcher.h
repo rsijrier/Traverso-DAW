@@ -32,6 +32,7 @@
 #include "defines.h"
 
 class TCommand;
+class TMoveCommand;
 class CommandPlugin;
 class TFunction;
 class QKeyEvent;
@@ -96,6 +97,7 @@ private:
 
     QHash<QString, int>	m_modes;
     TCommand* 		m_holdingCommand;
+    TMoveCommand*    m_moveCommand;
     QString			m_sCollectedNumber;
     QPoint			m_jogBypassPos;
     QTimer          m_holdKeyRepeatTimer;

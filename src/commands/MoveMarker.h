@@ -22,13 +22,13 @@
 #ifndef MOVEMARKER_H
 #define MOVEMARKER_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 #include "defines.h"
 
 class Marker;
 class MarkerView;
 
-class MoveMarker : public MoveCommand
+class MoveMarker : public TMoveCommand
 {
         Q_OBJECT
 
@@ -47,11 +47,11 @@ private :
         Marker*		m_marker;
         TimeRef		m_origWhen;
         TimeRef		m_newWhen;
-        struct Data {
+        struct MoveMarkerData {
                 MarkerView*	view;
                 qint64 		scalefactor;
         };
-        Data* d;
+        MoveMarkerData* mmd;
 
 public slots:
         void move_left();

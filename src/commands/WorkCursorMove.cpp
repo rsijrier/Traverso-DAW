@@ -39,13 +39,12 @@
 #include <Debugger.h>
 
 WorkCursorMove::WorkCursorMove(SheetView* sv)
-	: MoveCommand("Play Cursor Move")
+    : TMoveCommand(sv, nullptr, "Work Cursor Move")
 	, m_session(sv->get_sheet())
 	, m_browseMarkers(false)
 {
-	m_sv = sv;
-	m_workCursor = m_sv->get_work_cursor();
-	m_playCursor = m_sv->get_play_cursor();
+    m_workCursor = d->sv->get_work_cursor();
+    m_playCursor = d->sv->get_play_cursor();
 
 	m_holdCursorSceneY = cpointer().scene_y();
 }
@@ -53,7 +52,6 @@ WorkCursorMove::WorkCursorMove(SheetView* sv)
 int WorkCursorMove::finish_hold()
 {
 	m_session->get_work_snap()->set_snappable(true);
-	m_sv->start_shuttle(false);
 	return -1;
 }
 
@@ -65,7 +63,6 @@ int WorkCursorMove::begin_hold()
 	}
 
 	m_session->get_work_snap()->set_snappable(false);
-	m_sv->start_shuttle(true, true);
 	cpointer().setCursorShape(":/cursorHoldLr");
 	m_origPos = m_session->get_work_location();
 
@@ -95,21 +92,20 @@ int WorkCursorMove::jog()
 		x = 0;
 	}
 
-	TimeRef newLocation(x * m_sv->timeref_scalefactor);
+    TimeRef newLocation(x * d->sv->timeref_scalefactor);
 
 	if (newLocation == m_session->get_work_location()) {
 		return 1;
 	}
 
-	if (m_session->is_snap_on() || m_doSnap) {
+    if (m_session->is_snap_on() || d->doSnap) {
 		SnapList* slist = m_session->get_snap_list();
 		newLocation = slist->get_snap_value(newLocation);
 	}
 
 	m_session->set_work_at(newLocation);
 
-	m_sv->update_shuttle_factor();
-	cpointer().setCursorText(timeref_to_text(newLocation, m_sv->timeref_scalefactor));
+    cpointer().setCursorText(timeref_to_text(newLocation, d->sv->timeref_scalefactor));
 	cpointer().setCursorPos(QPointF(m_workCursor->scenePos().x(), m_holdCursorSceneY));
 
 	return 1;
@@ -128,10 +124,10 @@ void WorkCursorMove::move_left()
 	// edit point!!!
 	remove_markers_from_active_context();
 
-	if (m_doSnap) {
+    if (d->doSnap) {
         return prev_snap_pos();
 	}
-	do_keyboard_move(m_session->get_work_location() - (m_sv->timeref_scalefactor * m_speed));
+    do_keyboard_move(m_session->get_work_location() - (d->sv->timeref_scalefactor * d->speed));
 }
 
 
@@ -148,10 +144,10 @@ void WorkCursorMove::move_right()
 	// edit point!!!
 	remove_markers_from_active_context();
 
-	if (m_doSnap) {
+    if (d->doSnap) {
         return next_snap_pos();
 	}
-	do_keyboard_move(m_session->get_work_location() + (m_sv->timeref_scalefactor * m_speed));
+    do_keyboard_move(m_session->get_work_location() + (d->sv->timeref_scalefactor * d->speed));
 }
 
 
@@ -171,13 +167,13 @@ void WorkCursorMove::do_keyboard_move(TimeRef newLocation)
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
-	m_sv->move_edit_point_to(newLocation, m_holdCursorSceneY);
+    d->sv->move_edit_point_to(newLocation, m_holdCursorSceneY);
 }
 
 void WorkCursorMove::toggle_snap_on_off()
 {
 	m_browseMarkers = false;
-    MoveCommand::toggle_snap_on_off();
+    TMoveCommand::toggle_snap_on_off();
 }
 
 void WorkCursorMove::browse_to_next_marker()
@@ -202,7 +198,7 @@ void WorkCursorMove::browse_to_next_marker()
 	}
 
 	if (next) {
-		QList<MarkerView*> markerViews = m_sv->get_timeline_viewport()->get_timeline_view()->get_marker_views();
+        QList<MarkerView*> markerViews = d->sv->get_timeline_viewport()->get_timeline_view()->get_marker_views();
 		foreach(MarkerView* view, markerViews) {
 			if (view->get_marker() == next) {
 				contexts.prepend(view);
@@ -238,7 +234,7 @@ void WorkCursorMove::browse_to_previous_marker()
 	}
 
 	if (prev) {
-		QList<MarkerView*> markerViews = m_sv->get_timeline_viewport()->get_timeline_view()->get_marker_views();
+        QList<MarkerView*> markerViews = d->sv->get_timeline_viewport()->get_timeline_view()->get_marker_views();
 		foreach(MarkerView* view, markerViews) {
 			if (view->get_marker() == prev) {
 				contexts.prepend(view);

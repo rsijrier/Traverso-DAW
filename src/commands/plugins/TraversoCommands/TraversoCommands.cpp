@@ -82,7 +82,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_meta_object(&Shuttle::staticMetaObject);
     tShortCutManager().add_meta_object(&SplitClip::staticMetaObject);
     tShortCutManager().add_meta_object(&TPanKnobView::staticMetaObject);
-    tShortCutManager().add_meta_object(&MoveCommand::staticMetaObject);
+    tShortCutManager().add_meta_object(&TMoveCommand::staticMetaObject);
     tShortCutManager().add_meta_object(&TTransport::staticMetaObject);
 
     tShortCutManager().add_translation("TTransport", tr("Transport"));
@@ -138,7 +138,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("CorrelationMeter", tr("Correlation Meter"));
     tShortCutManager().add_translation("SpectralMeter", tr("Spectral Analyzer"));
     tShortCutManager().add_translation("Track", tr("Track"));
-    tShortCutManager().add_translation("MoveCommand", tr("Move Command"));
+    tShortCutManager().add_translation("TMoveCommand", tr("Move Command"));
     tShortCutManager().add_translation("EditProperties", tr("Edit Properties"));
     tShortCutManager().add_translation("TAudioProcessingNode", tr("Audio Processing Node"));
     tShortCutManager().add_translation("ToggleBypass", tr("Toggle Bypass"));
@@ -302,6 +302,7 @@ TraversoCommands::TraversoCommands()
     create_and_add_function("SheetView", tr("Fold Sheet"), "FoldSheet", MoveClipCommand, QStringList() << "fold_sheet", "", true, true);
     create_and_add_function("SheetView", tr("Move Work Cursor"), "WorkCursorMove", WorkCursorMoveCommand);
     create_and_add_function("SheetView", tr("Scroll"), "Scroll", ScrollCommand);
+    create_and_add_function("SheetView", tr("Shuttle"), "Shuttle", ShuttleCommand);
 }
 
 void TraversoCommands::add_function(TFunction *function, TraversoCommand command)

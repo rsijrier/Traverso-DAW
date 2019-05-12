@@ -104,8 +104,9 @@ TCommand::TCommand( const QString& des )
 TCommand::TCommand(ContextItem* item, const QString& des)
     : TCommand(des)
 {
-	Q_ASSERT(item);
-	m_historyStack = item->get_history_stack();
+    if (item) {
+        m_historyStack = item->get_history_stack();
+    }
 }
 
 TCommand::~TCommand()

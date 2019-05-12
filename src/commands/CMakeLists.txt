@@ -38,7 +38,7 @@ ArmTracks.cpp
 PlayHeadMove.cpp
 WorkCursorMove.cpp
 RemoveClip.cpp
-MoveCommand.cpp
+TMoveCommand.cpp
 )
 
 SET(TRAVERSO_COMMANDS_UI_FILES

@@ -24,7 +24,7 @@ $Id: Fade.h,v 1.13 2008/01/21 16:22:11 r_sijrier Exp $
 #define FADE_H
 
 #include "TCommand.h"
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 
 #include <QPoint>
 
@@ -35,131 +35,130 @@ class FadeCurveView;
 class SheetView;
 class Sheet;
 
-class FadeRange : public MoveCommand
+class FadeRange : public TMoveCommand
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public :
-        FadeRange(AudioClip* clip, FadeCurve* curve, qint64 scalefactor);
-	FadeRange(AudioClip* clip, FadeCurve* curve, double newVal);
-        ~FadeRange();
+    FadeRange(AudioClip* clip, FadeCurve* curve, qint64 scalefactor);
+    FadeRange(AudioClip* clip, FadeCurve* curve, double newVal);
+    ~FadeRange();
 
-        int begin_hold();
-        int finish_hold();
-        int prepare_actions();
-        int do_action();
-        int undo_action();
-	void cancel_action();
+    int begin_hold();
+    int finish_hold();
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    void cancel_action();
 
-        int jog();
-	
-	void set_cursor_shape(int useX, int useY);
-	bool restoreCursorPosition() const {return true;}
+    int jog();
+
+    void set_cursor_shape(int useX, int useY);
+    bool restoreCursorPosition() const {return true;}
 
 private :
-	FadeCurve*	m_curve;
-	double 		m_origRange;
-	double 		m_newRange;
-	class Private {
-		public:
-                        Sheet* sheet;
-                        AudioClip* clip;
-			int origX;
-			int direction;
-			qint64 scalefactor;
-	};
-	Private* d;
+    FadeCurve*	m_curve;
+    double 		m_origRange;
+    double 		m_newRange;
+    struct FadeRangePrivate {
+        Sheet* sheet;
+        AudioClip* clip;
+        int origX;
+        int direction;
+        qint64 scalefactor;
+    };
+    FadeRangePrivate* frp;
 
-        void do_keyboard_move(double range);
+    void do_keyboard_move(double range);
 
 
 public slots:
-        void next_snap_pos();
-        void prev_snap_pos();
-        void move_left();
-        void move_right();
+    void next_snap_pos();
+    void prev_snap_pos();
+    void move_left();
+    void move_right();
 };
 
 
 class FadeStrength : public TCommand
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public :
-	FadeStrength(FadeCurveView* FadeCurveView);
-	FadeStrength(FadeCurve* fade, double val);
-        ~FadeStrength(){}
+    FadeStrength(FadeCurveView* FadeCurveView);
+    FadeStrength(FadeCurve* fade, double val);
+    ~FadeStrength(){}
 
-        int begin_hold();
-	int finish_hold();
-        int prepare_actions();
-        int do_action();
-        int undo_action();
-	void cancel_action();
+    int begin_hold();
+    int finish_hold();
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    void cancel_action();
 
-	int jog();
+    int jog();
 
-	void set_cursor_shape(int useX, int useY);
-	bool restoreCursorPosition() const {return true;}
-	
+    void set_cursor_shape(int useX, int useY);
+    bool restoreCursorPosition() const {return true;}
+
 private :
     float	oldValue{};
     int	origY{};
-	double	origStrength{};
-	double	newStrength{};
-	FadeCurve*	m_fade;
-	FadeCurveView*	m_fv;
+    double	origStrength{};
+    double	newStrength{};
+    FadeCurve*	m_fade;
+    FadeCurveView*	m_fv;
 };
 
 
 class FadeBend : public TCommand
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public :
-	FadeBend(FadeCurveView* FadeCurveView);
-	FadeBend(FadeCurve* fade, double val);
-        ~FadeBend(){}
+    FadeBend(FadeCurveView* FadeCurveView);
+    FadeBend(FadeCurve* fade, double val);
+    ~FadeBend(){}
 
-        int begin_hold();
-	int finish_hold();
-        int prepare_actions();
-        int do_action();
-        int undo_action();
-	void cancel_action();
+    int begin_hold();
+    int finish_hold();
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    void cancel_action();
 
-	int jog();
-	
-	void set_cursor_shape(int useX, int useY);
-	bool restoreCursorPosition() const {return true;}
+    int jog();
+
+    void set_cursor_shape(int useX, int useY);
+    bool restoreCursorPosition() const {return true;}
 
 private :
     float	oldValue{};
     int	origY{};
-	double	origBend{};
-	double	newBend{};
-	FadeCurve*	m_fade;
-	FadeCurveView*	m_fv;
+    double	origBend{};
+    double	newBend{};
+    FadeCurve*	m_fade;
+    FadeCurveView*	m_fv;
 };
 
 
 class FadeMode : public TCommand
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public :
-	FadeMode(FadeCurve* fade, int oldMode, int newMode);
-        ~FadeMode(){}
+    FadeMode(FadeCurve* fade, int oldMode, int newMode);
+    ~FadeMode(){}
 
-        int prepare_actions();
-        int do_action();
-        int undo_action();
-	bool is_hold_command() const {return false;}
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    bool is_hold_command() const {return false;}
 
 private :
-	int		m_oldMode;
-	int		m_newMode;
-	FadeCurve*	m_fade;
+    int		m_oldMode;
+    int		m_newMode;
+    FadeCurve*	m_fade;
 };
 
 

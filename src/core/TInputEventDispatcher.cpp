@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "ContextPointer.h"
 #include "Information.h"
 #include "TCommand.h"
+#include "TMoveCommand.h"
 #include "CommandPlugin.h"
 #include "Utils.h"
 #include "TShortcutManager.h"
@@ -85,6 +86,7 @@ TInputEventDispatcher::TInputEventDispatcher()
 {
 	PENTERCONS;
     m_holdingCommand = nullptr;
+    m_moveCommand = nullptr;
 	// holdEvenCode MUST be a value != ANY key code!
 	// when set to 'not matching any key!!!!!!
 	m_holdEventCode = -100;
@@ -367,7 +369,14 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                 if (command->begin_hold() != -1) {
                     command->set_valid(true);
                     command->set_cursor_shape(shortCutFunction->useX, shortCutFunction->useY);
+                    if (has_collected_number()) {
+                        command->process_collected_number(get_collected_number());
+                    }
                     m_holdingCommand = command;
+                    m_moveCommand = qobject_cast<TMoveCommand*>(m_holdingCommand);
+                    if (m_moveCommand) {
+                        m_moveCommand->TMoveCommand::begin_hold();
+                    }
 					m_isHolding = true;
 					m_holdEventCode = shortCut->getKeyValue();
 					set_jogging(true);
@@ -454,6 +463,9 @@ void TInputEventDispatcher::jog()
 			}
 
             if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor()) {
+                if (m_moveCommand) {
+                    m_moveCommand->TMoveCommand::jog();
+                }
                 cpointer().setCursorPos(cpointer().scene_pos());
             }
 		}
@@ -710,12 +722,19 @@ void TInputEventDispatcher::finish_hold()
 		PMESG("Canceling this hold command");
 		if (m_holdingCommand) {
 			m_holdingCommand->cancel_action();
+            if (m_moveCommand) {
+                m_moveCommand->TMoveCommand::cancel_action();
+            }
 			delete m_holdingCommand;
             m_holdingCommand = nullptr;
+            m_moveCommand = nullptr;
 		}
 	} else if (m_holdingCommand) {
 
 		int holdFinish = m_holdingCommand->finish_hold();
+        if (m_moveCommand) {
+            m_moveCommand->TMoveCommand::finish_hold();
+        }
 		int holdprepare = -1;
 
 		if (holdFinish > 0) {

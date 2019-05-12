@@ -22,7 +22,7 @@
 #ifndef WORKCURSOR_MOVE_H
 #define WORKCURSOR_MOVE_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 #include "defines.h"
 
 class TSession;
@@ -30,7 +30,7 @@ class SheetView;
 class PlayHead;
 class WorkCursor;
 
-class WorkCursorMove : public MoveCommand
+class WorkCursorMove : public TMoveCommand
 {
 	Q_OBJECT
 
@@ -48,7 +48,6 @@ public :
 
 private :
 	TSession*	m_session;
-	SheetView*	m_sv;
 	PlayHead*	m_playCursor;
 	WorkCursor*     m_workCursor;
 	TimeRef		m_origPos;

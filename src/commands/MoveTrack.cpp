@@ -38,10 +38,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 MoveTrack::MoveTrack(TrackView* view)
-        : TCommand(view->get_context(), "")
-        , m_trackView(view)
+    : TCommand(view->get_context(), "")
+    , m_trackView(view)
 {
-        m_sv = m_trackView->get_sheetview();
+    m_sv = m_trackView->get_sheetview();
 }
 
 MoveTrack::~MoveTrack()
@@ -50,48 +50,46 @@ MoveTrack::~MoveTrack()
 
 int MoveTrack::begin_hold()
 {
-        m_sv->start_shuttle(true, true);
-        m_trackView->set_moving(true);
+    m_trackView->set_moving(true);
 
-        return 1;
+    return 1;
 }
 
 
 int MoveTrack::finish_hold()
 {
-        m_sv->start_shuttle(false);
-        m_trackView->set_moving(false);
-        return 1;
+    m_trackView->set_moving(false);
+    return 1;
 }
 
 
 int MoveTrack::prepare_actions()
 {
-//        move_to_sheet();
+    //        move_to_sheet();
 
-        return -1;
+    return -1;
 }
 
 
 int MoveTrack::do_action()
 {
-        PENTER;
+    PENTER;
 
-        return 1;
+    return 1;
 }
 
 
 int MoveTrack::undo_action()
 {
-        PENTER;
+    PENTER;
 
-        return 1;
+    return 1;
 }
 
 void MoveTrack::cancel_action()
 {
-        finish_hold();
-        undo_action();
+    finish_hold();
+    undo_action();
 }
 
 int MoveTrack::jog()
@@ -107,81 +105,79 @@ int MoveTrack::jog()
         m_sv->move_trackview_up(m_trackView);
     }
 
-    m_sv->update_shuttle_factor();
-
     return 1;
 }
 
 
 void MoveTrack::move_up()
 {
-        m_sv->move_trackview_up(m_trackView);
-        m_sv->browse_to_track(m_trackView->get_track());
+    m_sv->move_trackview_up(m_trackView);
+    m_sv->browse_to_track(m_trackView->get_track());
 }
 
 void MoveTrack::move_down()
 {
-        m_sv->move_trackview_down(m_trackView);
-        m_sv->browse_to_track(m_trackView->get_track());
+    m_sv->move_trackview_down(m_trackView);
+    m_sv->browse_to_track(m_trackView->get_track());
 }
 
 void MoveTrack::set_cursor_shape(int /*useX*/, int useY)
 {
-        if (useY) {
-		cpointer().setCursorShape(":/cursorHoldUd");
-        }
+    if (useY) {
+        cpointer().setCursorShape(":/cursorHoldUd");
+    }
 }
 
 void MoveTrack::to_bottom()
 {
-        m_sv->to_bottom(m_trackView);
-        m_sv->browse_to_track(m_trackView->get_track());
+    m_sv->to_bottom(m_trackView);
+    m_sv->browse_to_track(m_trackView->get_track());
 }
 
 void MoveTrack::to_top()
 {
-        m_sv->to_top(m_trackView);
-        m_sv->browse_to_track(m_trackView->get_track());
+    m_sv->to_top(m_trackView);
+    m_sv->browse_to_track(m_trackView->get_track());
 }
 
 
 // horribly broken :D
 void MoveTrack::move_to_sheet()
 {
-        Project* project = pm().get_project();
+    Project* project = pm().get_project();
 
-        if (!project) {
-                return;
-        }
+    if (!project) {
+        return;
+    }
 
-        QList<Sheet*> sheets = project->get_sheets();
+    QList<Sheet*> sheets = project->get_sheets();
 
-        QMenu menu;
+    QMenu menu;
 
-        foreach(Sheet* sheet, sheets) {
-                QAction* action = menu.addAction(sheet->get_name());
-                action->setData(sheet->get_id());
-        }
+    foreach(Sheet* sheet, sheets) {
+        QAction* action = menu.addAction(sheet->get_name());
+        action->setData(sheet->get_id());
+    }
 
-        QAction* action = menu.exec(QCursor::pos());
+    QAction* action = menu.exec(QCursor::pos());
 
-        if (!action) {
-                return;
-        }
+    if (!action) {
+        return;
+    }
 
-        qlonglong id = action->data().toLongLong();
+    qlonglong id = action->data().toLongLong();
 
 
-        Track* track = m_trackView->get_track();
-        Sheet* destination = project->get_sheet(id);
-        Sheet* orig = qobject_cast<Sheet*>(track->get_session());
+    Track* track = m_trackView->get_track();
+    Sheet* destination = project->get_sheet(id);
+    Sheet* orig = qobject_cast<Sheet*>(track->get_session());
 
-        if (! (destination || orig)) {
-                return;
-        }
+    if (! (destination || orig)) {
+        return;
+    }
 
-        TCommand::process_command(orig->remove_track(track));
-        TCommand::process_command(destination->add_track(track));
+    TCommand::process_command(orig->remove_track(track));
+    TCommand::process_command(destination->add_track(track));
 
-        m_sv->browse_to_track(track);
+    m_sv->browse_to_track(track);
 }

@@ -23,11 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #ifndef SHUTTLE_H
 #define SHUTTLE_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 
 class SheetView;
 
-class Shuttle : public MoveCommand
+class Shuttle : public TMoveCommand
 {
         Q_OBJECT
 
@@ -37,9 +37,6 @@ public :
         int begin_hold();
         int finish_hold();
         int jog();
-
-private :
-        SheetView*	m_sv;
 
 public slots:
         void move_up();

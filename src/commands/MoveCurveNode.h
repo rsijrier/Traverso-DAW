@@ -22,7 +22,7 @@
 #ifndef MOVECURVENODE_H
 #define MOVECURVENODE_H
 
-#include "MoveCommand.h"
+#include "TMoveCommand.h"
 #include "defines.h"
 #include <QRectF>
 
@@ -32,72 +32,72 @@ class Curve;
 class QPoint;
 class QRectF;
 
-class MoveCurveNode : public MoveCommand
+class MoveCurveNode : public TMoveCommand
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-	MoveCurveNode(Curve* curve,
-		QList<CurveNode*> nodes,
-		float height,
-                qint64 scalefactor,
-		TimeRef minWhenDiff,
-		TimeRef maxWhenDiff,
-		double	minValueDiff,
-		double	maxValueDiff,
-		const QString& des);
+    MoveCurveNode(Curve* curve,
+                  QList<CurveNode*> nodes,
+                  float height,
+                  qint64 scalefactor,
+                  TimeRef minWhenDiff,
+                  TimeRef maxWhenDiff,
+                  double	minValueDiff,
+                  double	maxValueDiff,
+                  const QString& des);
 
-        int prepare_actions();
-        int do_action();
-        int undo_action();
-        int finish_hold();
-        void cancel_action();
-        int begin_hold();
-        int jog();
-        void set_cursor_shape(int useX, int useY);
+    int prepare_actions();
+    int do_action();
+    int undo_action();
+    int finish_hold();
+    void cancel_action();
+    int begin_hold();
+    int jog();
+    void set_cursor_shape(int useX, int useY);
 
-	void set_height(int height) {
-		d->height = height;
-	}
+    void set_height(int height) {
+        mcnd->height = height;
+    }
 
-	int get_height() {
-		return d->height;
-	}
+    int get_height() {
+        return mcnd->height;
+    }
 
 private :
-        struct	Data {
-                qint64		scalefactor;
-                QPoint		mousepos;
-                bool		verticalOnly;
-		float		height;
-		double		maxValueDiff;
-		double		minValueDiff;
-		TimeRef		maxWhenDiff;
-		TimeRef		minWhenDiff;
-	};
+    struct	MoveCurveNodeData {
+        qint64		scalefactor;
+        QPoint		mousepos;
+        bool		verticalOnly;
+        float		height;
+        double		maxValueDiff;
+        double		minValueDiff;
+        TimeRef		maxWhenDiff;
+        TimeRef		minWhenDiff;
+    };
 
-	MoveCurveNode::Data* d;
+    MoveCurveNode::MoveCurveNodeData* mcnd;
 
-	struct CurveNodeData {
-		CurveNode* node;
-		double	origWhen;
-		double	origValue;
-	};
+    struct CurveNodeData {
+        CurveNode* node;
+        double	origWhen;
+        double	origValue;
+    };
 
-	double	m_valueDiff;
-	TimeRef	m_whenDiff;
+    double	m_valueDiff;
+    TimeRef	m_whenDiff;
 
-	QList<CurveNodeData> m_nodeDatas;
+    QList<CurveNodeData> m_nodeDatas;
 
-	int check_and_apply_when_and_value_diffs();
+    int check_and_apply_when_and_value_diffs();
 
 
 public slots:
-        void move_up();
-        void move_down();
-        void move_left();
-        void move_right();
-	void toggle_vertical_only();
+    void move_up();
+    void move_down();
+    void move_left();
+    void move_right();
+    void toggle_vertical_only();
 };
 
 #endif // MOVECURVENODE_H

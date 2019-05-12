@@ -129,36 +129,12 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	connect(m_session, SIGNAL(trackAdded(Track*)), this, SLOT(add_new_track_view(Track*)));
 	connect(m_session, SIGNAL(trackRemoved(Track*)), this, SLOT(remove_track_view(Track*)));
 	connect(m_session, SIGNAL(lastFramePositionChanged()), this, SLOT(update_scrollbars()));
-	connect(&m_shuttletimer, SIGNAL(timeout()), this, SLOT (update_shuttle()));
 	connect(m_hScrollBar, SIGNAL(sliderMoved(int)), this, SLOT(stop_follow_play_head()));
 	connect(m_hScrollBar, SIGNAL(actionTriggered(int)), this, SLOT(hscrollbar_action(int)));
 	connect(m_hScrollBar, SIGNAL(valueChanged(int)), this, SLOT(hscrollbar_value_changed(int)));
 	connect(m_vScrollBar, SIGNAL(valueChanged(int)), m_clipsViewPort->verticalScrollBar(), SLOT(setValue(int)));
 
 	connect(&cpointer(), SIGNAL(contextChanged()), this, SLOT(context_changed()));
-
-    m_shuttleCurve = new Curve(nullptr);
-	m_shuttleCurve->set_sheet(m_session);
-    m_dragShuttleCurve = new Curve(nullptr);
-	m_dragShuttleCurve->set_sheet(m_session);
-
-	// Use these variables to fine tune the scroll behavior
-    qreal whens[7] = {0.0, 0.2, 0.3, 0.4, 0.6, 0.9, 1.2};
-    qreal values[7] = {0.0, 0.15, 0.3, 0.8, 0.95, 1.5, 8.0};
-
-	// Use these variables to fine tune the scroll during drag behavior
-    qreal dragWhens[7] =  {0.0, 0.9, 0.94, 0.98, 1.0, 1.1, 1.3};
-    qreal dragValues[7] = {0.0, 0.0, 0.2,  0.5,  0.85,  1.1,  2.0};
-
-	for (int i=0; i<7; ++i) {
-        AddRemove* cmd = static_cast<AddRemove*>(m_dragShuttleCurve->add_node(new CurveNode(m_dragShuttleCurve, dragWhens[i], dragValues[i]), false));
-        cmd->set_instantanious(true);
-		TCommand::process_command(cmd);
-
-        cmd = static_cast<AddRemove*>(m_shuttleCurve->add_node(new CurveNode(m_shuttleCurve, whens[i], values[i]), false));
-		cmd->set_instantanious(true);
-		TCommand::process_command(cmd);
-	}
 
 	// fill the view with trackviews, add_new_trackview()
 	// doesn't yet layout the new tracks.
@@ -179,8 +155,6 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 
 SheetView::~SheetView()
 {
-	delete m_dragShuttleCurve;
-	delete m_shuttleCurve;
 }
 
 void SheetView::scale_factor_changed( )
@@ -644,117 +618,6 @@ void SheetView::set_follow_state(bool state)
 		m_playCursor->disable_follow();
 	}
 }
-
-
-void SheetView::start_shuttle(bool start, bool drag)
-{
-	if (start) {
-		m_shuttletimer.start(40);
-		m_dragShuttle = drag;
-		m_shuttleYfactor = m_shuttleXfactor = 0;
-		stop_follow_play_head();
-	} else {
-		if (m_shuttletimer.isActive()) {
-			m_shuttletimer.stop();
-		}
-	}
-}
-
-void SheetView::set_shuttle_factor_values(int x, int y)
-{
-	m_shuttleXfactor = x;
-	m_shuttleYfactor = y;
-}
-
-
-void SheetView::update_shuttle_factor()
-{
-	float vec[2];
-	int direction = 1;
-
-	float normalizedX = (float) cpointer().x() / m_clipsViewPort->width();
-
-    if (normalizedX < 0.5f) {
-        normalizedX = 0.5f - normalizedX;
-		normalizedX *= 2;
-		direction = -1;
-    } else if (normalizedX > 0.5f) {
-        normalizedX = normalizedX - 0.5f;
-		normalizedX *= 2;
-        if (normalizedX > 1.0f) {
-            normalizedX *= 1.15f;
-		}
-	}
-
-	if (m_dragShuttle) {
-		m_dragShuttleCurve->get_vector(normalizedX, normalizedX + 0.01, vec, 2);
-	} else {
-		m_shuttleCurve->get_vector(normalizedX, normalizedX + 0.01, vec, 2);
-	}
-
-	if (direction > 0) {
-		m_shuttleXfactor = (int) (vec[0] * 30);
-	} else {
-		m_shuttleXfactor = (int) (vec[0] * -30);
-	}
-
-	direction = 1;
-	float normalizedY = (float) cpointer().y() / m_clipsViewPort->height();
-
-	if (normalizedY < 0) normalizedY = 0;
-	if (normalizedY > 1) normalizedY = 1;
-
-    if (normalizedY > 0.35f && normalizedY < 0.65f) {
-		normalizedY = 0;
-    } else if (normalizedY < 0.5f) {
-        normalizedY = 0.5f - normalizedY;
-		direction = -1;
-    } else if (normalizedY > 0.5f) {
-        normalizedY = normalizedY - 0.5f;
-	}
-
-	normalizedY *= 2;
-
-	if (m_dragShuttle) {
-		m_dragShuttleCurve->get_vector(normalizedY, normalizedY + 0.01, vec, 2);
-	} else {
-		m_shuttleCurve->get_vector(normalizedY, normalizedY + 0.01, vec, 2);
-	}
-
-	int yscale;
-
-	if (!m_audioTrackViews.empty()) {
-		yscale = int(m_meanTrackHeight / 10);
-	} else {
-		yscale = int(m_clipsViewPort->viewport()->height() / 10);
-	}
-
-	if (direction > 0) {
-        m_shuttleYfactor = int(vec[0] * yscale);
-	} else {
-        m_shuttleYfactor = int(vec[0] * -yscale);
-	}
-
-	if (m_dragShuttle) {
-		m_shuttleYfactor *= 4;
-	}
-}
-
-void SheetView::update_shuttle()
-{
-	int x = m_clipsViewPort->horizontalScrollBar()->value() + m_shuttleXfactor;
-	set_hscrollbar_value(x);
-
-	int y = m_clipsViewPort->verticalScrollBar()->value() + m_shuttleYfactor;
-	if (m_dragShuttle) {
-	       set_vscrollbar_value(y);
-	}
-
-	if (m_shuttleXfactor != 0 || m_shuttleYfactor != 0) {
-        ied().jog();
-	}
-}
-
 
 TCommand* SheetView::goto_begin()
 {
@@ -1377,10 +1240,15 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 	m_editCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY));
 }
 
+float SheetView::getMeanTrackHeight() const
+{
+    return m_meanTrackHeight;
+}
+
 
 QList<TrackView*> SheetView::get_track_views() const
 {
-	QList<TrackView*> views;
+    QList<TrackView*> views;
     if (m_sheetMasterOutView) {
 		views.append(m_sheetMasterOutView);
 	}
