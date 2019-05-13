@@ -390,8 +390,6 @@ void MoveClip::move_to_end()
 
 void MoveClip::move_up()
 {
-
-    ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
     int deltaTrackIndex = -1;
     m_group.check_valid_track_index_delta(deltaTrackIndex);
     m_newTrackIndex = m_newTrackIndex + deltaTrackIndex;
@@ -400,8 +398,6 @@ void MoveClip::move_up()
 
 void MoveClip::move_down()
 {
-
-    ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
     int deltaTrackIndex = 1;
     m_group.check_valid_track_index_delta(deltaTrackIndex);
     m_newTrackIndex = m_newTrackIndex + deltaTrackIndex;
@@ -421,7 +417,6 @@ void MoveClip::move_left()
         return prev_snap_pos();
     }
 
-    ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
     m_posDiff -= (d->sv->timeref_scalefactor * d->speed);
     if (m_posDiff + m_trackStartLocation < TimeRef()) {
         m_posDiff = -1 * m_trackStartLocation;
@@ -442,7 +437,6 @@ void MoveClip::move_right()
         return next_snap_pos();
     }
 
-    ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
     m_posDiff += (d->sv->timeref_scalefactor * d->speed);
     do_move();
 }
@@ -464,17 +458,6 @@ void MoveClip::start_zoom()
     }
 }
 
-void MoveClip::set_cursor_shape(int useX, int useY)
-{
-    if (useX && useY) {
-        cpointer().setCursorShape(":/cursorHoldLrud");
-    } else if (useX) {
-        cpointer().setCursorShape(":/cursorHoldLr");
-    } else {
-        cpointer().setCursorShape(":/cursorHoldUd");
-    }
-}
-
 void MoveClip::toggle_vertical_only()
 {
     mcd->verticalOnly = !mcd->verticalOnly;
@@ -489,7 +472,10 @@ void MoveClip::toggle_vertical_only()
 
 void MoveClip::do_move()
 {       
+    ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
+
     m_group.move_to(m_newTrackIndex, m_trackStartLocation + m_posDiff);
+
     if (mcd) {
         TrackView* tv = d->sv->get_track_views().at(m_newTrackIndex);
         int sceneY = tv->scenePos().y() + tv->boundingRect().height() / 2;

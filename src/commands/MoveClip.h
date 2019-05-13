@@ -55,10 +55,9 @@ public :
         int prepare_actions();
         int do_action();
         int undo_action();
-	void cancel_action();
+        void cancel_action();
         int jog();
 
-	void set_cursor_shape(int useX, int useY);
         void set_jog_bypassed(bool bypassed);
 	
 private :
