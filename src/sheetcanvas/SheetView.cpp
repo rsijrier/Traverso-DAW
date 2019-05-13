@@ -851,7 +851,12 @@ void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 	activeList.append(acv->get_audio_track_view());
 	activeList.append(this);
 
-	move_edit_point_to(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+    if (m_editCursor->get_pos().x() > acv->scenePos().x() && (m_editCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
+        move_edit_point_to(TimeRef(m_editCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+    } else {
+        move_edit_point_to(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+    }
+
 
 	cpointer().set_active_context_items_by_keyboard_input(activeList);
 }
@@ -1211,7 +1216,7 @@ void SheetView::center_in_view(ViewItem *item, enum Qt::AlignmentFlag flag)
 
 void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 {
-	m_session->set_work_at(location);
+    m_session->set_work_at(location);
 
 	int x = m_clipsViewPort->mapFromScene(m_workCursor->scenePos()).x();
 	int y = m_clipsViewPort->mapFromScene(0, sceneY).y();

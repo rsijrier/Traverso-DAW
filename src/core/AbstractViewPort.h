@@ -15,7 +15,8 @@ public:
     enum CursorMoveReason {
         UNDEFINED,
         MOUSE_MOVE_EVENT,
-        KEYBOARD_NAVIGATION
+        KEYBOARD_NAVIGATION,
+        CURSOR_SHAPE_CHANGE
     };
 
     virtual QPointF map_to_scene(const QPoint& pos) const = 0;

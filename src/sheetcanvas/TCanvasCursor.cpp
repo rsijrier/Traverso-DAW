@@ -176,8 +176,7 @@ void TCanvasCursor::set_cursor_shape(const QString &shape, int alignment)
     prepareGeometryChange();
     m_boundingRect = m_pixmap.rect();
 
-    set_pos(m_pos, AbstractViewPort::CursorMoveReason::UNDEFINED);
-    update();
+    set_pos(m_pos, AbstractViewPort::CursorMoveReason::CURSOR_SHAPE_CHANGE);
 }
 
 void TCanvasCursor::set_pos(const QPointF &position,  AbstractViewPort::CursorMoveReason reason)
@@ -195,7 +194,7 @@ void TCanvasCursor::set_pos(const QPointF &position,  AbstractViewPort::CursorMo
         int animDuration = int(diffPos.manhattanLength() * 0.3);
         // do not even bother animating a movement if the distance is real small
         if (animDuration < 50) {
-            setPos(posWithOffset);
+            setPosition(posWithOffset);
         } else {
             if (m_animation->state() == QPropertyAnimation::Running) {
                 m_animation->stop();
@@ -206,11 +205,10 @@ void TCanvasCursor::set_pos(const QPointF &position,  AbstractViewPort::CursorMo
             m_animation->start();
         }
     } else {
-        setPos(posWithOffset);
+        setPosition(posWithOffset);
     }
 
     m_pos = position;
-    update_textitem_pos();
 }
 
 void TCanvasCursor::update_textitem_pos()
@@ -249,4 +247,10 @@ void TCanvasCursor::update_textitem_pos()
 void TCanvasCursor::timer_timeout()
 {
     set_text("");
+}
+
+void TCanvasCursor::setPosition(const QPointF &position)
+{
+    setPos(position);
+    update_textitem_pos();
 }

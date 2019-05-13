@@ -46,6 +46,7 @@ public:
     void set_info(const QString& info);
     void set_cursor_shape(const QString& shape, int alignment);
     void set_pos(const QPointF& pos,  AbstractViewPort::CursorMoveReason reason);
+    QPointF get_pos() const {return m_pos;}
 
 private:
     QPropertyAnimation*     m_animation;
@@ -65,7 +66,7 @@ private:
 private slots:
     void timer_timeout();
     QPointF getPosition() const {return pos();}
-    void setPosition(const QPointF& position) {setPos(position);}
+    void setPosition(const QPointF& position);
 };
 
 #endif // TEDITCURSOR_H
