@@ -1,5 +1,7 @@
 TOBEDONE FOR 0.50.x
 
+* snaplist not functional after project load. works again after a zoom
+* split clip: fade in/out on new clips is broken, sometimes they do show up, sometimes they are gone
 * Setting input bus for AudioTrack: update vumeter monitoring  on the newly added bus, not the configuration on the old bus
 * CurveView does not seem to overlap AudioClipView, cursor changes to early to AudioClipView from CurveView when
   moving to edge of CurveView

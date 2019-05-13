@@ -49,7 +49,7 @@ FileWidget::FileWidget(QWidget *parent)
     palette.setColor(QPalette::AlternateBase, themer()->get_color("ResourcesBin:alternaterowcolor"));
 
     m_dirModel = new QDirModel;
-    m_dirModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    m_dirModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDot);
     m_dirView = new QListView;
     m_dirView->setModel(m_dirModel);
     m_dirView->setDragEnabled(true);

@@ -167,14 +167,13 @@ void Traverso::shutdown( int signal )
 
     // Just in case the mouse was grabbed...
     cpointer().jog_finished();
-    QApplication::sendPostedEvents();
+    QApplication::processEvents();
 
     switch(signal) {
     case SIGINT:
         printf("\nCaught the SIGINT signal!\nShutting down Traverso!\n\n");
         pm().exit();
         return;
-        break;
     case SIGSEGV:
         printf("\nCaught the SIGSEGV signal!\n");
         QMessageBox::critical( TMainWindow::instance(), "Crash",

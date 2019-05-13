@@ -107,7 +107,7 @@
 	<color alpha="170" red="30" blue="230" name="Plugin:background" green="100"/>
 	<color alpha="0" red="100" blue="40" name="TrackPanel:slider:background" green="100"/>
 	<color alpha="100" red="180" blue="210" name="Fade:default" green="200"/>
-	<color alpha="255" red="12" blue="26" name="Track:mousehover" green="26"/>
+        <color alpha="180" red="12" blue="26" name="Track:mousehover" green="26"/>
 	<color alpha="255" red="92" blue="90" name="AudioClip:wavemacroview:brush:curvemode:hover" green="50"/>
 	<color alpha="255" red="255" blue="50" name="TrackPanel:Mled" green="255"/>
 	<color alpha="20" red="0" blue="0" name="Marker:line:inactive" green="0"/>
