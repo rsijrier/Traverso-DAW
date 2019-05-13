@@ -42,70 +42,66 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define LENGTH_SECTION_WIDTH 60
 #define COLUMN_INDENTION 18
 
-void FileWidget::showEvent( QShowEvent * event ) {
-	Q_UNUSED(event);
-		
-	if (m_dirModel) {
-		return;
-	}
-		
-	QPalette palette;
-	palette.setColor(QPalette::AlternateBase, themer()->get_color("ResourcesBin:alternaterowcolor"));
-		
-	m_dirModel = new QDirModel;
-	m_dirModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-	m_dirView = new QListView;
-	m_dirView->setModel(m_dirModel);
-	m_dirView->setDragEnabled(true);
-	m_dirView->setDropIndicatorShown(true);
-	m_dirView->setSelectionMode(QAbstractItemView::ExtendedSelection);
-	m_dirView->setAlternatingRowColors(true);
-	m_dirView->setPalette(palette);
-	m_dirModel->setSorting(QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
-		
-	m_box = new QComboBox(this);
-	m_box->addItem("", "");
+FileWidget::FileWidget(QWidget *parent)
+    : QWidget(parent)
+{
+    QPalette palette;
+    palette.setColor(QPalette::AlternateBase, themer()->get_color("ResourcesBin:alternaterowcolor"));
+
+    m_dirModel = new QDirModel;
+    m_dirModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    m_dirView = new QListView;
+    m_dirView->setModel(m_dirModel);
+    m_dirView->setDragEnabled(true);
+    m_dirView->setDropIndicatorShown(true);
+    m_dirView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_dirView->setAlternatingRowColors(true);
+    m_dirView->setPalette(palette);
+    m_dirModel->setSorting(QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
+
+    m_box = new QComboBox(this);
+    m_box->addItem("", "");
 #if defined (Q_OS_WIN)
-	m_box->addItem(tr("My Computer"), "");
-	m_box->addItem(tr("My Documents"), QDir::homePath() + "\\" + tr("My Documents"));
+    m_box->addItem(tr("My Computer"), "");
+    m_box->addItem(tr("My Documents"), QDir::homePath() + "\\" + tr("My Documents"));
 #else
-	m_box->addItem(QDir::rootPath(), QDir::rootPath());
-	m_box->addItem(QDir::homePath(), QDir::homePath());
+    m_box->addItem(QDir::rootPath(), QDir::rootPath());
+    m_box->addItem(QDir::homePath(), QDir::homePath());
 #endif
-	QPushButton* upButton = new QPushButton(this);
-	QIcon upIcon = QApplication::style()->standardIcon(QStyle::SP_FileDialogToParent);
-	upButton->setToolTip(tr("Parent Directory"));
-	upButton->setIcon(upIcon);
-	upButton->setMaximumHeight(25);
-	upButton->setMaximumWidth(30);
-		
-	QPushButton* refreshButton = new QPushButton(this);
-	QIcon refreshIcon = QIcon(find_pixmap(":/refresh-16"));
-	refreshButton->setToolTip(tr("Refresh File View"));
-	refreshButton->setIcon(refreshIcon);
-	refreshButton->setMaximumHeight(25);
-	refreshButton->setMaximumWidth(30);
-		
-	QHBoxLayout* hlay = new QHBoxLayout;
-	hlay->addWidget(upButton);
+    QPushButton* upButton = new QPushButton(this);
+    QIcon upIcon = QApplication::style()->standardIcon(QStyle::SP_FileDialogToParent);
+    upButton->setToolTip(tr("Parent Directory"));
+    upButton->setIcon(upIcon);
+    upButton->setMaximumHeight(25);
+    upButton->setMaximumWidth(30);
+
+    QPushButton* refreshButton = new QPushButton(this);
+    QIcon refreshIcon = QIcon(find_pixmap(":/refresh-16"));
+    refreshButton->setToolTip(tr("Refresh File View"));
+    refreshButton->setIcon(refreshIcon);
+    refreshButton->setMaximumHeight(25);
+    refreshButton->setMaximumWidth(30);
+
+    QHBoxLayout* hlay = new QHBoxLayout;
+    hlay->addWidget(upButton);
     hlay->addWidget(refreshButton);
     hlay->addStretch();
-		
-	QVBoxLayout* lay = new QVBoxLayout(this);
-	lay->setMargin(0);
+
+    QVBoxLayout* lay = new QVBoxLayout(this);
+    lay->setMargin(0);
     lay->setSpacing(6);
     lay->addWidget(m_box);
     lay->addLayout(hlay);
-	lay->addWidget(m_dirView);
-		
-	setLayout(lay);
-		
-	connect(m_dirView, SIGNAL(clicked(const QModelIndex& )), this, SLOT(dirview_item_clicked(const QModelIndex&)));
-	connect(upButton, SIGNAL(clicked()), this, SLOT(dir_up_button_clicked()));
-	connect(refreshButton, SIGNAL(clicked()), this, SLOT(refresh_button_clicked()));
-	connect(m_box, SIGNAL(activated(int)), this, SLOT(box_actived(int)));
+    lay->addWidget(m_dirView);
+
+    setLayout(lay);
+
+    connect(m_dirView, SIGNAL(clicked(const QModelIndex& )), this, SLOT(dirview_item_clicked(const QModelIndex&)));
+    connect(upButton, SIGNAL(clicked()), this, SLOT(dir_up_button_clicked()));
+    connect(refreshButton, SIGNAL(clicked()), this, SLOT(refresh_button_clicked()));
+    connect(m_box, SIGNAL(activated(int)), this, SLOT(box_actived(int)));
 }
-		
+
 void FileWidget::dirview_item_clicked(const QModelIndex & index)
 {
 	if (m_dirModel->isDir(index)) {

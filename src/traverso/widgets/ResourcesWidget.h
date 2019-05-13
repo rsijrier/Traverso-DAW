@@ -41,12 +41,9 @@ class FileWidget : public QWidget
 	Q_OBJECT
 public:
 
-    FileWidget(QWidget* parent=0) : QWidget(parent) {
-		m_dirModel = 0;
-	}
+    FileWidget(QWidget* parent=nullptr);
 
-	void showEvent ( QShowEvent * event );
-	void set_current_path(const QString& path) const;
+    void set_current_path(const QString& path) const;
 
 private slots:
 	void dirview_item_clicked(const QModelIndex & index);
