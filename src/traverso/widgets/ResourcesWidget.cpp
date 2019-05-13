@@ -88,13 +88,14 @@ void FileWidget::showEvent( QShowEvent * event ) {
 		
 	QHBoxLayout* hlay = new QHBoxLayout;
 	hlay->addWidget(upButton);
-	hlay->addWidget(refreshButton);
-	hlay->addWidget(m_box, 10);
+    hlay->addWidget(refreshButton);
+    hlay->addStretch();
 		
 	QVBoxLayout* lay = new QVBoxLayout(this);
 	lay->setMargin(0);
-	lay->setSpacing(6);
-	lay->addLayout(hlay);
+    lay->setSpacing(6);
+    lay->addWidget(m_box);
+    lay->addLayout(hlay);
 	lay->addWidget(m_dirView);
 		
 	setLayout(lay);
@@ -164,7 +165,9 @@ void FileWidget::set_current_path(const QString& path) const
 ResourcesWidget::ResourcesWidget(QWidget * parent)
     : QWidget(parent)
 {
-	sourcesTreeWidget = 0;
+    m_project = nullptr;
+    m_currentSheet = nullptr;
+    sourcesTreeWidget = nullptr;
 }
 
 ResourcesWidget::~ ResourcesWidget()
@@ -201,42 +204,30 @@ void ResourcesWidget::showEvent( QShowEvent * event )
 	
 	
 	m_filewidget = new FileWidget(this);
-	layout()->addWidget(m_filewidget);
-	m_filewidget->hide();
-	
-	m_currentSheet = 0;
-	m_project = 0;
+    tab_2->layout()->addWidget(m_filewidget);
 	
 	
-	connect(viewComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(view_combo_box_index_changed(int)));
 	connect(sheetComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(sheet_combo_box_index_changed(int)));
 	connect(sheetComboBox, SIGNAL(activated(int)), this, SLOT(sheet_combo_box_index_changed(int)));
 	connect(&pm(), SIGNAL(projectLoaded(Project*)), this, SLOT(set_project(Project*)));
-	
-	set_project(pm().get_project());
-	
-	// Fade a project load finished since we were not able to catch that signal!
-	project_load_finished();
 }
 
 void ResourcesWidget::set_project(Project * project)
 {
-        m_project = project;
+    m_project = project;
 
-        sourcesTreeWidget->clear();
-	m_sourceindices.clear();
+    sourcesTreeWidget->clear();
+    m_sourceindices.clear();
 	m_clipindices.clear();
 	sheetComboBox->clear();
 	
 	if (!m_project) {
-		sheetComboBox->setEnabled(false);
-		m_currentSheet = 0;
-		return;
+        m_currentSheet = nullptr;
+        m_filewidget->set_current_path(QDir::homePath());
+        return;
 	}
-	
-	sheetComboBox->setEnabled(true);
-	
-	connect(m_project, SIGNAL(projectLoadFinished()), this, SLOT(project_load_finished()));
+
+    connect(m_project, SIGNAL(projectLoadFinished()), this, SLOT(project_load_finished()));
 }
 
 void ResourcesWidget::project_load_finished()
@@ -268,27 +259,11 @@ void ResourcesWidget::project_load_finished()
 		sheet_added(sheet);
 	}
 	
-        set_current_sheet(qobject_cast<Sheet*>(m_project->get_current_session()));
+    set_current_sheet(qobject_cast<Sheet*>(m_project->get_current_session()));
+
+    m_filewidget->set_current_path(m_project->get_import_dir());
 
 	sourcesTreeWidget->sortItems(0, Qt::AscendingOrder);
-}
-
-void ResourcesWidget::view_combo_box_index_changed(int index)
-{
-	if (index == 0) {
-		sourcesTreeWidget->show();
-		sheetComboBox->show();
-		m_filewidget->hide();
-	} else if (index == 1) {
-		sourcesTreeWidget->hide();
-		sheetComboBox->hide();
-		m_filewidget->show();
-                if (m_project) {
-                        m_filewidget->set_current_path(m_project->get_import_dir());
-                } else {
-                        m_filewidget->set_current_path(QDir::homePath());
-                }
-	}
 }
 
 void ResourcesWidget::sheet_combo_box_index_changed(int index)
@@ -514,7 +489,7 @@ void SourceTreeItem::source_state_changed()
 		}
 	}
 	
-	int rate = m_source->get_rate();
+    uint rate = m_source->get_rate();
 	if (rate == 0) rate = pm().get_project()->get_rate();
 	QString duration = timeref_to_ms(m_source->get_length());
 	setText(0, m_source->get_short_name());
@@ -526,7 +501,7 @@ void SourceTreeItem::source_state_changed()
 
 }
 
-void ResourcesWidget::resizeEvent(QResizeEvent * e)
+void ResourcesWidget::resizeEvent(QResizeEvent * /*e*/)
 {
 	if (sourcesTreeWidget) {
 		int w = width() - COLUMN_INDENTION;

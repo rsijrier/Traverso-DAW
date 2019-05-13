@@ -99,7 +99,7 @@ class ResourcesWidget : public QWidget, protected Ui::ResourcesWidget
 	Q_OBJECT
 
 public:
-	ResourcesWidget(QWidget* parent=0);
+    ResourcesWidget(QWidget* parent=nullptr);
 	~ResourcesWidget();
 
 protected:
@@ -122,7 +122,6 @@ private slots:
 	void set_project(Project* project);
 	void project_load_finished();
 	
-	void view_combo_box_index_changed(int index);
 	void sheet_combo_box_index_changed(int index);
 	
 	void sheet_added(Sheet* sheet);

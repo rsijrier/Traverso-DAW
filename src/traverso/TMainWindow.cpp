@@ -177,7 +177,7 @@ TMainWindow::TMainWindow()
 	addDockWidget(Qt::RightDockWidgetArea, m_historyDW);
 
 	// AudioSources View
-	m_audioSourcesDW = new QDockWidget(tr("Resources Bin"), this);
+    m_audioSourcesDW = new QDockWidget(tr("Resources | Files"), this);
 	m_audioSourcesDW->setObjectName("AudioSourcesDockWidget");
 	m_audiosourcesview = new ResourcesWidget(m_audioSourcesDW);
 	m_audiosourcesview->setFocusPolicy(Qt::NoFocus);
