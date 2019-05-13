@@ -422,7 +422,7 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "toggle_snap_on_off";
 	function->setDescription(tr("Toggle Snap on/off"));
 	function->commandName = "MoveCommandToggleSnap";
@@ -457,42 +457,42 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_right";
 	function->m_description = tr("Move Right");
 	function->commandName = "MoveCommandRight";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_left";
 	function->m_description = tr("Move Left");
 	function->commandName = "MoveCommandLeft";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_up";
 	function->m_description = tr("Move Up");
 	function->commandName = "MoveCommandUp";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_down";
 	function->m_description = tr("Move Down");
 	function->commandName = "MoveCommandDown";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_faster";
 	function->m_description = tr("Move Faster");
 	function->commandName = "MoveCommandFaster";
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "move_slower";
 	function->m_description = tr("Move Slower");
 	function->commandName = "MoveCommandSlower";
@@ -733,7 +733,7 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "MoveCommand";
+    function->object = "TMoveCommand";
 	function->slotsignature = "numerical_input";
 	function->m_description = tr("Moving Speed");
 	function->commandName = "MoveCommandSpeed";
