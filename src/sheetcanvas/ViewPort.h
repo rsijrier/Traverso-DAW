@@ -45,7 +45,7 @@ public :
 
     // Set functions
     void setCursorText(const QString& text, int mseconds=-1);
-    void set_holdcursor_pos(QPointF pos);
+    void set_holdcursor_pos(QPointF pos, CursorMoveReason reason);
     void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
     virtual void set_sheetview(SheetView* view) {m_sv = view;}
 
@@ -56,7 +56,7 @@ public :
     void grab_mouse();
     void release_mouse();
 
-    void detect_items_under_cursor();
+    void detect_items_below_cursor();
 
 
 

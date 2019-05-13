@@ -38,9 +38,13 @@ TCanvasCursor::TCanvasCursor(SheetView* )
     m_infoItem->hide();
 
     m_ignoreContext = true;
+    m_shape = "";
     m_xOffset = m_yOffset = 0.0;
 
     setZValue(20000);
+
+    m_animation = new QPropertyAnimation(this, "position");
+    m_animation->setEasingCurve(QEasingCurve::InOutQuad);
 
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 }
@@ -128,8 +132,15 @@ void TCanvasCursor::set_info(const QString &info)
     m_infoItem->set_value(info);
 }
 
-void TCanvasCursor::set_cursor_shape(QString shape, int alignment)
+void TCanvasCursor::set_cursor_shape(const QString &shape, int alignment)
 {
+    PENTER;
+
+    if (m_shape == shape) {
+        return;
+    }
+
+    m_shape = shape;
     m_xOffset = m_yOffset = 0;
 
     if (shape.size() > 1)
@@ -137,7 +148,7 @@ void TCanvasCursor::set_cursor_shape(QString shape, int alignment)
         m_pixmap = find_pixmap(shape);
         if (m_pixmap.isNull())
         {
-            shape = "";
+            m_shape = "";
         }
     }
 
@@ -162,21 +173,43 @@ void TCanvasCursor::set_cursor_shape(QString shape, int alignment)
         m_yOffset = qreal(m_pixmap.height() / 2);
     }
 
+    prepareGeometryChange();
     m_boundingRect = m_pixmap.rect();
 
-    set_pos(m_pos);
-
+    set_pos(m_pos, AbstractViewPort::CursorMoveReason::UNDEFINED);
     update();
 }
 
-void TCanvasCursor::set_pos(QPointF p)
+void TCanvasCursor::set_pos(const QPointF &position,  AbstractViewPort::CursorMoveReason reason)
 {
-    m_pos = p;
-    p.setX(p.x() - m_xOffset);
-    p.setY(p.y() - m_yOffset);
+    PENTER;
 
-    setPos(p);
+    if (reason == AbstractViewPort::CursorMoveReason::UNDEFINED) {
+        PERROR("Moving canvas cursor but no CursorMoveReason was given.");
+    }
 
+    QPointF posWithOffset = QPointF(position.x() - m_xOffset, position.y() - m_yOffset);
+    QPointF diffPos = pos() - posWithOffset;
+
+    if (reason == AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION) {
+        int animDuration = int(diffPos.manhattanLength() * 0.3);
+        // do not even bother animating a movement if the distance is real small
+        if (animDuration < 50) {
+            setPos(posWithOffset);
+        } else {
+            if (m_animation->state() == QPropertyAnimation::Running) {
+                m_animation->stop();
+            }
+            m_animation->setStartValue(pos());
+            m_animation->setEndValue(posWithOffset);
+            m_animation->setDuration(animDuration);
+            m_animation->start();
+        }
+    } else {
+        setPos(posWithOffset);
+    }
+
+    m_pos = position;
     update_textitem_pos();
 }
 

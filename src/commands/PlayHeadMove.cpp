@@ -185,7 +185,7 @@ void PlayHeadMove::do_keyboard_move(TimeRef newLocation, bool centerInView)
 
 
     cpointer().setCursorText(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
-    cpointer().setCursorPos(QPointF(m_playhead->scenePos().x(), m_holdCursorSceneY));
+    d->sv->set_canvas_cursor_pos(QPointF(m_playhead->scenePos().x(), m_holdCursorSceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
 }
 
 void PlayHeadMove::move_to_work_cursor()

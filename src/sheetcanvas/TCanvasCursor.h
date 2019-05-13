@@ -23,41 +23,49 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define TEDITCURSOR_H
 
 #include "ViewItem.h"
+#include "AbstractViewPort.h"
 
 #include <QTimer>
+#include <QPropertyAnimation>
 
 class SheetView;
 class PositionIndicator;
 
 class TCanvasCursor : public ViewItem
 {
-        Q_OBJECT
+    Q_OBJECT
+    Q_PROPERTY(QPointF position READ getPosition WRITE setPosition)
+
 public:
     TCanvasCursor(SheetView*);
-	~TCanvasCursor();
+    ~TCanvasCursor();
 
-        void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
     void set_text(const QString& text, int mseconds=-1);
     void set_info(const QString& info);
-	void set_cursor_shape(QString shape, int alignment);
-        void set_pos(QPointF pos);
+    void set_cursor_shape(const QString& shape, int alignment);
+    void set_pos(const QPointF& pos,  AbstractViewPort::CursorMoveReason reason);
 
 private:
+    QPropertyAnimation*     m_animation;
     PositionIndicator*	m_textItem;
     PositionIndicator* m_infoItem;
-	QPointF			m_pos;
+    QPointF			m_pos;
+    QString         m_shape;
     qreal			m_xOffset;
     qreal			m_yOffset;
-	QPixmap			m_pixmap;
-	QString			m_text;
-	QTimer			m_timer;
+    QPixmap			m_pixmap;
+    QString			m_text;
+    QTimer			m_timer;
 
-	void create_cursor_pixmap(const QString& shape);
+    void create_cursor_pixmap(const QString& shape);
     void update_textitem_pos();
 
 private slots:
-	void timer_timeout();
+    void timer_timeout();
+    QPointF getPosition() const {return pos();}
+    void setPosition(const QPointF& position) {setPos(position);}
 };
 
 #endif // TEDITCURSOR_H

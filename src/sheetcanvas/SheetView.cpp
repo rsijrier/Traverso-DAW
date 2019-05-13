@@ -88,6 +88,7 @@ SheetView::SheetView(SheetWidget* sheetwidget,
     m_sheetMasterOutView = nullptr;
     m_projectMasterOutView = nullptr;
 	timeref_scalefactor = UNIVERSAL_SAMPLE_RATE;
+    m_hasMouseTracking = true;
 
 	m_clipsViewPort->scene()->addItem(this);
 
@@ -1237,14 +1238,8 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
     cpointer().store_canvas_cursor_position(pos);
 
 	m_editCursor->set_text(timeref_to_text(location, timeref_scalefactor));
-	m_editCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY));
+    m_editCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
 }
-
-float SheetView::getMeanTrackHeight() const
-{
-    return m_meanTrackHeight;
-}
-
 
 QList<TrackView*> SheetView::get_track_views() const
 {
@@ -1289,9 +1284,15 @@ void SheetView::set_edit_cursor_text(const QString &text, int mseconds)
 	m_editCursor->set_text(text, mseconds);
 }
 
-void SheetView::set_canvas_cursor_pos(QPointF pos)
+void SheetView::set_canvas_cursor_pos(QPointF pos,  AbstractViewPort::CursorMoveReason reason)
 {
-	m_editCursor->set_pos(pos);
+    m_editCursor->set_pos(pos, reason);
+}
+
+void SheetView::mouse_hover_move_event()
+{
+    PENTER;
+   set_canvas_cursor_pos(cpointer().scene_pos(), AbstractViewPort::CursorMoveReason::MOUSE_MOVE_EVENT);
 }
 
 void SheetView::context_changed()

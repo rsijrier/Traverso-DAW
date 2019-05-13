@@ -231,6 +231,7 @@ void ContextPointer::setCursorText(const QString &text, int mseconds)
 
 void ContextPointer::setCursorPos(QPointF pos)
 {
+    PENTER;
     if (!m_viewPort)
 	{
 		return;
@@ -385,7 +386,7 @@ void ContextPointer::request_viewport_to_detect_items_below_cursor()
         return;
     }
     set_active_context_items(QList<ContextItem*>());
-    m_viewPort->detect_items_under_cursor();
+    m_viewPort->detect_items_below_cursor();
 }
 
 void ContextPointer::set_active_context_items(const QList<ContextItem *> &items)

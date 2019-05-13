@@ -143,7 +143,7 @@ void ViewPort::release_mouse()
 
 void ViewPort::mouseMoveEvent(QMouseEvent* event)
 {
-    PENTER4;
+    PENTER;
 
     cpointer().update_mouse_positions(event->pos(), event->globalPos());
 
@@ -171,17 +171,23 @@ void ViewPort::mouseMoveEvent(QMouseEvent* event)
     }
 
     // here we detect which items are under the mouse cursor
-    detect_items_under_cursor();
+    detect_items_below_cursor();
 
     event->accept();
 }
 
-void ViewPort::detect_items_under_cursor()
+void ViewPort::detect_items_below_cursor()
 {
     QList<ViewItem*> mouseTrackingItems;
 
     QList<QGraphicsItem *> itemsUnderCursor = scene()->items(cpointer().scene_pos());
     QList<ContextItem*> activeContextItems;
+
+    // since sheetview has no bounding rect, and should always have 'active context'
+    // add it if it's available
+    if (m_sv) {
+        itemsUnderCursor.append(m_sv);
+    }
 
     if (!itemsUnderCursor.isEmpty())
     {
@@ -205,19 +211,8 @@ void ViewPort::detect_items_under_cursor()
         setCanvasCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
     }
 
-    // since sheetview has no bounding rect, and should always have 'active context'
-    // add it if it's available
-    if (m_sv) {
-        activeContextItems.append(m_sv);
-    }
-
     // update context pointer active context items list
     cpointer().set_active_context_items_by_mouse_movement(activeContextItems);
-
-    if (m_sv)
-    {
-        m_sv->set_canvas_cursor_pos(cpointer().scene_pos());
-    }
 
     // Some ViewItems want to track mouse move events themselves like CurveView
     // to update the soft selected node which cannot be done by the boudingRect of
@@ -342,7 +337,7 @@ void ViewPort::setCursorText( const QString & text, int mseconds)
 	m_sv->set_edit_cursor_text(text, mseconds);
 }
 
-void ViewPort::set_holdcursor_pos(QPointF pos)
+void ViewPort::set_holdcursor_pos(QPointF pos, CursorMoveReason reason)
 {
-	m_sv->set_canvas_cursor_pos(pos);
+    m_sv->set_canvas_cursor_pos(pos, reason);
 }

@@ -23,6 +23,7 @@
 #define SONG_VIEW_H
 
 #include "ViewItem.h"
+#include "AbstractViewPort.h"
 #include <QTimer>
 
 class AudioClip;
@@ -114,7 +115,8 @@ public :
 
 	void set_cursor_shape(const QString& shape, int alignment);
 	void set_edit_cursor_text(const QString& text, int mseconds=-1);
-	void set_canvas_cursor_pos(QPointF pos);
+    void set_canvas_cursor_pos(QPointF pos, AbstractViewPort::CursorMoveReason reason);
+    void mouse_hover_move_event();
 
 
 	void browse_to_track(Track* track);
@@ -123,11 +125,9 @@ public :
 	void browse_to_curve_node_view(CurveNodeView* nodeView);
 	void browse_to_marker_view(MarkerView* markerView);
 	void center_in_view(ViewItem* item, enum Qt::AlignmentFlag = Qt::AlignHCenter);
-	void move_edit_point_to(TimeRef location, int sceneY);
+    void move_edit_point_to(TimeRef location, int sceneY);
 
 	qint64		timeref_scalefactor;
-
-    float getMeanTrackHeight() const;
 
 private:
     TSession*           m_session;
