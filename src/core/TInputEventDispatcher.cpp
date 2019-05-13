@@ -124,6 +124,16 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* functio
 		m_activeModifierKeys.append(modifier);
 	}
 
+    if (function->commandName == "RejectHoldCommand") {
+        reject_current_hold_actions();
+        return 1;
+    }
+
+    if (function->commandName == "AcceptHoldCommand") {
+        process_press_event(Qt::Key_Enter);
+        return 1;
+    }
+
     dispatch_shortcut(shortCut, true);
 
 	m_activeModifierKeys.clear();
