@@ -40,7 +40,8 @@ OPTION(WANT_TRAVERSO_DEBUG "Provides 4 levels of debug ouput on the command line
 OPTION(WANT_THREAD_CHECK	"Checks at runtime if functions are called from the correct thread, used by developers for debugging" OFF)
 OPTION(WANT_VECLIB_OPTIMIZATIONS "Build with veclib optimizations (Only for PPC based Mac OS X)" OFF)
 OPTION(AUTOPACKAGE_BUILD "Build traverso with autopackage tools" OFF)
-OPTION(DETECT_HOST_CPU_FEATURES "Detect the feature set of the host cpu, and compile with an optimal set of compiler flags" ON)
+OPTION(DETECT_HOST_CPU_FEATURES "Detect the feature set of the host cpu, and compile with an optimal set of compiler flags" OFF)
+OPTION(WANT_SSE "Use sse instruction set. This option is only effective if DETECT_HOST_CPU_FEATURES is OFF." ON)
 
 
 SET(MAIN_DIR_NAME "src")
@@ -107,6 +108,7 @@ SET(MINIMAL_FFTW_VERSION 3.0.0)
 SET(MINIMAL_REDLAND_VERSION 1.0.2)
 SET(MINIMAL_PULSAUDIO_VERSION 0.9)
 SET(HAVE_COREAUDIO FALSE)
+SET(HOST_SUPPORTS_SSE FALSE)
 
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb3 -Wall -Wno-unused-local-typedefs ${CXX_FLAGS}")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -fPIC -Wno-unused-local-typedefs ${CXX_FLAGS}")
@@ -466,6 +468,33 @@ IF(UNIX)
                         LIST(APPEND TRAVERSO_DEFINES -DARCH_X86)
                         SET(IS_ARCH_X86 TRUE)
                 ENDIF(uname_invoke_result MATCHES i[456]86)
+
+            ELSE(NOT WANT_DEBUG AND DETECT_HOST_CPU_FEATURES)
+                IF(WANT_SSE)
+                    MESSAGE("SSE wanted, setting compiler flags to -msse -mfpmath=sse")
+                    MESSAGE("Detecting host architecture")
+                    SET(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -msse -mfpmath=sse")
+                    LIST(APPEND TRAVERSO_DEFINES -DSSE_OPTIMIZATIONS -DUSE_XMMINTRIN)
+
+                    execute_process(
+                        COMMAND uname -m
+                        OUTPUT_VARIABLE uname_invoke_result
+                        RESULT_VARIABLE uname_failed
+                    )
+
+                    IF(uname_invoke_result MATCHES i[456]86)
+                            LIST(APPEND TRAVERSO_DEFINES -DARCH_X86)
+                    SET(IS_ARCH_X86 TRUE)
+                    MESSAGE("-- Architecture is ARCH_X86")
+                ENDIF(uname_invoke_result MATCHES i[456]86)
+
+                    IF(uname_invoke_result MATCHES x86_64)
+                            LIST(APPEND TRAVERSO_DEFINES -DUSE_X86_64_ASM -DARCH_X86_64)
+                            SET(IS_ARCH_X86_64 TRUE)
+                            MESSAGE("--Architecture is ARCH_X86_64")
+                    ENDIF(uname_invoke_result MATCHES x86_64)
+                    SET(HOST_SUPPORTS_SSE TRUE)
+                ENDIF(WANT_SSE)
         ENDIF(NOT WANT_DEBUG AND DETECT_HOST_CPU_FEATURES)
 
 ELSE(UNIX)
@@ -591,4 +620,5 @@ CoreAudio support	:	${HAVE_COREAUDIO}
 SLV2 support		:	${SLV2OPTIONS}
 MP3 read support	:	${HAVE_MP3_DECODING}
 MP3 writing support	:	${HAVE_MP3_ENCODING}
+SSE Optimizations       :       ${HOST_SUPPORTS_SSE}
 ")
