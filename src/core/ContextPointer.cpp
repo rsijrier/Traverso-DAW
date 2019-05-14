@@ -291,6 +291,7 @@ QPointF ContextPointer::scene_pos() const
 void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
     m_mouseData->canvasCursorPos = pos;
+    m_mouseData->mousePos = pos;
 }
 
 int ContextPointer::on_first_input_event_x() const
@@ -338,8 +339,6 @@ void ContextPointer::set_active_context_items_by_mouse_movement(const QList<Cont
 void ContextPointer::set_active_context_items_by_keyboard_input(const QList<ContextItem *> &items)
 {
 	set_keyboard_only_input(true);
-    m_mouseData->jogStartGlobalMousePos = QCursor::pos();
-
     set_active_context_items(items);
 }
 
@@ -446,6 +445,7 @@ void ContextPointer::about_to_delete(ContextItem *item)
 void ContextPointer::set_keyboard_only_input(bool keyboardOnly)
 {
 	PENTER;
+
 	if (m_keyboardOnlyInput == keyboardOnly) {
 		return;
 	}
@@ -457,5 +457,7 @@ void ContextPointer::set_keyboard_only_input(bool keyboardOnly)
 	if (!keyboardOnly)
 	{
         QCursor::setPos(m_viewPort->map_to_global(m_mouseData->canvasCursorPos));
-	}
+    } else {
+        m_mouseData->jogStartGlobalMousePos = QCursor::pos();
+    }
 }
