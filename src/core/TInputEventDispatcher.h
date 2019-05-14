@@ -57,7 +57,6 @@ public:
     bool has_collected_number();
     QString get_collected_number() const {return m_sCollectedNumber;}
 
-    bool is_jogging();
     bool is_holding();
 
     TCommand* get_holding_command() const;
@@ -105,7 +104,6 @@ private:
 
     bool 			m_isHolding{};
     bool			m_enterFinishesHold{};
-    bool 			m_isJogging;
     bool			m_cancelHold{};
     bool			m_bypassJog{};
 
@@ -122,7 +120,7 @@ private:
     //! call the slot that handler a given action
     int dispatch_shortcut(TShortcut* shortCut, bool fromContextMenu=false);
 
-    void set_jogging(bool jog);
+    void set_holding(bool holding);
     void set_numerical_input(const QString& number);
     void process_press_event(int keyValue);
     void process_release_event(int keyValue);
@@ -139,8 +137,8 @@ private slots:
 
 signals:
     void collectedNumberChanged();
-    void jogStarted();
-    void jogFinished();
+    void holdStarted();
+    void holdFinished();
 };
 
 // use this function to get the InputEngine object

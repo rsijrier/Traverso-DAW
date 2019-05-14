@@ -46,7 +46,7 @@ private:
 
 private slots:
         void context_changed();
-        void jog_started();
+        void hold_started();
         void combobox_activated(int);
 	void function_keys_changed();
 };

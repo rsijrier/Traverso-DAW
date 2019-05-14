@@ -149,7 +149,7 @@ void ContextPointer::remove_contextitem(QObject* item)
 	m_contextItemsList.removeAt(index);
 }
 
-void ContextPointer::jog_start()
+void ContextPointer::hold_start()
 {
     if (m_viewPort) {
         m_viewPort->grab_mouse();
@@ -157,7 +157,7 @@ void ContextPointer::jog_start()
     m_mouseData->jogStartGlobalMousePos = QCursor::pos();
 }
 
-void ContextPointer::jog_finished()
+void ContextPointer::hold_finished()
 {
     if (m_viewPort) {
         m_viewPort->release_mouse();
@@ -352,7 +352,7 @@ void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &glo
     m_mouseData->mousePos = pos;
     m_mouseData->globalMousePos = globalPos;
 
-    if (ied().is_jogging()) {
+    if (ied().is_holding()) {
         if (m_keyboardOnlyInput) {
             // no need or desire to call the current's
             // Hold Command::jog() function, were moving by keyboard now!

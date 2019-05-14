@@ -157,8 +157,8 @@ private:
     friend class TInputEventDispatcher;
     friend class Traverso;
 
-    void jog_start();
-    void jog_finished();
+    void hold_start();
+    void hold_finished();
 
     int m_jogBypassDistance{};
 

@@ -166,7 +166,7 @@ void Traverso::shutdown( int signal )
     PENTER;
 
     // Just in case the mouse was grabbed...
-    cpointer().jog_finished();
+    cpointer().hold_finished();
     QApplication::processEvents();
 
     switch(signal) {

@@ -90,7 +90,6 @@ TInputEventDispatcher::TInputEventDispatcher()
 	// holdEvenCode MUST be a value != ANY key code!
 	// when set to 'not matching any key!!!!!!
 	m_holdEventCode = -100;
-	m_isJogging = false;
 	reset();
 
 	m_collectedNumber = -1;
@@ -381,15 +380,15 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                     command->set_cursor_shape(shortCutFunction->useX, shortCutFunction->useY);
                     if (has_collected_number()) {
                         command->process_collected_number(get_collected_number());
+                        set_numerical_input("");
                     }
                     m_holdingCommand = command;
                     m_moveCommand = qobject_cast<TMoveCommand*>(m_holdingCommand);
                     if (m_moveCommand) {
                         m_moveCommand->TMoveCommand::begin_hold();
                     }
-					m_isHolding = true;
 					m_holdEventCode = shortCut->getKeyValue();
-					set_jogging(true);
+                    set_holding(true);
 					m_enterFinishesHold = config().get_property("InputEventDispatcher", "EnterFinishesHold", false).toBool();
                     if (fromContextMenu && command->supportsEnterFinishesHold())
 					{
@@ -422,7 +421,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
 					// set following stuff to zero to make finish_hold do nothing
                     delete command;
                     command = nullptr;
-					set_jogging( false );
+                    set_holding( false );
 				}
 			}
 			else
@@ -459,27 +458,33 @@ void TInputEventDispatcher::jog()
 {
 	PENTER3;
 
-	if (m_isJogging) {
-		if (m_holdingCommand) {
-			if (m_bypassJog) {
-				QPoint diff = m_jogBypassPos - cpointer().mouse_viewport_pos();
-				if (diff.manhattanLength() > m_unbypassJogDistance) {
-					m_bypassJog = false;
-					m_holdingCommand->set_jog_bypassed(m_bypassJog);
-				} else {
-					return;
-				}
-				m_jogBypassPos = cpointer().mouse_viewport_pos();
-			}
+    if (!m_isHolding) {
+        PERROR("jog() called but not holding, invalid call to jog()");
+        return;
+    }
 
-            if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor()) {
-                if (m_moveCommand) {
-                    m_moveCommand->TMoveCommand::jog();
-                }
-                cpointer().set_canvas_cursor_pos(cpointer().scene_pos());
-            }
-		}
-	}
+    if (!m_holdingCommand) {
+        PERROR("jog() called but no holdingCommand but m_isHolding was set to true, internal state error, fix the program!");
+        return;
+    }
+
+    if (m_bypassJog) {
+        QPoint diff = m_jogBypassPos - cpointer().mouse_viewport_pos();
+        if (diff.manhattanLength() > m_unbypassJogDistance) {
+            m_bypassJog = false;
+            m_holdingCommand->set_jog_bypassed(m_bypassJog);
+        } else {
+            return;
+        }
+        m_jogBypassPos = cpointer().mouse_viewport_pos();
+    }
+
+    if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor()) {
+        if (m_moveCommand) {
+            m_moveCommand->TMoveCommand::jog();
+        }
+        cpointer().set_canvas_cursor_pos(cpointer().scene_pos());
+    }
 }
 
 void TInputEventDispatcher::bypass_jog_until_mouse_movements_exceeded_manhattenlength(int length)
@@ -497,28 +502,23 @@ void TInputEventDispatcher::update_jog_bypass_pos()
 	m_jogBypassPos = cpointer().mouse_viewport_pos();
 }
 
-void TInputEventDispatcher::set_jogging(bool jog)
+void TInputEventDispatcher::set_holding(bool holding)
 {
-	m_isJogging = jog;
+    m_isHolding = holding;
 
-	if (m_isJogging) {
-		emit jogStarted();
-        cpointer().jog_start();
+    if (m_isHolding) {
+        emit holdStarted();
+        cpointer().hold_start();
 	} else {
-        cpointer().jog_finished();
-		emit jogFinished();
+        cpointer().hold_finished();
+        emit holdFinished();
 	}
-}
-
-bool TInputEventDispatcher::is_jogging()
-{
-	return m_isJogging;
 }
 
 void TInputEventDispatcher::reset()
 {
 	PENTER3;
-	m_isHolding = false;
+    set_holding(false);
 	m_cancelHold = false;
 	m_bypassJog = false;
 
@@ -772,8 +772,6 @@ void TInputEventDispatcher::finish_hold()
 	}
 
 	reset();
-
-	set_jogging(false);
 }
 
 void TInputEventDispatcher::clear_hold_modifier_keys()
@@ -834,11 +832,7 @@ int TInputEventDispatcher::collected_number( )
 
 bool TInputEventDispatcher::has_collected_number()
 {
-	if (m_sCollectedNumber.isEmpty()) {
-		return false;
-	}
-
-	return true;
+    return !m_sCollectedNumber.isEmpty();
 }
 
 void TInputEventDispatcher::set_numerical_input(const QString &number)

@@ -120,7 +120,7 @@ TContextHelpWidget::TContextHelpWidget(QWidget* parent)
 	combobox_activated(0);
 
         connect(&cpointer(), SIGNAL(contextChanged()), this, SLOT(context_changed()));
-        connect(&ied(), SIGNAL(jogStarted()), this, SLOT(jog_started()));
+        connect(&ied(), SIGNAL(holdStarted()), this, SLOT(hold_started()));
         connect(m_comboBox, SIGNAL(activated(int)), this, SLOT(combobox_activated(int)));
 	connect(&tShortCutManager(), SIGNAL(functionKeysChanged()), this, SLOT(function_keys_changed()));
 }
@@ -153,7 +153,7 @@ void TContextHelpWidget::context_changed()
         }
 }
 
-void TContextHelpWidget::jog_started()
+void TContextHelpWidget::hold_started()
 {
         if (m_comboBox->currentIndex() != 1) {
                 return;
