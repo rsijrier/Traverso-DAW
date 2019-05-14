@@ -53,6 +53,10 @@ public :
         return mapToScene(pos);
     }
 
+    inline QPoint map_to_global(const QPoint& point) const {
+        return mapToGlobal(point);
+    }
+
     void grab_mouse();
     void release_mouse();
 

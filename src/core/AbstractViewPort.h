@@ -20,6 +20,7 @@ public:
     };
 
     virtual QPointF map_to_scene(const QPoint& pos) const = 0;
+    virtual QPoint map_to_global(const QPoint& pos) const = 0;
     virtual void set_canvas_cursor_shape(const QString& shape, int alignment=Qt::AlignCenter) = 0;
     virtual void set_canvas_cursor_text(const QString& text, int mseconds) = 0;
     virtual void set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason = UNDEFINED) = 0;

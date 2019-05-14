@@ -61,6 +61,7 @@ struct TMouseData {
     QPoint  mousePos;
     QPoint  globalMousePos;           // global Mouse Screen position while holding
     QPoint  mouseCursorPosDuringHold;  // global Mouse Screen pos while holding centered in ViewPort
+    QPoint  canvasCursorPos;
 };
 
 /**
@@ -81,6 +82,7 @@ ContextPointer::ContextPointer()
     m_mouseData = new TMouseData{};
 
 	m_mouseLeftClickBypassesJog = config().get_property("InputEventDispatcher", "mouseclicktakesoverkeyboardnavigation", false).toBool();
+    m_jogBypassDistance = config().get_property("InputEventDispatcher", "jobbypassdistance", 70).toInt();
 }
 
 /**
@@ -286,12 +288,9 @@ QPointF ContextPointer::scene_pos() const
     return m_viewPort->map_to_scene(m_mouseData->mousePos);
 }
 
-// Fixme
-// called from SheetView move_edit_point meaning we move canvas cursor by keyboard
-// but here we store it in the hardware mouse position relative to the viewport ?
 void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
-    m_mouseData->mousePos = pos;
+    m_mouseData->canvasCursorPos = pos;
 }
 
 int ContextPointer::on_first_input_event_x() const
@@ -457,6 +456,6 @@ void ContextPointer::set_keyboard_only_input(bool keyboardOnly)
 	// from the edit point :)
 	if (!keyboardOnly)
 	{
-        QCursor::setPos(m_mouseData->jogStartGlobalMousePos);
+        QCursor::setPos(m_viewPort->map_to_global(m_mouseData->canvasCursorPos));
 	}
 }
