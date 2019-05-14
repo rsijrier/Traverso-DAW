@@ -97,6 +97,9 @@ SheetView::SheetView(SheetWidget* sheetwidget,
     m_canvasCursor = new TCanvasCursor(this);
     scene()->addItem(m_canvasCursor);
 
+    m_canvasCursorMoveAnimation = new QPropertyAnimation(m_canvasCursor, "position");
+    m_canvasCursorMoveAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+
 	Sheet* sheet = qobject_cast<Sheet*>(m_session);
 
 	if (m_session->is_project_session()) {
@@ -1243,7 +1246,7 @@ void SheetView::keyboard_move_canvas_cursor_to_location(TimeRef location, qreal 
     cpointer().store_canvas_cursor_position(pos);
 
     m_canvasCursor->set_text(timeref_to_text(location, timeref_scalefactor));
-    m_canvasCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
+    do_keyboard_canvas_cursor_move(QPointF(location / timeref_scalefactor, sceneY));
 }
 
 QList<TrackView*> SheetView::get_track_views() const
@@ -1291,12 +1294,38 @@ void SheetView::set_edit_cursor_text(const QString &text, int mseconds)
 
 void SheetView::set_canvas_cursor_pos(QPointF pos,  AbstractViewPort::CursorMoveReason reason)
 {
-    m_canvasCursor->set_pos(pos, reason);
+    if (reason == AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION) {
+        do_keyboard_canvas_cursor_move(pos);
+    } else {
+        m_canvasCursor->set_pos(pos);
+    }
+}
+
+void SheetView::do_keyboard_canvas_cursor_move(const QPointF &position)
+{
+    PENTER;
+
+    QPointF diffPos = m_canvasCursor->get_pos() - position;
+
+    int animDuration = int(diffPos.manhattanLength() * 0.3);
+    // do not even bother animating a movement if the distance is real small
+    if (animDuration < 50) {
+        m_canvasCursor->set_pos(position);
+        return;
+    }
+
+    if (m_canvasCursorMoveAnimation->state() == QPropertyAnimation::Running) {
+        m_canvasCursorMoveAnimation->stop();
+    }
+
+    m_canvasCursorMoveAnimation->setStartValue(m_canvasCursor->get_pos());
+    m_canvasCursorMoveAnimation->setEndValue(position);
+    m_canvasCursorMoveAnimation->setDuration(animDuration);
+    m_canvasCursorMoveAnimation->start();
 }
 
 void SheetView::mouse_hover_move_event()
 {
-    PENTER;
    set_canvas_cursor_pos(cpointer().scene_pos(), AbstractViewPort::CursorMoveReason::MOUSE_MOVE_EVENT);
 }
 

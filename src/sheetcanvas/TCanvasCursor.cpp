@@ -42,10 +42,6 @@ TCanvasCursor::TCanvasCursor(SheetView* )
     m_xOffset = m_yOffset = 0.0;
 
     setZValue(20000);
-
-    m_animation = new QPropertyAnimation(this, "position");
-    m_animation->setEasingCurve(QEasingCurve::InOutQuad);
-
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 }
 
@@ -58,7 +54,7 @@ void TCanvasCursor::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
     Q_UNUSED(widget);
     Q_UNUSED(option);
 
-    painter->drawPixmap(0, 0, m_pixmap);
+    painter->drawPixmap(int(-m_xOffset), int(-m_yOffset), m_pixmap);
 }
 
 void TCanvasCursor::create_cursor_pixmap(const QString &shape)
@@ -174,41 +170,9 @@ void TCanvasCursor::set_cursor_shape(const QString &shape, int alignment)
     }
 
     prepareGeometryChange();
-    m_boundingRect = m_pixmap.rect();
+    m_boundingRect = QRect(-m_pixmap.width(), -m_pixmap.height(), 2 * m_pixmap.width(), 2*m_pixmap.height());
 
-    set_pos(m_pos, AbstractViewPort::CursorMoveReason::CURSOR_SHAPE_CHANGE);
-}
-
-void TCanvasCursor::set_pos(const QPointF &position,  AbstractViewPort::CursorMoveReason reason)
-{
-    PENTER;
-
-    if (reason == AbstractViewPort::CursorMoveReason::UNDEFINED) {
-        PERROR("Moving canvas cursor but no CursorMoveReason was given.");
-    }
-
-    QPointF posWithOffset = QPointF(position.x() - m_xOffset, position.y() - m_yOffset);
-    QPointF diffPos = pos() - posWithOffset;
-
-    if (reason == AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION) {
-        int animDuration = int(diffPos.manhattanLength() * 0.3);
-        // do not even bother animating a movement if the distance is real small
-        if (animDuration < 50) {
-            setPosition(posWithOffset);
-        } else {
-            if (m_animation->state() == QPropertyAnimation::Running) {
-                m_animation->stop();
-            }
-            m_animation->setStartValue(pos());
-            m_animation->setEndValue(posWithOffset);
-            m_animation->setDuration(animDuration);
-            m_animation->start();
-        }
-    } else {
-        setPosition(posWithOffset);
-    }
-
-    m_pos = position;
+    update_textitem_pos();
 }
 
 void TCanvasCursor::update_textitem_pos()
@@ -219,7 +183,7 @@ void TCanvasCursor::update_textitem_pos()
         return;
     }
 
-    qreal textItemX = 40;
+    qreal textItemX = 30;
     int textItemY = 40;
 
     QPointF textPos(textItemX, textItemY);
@@ -247,10 +211,4 @@ void TCanvasCursor::update_textitem_pos()
 void TCanvasCursor::timer_timeout()
 {
     set_text("");
-}
-
-void TCanvasCursor::setPosition(const QPointF &position)
-{
-    setPos(position);
-    update_textitem_pos();
 }

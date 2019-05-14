@@ -25,6 +25,7 @@
 #include "ViewItem.h"
 #include "AbstractViewPort.h"
 #include <QTimer>
+#include <QPropertyAnimation>
 
 class AudioClip;
 class Sheet;
@@ -141,6 +142,7 @@ private:
     TrackView*          m_projectMasterOutView;
     WorkCursor*         m_workCursor;
     TCanvasCursor*      m_canvasCursor;
+    QPropertyAnimation* m_canvasCursorMoveAnimation;
     int                 m_sceneHeight{};
     float               m_meanTrackHeight{};
     QScrollBar*         m_vScrollBar;
@@ -157,7 +159,10 @@ private:
 	int	m_trackTopIndent{};
 
 	void update_tracks_bounding_rect();
-	void collect_item_browser_data(ItemBrowserData& data);
+
+    void do_keyboard_canvas_cursor_move(const QPointF &position);
+
+    void collect_item_browser_data(ItemBrowserData& data);
 	static void calculate_cursor_dict();
 
 
