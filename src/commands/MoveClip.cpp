@@ -478,8 +478,8 @@ void MoveClip::do_move()
 
     if (mcd) {
         TrackView* tv = d->sv->get_track_views().at(m_newTrackIndex);
-        int sceneY = tv->scenePos().y() + tv->boundingRect().height() / 2;
-        d->sv->move_edit_point_to(m_trackStartLocation + m_posDiff + mcd->relativeWorkCursorPos, sceneY);
+        qreal sceneY = tv->scenePos().y() + tv->boundingRect().height() / 2;
+        d->sv->keyboard_move_canvas_cursor_to_location(m_trackStartLocation + m_posDiff + mcd->relativeWorkCursorPos, sceneY);
         d->sv->set_edit_cursor_text(timeref_to_text(m_trackStartLocation + m_posDiff, d->sv->timeref_scalefactor));
     }
 }

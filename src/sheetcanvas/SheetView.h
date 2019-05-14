@@ -125,7 +125,7 @@ public :
 	void browse_to_curve_node_view(CurveNodeView* nodeView);
 	void browse_to_marker_view(MarkerView* markerView);
 	void center_in_view(ViewItem* item, enum Qt::AlignmentFlag = Qt::AlignHCenter);
-    void move_edit_point_to(TimeRef location, int sceneY);
+    void keyboard_move_canvas_cursor_to_location(TimeRef location, qreal sceneY);
 
 	qint64		timeref_scalefactor;
 

@@ -836,7 +836,7 @@ void SheetView::browse_to_track(Track *track)
 
 			cpointer().set_active_context_items_by_keyboard_input(list);
 
-			move_edit_point_to(m_session->get_work_location(), view->scenePos().y() + view->boundingRect().height() / 2);
+            keyboard_move_canvas_cursor_to_location(m_session->get_work_location(), view->scenePos().y() + view->boundingRect().height() / 2);
 
 			return;
 		}
@@ -852,9 +852,9 @@ void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 	activeList.append(this);
 
     if (m_canvasCursor->get_pos().x() > acv->scenePos().x() && (m_canvasCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
-        move_edit_point_to(TimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        keyboard_move_canvas_cursor_to_location(TimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     } else {
-        move_edit_point_to(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        keyboard_move_canvas_cursor_to_location(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     }
 
 
@@ -888,7 +888,7 @@ void SheetView::browse_to_marker_view(MarkerView *markerView)
 		}
 	}
 
-	move_edit_point_to(TimeRef(markerView->get_marker()->get_when()), cpointer().scene_y());
+    keyboard_move_canvas_cursor_to_location(TimeRef(markerView->get_marker()->get_when()), cpointer().scene_y());
 
 	contexts.prepend(markerView);
 	cpointer().set_active_context_items_by_keyboard_input(contexts);
@@ -906,7 +906,7 @@ void SheetView::browse_to_curve_node_view(CurveNodeView *nodeView)
 	activeList.append(acv->get_audio_track_view());
 	activeList.append(this);
 
-    move_edit_point_to(TimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
+    keyboard_move_canvas_cursor_to_location(TimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
 			   nodeView->scenePos().y() + nodeView->boundingRect().height() / 2);
 
 	cpointer().set_active_context_items_by_keyboard_input(activeList);
@@ -1208,13 +1208,13 @@ TCommand* SheetView::browse_to_previous_context_item()
 void SheetView::center_in_view(ViewItem *item, enum Qt::AlignmentFlag flag)
 {
 	if (flag == Qt::AlignHCenter) {
-		set_hscrollbar_value(item->scenePos().x() - m_clipsViewPort->width() / 2);
+        set_hscrollbar_value(int(item->scenePos().x() - m_clipsViewPort->width() / 2));
 	} else if (flag == Qt::AlignVCenter) {
-		set_vscrollbar_value(item->scenePos().y() + (item->boundingRect().height() / 2) - (m_clipsViewPort->height() / 2));
+        set_vscrollbar_value(int(item->scenePos().y() + (item->boundingRect().height() / 2) - (m_clipsViewPort->height() / 2)));
 	}
 }
 
-void SheetView::move_edit_point_to(TimeRef location, int sceneY)
+void SheetView::keyboard_move_canvas_cursor_to_location(TimeRef location, qreal sceneY)
 {
     m_session->set_work_at(location);
 
@@ -1236,7 +1236,7 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 	// viewport area, then use sceneY (!!) to set the vertical scrollbar
 	// since the vertical scrollbar range == scene height range.
 	if (y < 0 || y > m_clipsViewPort->height()) {
-		set_vscrollbar_value(sceneY - m_clipsViewPort->height() / 2);
+        set_vscrollbar_value(int(sceneY - m_clipsViewPort->height() / 2));
 	}
 
 	QPoint pos = m_clipsViewPort->mapFromScene(location / timeref_scalefactor, sceneY);

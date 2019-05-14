@@ -167,7 +167,7 @@ void WorkCursorMove::do_keyboard_move(TimeRef newLocation)
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
-    d->sv->move_edit_point_to(newLocation, m_holdCursorSceneY);
+    d->sv->keyboard_move_canvas_cursor_to_location(newLocation, m_holdCursorSceneY);
 }
 
 void WorkCursorMove::toggle_snap_on_off()
