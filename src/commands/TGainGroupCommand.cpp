@@ -69,14 +69,14 @@ void TGainGroupCommand::set_cursor_shape(int useX, int useY)
     Q_UNUSED(useX);
     Q_UNUSED(useY);
 
-    cpointer().setCursorShape(":/cursorGain");
+    cpointer().set_canvas_cursor_shape(":/cursorGain");
 }
 
 
 int TGainGroupCommand::begin_hold()
 {
     m_origPos = cpointer().scene_pos();
-    cpointer().setCursorText(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+    cpointer().set_canvas_cursor_text(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
     return 1;
 }
 
@@ -96,7 +96,7 @@ void TGainGroupCommand::cancel_action()
 void TGainGroupCommand::process_collected_number(const QString &collected)
 {
     if (collected.size() == 0) {
-        cpointer().setCursorText(" dB");
+        cpointer().set_canvas_cursor_text(" dB");
         return;
     }
 
@@ -106,7 +106,7 @@ void TGainGroupCommand::process_collected_number(const QString &collected)
         if (collected.contains(".") || collected.contains("-")) {
             QString s = collected;
             s.append(" dB");
-            cpointer().setCursorText(s);
+            cpointer().set_canvas_cursor_text(s);
         }
         return;
     }
@@ -125,9 +125,9 @@ void TGainGroupCommand::process_collected_number(const QString &collected)
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
     if(rightfromdot) {
-        cpointer().setCursorText(QByteArray::number(double(dbFactor), 'f', rightfromdot).append(" dB"));
+        cpointer().set_canvas_cursor_text(QByteArray::number(double(dbFactor), 'f', rightfromdot).append(" dB"));
     } else {
-        cpointer().setCursorText(QByteArray::number(double(dbFactor)).append(" dB"));
+        cpointer().set_canvas_cursor_text(QByteArray::number(double(dbFactor)).append(" dB"));
     }
 
     if (m_primaryGainOnly) {
@@ -151,10 +151,10 @@ int TGainGroupCommand::jog()
         }
     }
 
-    cpointer().setCursorPos(m_origPos);
+    cpointer().set_canvas_cursor_pos(m_origPos);
 
     // Update the vieport's hold cursor!
-    cpointer().setCursorText(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+    cpointer().set_canvas_cursor_text(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
 
     return 1;
 }
@@ -228,7 +228,7 @@ void TGainGroupCommand::increase_gain(  )
     }
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
-    cpointer().setCursorText(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+    cpointer().set_canvas_cursor_text(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
 }
 
 void TGainGroupCommand::decrease_gain()
@@ -242,7 +242,7 @@ void TGainGroupCommand::decrease_gain()
     }
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
-    cpointer().setCursorText(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+    cpointer().set_canvas_cursor_text(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
 }
 
 void TGainGroupCommand::toggle_primary_gain_only()

@@ -209,27 +209,27 @@ void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 	}
 }
 
-void ContextPointer::setCursorShape(const QString &cursor, int alignment)
+void ContextPointer::set_canvas_cursor_shape(const QString &cursor, int alignment)
 {
     if (!m_viewPort)
 	{
 		return;
 	}
 
-    m_viewPort->setCanvasCursorShape(cursor, alignment);
+    m_viewPort->set_canvas_cursor_shape(cursor, alignment);
 }
 
-void ContextPointer::setCursorText(const QString &text, int mseconds)
+void ContextPointer::set_canvas_cursor_text(const QString &text, int mseconds)
 {
     if (!m_viewPort)
 	{
 		return;
 	}
 
-    m_viewPort->setCursorText(text, mseconds);
+    m_viewPort->set_canvas_cursor_text(text, mseconds);
 }
 
-void ContextPointer::setCursorPos(QPointF pos)
+void ContextPointer::set_canvas_cursor_pos(QPointF pos)
 {
     PENTER;
     if (!m_viewPort)
@@ -242,19 +242,19 @@ void ContextPointer::setCursorPos(QPointF pos)
         QCursor::setPos(m_mouseData->jogStartGlobalMousePos);
 	}
 
-    m_viewPort->set_holdcursor_pos(pos);
+    m_viewPort->set_canvas_cursor_pos(pos);
 }
 
-int ContextPointer::x() const {
+int ContextPointer::mouse_viewport_x() const {
     return m_mouseData->mousePos.x();
 }
 
-int ContextPointer::y() const
+int ContextPointer::mouse_viewport_y() const
 {
     return m_mouseData->mousePos.y();
 }
 
-QPoint ContextPointer::pos() const
+QPoint ContextPointer::mouse_viewport_pos() const
 {
     return m_mouseData->mousePos;
 }
@@ -286,6 +286,9 @@ QPointF ContextPointer::scene_pos() const
     return m_viewPort->map_to_scene(m_mouseData->mousePos);
 }
 
+// Fixme
+// called from SheetView move_edit_point meaning we move canvas cursor by keyboard
+// but here we store it in the hardware mouse position relative to the viewport ?
 void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
     m_mouseData->mousePos = pos;

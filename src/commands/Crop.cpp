@@ -166,7 +166,7 @@ int CropClip::jog()
 
 	long long splitPoint = x * m_cv->get_sheetview()->timeref_scalefactor;
 
-	QPointF point = m_cv->mapFromScene(splitPoint / m_cv->get_sheetview()->timeref_scalefactor, cpointer().y());
+	QPointF point = m_cv->mapFromScene(splitPoint / m_cv->get_sheetview()->timeref_scalefactor, cpointer().mouse_viewport_y());
 	int xpos = (int) point.x();
 	if (xpos < 0) {
 		xpos = 0;
@@ -189,7 +189,7 @@ void CropClip::adjust_left()
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
-	int x = (int) m_selection->mapFromScene(cpointer().scene_x(), cpointer().y()).x();
+	int x = (int) m_selection->mapFromScene(cpointer().scene_x(), cpointer().mouse_viewport_y()).x();
 
 	if (x < (m_selection->boundingRect().width() / 2)) {
 		x1 -= 1;
@@ -209,7 +209,7 @@ void CropClip::adjust_right()
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
-	int x = (int) m_selection->mapFromScene(cpointer().scene_x(), cpointer().y()).x();
+	int x = (int) m_selection->mapFromScene(cpointer().scene_x(), cpointer().mouse_viewport_y()).x();
 
 	if (x < (m_selection->boundingRect().width() / 2)) {
 		if (x2 > (x1 + 1)) {

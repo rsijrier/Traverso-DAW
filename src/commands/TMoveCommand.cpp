@@ -86,7 +86,7 @@ int TMoveCommand::jog()
 
     int direction = 1;
 
-    qreal normalizedX = cpointer().x() / d->sv->get_clips_viewport()->width();
+    qreal normalizedX = cpointer().mouse_viewport_x() / d->sv->get_clips_viewport()->width();
 
     if (normalizedX < 0.5) {
         normalizedX = 0.5 - normalizedX;
@@ -114,7 +114,7 @@ int TMoveCommand::jog()
     }
 
     direction = 1;
-    qreal normalizedY = cpointer().y() / d->sv->get_clips_viewport()->height();
+    qreal normalizedY = cpointer().mouse_viewport_y() / d->sv->get_clips_viewport()->height();
 
     if (normalizedY < 0) normalizedY = 0;
     if (normalizedY > 1) normalizedY = 1;
@@ -176,7 +176,7 @@ void TMoveCommand::move_faster()
 	}
 
     pm().get_project()->set_keyboard_arrow_key_navigation_speed(d->speed);
-    cpointer().setCursorText(tr("Speed: %1").arg(d->speed), 1000);
+    cpointer().set_canvas_cursor_text(tr("Speed: %1").arg(d->speed), 1000);
 }
 
 
@@ -199,7 +199,7 @@ void TMoveCommand::move_slower()
 	}
 
     pm().get_project()->set_keyboard_arrow_key_navigation_speed(d->speed);
-    cpointer().setCursorText(tr("Speed: %1").arg(d->speed), 1000);
+    cpointer().set_canvas_cursor_text(tr("Speed: %1").arg(d->speed), 1000);
 }
 
 void TMoveCommand::process_collected_number(const QString &collected)
@@ -231,7 +231,7 @@ void TMoveCommand::process_collected_number(const QString &collected)
         default: d->speed = 2;
 		}
         pm().get_project()->set_keyboard_arrow_key_navigation_speed(d->speed);
-        cpointer().setCursorText(tr("Speed: %1").arg(d->speed), 1000);
+        cpointer().set_canvas_cursor_text(tr("Speed: %1").arg(d->speed), 1000);
 	}
 }
 
@@ -243,11 +243,11 @@ void TMoveCommand::toggle_snap_on_off()
 
     if (d->doSnap)
 	{
-		cpointer().setCursorText(tr("Snap On"), 1000);
+		cpointer().set_canvas_cursor_text(tr("Snap On"), 1000);
 	}
 	else
 	{
-		cpointer().setCursorText(tr("Snap Off"), 1000);
+		cpointer().set_canvas_cursor_text(tr("Snap Off"), 1000);
 	}
 }
 

@@ -62,7 +62,7 @@ int PlayHeadMove::begin_hold()
     m_holdCursorSceneY = cpointer().scene_y();
 
     ClipsViewPort* port = d->sv->get_clips_viewport();
-    cpointer().setCursorPos(QPointF(m_playhead->scenePos().x(), cpointer().y()));
+    cpointer().set_canvas_cursor_pos(QPointF(m_playhead->scenePos().x(), cpointer().mouse_viewport_y()));
     int x = port->mapFromScene(m_playhead->scenePos()).x();
 
     if (x < 0 || x > port->width()) {
@@ -86,7 +86,7 @@ void PlayHeadMove::set_cursor_shape(int useX, int useY)
     Q_UNUSED(useX);
     Q_UNUSED(useY);
 
-    cpointer().setCursorShape(":/cursorHoldLr");
+    cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
 }
 
 int PlayHeadMove::jog()
@@ -109,10 +109,10 @@ int PlayHeadMove::jog()
             m_session->set_transport_pos(m_newTransportLocation);
         }
 
-        cpointer().setCursorText(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
+        cpointer().set_canvas_cursor_text(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
     }
 
-    cpointer().setCursorPos(QPointF(x, y));
+    cpointer().set_canvas_cursor_pos(QPointF(x, y));
 
     m_newXPos = x;
     m_newYPos = y;
@@ -184,7 +184,7 @@ void PlayHeadMove::do_keyboard_move(TimeRef newLocation, bool centerInView)
     }
 
 
-    cpointer().setCursorText(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
     d->sv->set_canvas_cursor_pos(QPointF(m_playhead->scenePos().x(), m_holdCursorSceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
 }
 

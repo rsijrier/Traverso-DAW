@@ -134,7 +134,7 @@ void SplitClip::set_cursor_shape(int useX, int useY)
 	Q_UNUSED(useX);
 	Q_UNUSED(useY);
 	
-	cpointer().setCursorShape(":/cursorHoldLr");
+	cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
 }
 
 
@@ -153,7 +153,7 @@ int SplitClip::jog()
 		m_splitPoint = slist->get_snap_value(m_splitPoint);
 	}
 	
-    QPointF point = m_cv->mapFromScene(m_splitPoint / d->sv->timeref_scalefactor, cpointer().y());
+    QPointF point = m_cv->mapFromScene(m_splitPoint / d->sv->timeref_scalefactor, cpointer().mouse_viewport_y());
 	int xpos = (int) point.x();
 	if (xpos < 0) {
 		xpos = 0;
@@ -163,7 +163,7 @@ int SplitClip::jog()
 	}
 	m_splitcursor->setPos(xpos, 0);
 
-    cpointer().setCursorText(timeref_to_text(m_splitPoint, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(m_splitPoint, d->sv->timeref_scalefactor));
 	
 	return 1;
 }

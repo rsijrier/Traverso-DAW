@@ -115,13 +115,13 @@ void FadeRange::set_cursor_shape(int useX, int useY)
 	Q_UNUSED(useX);
 	Q_UNUSED(useY);
 	
-	cpointer().setCursorShape(":/cursorHoldLr");
+	cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
 }
 
 
 int FadeRange::jog()
 {
-    int dx = (frp->origX - (cpointer().x()) ) * frp->direction;
+    int dx = (frp->origX - (cpointer().mouse_viewport_x()) ) * frp->direction;
     m_newRange = m_origRange - ( dx * frp->scalefactor);
 	
 	if (m_newRange < 1) {
@@ -131,7 +131,7 @@ int FadeRange::jog()
 	m_curve->set_range( m_newRange );
 	
 	TimeRef location = TimeRef(m_newRange);
-    cpointer().setCursorText(timeref_to_ms_3(location));
+    cpointer().set_canvas_cursor_text(timeref_to_ms_3(location));
 	
 	return 1;
 }
@@ -180,7 +180,7 @@ void FadeRange::do_keyboard_move(double range)
         m_newRange = range;
 
 	TimeRef location = TimeRef(m_newRange);
-	cpointer().setCursorText(timeref_to_ms_3(location));
+	cpointer().set_canvas_cursor_text(timeref_to_ms_3(location));
 
         do_action();
 }
@@ -257,14 +257,14 @@ void FadeBend::set_cursor_shape(int useX, int useY)
 	Q_UNUSED(useX);
 	Q_UNUSED(useY);
 	
-	cpointer().setCursorShape(":/cursorHoldUd");
+	cpointer().set_canvas_cursor_shape(":/cursorHoldUd");
 }
 
 int FadeBend::jog()
 {
 	int direction = (m_fade->get_fade_type() == FadeCurve::FadeIn) ? 1 : -1;
 	
-	float dx = (float(origY - cpointer().y()) / CURSOR_SPEED);
+	float dx = (float(origY - cpointer().mouse_viewport_y()) / CURSOR_SPEED);
 
 	if (m_fade->get_raster()) {
 		float value = round_float(oldValue + dx * direction);
@@ -275,9 +275,9 @@ int FadeBend::jog()
 
 	oldValue = m_fade->get_bend_factor();
 	newBend = oldValue;
-	cpointer().setCursorText(QByteArray::number(newBend, 'f', 2));
+	cpointer().set_canvas_cursor_text(QByteArray::number(newBend, 'f', 2));
 	
-	origY = cpointer().y();
+	origY = cpointer().mouse_viewport_y();
 	
 	return 1;
 }
@@ -348,12 +348,12 @@ void FadeStrength::set_cursor_shape(int useX, int useY)
 	Q_UNUSED(useX);
 	Q_UNUSED(useY);
 	
-	cpointer().setCursorShape(":/cursorHoldUd");
+	cpointer().set_canvas_cursor_shape(":/cursorHoldUd");
 }
 
 int FadeStrength::jog()
 {
-	float dy = float(origY - cpointer().y()) / CURSOR_SPEED;
+	float dy = float(origY - cpointer().mouse_viewport_y()) / CURSOR_SPEED;
 	
 	if (m_fade->get_bend_factor() >= 0.5) {
 		m_fade->set_strength_factor(oldValue + dy );
@@ -368,9 +368,9 @@ int FadeStrength::jog()
 	
 	oldValue = m_fade->get_strength_factor();
 	newStrength = oldValue;
-	cpointer().setCursorText(QByteArray::number(newStrength, 'f', 2));
+	cpointer().set_canvas_cursor_text(QByteArray::number(newStrength, 'f', 2));
 
-	origY = cpointer().y();
+	origY = cpointer().mouse_viewport_y();
 
 	return 1;
 }

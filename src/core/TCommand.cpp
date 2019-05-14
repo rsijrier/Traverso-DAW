@@ -273,13 +273,13 @@ void TCommand::process_collected_number(const QString & collected)
 void TCommand::set_cursor_shape( int useX, int useY )
 {
 	if (useX && useY) {
-		 cpointer().setCursorShape(":/cursorHoldLrud");
+		 cpointer().set_canvas_cursor_shape(":/cursorHoldLrud");
 	} else if (useX) {
-		cpointer().setCursorShape(":/cursorHoldLr");
+		cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
 	} else if (useY) {
-		cpointer().setCursorShape(":/cursorHoldUd");
+		cpointer().set_canvas_cursor_shape(":/cursorHoldUd");
 	} else{
-		cpointer().setCursorShape(":/cursorFloat");
+		cpointer().set_canvas_cursor_shape(":/cursorFloat");
 	}
 	
 }

@@ -124,7 +124,7 @@ void MoveTrack::move_down()
 void MoveTrack::set_cursor_shape(int /*useX*/, int useY)
 {
     if (useY) {
-        cpointer().setCursorShape(":/cursorHoldUd");
+        cpointer().set_canvas_cursor_shape(":/cursorHoldUd");
     }
 }
 

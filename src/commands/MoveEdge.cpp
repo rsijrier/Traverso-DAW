@@ -64,12 +64,12 @@ int MoveEdge::begin_hold()
 	if (m_edge == "set_left_edge") {
 		m_newPos = m_originalPos = m_clip->get_track_start_location();
 		m_otherEdgePos = m_clip->get_track_end_location();
-		cpointer().setCursorText(tr("Left Edge"), 800);
+		cpointer().set_canvas_cursor_text(tr("Left Edge"), 800);
 	}
 	if (m_edge == "set_right_edge") {
 		m_newPos = m_originalPos = m_clip->get_track_end_location();
 		m_otherEdgePos = m_clip->get_track_start_location();
-		cpointer().setCursorText(tr("Right Edge"), 800);
+		cpointer().set_canvas_cursor_text(tr("Right Edge"), 800);
 	}
 
 	m_clip->set_snappable(false);
@@ -149,7 +149,7 @@ int MoveEdge::jog()
 		m_newPos = m_clip->get_track_start_location();
 	}
 
-    cpointer().setCursorText(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
 
 	return 1;
 }
@@ -205,7 +205,7 @@ void MoveEdge::do_keyboard_move()
 		m_newPos = m_clip->get_track_start_location();
 	}
 
-    cpointer().setCursorText(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(m_newPos, d->sv->timeref_scalefactor));
 }
 
 // eof

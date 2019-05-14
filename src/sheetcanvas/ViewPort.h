@@ -44,9 +44,9 @@ public :
     virtual ~ViewPort();
 
     // Set functions
-    void setCursorText(const QString& text, int mseconds=-1);
-    void set_holdcursor_pos(QPointF pos, CursorMoveReason reason);
-    void setCanvasCursorShape(const QString& shape, int alignment=Qt::AlignCenter);
+    void set_canvas_cursor_text(const QString& text, int mseconds=-1);
+    void set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason);
+    void set_canvas_cursor_shape(const QString& shape, int alignment=Qt::AlignCenter);
     virtual void set_sheetview(SheetView* view) {m_sv = view;}
 
     inline QPointF map_to_scene(const QPoint& pos) const {

@@ -216,7 +216,7 @@ int MoveClip::begin_hold()
 //        MoveCommand::begin_hold();
     }
 
-    cpointer().setCursorText(timeref_to_text(m_group.get_track_start_location(), d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(m_group.get_track_start_location(), d->sv->timeref_scalefactor));
 
     return 1;
 }
@@ -347,7 +347,7 @@ int MoveClip::jog()
         markerAndOrigin.marker->set_when(markerAndOrigin.origin + m_posDiff);
     }
 
-    cpointer().setCursorText(timeref_to_text(newTrackStartLocation, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(timeref_to_text(newTrackStartLocation, d->sv->timeref_scalefactor));
 
     return 1;
 }
@@ -446,11 +446,11 @@ void MoveClip::start_zoom()
     if (!mcd->zoom) {
         mcd->zoom = new Zoom(d->sv, QList<QVariant>() << "HJogZoom" << "1.2" << "0.2");
         mcd->zoom->begin_hold();
-        cpointer().setCursorShape(":/cursorZoomHorizontal");
+        cpointer().set_canvas_cursor_shape(":/cursorZoomHorizontal");
         // FIXME, should no longer be handled from inherited class
 //        stop_shuttle();
     } else {
-        cpointer().setCursorShape(":/cursorHoldLrud");
+        cpointer().set_canvas_cursor_shape(":/cursorHoldLrud");
         // FIXME, should no longer be handled from inherited class
 //        start_shuttle(true);
         delete mcd->zoom;
@@ -463,10 +463,10 @@ void MoveClip::toggle_vertical_only()
     mcd->verticalOnly = !mcd->verticalOnly;
     if (mcd->verticalOnly) {
         set_cursor_shape(0, 1);
-        cpointer().setCursorText(tr("Vertical On"), 1000);
+        cpointer().set_canvas_cursor_text(tr("Vertical On"), 1000);
     } else {
         set_cursor_shape(1, 1);
-        cpointer().setCursorText(tr("Vertical Off"), 1000);
+        cpointer().set_canvas_cursor_text(tr("Vertical Off"), 1000);
     }
 }
 

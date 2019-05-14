@@ -51,9 +51,9 @@ int Scroll::begin_hold()
     set_shuttle_factor_values(m_dx, m_dy);
 
     if (m_dx) {
-		cpointer().setCursorShape("LR");
+		cpointer().set_canvas_cursor_shape("LR");
 	} else {
-		cpointer().setCursorShape("UD");
+		cpointer().set_canvas_cursor_shape("UD");
 	}
 	
 	return 1;

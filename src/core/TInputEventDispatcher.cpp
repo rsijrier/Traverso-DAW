@@ -414,7 +414,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortcut* shortCut, bool fromConte
                         } else {
                             keyString = QKeySequence(shortCut->getKeyValue()).toString();
                         }
-                        cpointer().setCursorText(tr("Press Enter or %1 to accept, Esc to reject").arg(keyString));
+                        cpointer().set_canvas_cursor_text(tr("Press Enter or %1 to accept, Esc to reject").arg(keyString));
                     }
 				} else {
                     PWARN("hold action begin_hold() returned -1");
@@ -462,21 +462,21 @@ void TInputEventDispatcher::jog()
 	if (m_isJogging) {
 		if (m_holdingCommand) {
 			if (m_bypassJog) {
-				QPoint diff = m_jogBypassPos - cpointer().pos();
+				QPoint diff = m_jogBypassPos - cpointer().mouse_viewport_pos();
 				if (diff.manhattanLength() > m_unbypassJogDistance) {
 					m_bypassJog = false;
 					m_holdingCommand->set_jog_bypassed(m_bypassJog);
 				} else {
 					return;
 				}
-				m_jogBypassPos = cpointer().pos();
+				m_jogBypassPos = cpointer().mouse_viewport_pos();
 			}
 
             if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor()) {
                 if (m_moveCommand) {
                     m_moveCommand->TMoveCommand::jog();
                 }
-                cpointer().setCursorPos(cpointer().scene_pos());
+                cpointer().set_canvas_cursor_pos(cpointer().scene_pos());
             }
 		}
 	}
@@ -486,7 +486,7 @@ void TInputEventDispatcher::bypass_jog_until_mouse_movements_exceeded_manhattenl
 {
 	m_unbypassJogDistance = length;
 	m_bypassJog = true;
-	m_jogBypassPos = cpointer().pos();
+	m_jogBypassPos = cpointer().mouse_viewport_pos();
 	if (m_holdingCommand) {
 		m_holdingCommand->set_jog_bypassed(m_bypassJog);
 	}
@@ -494,7 +494,7 @@ void TInputEventDispatcher::bypass_jog_until_mouse_movements_exceeded_manhattenl
 
 void TInputEventDispatcher::update_jog_bypass_pos()
 {
-	m_jogBypassPos = cpointer().pos();
+	m_jogBypassPos = cpointer().mouse_viewport_pos();
 }
 
 void TInputEventDispatcher::set_jogging(bool jog)
@@ -725,7 +725,7 @@ void TInputEventDispatcher::finish_hold()
 
 	if (m_holdingCommand->restoreCursorPosition())
 	{
-		cpointer().setCursorPos(cpointer().on_first_input_event_scene_pos());
+		cpointer().set_canvas_cursor_pos(cpointer().on_first_input_event_scene_pos());
 	}
 
 	if (m_cancelHold) {

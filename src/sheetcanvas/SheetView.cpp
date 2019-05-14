@@ -94,8 +94,8 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 
 	m_playCursor = new PlayHead(this, m_session, m_clipsViewPort);
 	m_workCursor = new WorkCursor(this, m_session);
-	m_editCursor = new TCanvasCursor(this);
-	scene()->addItem(m_editCursor);
+    m_canvasCursor = new TCanvasCursor(this);
+    scene()->addItem(m_canvasCursor);
 
 	Sheet* sheet = qobject_cast<Sheet*>(m_session);
 
@@ -667,7 +667,7 @@ TCommand * SheetView::touch( )
     if (!viewPort) {
 		x = cpointer().on_first_input_event_x();
 	} else {
-		x = cpointer().x();
+        x = cpointer().mouse_viewport_x();
 	}
 
     m_session->set_work_at(TimeRef(qRound(viewPort->map_to_scene(QPoint(x, 0)).x()) * timeref_scalefactor));
@@ -684,7 +684,7 @@ TCommand * SheetView::touch_play_cursor( )
 	if (!cpointer().get_viewport()) {
 		x = cpointer().on_first_input_event_x();
 	} else {
-		x = cpointer().x();
+        x = cpointer().mouse_viewport_x();
 	}
 	m_session->set_transport_pos(TimeRef(qRound(m_clipsViewPort->mapToScene(x, 0).x()) * timeref_scalefactor));
 
@@ -851,8 +851,8 @@ void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 	activeList.append(acv->get_audio_track_view());
 	activeList.append(this);
 
-    if (m_editCursor->get_pos().x() > acv->scenePos().x() && (m_editCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
-        move_edit_point_to(TimeRef(m_editCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+    if (m_canvasCursor->get_pos().x() > acv->scenePos().x() && (m_canvasCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
+        move_edit_point_to(TimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     } else {
         move_edit_point_to(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     }
@@ -1242,8 +1242,8 @@ void SheetView::move_edit_point_to(TimeRef location, int sceneY)
 	QPoint pos = m_clipsViewPort->mapFromScene(location / timeref_scalefactor, sceneY);
     cpointer().store_canvas_cursor_position(pos);
 
-	m_editCursor->set_text(timeref_to_text(location, timeref_scalefactor));
-    m_editCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
+    m_canvasCursor->set_text(timeref_to_text(location, timeref_scalefactor));
+    m_canvasCursor->set_pos(QPointF(location / timeref_scalefactor, sceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
 }
 
 QList<TrackView*> SheetView::get_track_views() const
@@ -1281,17 +1281,17 @@ TCommand* SheetView::edit_properties()
 
 void SheetView::set_cursor_shape(const QString& shape, int alignment)
 {
-	m_editCursor->set_cursor_shape(shape, alignment);
+    m_canvasCursor->set_cursor_shape(shape, alignment);
 }
 
 void SheetView::set_edit_cursor_text(const QString &text, int mseconds)
 {
-	m_editCursor->set_text(text, mseconds);
+    m_canvasCursor->set_text(text, mseconds);
 }
 
 void SheetView::set_canvas_cursor_pos(QPointF pos,  AbstractViewPort::CursorMoveReason reason)
 {
-    m_editCursor->set_pos(pos, reason);
+    m_canvasCursor->set_pos(pos, reason);
 }
 
 void SheetView::mouse_hover_move_event()
@@ -1316,7 +1316,7 @@ void SheetView::context_changed()
         foreach(ContextItem * item, items) {
             QString cursorShape = cursor_dict()->value(item->metaObject()->className(), "");
             if (!cursorShape.isEmpty()) {
-                cpointer().setCursorShape(cursorShape, Qt::AlignTop | Qt::AlignHCenter);
+                cpointer().set_canvas_cursor_shape(cursorShape, Qt::AlignTop | Qt::AlignHCenter);
                 break;
             }
         }

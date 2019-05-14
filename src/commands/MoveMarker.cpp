@@ -151,9 +151,9 @@ int MoveMarker::jog()
     if (didSnap) {
         QPointF scenePos = cpointer().scene_pos();
         scenePos.setX(mmd->view->x());
-        cpointer().setCursorPos(scenePos);
+        cpointer().set_canvas_cursor_pos(scenePos);
     } else {
-        cpointer().setCursorPos(cpointer().scene_pos());
+        cpointer().set_canvas_cursor_pos(cpointer().scene_pos());
     }
 
 //	d->view->set_position(int(m_newWhen / d->scalefactor));

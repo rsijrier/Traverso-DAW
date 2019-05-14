@@ -43,10 +43,10 @@ int ArrowKeyBrowser::finish_hold()
 void ArrowKeyBrowser::set_cursor_shape(int useX, int useY)
 {
         if (useX) {
-		cpointer().setCursorShape(":/cursorHoldLr");
+		cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
         }
         if (useY) {
-		cpointer().setCursorShape(":/cursorHoldUd");
+		cpointer().set_canvas_cursor_shape(":/cursorHoldUd");
         }
 }
 

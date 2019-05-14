@@ -140,7 +140,7 @@ private:
     TrackView*          m_sheetMasterOutView;
     TrackView*          m_projectMasterOutView;
     WorkCursor*         m_workCursor;
-    TCanvasCursor*      m_editCursor;
+    TCanvasCursor*      m_canvasCursor;
     int                 m_sceneHeight{};
     float               m_meanTrackHeight{};
     QScrollBar*         m_vScrollBar;

@@ -208,7 +208,7 @@ void ViewPort::detect_items_below_cursor()
         }
     } else {
         // If no item is below the mouse, default to default cursor
-        setCanvasCursorShape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
+        set_canvas_cursor_shape(":/cursorFloat", Qt::AlignTop | Qt::AlignHCenter);
     }
 
     // update context pointer active context items list
@@ -327,17 +327,17 @@ void ViewPort::paintEvent( QPaintEvent* e )
 	QGraphicsView::paintEvent(e);
 }
 
-void ViewPort::setCanvasCursorShape(const QString &shape, int alignment)
+void ViewPort::set_canvas_cursor_shape(const QString &shape, int alignment)
 {
     m_sv->set_cursor_shape(shape, alignment);
 }
 
-void ViewPort::setCursorText( const QString & text, int mseconds)
+void ViewPort::set_canvas_cursor_text( const QString & text, int mseconds)
 {
 	m_sv->set_edit_cursor_text(text, mseconds);
 }
 
-void ViewPort::set_holdcursor_pos(QPointF pos, CursorMoveReason reason)
+void ViewPort::set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason)
 {
     m_sv->set_canvas_cursor_pos(pos, reason);
 }

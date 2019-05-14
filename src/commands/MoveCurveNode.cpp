@@ -64,12 +64,12 @@ void MoveCurveNode::toggle_vertical_only()
     mcnd->verticalOnly = !mcnd->verticalOnly;
     if (mcnd->verticalOnly)
 	{
-		cpointer().setCursorText(tr("Vertical On"), 1000);
+		cpointer().set_canvas_cursor_text(tr("Vertical On"), 1000);
 
 	}
 	else
 	{
-		cpointer().setCursorText(tr("Vertical Off"), 1000);
+		cpointer().set_canvas_cursor_text(tr("Vertical Off"), 1000);
 	}
 }
 
@@ -153,7 +153,7 @@ void MoveCurveNode::set_cursor_shape(int useX, int useY)
 
 int MoveCurveNode::jog()
 {
-	QPoint mousepos = cpointer().pos();
+	QPoint mousepos = cpointer().mouse_viewport_pos();
 
 	int dx, dy;
     dx = mousepos.x() - mcnd->mousepos.x();
@@ -193,7 +193,7 @@ int MoveCurveNode::check_and_apply_when_and_value_diffs()
         // Use a delegate (or something similar) in the future that set's the correct value.
 	if (m_nodeDatas.size() == 1) {
 		float dbFactor = coefficient_to_dB(m_nodeDatas.first().origValue + m_valueDiff);
-        cpointer().setCursorText(QByteArray::number(dbFactor, 'f', 1).append(" dB"));
+        cpointer().set_canvas_cursor_text(QByteArray::number(dbFactor, 'f', 1).append(" dB"));
 	}
 
     return do_action();

@@ -76,7 +76,7 @@ int TrackPan::prepare_actions()
 
 int TrackPan::begin_hold()
 {
-	m_origX = cpointer().x();
+	m_origX = cpointer().mouse_viewport_x();
         m_origPan = m_newPan = m_track->get_pan();
 
         return 1;
@@ -113,13 +113,13 @@ void TrackPan::set_cursor_shape(int useX, int useY)
 	Q_UNUSED(useX);
 	Q_UNUSED(useY);
 	
-	cpointer().setCursorShape(":/cursorHoldLr");
+	cpointer().set_canvas_cursor_shape(":/cursorHoldLr");
 }
 
 int TrackPan::jog()
 {
         float w = 600.0;
-	float ofx = (float) m_origX - cpointer().x();
+	float ofx = (float) m_origX - cpointer().mouse_viewport_x();
         float p = -2.0f *  (ofx) / w ;
 
         if (p > 0.0f && p < 0.01f) {
@@ -142,9 +142,9 @@ int TrackPan::jog()
 
         m_track->set_pan(m_newPan);
 
-	m_origX = cpointer().x();
+	m_origX = cpointer().mouse_viewport_x();
 	
-	cpointer().setCursorText(QByteArray::number(m_newPan, 'f', 2));
+	cpointer().set_canvas_cursor_text(QByteArray::number(m_newPan, 'f', 2));
 	return 1;
 }
 
@@ -182,5 +182,5 @@ void TrackPan::set_value_by_keyboard_input(float newPan)
 	m_newPan = newPan;
 	m_track->set_pan(m_newPan);
 
-	cpointer().setCursorText(QByteArray::number(m_newPan, 'f', 2));
+	cpointer().set_canvas_cursor_text(QByteArray::number(m_newPan, 'f', 2));
 }

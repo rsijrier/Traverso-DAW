@@ -75,8 +75,8 @@ int Zoom::prepare_actions()
 
 int Zoom::begin_hold()
 {
-        m_verticalJogZoomLastY = cpointer().y();
-        m_horizontalJogZoomLastX = cpointer().x();
+        m_verticalJogZoomLastY = cpointer().mouse_viewport_y();
+        m_horizontalJogZoomLastX = cpointer().mouse_viewport_x();
         m_origPos = cpointer().scene_pos();
 
 	return 1;
@@ -96,11 +96,11 @@ void Zoom::set_cursor_shape( int useX, int useY )
 	Q_UNUSED(useY);
 	
 	if (useX && useY) {
-		cpointer().setCursorShape(":/cursorZoom");
+		cpointer().set_canvas_cursor_shape(":/cursorZoom");
 	} else if(useX) {
-		cpointer().setCursorShape(":/cursorZoomHorizontal");
+		cpointer().set_canvas_cursor_shape(":/cursorZoomHorizontal");
 	} else if (useY) {
-		cpointer().setCursorShape(":/cursorZoomVertical");
+		cpointer().set_canvas_cursor_shape(":/cursorZoomVertical");
 	}
 
         m_mousePos = QCursor::pos();
@@ -111,7 +111,7 @@ int Zoom::jog()
         PENTER;
 	
 	if (m_jogVertical) {
-		int y = cpointer().y();
+		int y = cpointer().mouse_viewport_y();
                 int dy = y - m_verticalJogZoomLastY;
 		
 		if (abs(dy) > 8) {
@@ -125,7 +125,7 @@ int Zoom::jog()
 	} 
 	
 	if (m_jogHorizontal) {
-                int x = cpointer().x();
+                int x = cpointer().mouse_viewport_x();
                 int dx = x - m_horizontalJogZoomLastX;
 		
 		if (abs(dx) > 10  /*1*/) {
@@ -138,7 +138,7 @@ int Zoom::jog()
 		}
 	}
 
-	cpointer().setCursorPos(m_origPos);
+	cpointer().set_canvas_cursor_pos(m_origPos);
 	
         return 1;
 }
@@ -277,15 +277,15 @@ int Zoom::collected_number_to_track_height(const QString& collected) const
 void Zoom::toggle_vertical_horizontal_jog_zoom()
 {
 	if (m_jogVertical) {
-		cpointer().setCursorShape(":/cursorZoomHorizontal");
-		cpointer().setCursorText(tr("Vertical Off"), 1000);
-		cpointer().setCursorPos(m_origPos);
+		cpointer().set_canvas_cursor_shape(":/cursorZoomHorizontal");
+		cpointer().set_canvas_cursor_text(tr("Vertical Off"), 1000);
+		cpointer().set_canvas_cursor_pos(m_origPos);
                 m_jogVertical = false;
 		m_jogHorizontal = true;
 	} else {
-		cpointer().setCursorShape(":/cursorZoomVertical");
-		cpointer().setCursorText(tr("Vertical On"), 1000);
-		cpointer().setCursorPos(m_origPos);
+		cpointer().set_canvas_cursor_shape(":/cursorZoomVertical");
+		cpointer().set_canvas_cursor_text(tr("Vertical On"), 1000);
+		cpointer().set_canvas_cursor_pos(m_origPos);
 		m_jogVertical = true;
 		m_jogHorizontal = false;
 	}

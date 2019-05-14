@@ -39,14 +39,14 @@ public:
 
      * @return The current ViewPort's mouse x coordinate
      */
-    int x() const;
+    int mouse_viewport_x() const;
 
     /**
      * 	Returns the current ViewPort's mouse y coordinate
 
      * @return The current ViewPort's mouse y coordinate
      */
-    int y() const;
+    int mouse_viewport_y() const;
 
     /**
      *  Convenience function, equals QPoint(cpointer().x(), cpointer().y())
@@ -54,7 +54,7 @@ public:
     *   @return The current ViewPorts mouse position;
     */
 
-    QPoint pos() const;
+    QPoint mouse_viewport_pos() const;
 
     /**
      * 	Convenience function that maps the ViewPort's mouse x <br />
@@ -85,7 +85,7 @@ public:
      * @param x The ViewPort's mouse x coordinate
      * @param y The ViewPort's mouse y coordinate
      */
-    void store_canvas_cursor_position(const QPoint& pos);
+    void store_canvas_cursor_position(const QPoint& mouse_viewport_pos);
 
     /**
      *        Returns the ViewPort x coordinate on first input event.
@@ -122,9 +122,9 @@ public:
     }
 
     void set_current_viewport(AbstractViewPort* vp);
-    void setCursorShape(const QString& cursor, int alignment=Qt::AlignCenter);
-    void setCursorText(const QString& text, int mseconds=-1);
-    void setCursorPos(QPointF pos);
+    void set_canvas_cursor_shape(const QString& cursor, int alignment=Qt::AlignCenter);
+    void set_canvas_cursor_text(const QString& text, int mseconds=-1);
+    void set_canvas_cursor_pos(QPointF mouse_viewport_pos);
 
     QList<QObject* > get_context_items();
     QList<ContextItem*> get_active_context_items() const {return m_activeContextItems;}
@@ -144,7 +144,7 @@ public:
 
     QPoint get_global_mouse_pos() const;
 
-    void update_mouse_positions(const QPoint &pos, const QPoint &globalPos);
+    void update_mouse_positions(const QPoint &mouse_viewport_pos, const QPoint &globalPos);
     void request_viewport_to_detect_items_below_cursor();
 
 
