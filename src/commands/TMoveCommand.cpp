@@ -232,6 +232,7 @@ void TMoveCommand::process_collected_number(const QString &collected)
 		}
         pm().get_project()->set_keyboard_arrow_key_navigation_speed(d->speed);
         cpointer().set_canvas_cursor_text(tr("Speed: %1").arg(d->speed), 1000);
+        ied().set_numerical_input("");
 	}
 }
 

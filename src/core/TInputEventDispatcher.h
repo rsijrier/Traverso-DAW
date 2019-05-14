@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2011 Remon Sijrier
+    Copyright (C) 2005-2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -53,9 +53,9 @@ public:
     void catch_mousebutton_release( QMouseEvent * e );
     void catch_scroll(QWheelEvent * e );
 
-    int collected_number();
     bool has_collected_number();
     QString get_collected_number() const {return m_sCollectedNumber;}
+    void set_numerical_input(const QString& number);
 
     bool is_holding();
 
@@ -107,21 +107,18 @@ private:
     bool			m_cancelHold{};
     bool			m_bypassJog{};
 
-    int 			m_collectedNumber;
     int             m_dispatchResult{};
     int             m_unbypassJogDistance{};
     int             m_holdEventCode;
 
     void 			finish_hold();
     void 			reset();
-    void 			stop_collecting();
     bool 			check_number_collection(int eventcode);
 
     //! call the slot that handler a given action
     int dispatch_shortcut(TShortcut* shortCut, bool fromContextMenu=false);
 
     void set_holding(bool holding);
-    void set_numerical_input(const QString& number);
     void process_press_event(int keyValue);
     void process_release_event(int keyValue);
     bool is_modifier_keyfact(int eventcode);

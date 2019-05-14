@@ -1349,6 +1349,8 @@ void SheetView::context_changed()
                 break;
             }
         }
+    } else {
+    PERROR("cpointer returned empty context item list")
     }
 }
 

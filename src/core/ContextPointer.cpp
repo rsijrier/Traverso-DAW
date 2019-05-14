@@ -161,8 +161,10 @@ void ContextPointer::hold_finished()
 {
     if (m_viewPort) {
         m_viewPort->release_mouse();
-		emit contextChanged();
-	}
+        emit contextChanged();
+    } else {
+        PERROR("Hold finished, but no ViewPort set");
+    }
 }
 
 void ContextPointer::set_jog_bypass_distance(int distance)
@@ -195,6 +197,12 @@ void ContextPointer::set_contextmenu_items(const QList< QObject * >& list)
 void ContextPointer::set_current_viewport(AbstractViewPort *vp)
 {
 	PENTER;
+
+    if (ied().is_holding()) {
+        PERROR("Setting new viewport when Input Event Dispatcher is holding is not supported");
+        return;
+    }
+
     if (m_viewPort) {
         // just in case, it should not be possible at this stage that a viewport
         // still has mouse grab, but if a key release is not catched at the proper
@@ -215,7 +223,8 @@ void ContextPointer::set_canvas_cursor_shape(const QString &cursor, int alignmen
 {
     if (!m_viewPort)
 	{
-		return;
+        PERROR("Setting canvas cursor shape but I have no ViewPort!");
+        return;
 	}
 
     m_viewPort->set_canvas_cursor_shape(cursor, alignment);
@@ -236,7 +245,8 @@ void ContextPointer::set_canvas_cursor_pos(QPointF pos)
     PENTER;
     if (!m_viewPort)
 	{
-		return;
+        PERROR("Setting canvas cursor pos but I have no ViewPort!");
+        return;
 	}
 
 	if (ied().get_holding_command() && ied().get_holding_command()->restoreCursorPosition())

@@ -266,6 +266,15 @@ void ViewPort::leaveEvent(QEvent* e)
     // always restore an overrided cursor, we did set one in enterEvent()
 //    QGuiApplication::restoreOverrideCursor();
 
+    // FIXME
+    // not having a viewport in contextpointer is fine when mouse cursor leaves the viewport
+    // however, a leaveEvent is also created when a ContextMenu is shown
+    // in special cases (Q qwerty browse Gain enter numerical input Q qwerty browse reject enter -> undefined state is entered)
+    // When selecting with the mouse cursor an item from the menu there is no problem, probably due an enterEvent or at least
+    // mouse move event is catched by ContextPointer
+    // this can result in ContextPointer having an empty list of active context items
+    // and a crash in TInputEventDispatcher finish_hold() when enter is pressed during this state
+    // state is recovered when the mouse is moved
     cpointer().set_current_viewport(nullptr);
 
     // Force the next mouse move event to do something

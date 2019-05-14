@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2011 Remon Sijrier
+Copyright (C) 2005-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -92,7 +92,6 @@ TInputEventDispatcher::TInputEventDispatcher()
 	m_holdEventCode = -100;
 	reset();
 
-	m_collectedNumber = -1;
 	m_sCollectedNumber = "";
 
 	m_modifierKeys << Qt::Key_Shift << Qt::Key_Control << Qt::Key_Alt << Qt::Key_Meta;
@@ -124,7 +123,7 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TFunction* functio
 	}
 
     if (function->commandName == "RejectHoldCommand") {
-        reject_current_hold_actions();
+        process_press_event(Qt::Key_Escape);
         return 1;
     }
 
@@ -504,6 +503,8 @@ void TInputEventDispatcher::update_jog_bypass_pos()
 
 void TInputEventDispatcher::set_holding(bool holding)
 {
+    PENTER;
+
     m_isHolding = holding;
 
     if (m_isHolding) {
@@ -517,10 +518,11 @@ void TInputEventDispatcher::set_holding(bool holding)
 
 void TInputEventDispatcher::reset()
 {
-	PENTER3;
+    PENTER;
     set_holding(false);
 	m_cancelHold = false;
 	m_bypassJog = false;
+    m_enterFinishesHold = false;
 
 	set_numerical_input("");
 }
@@ -532,7 +534,7 @@ void TInputEventDispatcher::reject_current_hold_actions()
     // Fake an escape key press, so if a hold action was
 	// running it will be canceled!
 	if (is_holding()) {
-		process_press_event(Qt::Key_Escape);
+        process_press_event(Qt::Key_Escape);
 	}
 }
 
@@ -716,7 +718,7 @@ bool TInputEventDispatcher::is_modifier_keyfact(int keyValue)
 
 void TInputEventDispatcher::finish_hold()
 {
-	PENTER3;
+    PENTER;
 	PMESG("Finishing hold action %s", m_holdingCommand->metaObject()->className());
 
 	m_holdEventCode = -100;
@@ -812,24 +814,6 @@ bool TInputEventDispatcher::check_number_collection(int eventcode)
 	return false;
 }
 
-void TInputEventDispatcher::stop_collecting()
-{
-	PENTER3;
-	bool ok;
-	m_collectedNumber = m_sCollectedNumber.toInt(&ok);
-	if (!ok) {
-		m_collectedNumber = -1;
-	}
-	set_numerical_input("");
-}
-
-int TInputEventDispatcher::collected_number( )
-{
-	int n = m_collectedNumber;
-	set_numerical_input("");
-	return n;
-}
-
 bool TInputEventDispatcher::has_collected_number()
 {
     return !m_sCollectedNumber.isEmpty();
@@ -838,16 +822,12 @@ bool TInputEventDispatcher::has_collected_number()
 void TInputEventDispatcher::set_numerical_input(const QString &number)
 {
 	m_sCollectedNumber = number;
-	bool ok;
-	m_collectedNumber = m_sCollectedNumber.toInt(&ok);
-	if (!ok) {
-		m_collectedNumber = -1;
-	}
 
 	if (m_holdingCommand) {
 		m_holdingCommand->process_collected_number(m_sCollectedNumber);
 	}
-	emit collectedNumberChanged();
+
+    emit collectedNumberChanged();
 }
 
 bool TInputEventDispatcher::is_holding( )
