@@ -28,6 +28,7 @@ $Id: FadeCurveView.h,v 1.2 2008/05/24 17:27:49 r_sijrier Exp $
 class Curve;
 class FadeCurve;
 class AudioClipView;
+class AudioClip;
 
 class FadeCurveView : public ViewItem
 {
@@ -43,11 +44,13 @@ public:
 	void set_holding(bool hold);
 	
 	FadeCurve* get_fade() const {return m_fadeCurve;}
+    AudioClip* get_audio_clip() const {return m_audioClip;}
 	
 	void load_theme_data();
 
 private:
 	FadeCurve*	m_fadeCurve;
+    AudioClip*  m_audioClip;
 	Curve*		m_guicurve;
 	bool		m_holdactive;
 	

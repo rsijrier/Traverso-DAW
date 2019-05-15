@@ -46,7 +46,8 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 	, m_fadeCurve(fadeCurve)
 {
 	PENTERCONS;
-        m_sv = sv;
+    m_sv = sv;
+    m_audioClip = parent->get_clip();
 	m_holdactive = false;
 	m_guicurve = new Curve(nullptr);
 	m_guicurve->set_sheet(m_sv->get_sheet());

@@ -297,6 +297,8 @@ TraversoCommands::TraversoCommands()
     create_and_add_function("AudioClip", tr("Remove AudioClip"), "RemoveClip", RemoveClipCommand, QStringList(), "DeleteBase");
     create_and_add_function("AudioClip", tr("(De)Select"), "ClipSelectionSelect", ClipSelectionCommand, QStringList() << "toggle_selected");
 
+    create_and_add_function("FadeCurveView", tr("Length"), "FadeLength", FadeRangeCommand);
+
     create_and_add_function("PluginView", tr("Move"), "MovePlugin", MovePluginCommand, QStringList(), "MoveBase", true);
 
     create_and_add_function("SheetView", tr("Fold Sheet"), "FoldSheet", MoveClipCommand, QStringList() << "fold_sheet", "", true, true);
@@ -763,6 +765,14 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         PERROR("TraversoCommands: Supplied QObject was not a TimeLineView or MarkerView! "
                "MoveMarkerCommand needs a TimeLineView or MarkerView as argument");
         return 0;
+    }
+    case FadeRangeCommand:
+    {
+        FadeCurveView* view = qobject_cast<FadeCurveView*>(obj);
+        if (view) {
+            return new FadeRange(view->get_audio_clip(), view->get_fade(), view->get_sheetview()->timeref_scalefactor);
+        }
+        return nullptr;
     }
 
     }
