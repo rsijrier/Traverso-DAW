@@ -157,6 +157,12 @@ void FadeRange::move_right()
         do_keyboard_move(m_newRange + (frp->scalefactor * d->speed * frp->direction));
 }
 
+void FadeRange::reset_length()
+{
+    m_newRange = 1.0;
+    do_action();
+}
+
 
 void FadeRange::next_snap_pos()
 {

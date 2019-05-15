@@ -77,6 +77,7 @@ public slots:
     void prev_snap_pos();
     void move_left();
     void move_right();
+    void reset_length();
 };
 
 

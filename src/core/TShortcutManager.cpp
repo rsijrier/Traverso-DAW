@@ -1129,6 +1129,8 @@ void TShortcutManager::loadFunctions()
     createAndAddFunction("TAudioProcessingNode", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
     createAndAddFunction("AudioTrackView", tr("Insert Silence"), "insert_silence", "AudioTrackInsertSilence");
 
+    createAndAddFunction("FadeRange", tr("Reset"), "reset_length", "FadeResetLength");
+
     createAndAddFunction("TGainGroupCommand", tr("Toggle Selection"), "toggle_primary_gain_only", "GainToggleSelection");
 
 
