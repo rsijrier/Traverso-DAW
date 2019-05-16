@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2010 Remon Sijrier
+    Copyright (C) 2010-2019 Remon Sijrier
 
     This file is part of Traverso
 
@@ -43,7 +43,7 @@ public :
     int jog();
     void process_collected_number(const QString & collected);
 
-protected :
+protected:
     void start_shuttle(bool drag=false);
     void stop_shuttle();
     void update_shuttle_factor();
@@ -70,6 +70,15 @@ public slots:
     void move_faster();
     void move_slower();
     void toggle_snap_on_off();
+
+    // Move up/down/left/right moves scrollbars by pagestep
+    // as a default. Reimplement those function if different
+    // behavior is needed (Qt slots behave like virtual functions
+    // and can be reimplemented in derived classes)
+    void move_up();
+    void move_down();
+    void move_left();
+    void move_right();
 
 private slots:
     void update_shuttle();

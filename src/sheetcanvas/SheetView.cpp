@@ -51,9 +51,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-11  USA.
 #include "TCanvasCursor.h"
 #include "TSession.h"
 #include "ViewPort.h"
+#include "TMoveCommand.h"
 
 #include "AddRemove.h"
-#include "Shuttle.h"
 #include "ProjectManager.h"
 #include "Project.h"
 
@@ -457,7 +457,7 @@ void SheetView::hscrollbar_value_changed(int value)
     // this here. for now disable calling ied().jog(), so far no behavioral change
     // noticed.
 	if (ied().is_holding()) {
-		Shuttle* s = dynamic_cast<Shuttle*>(ied().get_holding_command());
+        TMoveCommand* s = dynamic_cast<TMoveCommand*>(ied().get_holding_command());
 		if (!s) {
 //			ied().jog();
 		}

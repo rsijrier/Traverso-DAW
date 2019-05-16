@@ -79,7 +79,6 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_meta_object(&MoveEdge::staticMetaObject);
     tShortCutManager().add_meta_object(&CropClip::staticMetaObject);
     tShortCutManager().add_meta_object(&FadeRange::staticMetaObject);
-    tShortCutManager().add_meta_object(&Shuttle::staticMetaObject);
     tShortCutManager().add_meta_object(&SplitClip::staticMetaObject);
     tShortCutManager().add_meta_object(&TPanKnobView::staticMetaObject);
     tShortCutManager().add_meta_object(&TMoveCommand::staticMetaObject);
@@ -138,13 +137,12 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("CorrelationMeter", tr("Correlation Meter"));
     tShortCutManager().add_translation("SpectralMeter", tr("Spectral Analyzer"));
     tShortCutManager().add_translation("Track", tr("Track"));
-    tShortCutManager().add_translation("TMoveCommand", tr("Move Command"));
+    tShortCutManager().add_translation("TMoveCommand", tr("Shuttle"));
     tShortCutManager().add_translation("EditProperties", tr("Edit Properties"));
     tShortCutManager().add_translation("TAudioProcessingNode", tr("Audio Processing Node"));
     tShortCutManager().add_translation("ToggleBypass", tr("Toggle Bypass"));
     tShortCutManager().add_translation("HoldCommand", tr("Hold Command"));
     tShortCutManager().add_translation("Navigate", tr("Navigate"));
-    tShortCutManager().add_translation("Scroll", tr("Scroll"));
 
     TFunction* function;
 
@@ -303,8 +301,7 @@ TraversoCommands::TraversoCommands()
 
     create_and_add_function("SheetView", tr("Fold Sheet"), "FoldSheet", MoveClipCommand, QStringList() << "fold_sheet", "", true, true);
     create_and_add_function("SheetView", tr("Move Work Cursor"), "WorkCursorMove", WorkCursorMoveCommand);
-    create_and_add_function("SheetView", tr("Scroll"), "Scroll", ScrollCommand);
-    create_and_add_function("SheetView", tr("Shuttle"), "Shuttle", ShuttleCommand);
+    create_and_add_function("SheetView", tr("Shuttle"), "Shuttle", ShuttleCommand, QStringList(), "", true, true);
 }
 
 void TraversoCommands::add_function(TFunction *function, TraversoCommand command)
@@ -679,23 +676,12 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         return curveView->drag_node();
     }
 
-    case ScrollCommand:
-    {
-        SheetView* view = qobject_cast<SheetView*>(obj);
-        if (!view) {
-            PERROR("TraversoCommands: Supplied QObject was not an SheetView! "
-                   "ScrollCommand needs an SheetView as argument");
-            return 0;
-        }
-        return new Scroll(view, arguments);
-    }
-
     case ArrowKeyBrowserCommand:
     {
         SheetView* view = qobject_cast<SheetView*>(obj);
         if (!view) {
             PERROR("TraversoCommands: Supplied QObject was not an SheetView! "
-                   "ScrollCommand needs an SheetView as argument");
+                   "ArrowKeyBrowserCommand needs an SheetView as argument");
             return 0;
         }
         return new ArrowKeyBrowser(view, arguments);
@@ -704,12 +690,10 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
     case ShuttleCommand:
     {
         SheetView* view = qobject_cast<SheetView*>(obj);
-        if (!view) {
-            PERROR("TraversoCommands: Supplied QObject was not an SheetView! "
-                   "ShuttleCommand needs an SheetView as argument");
-            return 0;
+        if (view) {
+            return new TMoveCommand(view, nullptr, "");
         }
-        return new Shuttle(view);
+        return nullptr;
     }
 
     case NormalizeClipCommand:

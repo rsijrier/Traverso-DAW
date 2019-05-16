@@ -28,6 +28,8 @@
 #include "Sheet.h"
 #include "SheetView.h"
 
+#include <QScrollBar>
+
 #include "Debugger.h"
 
 TMoveCommand::TMoveCommand(SheetView *sv, ContextItem* item, const QString &description)
@@ -49,6 +51,15 @@ TMoveCommand::TMoveCommand(SheetView *sv, ContextItem* item, const QString &desc
     connect(&d->shuttleTimer, SIGNAL(timeout()), this, SLOT (update_shuttle()));
 }
 
+void TMoveCommand::cancel_action()
+{
+    if (!d) {
+        return;
+    }
+    cleanup_and_free_data();
+}
+
+
 int TMoveCommand::begin_hold()
 {
     PENTER;
@@ -60,15 +71,12 @@ int TMoveCommand::begin_hold()
 int TMoveCommand::finish_hold()
 {
     PENTER;
+    if (!d) {
+        return -1;
+    }
     cleanup_and_free_data();
     return 1;
 }
-
-void TMoveCommand::cancel_action()
-{
-    PENTER;
-    cleanup_and_free_data();
- }
 
 void TMoveCommand::cleanup_and_free_data()
 {
@@ -294,5 +302,27 @@ void TMoveCommand::set_shuttle_factor_values(int x, int y)
 {
     d->shuttleXfactor = x;
     d->shuttleYfactor = y;
+}
+
+void TMoveCommand::move_up()
+{
+    int step = d->sv->getVScrollBar()->pageStep();
+    d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() - step * d->speed);
+}
+
+void TMoveCommand::move_down()
+{
+    int step = d->sv->getVScrollBar()->pageStep();
+    d->sv->set_vscrollbar_value(d->sv->vscrollbar_value() + step * d->speed);
+}
+
+void TMoveCommand::move_left()
+{
+    d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() - (d->speed * 5));
+}
+
+void TMoveCommand::move_right()
+{
+    d->sv->set_hscrollbar_value(d->sv->hscrollbar_value() + (d->speed * 5));
 }
 
