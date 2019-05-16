@@ -75,7 +75,11 @@ void MoveCurveNode::toggle_vertical_only()
 
 int MoveCurveNode::prepare_actions()
 {
-        return 1;
+    if (m_whenDiff.universal_frame() == 0 && qFuzzyCompare(m_valueDiff, 0.0)) {
+        return -1;
+    }
+
+    return 1;
 }
 
 int MoveCurveNode::finish_hold()
