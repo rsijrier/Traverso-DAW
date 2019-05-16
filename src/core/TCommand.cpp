@@ -86,11 +86,8 @@ $Id: Command.cpp,v 1.21 2008/02/12 20:39:08 r_sijrier Exp $
  * @param des The description of the action
  */
 TCommand::TCommand( const QString& des )
-	: QUndoCommand(des)
+    : TCommand(nullptr, des)
 {
-    m_historyStack = nullptr;
-	m_isHistorable = true;
-    m_canvasCursorFollowsMouseCursor = true;
 }
 
 /**
@@ -102,10 +99,15 @@ TCommand::TCommand( const QString& des )
  * @param des  The description as will show up in the HistoryView
  */
 TCommand::TCommand(ContextItem* item, const QString& des)
-    : TCommand(des)
+    : QUndoCommand(des)
 {
+    m_isValid = false;
+    m_canvasCursorFollowsMouseCursor = true;
+
     if (item) {
         m_historyStack = item->get_history_stack();
+    } else {
+        m_historyStack = nullptr;
     }
 }
 
@@ -169,11 +171,6 @@ void TCommand::set_valid(bool valid)
 int TCommand::push_to_history_stack( )
 {
 	PENTER3;
-	
-	if (! m_isHistorable) {
-		PMESG3("Not a Historable command, deleting the command");
-		return -1;
-	}
 	
 	if (! m_isValid) {
 		PMESG3("This command is invalid, deleting the command");
@@ -299,8 +296,8 @@ void TCommand::process_command(TCommand * cmd)
 	}
 }
 
-void TCommand::set_historable(bool historible)
+void TCommand::set_do_not_push_to_historystack()
 {
-	m_isHistorable = historible;
+    m_historyStack = nullptr;
 }
 

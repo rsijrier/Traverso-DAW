@@ -30,10 +30,9 @@
 class CommandGroup : public TCommand
 {
 public :
-	CommandGroup(ContextItem* parent, const QString& des, bool historable=true)
+    CommandGroup(ContextItem* parent, const QString& des)
 		: TCommand(parent, des)
 	{
-		m_isHistorable = historable;
 	}
 	~CommandGroup();
 

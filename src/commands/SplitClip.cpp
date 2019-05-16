@@ -67,7 +67,7 @@ int SplitClip::prepare_actions()
 	leftClip->set_right_edge(m_splitPoint);
 	if (leftClip->get_fade_out()) {
 		FadeRange* cmd = (FadeRange*)leftClip->reset_fade_out();
-		cmd->set_historable(false);
+        cmd->set_do_not_push_to_historystack();
 		TCommand::process_command(cmd);
 	}
 	
@@ -76,7 +76,7 @@ int SplitClip::prepare_actions()
 	rightClip->set_track_start_location(m_splitPoint);
 	if (rightClip->get_fade_in()) {
 		FadeRange* cmd = (FadeRange*)rightClip->reset_fade_in();
-		cmd->set_historable(false);
+        cmd->set_do_not_push_to_historystack();
 		TCommand::process_command(cmd);
 	}
 	

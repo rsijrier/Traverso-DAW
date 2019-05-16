@@ -131,7 +131,7 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 	}
 
 	CommandGroup* group = new CommandGroup(m_sw->get_sheet(), 
-		       tr("Import %n audiofile(s)", "", m_imports.size() + m_resourcesImport.size()), true);
+               tr("Import %n audiofile(s)", "", m_imports.size() + m_resourcesImport.size()));
 	
 	TimeRef startpos = TimeRef(mapFromGlobal(QCursor::pos()).x() * m_sw->get_sheetview()->timeref_scalefactor);
 	

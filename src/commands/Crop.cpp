@@ -95,7 +95,7 @@ int CropClip::prepare_actions()
 	leftClip->set_right_edge(TimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_track_start_location());
 	if (leftClip->get_fade_out()) {
         auto cmd = leftClip->reset_fade_out();
-		cmd->set_historable(false);
+        cmd->set_do_not_push_to_historystack();
 		TCommand::process_command(cmd);
 	}
 
@@ -104,7 +104,7 @@ int CropClip::prepare_actions()
 	rightClip->set_track_start_location(leftClip->get_track_end_location());
 	if (rightClip->get_fade_in()) {
         auto cmd = rightClip->reset_fade_in();
-		cmd->set_historable(false);
+        cmd->set_do_not_push_to_historystack();
 		TCommand::process_command(cmd);
 	}
 

@@ -36,8 +36,8 @@ public :
 	AddRemove(ContextItem* parent, ContextItem* item, const QString& des);
 	AddRemove(ContextItem* parent,
 			void*  arg,
-			bool historable,
-			TSession* sheet,
+            bool historable,
+            TSession* sheet,
 			const char* doActionSlot,
 			const char* doSignal,
 			const char* undoActionSlot,
@@ -45,8 +45,8 @@ public :
 			const QString& des);
 	AddRemove(ContextItem* parent,
 			ContextItem*  item,
-			bool historable,
-			TSession* sheet,
+            bool historable,
+            TSession* sheet,
 			const char* doActionSlot,
 			const char* doSignal,
 			const char* undoActionSlot,
