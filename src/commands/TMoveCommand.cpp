@@ -43,11 +43,6 @@ TMoveCommand::TMoveCommand(SheetView *sv, ContextItem* item, const QString &desc
         d->doSnap = d->sv->get_sheet()->is_snap_on();
     }
 
-    d->shuttleCurve.setType(QEasingCurve::InCubic);
-    d->shuttleCurve.setAmplitude(2.0);
-
-    d->dragShuttleCurve.setType(QEasingCurve::InExpo);
-
     connect(&d->shuttleTimer, SIGNAL(timeout()), this, SLOT (update_shuttle()));
 }
 
@@ -92,36 +87,34 @@ int TMoveCommand::jog()
         return -1;
     }
 
-    int direction = 1;
+    auto direction = ShuttleDirection::RIGHT;
 
-    qreal normalizedX = cpointer().mouse_viewport_x() / d->sv->get_clips_viewport()->width();
+    qreal normalizedX = qreal(cpointer().mouse_viewport_x()) / d->sv->get_clips_viewport()->width();
+    // clips viewport width to be used for active drag shuttle
+    qreal dragShuttleRange = 0.17;
 
-    if (normalizedX < 0.5) {
-        normalizedX = 0.5 - normalizedX;
-        normalizedX *= 2;
-        direction = -1;
-    } else if (normalizedX > 0.5) {
-        normalizedX = normalizedX - 0.5;
-        normalizedX *= 2;
-        if (normalizedX > 1.0) {
-            normalizedX *= 1.15;
+    if (normalizedX < dragShuttleRange || normalizedX > (1.0 - dragShuttleRange)) {
+        // this is where dragShuttle operates
+        if (normalizedX < dragShuttleRange) {
+            direction = ShuttleDirection::LEFT;
+            // normalize again to range 0.0 - 1.0
+            normalizedX = -dragShuttleRange + normalizedX;
+            normalizedX *= (1.0 / dragShuttleRange);
         }
-    }
-
-    qreal value = 1.0;
-    if (d->dragShuttle) {
-        value = d->dragShuttleCurve.valueForProgress(normalizedX);
+        if (normalizedX > (1.0 - dragShuttleRange)) {
+            // normalize again to range 0.0 - 1.0
+            normalizedX = normalizedX - (1.0 - dragShuttleRange);
+            normalizedX *= (1.0 / dragShuttleRange);
+        }
     } else {
-        value = d->shuttleCurve.valueForProgress(normalizedX);
+        normalizedX = 0;
     }
 
-    if (direction > 0) {
-        d->shuttleXfactor = int(value * 30);
-    } else {
-        d->shuttleXfactor = int(value * -30);
-    }
+    qreal value = d->shuttleCurve.valueForProgress(qAbs(normalizedX));
+    d->shuttleXfactor = int(value * 50 * direction);
 
-    direction = 1;
+
+    direction = ShuttleDirection::RIGHT;
     qreal normalizedY = cpointer().mouse_viewport_y() / d->sv->get_clips_viewport()->height();
 
     if (normalizedY < 0) normalizedY = 0;
@@ -131,18 +124,14 @@ int TMoveCommand::jog()
         normalizedY = 0;
     } else if (normalizedY < 0.5) {
         normalizedY = 0.5 - normalizedY;
-        direction = -1;
+        direction = ShuttleDirection::LEFT;
     } else if (normalizedY > 0.5) {
         normalizedY = normalizedY - 0.5;
     }
 
     normalizedY *= 2;
 
-    if (d->dragShuttle) {
-        value = d->dragShuttleCurve.valueForProgress(normalizedY);
-    } else {
-        value = d->shuttleCurve.valueForProgress(normalizedY);
-    }
+    value = d->shuttleCurve.valueForProgress(normalizedY);
 
     int yscale;
 
@@ -152,11 +141,7 @@ int TMoveCommand::jog()
         yscale = int(d->sv->get_clips_viewport()->viewport()->height() / 10);
     }
 
-    if (direction > 0) {
-        d->shuttleYfactor = int(value * yscale);
-    } else {
-        d->shuttleYfactor = int(value * -yscale);
-    }
+    d->shuttleYfactor = int(value * yscale * direction);
 
     if (d->dragShuttle) {
         d->shuttleYfactor *= 4;
@@ -264,6 +249,12 @@ void TMoveCommand::start_shuttle(bool drag)
 {
     if (!d->sv) {
         return;
+    }
+
+    if (drag) {
+        d->shuttleCurve.setType(QEasingCurve::InCirc);
+    } else {
+        d->shuttleCurve.setType(QEasingCurve::InCubic);
     }
 
     d->shuttleTimer.start(40);

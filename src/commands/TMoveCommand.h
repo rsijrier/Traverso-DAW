@@ -53,7 +53,6 @@ protected:
         SheetView*      sv;
         QTimer			shuttleTimer;
         QEasingCurve    shuttleCurve;
-        QEasingCurve    dragShuttleCurve;
         bool			dragShuttle{};
         int             shuttleXfactor{};
         int             shuttleYfactor{};
@@ -65,6 +64,11 @@ protected:
 
 private:
     void cleanup_and_free_data();
+
+    enum ShuttleDirection {
+        LEFT = -1,
+        RIGHT = 1
+    };
 
 public slots:
     void move_faster();
