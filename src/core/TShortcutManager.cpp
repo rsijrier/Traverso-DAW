@@ -1439,7 +1439,7 @@ QString TShortcutManager::createHtmlForClass(const QString& className, QObject* 
 	      "</head>\n<body>\n").arg(QApplication::palette().color(QPalette::AlternateBase).darker(105).name()).arg(alternateBaseColor);
 
 	if (object && object->inherits("PCommand")) {
-		PCommand* pc = dynamic_cast<PCommand*>(object);
+        PCommand* pc = static_cast<PCommand*>(object);
 		html += "<table><tr class=\"object\">\n<td width=220 align=\"center\">" + pc->text() + "</td></tr>\n";
 	} else {
 		html += "<table><tr class=\"object\">\n<td colspan=\"2\" align=\"center\"><b>" + name + "</b><font style=\"font-size: 11px;\">&nbsp;&nbsp;&nbsp;" + holdKeyFact + "</font></td></tr>\n";

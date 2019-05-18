@@ -230,8 +230,8 @@ void FadeCurveView::calculate_bounding_rect()
 	APILinkedListNode* guinode = guinodes.first();
 	
 	while (node) {
-        CurveNode* cnode = dynamic_cast<CurveNode*>(node);
-        CurveNode* cguinode = dynamic_cast<CurveNode*>(guinode);
+        CurveNode* cnode = static_cast<CurveNode*>(node);
+        CurveNode* cguinode = static_cast<CurveNode*>(guinode);
 		
 		cguinode->set_when_and_value(cnode->get_when() / m_sv->timeref_scalefactor, cnode->get_value());
 		

@@ -215,7 +215,7 @@ void Curve::solve ()
 		i = 0;
         for(APILinkedListNode* node = m_nodes.first(); node!=nullptr; node = node->next, ++i) {
 			
-            cn = dynamic_cast<CurveNode*>(node);
+            cn = static_cast<CurveNode*>(node);
 
             if (cn == nullptr) {
                 qFatal("programming error: non-CurvePoint event found in event list for a Curve");

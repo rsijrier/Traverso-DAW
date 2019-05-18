@@ -215,7 +215,7 @@ void CurveView::add_curvenode_view(CurveNode* node)
     CurveNodeView* nodeview = new CurveNodeView(m_sv, this, node, m_guicurve);
     m_nodeViews.append(nodeview);
 
-    AddRemove* cmd = dynamic_cast<AddRemove*>(m_guicurve->add_node(nodeview, false));
+    AddRemove* cmd = qobject_cast<AddRemove*>(m_guicurve->add_node(nodeview, false));
     if (cmd) {
         cmd->set_instantanious(true);
         TCommand::process_command(cmd);
@@ -235,7 +235,7 @@ void CurveView::remove_curvenode_view(CurveNode* node)
                 m_blinkingNode = nullptr;
                 update_softselected_node(cpointer().scene_pos());
             }
-            AddRemove* cmd = dynamic_cast<AddRemove*>(m_guicurve->remove_node(nodeview, false));
+            AddRemove* cmd = qobject_cast<AddRemove*>(m_guicurve->remove_node(nodeview, false));
             if (cmd) {
                 cmd->set_instantanious(true);
                 TCommand::process_command(cmd);
@@ -551,7 +551,7 @@ float CurveView::get_default_value()
         return 1.0f;
     }
 
-    return float(dynamic_cast<CurveNode*>(m_guicurve->get_nodes().first())->value);
+    return float(static_cast<CurveNode*>(m_guicurve->get_nodes().first())->value);
 }
 
 TCommand * CurveView::remove_all_nodes()
