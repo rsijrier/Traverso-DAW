@@ -94,7 +94,7 @@ public :
     TrackView* get_trackview_at_scene_pos(QPointF point);
 	QList<TrackView*> get_track_views() const;
 	int get_track_height(Track* track) const;
-    float get_mean_track_height() const {return m_meanTrackHeight;}
+    qreal get_mean_track_height() const {return m_meanTrackHeight;}
 	static QHash<QString, QString>* cursor_dict();
 
 	QScrollBar* getVScrollBar() {return m_vScrollBar;}
@@ -144,7 +144,7 @@ private:
     TCanvasCursor*      m_canvasCursor;
     QPropertyAnimation* m_canvasCursorMoveAnimation;
     int                 m_sceneHeight{};
-    float               m_meanTrackHeight{};
+    qreal               m_meanTrackHeight{};
     QScrollBar*         m_vScrollBar;
     QScrollBar*         m_hScrollBar;
     bool                m_actOnPlayHead;

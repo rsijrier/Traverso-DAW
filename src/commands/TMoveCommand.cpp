@@ -91,7 +91,7 @@ int TMoveCommand::jog()
 
     qreal normalizedX = qreal(cpointer().mouse_viewport_x()) / d->sv->get_clips_viewport()->width();
     // clips viewport width to be used for active drag shuttle
-    qreal dragShuttleRange = 0.17;
+    qreal dragShuttleRange = 0.18;
 
     if (normalizedX < dragShuttleRange || normalizedX > (1.0 - dragShuttleRange)) {
         // this is where dragShuttle operates
@@ -111,41 +111,42 @@ int TMoveCommand::jog()
     }
 
     qreal value = d->shuttleCurve.valueForProgress(qAbs(normalizedX));
-    d->shuttleXfactor = int(value * 50 * direction);
-
-
-    direction = ShuttleDirection::RIGHT;
-    qreal normalizedY = cpointer().mouse_viewport_y() / d->sv->get_clips_viewport()->height();
-
-    if (normalizedY < 0) normalizedY = 0;
-    if (normalizedY > 1) normalizedY = 1;
-
-    if (normalizedY > 0.35 && normalizedY < 0.65) {
-        normalizedY = 0;
-    } else if (normalizedY < 0.5) {
-        normalizedY = 0.5 - normalizedY;
-        direction = ShuttleDirection::LEFT;
-    } else if (normalizedY > 0.5) {
-        normalizedY = normalizedY - 0.5;
+    if (std::abs(normalizedX) > 1.0) {
+        // cursor went beyong screen boundaries, add a 50% boost for faster scrolling
+        value *= 1.5;
     }
 
-    normalizedY *= 2;
+    // make shuttleXFactor dependend on viewport width
+    qreal viewportWidthScrollStep = d->sv->get_clips_viewport()->width() * dragShuttleRange * dragShuttleRange;
+    d->shuttleXfactor = int(value * viewportWidthScrollStep * direction);
 
-    value = d->shuttleCurve.valueForProgress(normalizedY);
 
-    int yscale;
 
-    if (!d->sv->get_track_views().empty()) {
-        yscale = int(d->sv->get_mean_track_height() / 10);
+    dragShuttleRange = 0.1;
+    direction = ShuttleDirection::UP;
+    qreal normalizedY = qreal(cpointer().mouse_viewport_y()) / d->sv->get_clips_viewport()->height();
+
+    if (normalizedY < dragShuttleRange || normalizedY > (1.0 - dragShuttleRange)) {
+        // this is where dragShuttle operates
+        if (normalizedY < dragShuttleRange) {
+            direction = ShuttleDirection::DOWN;
+            // normalize again to range 0.0 - 1.0
+            normalizedY = -dragShuttleRange + normalizedY;
+            normalizedY *= (1.0 / dragShuttleRange);
+        }
+        if (normalizedY > (1.0 - dragShuttleRange)) {
+            // normalize again to range 0.0 - 1.0
+            normalizedY = normalizedY - (1.0 - dragShuttleRange);
+            normalizedY *= (1.0 / dragShuttleRange);
+        }
     } else {
-        yscale = int(d->sv->get_clips_viewport()->viewport()->height() / 10);
+        normalizedY = 0;
     }
 
+    value = d->shuttleCurve.valueForProgress(std::abs(normalizedY));
+
+    qreal yscale = int(qreal(d->sv->get_mean_track_height()) * dragShuttleRange * 2);
     d->shuttleYfactor = int(value * yscale * direction);
-
-    if (d->dragShuttle) {
-        d->shuttleYfactor *= 4;
-    }
 
     return 1;
 }
@@ -251,11 +252,7 @@ void TMoveCommand::start_shuttle(bool drag)
         return;
     }
 
-    if (drag) {
-        d->shuttleCurve.setType(QEasingCurve::InCirc);
-    } else {
-        d->shuttleCurve.setType(QEasingCurve::InCubic);
-    }
+    d->shuttleCurve.setType(QEasingCurve::InOutQuad);
 
     d->shuttleTimer.start(40);
     d->dragShuttle = drag;

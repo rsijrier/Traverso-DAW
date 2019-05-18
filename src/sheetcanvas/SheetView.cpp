@@ -559,7 +559,7 @@ void SheetView::layout_tracks()
 	m_sceneHeight = verticalposition;
 
 	// + 1, one for sheet master!
-	m_meanTrackHeight = float(totalTrackHeightPrimaryLanes) / (m_audioTrackViews.size() + m_busTrackViews.size() + 1);
+    m_meanTrackHeight = qreal(totalTrackHeightPrimaryLanes) / (m_audioTrackViews.size() + m_busTrackViews.size() + 1);
 
 	update_scrollbars();
 }
