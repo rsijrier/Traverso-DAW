@@ -182,7 +182,7 @@ AudioTrackView* SheetView::get_audio_trackview_at_scene_pos( QPointF point )
 	QList<QGraphicsItem*> views = m_clipsViewPort->items(m_clipsViewPort->mapFromScene(point));
 
 	for (int i=0; i<views.size(); ++i) {
-		view = dynamic_cast<AudioTrackView*>(views.at(i));
+        view = dynamic_cast<AudioTrackView*>(views.at(i));
 		if (view) {
 			return view;
 		}
@@ -1312,6 +1312,9 @@ void SheetView::do_keyboard_canvas_cursor_move(const QPointF &position)
     if (animDuration < 50) {
         m_canvasCursor->set_pos(position);
         return;
+    }
+    if (animDuration > 250) {
+        animDuration = 250;
     }
 
     if (m_canvasCursorMoveAnimation->state() == QPropertyAnimation::Running) {

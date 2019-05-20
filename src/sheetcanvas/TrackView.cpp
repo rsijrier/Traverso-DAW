@@ -184,7 +184,7 @@ void TrackView::move_to( int x, int y )
     }
     m_animation->setStartValue(getYPosition());
     m_animation->setEndValue(y);
-    m_animation->setDuration(150);
+    m_animation->setDuration(100);
     m_animation->start();
 }
 
