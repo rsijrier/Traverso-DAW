@@ -123,16 +123,16 @@ TCommand* TAudioProcessingNode::remove_plugin( Plugin * plugin )
 
 void TAudioProcessingNode::set_gain_animated(float newGain)
 {
-    if (m_animation.isNull()) {
-        m_animation = new QPropertyAnimation(this, "gain");
+    if (m_gainAnimation.isNull()) {
+        m_gainAnimation = new QPropertyAnimation(this, "gain");
     }
 
-    if (m_animation->state() == QPropertyAnimation::Running) {
-        m_animation->stop();
+    if (m_gainAnimation->state() == QPropertyAnimation::Running) {
+        m_gainAnimation->stop();
     }
 
-    m_animation->setStartValue(get_gain());
-    m_animation->setEndValue(newGain);
-    m_animation->setDuration(300);
-    m_animation->start(QAbstractAnimation::DeleteWhenStopped);
+    m_gainAnimation->setStartValue(get_gain());
+    m_gainAnimation->setEndValue(newGain);
+    m_gainAnimation->setDuration(300);
+    m_gainAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 }
