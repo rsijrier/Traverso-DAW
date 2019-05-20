@@ -148,8 +148,8 @@ void TShortcutEditorDialog::objects_combo_box_activated(int index)
 		ui->shortcutsTreeWidget->setHeaderLabels(QStringList() << tr("Function") << tr("Modifier Key"));
 	}
 	else {
-		ui->shortCutGroupBox->setTitle(tr("&Shortcuts"));
-        ui->shortcutsTreeWidget->setHeaderLabels(QStringList() << tr("Function") << tr("Shortcut Key"));
+        ui->shortCutGroupBox->setTitle(tr("&Key  / Button"));
+        ui->shortcutsTreeWidget->setHeaderLabels(QStringList() << tr("Function") << tr("Key / Button"));
 	}
 
 	QList<TFunction* > functionsList = tShortCutManager().getFunctionsFor(className);
@@ -293,7 +293,7 @@ void TShortcutEditorDialog::shortcut_tree_widget_item_activated()
 	TFunction* function = getSelectedFunction();
 	if (!function)
 	{
-		ui->baseFunctionGroupBox->hide();
+        ui->baseFunctionGroupBox->hide();
 		ui->autorepeatGroupBox->hide();
 		ui->shortCutGroupBox->setEnabled(false);
 		ui->modifiersGroupBox->setEnabled(false);
@@ -328,11 +328,10 @@ void TShortcutEditorDialog::shortcut_tree_widget_item_activated()
 	bool usesInheritedBase = function->usesInheritedBase();
 	if (inheritedFunction)
 	{
-        ui->baseFunctionGroupBox->setTitle(tr("Use common shortcut:"));
         ui->baseFunctionShortCutKey->setText(inheritedFunction->getKeySequence());
         ui->baseFunctionShortCutLable->setText(inheritedFunction->getDescription());
 		ui->configureInheritedShortcutPushButton->setText(tr("Configure %1").arg(inheritedFunction->getDescription()));
-		ui->baseFunctionGroupBox->show();
+        ui->baseFunctionGroupBox->show();
 
 		if (usesInheritedBase)
 		{
@@ -345,7 +344,7 @@ void TShortcutEditorDialog::shortcut_tree_widget_item_activated()
 	}
 	else
 	{
-		ui->baseFunctionGroupBox->hide();
+        ui->baseFunctionGroupBox->hide();
 	}
 
 	if (isHoldFunction)
@@ -428,10 +427,10 @@ void TShortcutEditorDialog::show_functions_checkbox_clicked()
 		ui->shortcutsTreeWidget->header()->resizeSection(1, 190);
 		ui->objectsComboBox->hide();
 		ui->keyComboBox2->hide();
-		ui->baseFunctionGroupBox->hide();
+        ui->baseFunctionGroupBox->hide();
 		key1_combo_box_activated(ui->keyComboBox1->currentIndex());
-		ui->shortCutGroupBox->setTitle(tr("&Shortcut"));
-		ui->shortCutGroupBox->setEnabled(true);
+        ui->shortCutGroupBox->setTitle(tr("&Key  / Button"));
+        ui->shortCutGroupBox->setEnabled(true);
 		ui->modifiersGroupBox->setEnabled(false);
 	}
 	else

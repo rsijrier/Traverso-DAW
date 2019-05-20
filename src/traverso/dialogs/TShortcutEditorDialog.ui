@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>718</width>
-    <height>666</height>
+    <height>680</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -51,92 +51,7 @@
              <height>0</height>
             </size>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_9">
-            <property name="spacing">
-             <number>12</number>
-            </property>
-            <item>
-             <widget class="QGroupBox" name="baseFunctionGroupBox">
-              <property name="title">
-               <string/>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <layout class="QVBoxLayout" name="verticalLayout_3">
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_3">
-                 <item>
-                  <widget class="QWidget" name="widget" native="true">
-                   <layout class="QVBoxLayout" name="verticalLayout_4">
-                    <item>
-                     <widget class="QLabel" name="label_6">
-                      <property name="text">
-                       <string>Name</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QWidget" name="widget" native="true">
-                   <layout class="QVBoxLayout" name="verticalLayout_8">
-                    <item>
-                     <widget class="QLabel" name="baseFunctionShortCutLable">
-                      <property name="text">
-                       <string>TextLabel</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_5">
-                 <item>
-                  <widget class="QWidget" name="widget_4" native="true">
-                   <layout class="QVBoxLayout" name="verticalLayout_11">
-                    <item>
-                     <widget class="QLabel" name="label_8">
-                      <property name="text">
-                       <string>Keys</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QWidget" name="widget_5" native="true">
-                   <layout class="QVBoxLayout" name="verticalLayout_12">
-                    <item>
-                     <widget class="QLabel" name="baseFunctionShortCutKey">
-                      <property name="text">
-                       <string>TextLabel</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <widget class="QPushButton" name="configureInheritedShortcutPushButton">
-                 <property name="text">
-                  <string>Configure shortcut</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
+           <layout class="QVBoxLayout" name="verticalLayout_10">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout">
               <item>
@@ -154,7 +69,7 @@
                  </size>
                 </property>
                 <property name="title">
-                 <string>&amp;Shortcut</string>
+                 <string>&amp;Key / Button</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_7">
                  <item>
@@ -220,67 +135,160 @@
              </layout>
             </item>
             <item>
-             <widget class="QGroupBox" name="autorepeatGroupBox">
+             <widget class="QGroupBox" name="shortCutOptionsGroupBox">
               <property name="title">
-               <string>&amp;Autorepeat</string>
+               <string>Shortcut options</string>
               </property>
-              <layout class="QVBoxLayout" name="verticalLayout_5">
+              <layout class="QVBoxLayout" name="verticalLayout_9">
                <item>
-                <widget class="QLabel" name="label">
+                <widget class="QGroupBox" name="baseFunctionGroupBox">
+                 <property name="title">
+                  <string>Prefer common shortcut</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_4">
+                  <item>
+                   <layout class="QHBoxLayout" name="horizontalLayout_3">
+                    <item>
+                     <widget class="QFrame" name="frame_2">
+                      <property name="frameShape">
+                       <enum>QFrame::NoFrame</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <property name="lineWidth">
+                       <number>0</number>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_3">
+                       <item>
+                        <widget class="QLabel" name="label_6">
+                         <property name="text">
+                          <string>Name :</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="label_8">
+                         <property name="text">
+                          <string>Keys :</string>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QFrame" name="frame_3">
+                      <property name="frameShape">
+                       <enum>QFrame::NoFrame</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <property name="lineWidth">
+                       <number>0</number>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_11">
+                       <item>
+                        <widget class="QLabel" name="baseFunctionShortCutLable">
+                         <property name="text">
+                          <string>TextLabel</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLabel" name="baseFunctionShortCutKey">
+                         <property name="text">
+                          <string>TextLabel</string>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="configureInheritedShortcutPushButton">
+                    <property name="text">
+                     <string>Configure shortcut</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="autorepeatGroupBox">
+                 <property name="title">
+                  <string>&amp;Autorepeat</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_5">
+                  <item>
+                   <widget class="QLabel" name="label">
+                    <property name="text">
+                     <string>Start Delay (ms)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="startDelaySpinBox">
+                    <property name="minimum">
+                     <number>20</number>
+                    </property>
+                    <property name="maximum">
+                     <number>500</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="label_2">
+                    <property name="text">
+                     <string>Interval (ms)</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QSpinBox" name="repeatIntervalSpinBox">
+                    <property name="minimum">
+                     <number>20</number>
+                    </property>
+                    <property name="maximum">
+                     <number>500</number>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="upPushButton">
                  <property name="text">
-                  <string>Start Delay (ms)</string>
+                  <string>Up</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QSpinBox" name="startDelaySpinBox">
-                 <property name="minimum">
-                  <number>20</number>
-                 </property>
-                 <property name="maximum">
-                  <number>500</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="label_2">
+                <widget class="QPushButton" name="downPushButton">
                  <property name="text">
-                  <string>Interval (ms)</string>
+                  <string>Down</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QSpinBox" name="repeatIntervalSpinBox">
-                 <property name="minimum">
-                  <number>20</number>
-                 </property>
-                 <property name="maximum">
-                  <number>500</number>
+                <widget class="QPushButton" name="restoreDefaultPushButton">
+                 <property name="text">
+                  <string>Restore Default</string>
                  </property>
                 </widget>
                </item>
               </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="upPushButton">
-              <property name="text">
-               <string>Up</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="downPushButton">
-              <property name="text">
-               <string>Down</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="restoreDefaultPushButton">
-              <property name="text">
-               <string>Restore Default</string>
-              </property>
              </widget>
             </item>
             <item>
