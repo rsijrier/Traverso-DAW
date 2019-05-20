@@ -140,7 +140,7 @@ class TShortcutManager : public QObject
 	Q_OBJECT
 public:
 
-    void createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName);
+    void createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName, const QString& inheritedBase = "");
 	void registerFunction(TFunction* function);
 	TFunction* getFunction(const QString& function) const;
 
@@ -177,7 +177,7 @@ private:
 	QHash<int, TShortcut*>		m_shortcuts;
 	QHash<QString, QString>		m_translations;
 	QHash<QString, QList<const QMetaObject*> > m_metaObjects;
-	QHash<QString, QStringList>	m_classes;
+    QHash<QString, QStringList>	m_classes;
 
 	TShortcutManager();
 	TShortcutManager(const TShortcutManager&) : QObject() {}

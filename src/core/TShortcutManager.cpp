@@ -380,6 +380,8 @@ void TShortcutManager::loadFunctions()
 	add_translation("DeleteBase", tr("Remove"));
 	m_classes.insert("DeleteBase", QStringList() << "DeleteBase");
 
+    add_translation("ResetBase", tr("Reset"));
+    m_classes.insert("ResetBase", QStringList() << "ResetBase");
 
 	add_translation("MoveBase", tr("Move"));
 	m_classes.insert("MoveBase", QStringList() << "MoveBase");
@@ -843,13 +845,6 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "TrackPan";
-	function->slotsignature = "reset_pan";
-	function->m_description = tr("Reset");
-	function->commandName = "TrackPanReset";
-    registerFunction(function);
-
-	function = new TFunction();
 	function->object = "SpectralMeterView";
 	function->slotsignature = "reset";
 	function->m_description = tr("Reset average curve");
@@ -1129,20 +1124,26 @@ void TShortcutManager::loadFunctions()
     createAndAddFunction("TAudioProcessingNode", tr("Gain Envelope"), "toggle_show_gain_automation_curve", "GainShowAutomation");
     createAndAddFunction("AudioTrackView", tr("Insert Silence"), "insert_silence", "AudioTrackInsertSilence");
 
-    createAndAddFunction("FadeRange", tr("Reset"), "reset_length", "FadeResetLength");
+    createAndAddFunction("FadeRange", tr("Reset"), "reset_length", "FadeResetLength", "ResetBase");
+
+
+    createAndAddFunction("ResetBase", tr("Reset"), "", "ResetBase");
 
     createAndAddFunction("TGainGroupCommand", tr("Toggle Selection"), "toggle_primary_gain_only", "GainToggleSelection");
 
-
+    createAndAddFunction("TrackPan", tr("Reset"), "reset_pan", "TrackPanReset", "ResetBase");
 }
 
-void TShortcutManager::createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName)
+void TShortcutManager::createAndAddFunction(const QString &object, const QString &description, const QString &slotSignature, const QString &commandName, const QString &inheritedBase)
 {
     auto function = new TFunction();
     function->object = object;
     function->m_description = description;
     function->slotsignature = slotSignature;
     function->commandName = commandName;
+    if (!inheritedBase.isEmpty()) {
+        function->setInheritedBase(inheritedBase);
+    }
     registerFunction(function);
 }
 
