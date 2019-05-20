@@ -27,6 +27,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "GainEnvelope.h"
 #include "defines.h"
 
+#include <QPointer>
+#include <QPropertyAnimation>
+
 class AudioBus;
 class AudioClip;
 class Plugin;
@@ -72,13 +75,16 @@ protected:
         bool            m_isMuted;
         float           m_pan;
 
+private:
+        QPointer<QPropertyAnimation>  m_gainAnimation;
+
 
 
 public slots:
 	float get_gain() const;
         void set_gain(float gain);
+        void set_gain_animated(float gain);
         TCommand* mute();
-
 
 signals:
         void audibleStateChanged();

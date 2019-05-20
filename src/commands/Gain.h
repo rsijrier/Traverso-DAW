@@ -24,9 +24,6 @@
 
 #include "TCommand.h"
 
-#include <QPointer>
-#include <QPropertyAnimation>
-
 class ContextItem;
 
 
@@ -46,18 +43,17 @@ public :
     int process_mouse_move(qreal diffY);
     void increase_gain();
     void decrease_gain();
-    void set_gain_by_collected_number(float newGain);
+    void set_new_gain(float newGain);
+    void set_new_gain_numerical_input(float newGain);
 
     static float get_gain_from_object(QObject* object);
 
 private :
     ContextItem*        m_gainObject;
-    QPointer<QPropertyAnimation>  m_animation;
     float 		m_origGain;
     float 		m_newGain;
 
-    void set_gain_animated(float startGain, float endGain);
-    void apply_new_gain_to_object(float dBFactor);
+    void apply_new_gain_to_object(float newGain);
 };
 
 #endif

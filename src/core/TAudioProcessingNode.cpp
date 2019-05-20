@@ -96,6 +96,20 @@ TCommand* TAudioProcessingNode::mute()
         return nullptr;
 }
 
+void TAudioProcessingNode::set_gain(float gain)
+{
+    if (gain < 0.0f) {
+            gain = 0.0;
+    }
+    if (gain > m_maxGainAmplification) {
+            gain = m_maxGainAmplification;
+    }
+
+    m_fader->set_gain(gain);
+
+    emit stateChanged();
+}
+
 TCommand* TAudioProcessingNode::add_plugin( Plugin * plugin )
 {
         return m_pluginChain->add_plugin(plugin);
@@ -107,12 +121,18 @@ TCommand* TAudioProcessingNode::remove_plugin( Plugin * plugin )
 }
 
 
-void TAudioProcessingNode::set_gain(float gain)
+void TAudioProcessingNode::set_gain_animated(float newGain)
 {
-        if (gain < 0.0f)
-                gain = 0.0;
-        if (gain > m_maxGainAmplification)
-                gain = m_maxGainAmplification;
-        m_fader->set_gain(gain);
-        emit stateChanged();
+    if (m_animation.isNull()) {
+        m_animation = new QPropertyAnimation(this, "gain");
+    }
+
+    if (m_animation->state() == QPropertyAnimation::Running) {
+        m_animation->stop();
+    }
+
+    m_animation->setStartValue(get_gain());
+    m_animation->setEndValue(newGain);
+    m_animation->setDuration(300);
+    m_animation->start(QAbstractAnimation::DeleteWhenStopped);
 }

@@ -59,7 +59,7 @@ TGainGroupCommand::~ TGainGroupCommand()
 {
     PENTERDES;
 
-    foreach(Gain* gain, m_gainCommands) {
+    for(auto gain : m_gainCommands) {
         delete gain;
     }
 }
@@ -88,7 +88,7 @@ int TGainGroupCommand::finish_hold()
 void TGainGroupCommand::cancel_action()
 {
     PENTER;
-    foreach(Gain* gain, m_gainCommands) {
+    for(auto gain : m_gainCommands) {
         gain->cancel_action();
     }
 }
@@ -118,11 +118,6 @@ void TGainGroupCommand::process_collected_number(const QString &collected)
 
     float newGain = dB_to_scale_factor(dbFactor);
 
-    if (newGain < 0.0f)
-        newGain = 0.0;
-    if (newGain > 2.0f)
-        newGain = 2.0;
-
     // Update the vieport's hold cursor with the _actuall_ gain value!
     if(rightfromdot) {
         cpointer().set_canvas_cursor_text(QByteArray::number(double(dbFactor), 'f', rightfromdot).append(" dB"));
@@ -131,10 +126,10 @@ void TGainGroupCommand::process_collected_number(const QString &collected)
     }
 
     if (m_primaryGainOnly) {
-        m_primaryGain->set_gain_by_collected_number(newGain);
+        m_primaryGain->set_new_gain(newGain);
     } else {
-        foreach(Gain* gain, m_gainCommands) {
-            gain->set_gain_by_collected_number(newGain);
+        for(auto gain : m_gainCommands) {
+            gain->set_new_gain_numerical_input(newGain);
         }
     }
 }
@@ -146,7 +141,7 @@ int TGainGroupCommand::jog()
     if (m_primaryGainOnly) {
         m_primaryGain->process_mouse_move(diff);
     } else {
-        foreach(Gain* gain, m_gainCommands) {
+        for(auto gain : m_gainCommands) {
             gain->process_mouse_move(diff);
         }
     }
@@ -166,7 +161,7 @@ int TGainGroupCommand::prepare_actions()
         return -1;
     }
 
-    foreach(Gain* gain, m_gainCommands) {
+    for(auto gain : m_gainCommands) {
         if (gain->prepare_actions() == -1) {
             printf("one of the commands in the group failed prepare_actions\n");
             return -1;
@@ -181,7 +176,7 @@ int TGainGroupCommand::do_action()
     if (m_primaryGainOnly) {
         m_primaryGain->do_action();
     } else {
-        foreach(Gain* gain, m_gainCommands) {
+        for(auto gain : m_gainCommands) {
             gain->do_action();
         }
     }
@@ -194,7 +189,7 @@ int TGainGroupCommand::undo_action()
     if (m_primaryGainOnly) {
         m_primaryGain->undo_action();
     } else {
-        foreach(Gain* gain, m_gainCommands) {
+        for(auto gain : m_gainCommands) {
             gain->undo_action();
         }
     }
@@ -222,7 +217,7 @@ void TGainGroupCommand::increase_gain(  )
     if (m_primaryGainOnly) {
         m_primaryGain->increase_gain();
     } else {
-        foreach(Gain* gain, m_gainCommands) {
+        for(auto gain : m_gainCommands) {
             gain->increase_gain();
         }
     }
@@ -236,13 +231,23 @@ void TGainGroupCommand::decrease_gain()
     if (m_primaryGainOnly) {
         m_primaryGain->decrease_gain();
     } else {
-        foreach(Gain* gain, m_gainCommands) {
+        for(auto gain : m_gainCommands) {
             gain->decrease_gain();
         }
     }
 
     // Update the vieport's hold cursor with the _actuall_ gain value!
     cpointer().set_canvas_cursor_text(coefficient_to_dbstring(Gain::get_gain_from_object(m_contextItem)));
+}
+
+void TGainGroupCommand::reset_gain()
+{
+    for (auto gain : m_gainCommands) {
+        gain->set_new_gain(1.0);
+    }
+
+    // Update the vieport's hold cursor with the _actuall_ gain value!
+    cpointer().set_canvas_cursor_text(coefficient_to_dbstring(1.0));
 }
 
 void TGainGroupCommand::toggle_primary_gain_only()

@@ -754,13 +754,6 @@ void TShortcutManager::loadFunctions()
     registerFunction(function);
 
 	function = new TFunction();
-	function->object = "Gain";
-	function->slotsignature = "numerical_input";
-	function->m_description = tr("Input dB value");
-	function->commandName = "GainNumericalInput";
-    registerFunction(function);
-
-	function = new TFunction();
 	function->object = "Zoom";
 	function->slotsignature = "numerical_input";
 	function->m_description = tr("Track Height");
@@ -1126,10 +1119,11 @@ void TShortcutManager::loadFunctions()
 
     createAndAddFunction("FadeRange", tr("Reset"), "reset_length", "FadeResetLength", "ResetBase");
 
-
     createAndAddFunction("ResetBase", tr("Reset"), "", "ResetBase");
 
+    createAndAddFunction("TGainGroupCommand", tr("Input dB value"), "numerical_input", "GainNumericalInput");
     createAndAddFunction("TGainGroupCommand", tr("Toggle Selection"), "toggle_primary_gain_only", "GainToggleSelection");
+    createAndAddFunction("TGainGroupCommand", tr("Reset"), "reset_gain", "GainReset", "ResetBase");
 
     createAndAddFunction("TrackPan", tr("Reset"), "reset_pan", "TrackPanReset", "ResetBase");
 }

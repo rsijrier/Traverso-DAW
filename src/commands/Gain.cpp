@@ -68,28 +68,9 @@ int Gain::prepare_actions()
     return 1;
 }
 
-void Gain::set_gain_animated(float startGain, float endGain)
+void Gain::apply_new_gain_to_object(float newGain)
 {
-    PENTER;
-    if (m_animation.isNull()) {
-        m_animation = new QPropertyAnimation();
-    }
-
-    if (m_animation->state() == QPropertyAnimation::Running) {
-        m_animation->stop();
-    }
-
-    m_animation->setPropertyName("gain");
-    m_animation->setTargetObject(m_gainObject);
-    m_animation->setStartValue(startGain);
-    m_animation->setEndValue(endGain);
-    m_animation->setDuration(300);
-    m_animation->start(QAbstractAnimation::DeleteWhenStopped);
-}
-
-void Gain::apply_new_gain_to_object(float dBFactor)
-{
-    m_newGain = dB_to_scale_factor(dBFactor);
+    m_newGain = newGain;
     QMetaObject::invokeMethod(m_gainObject, "set_gain", Q_ARG(float, m_newGain));
     // the gainobject is able to refuse the new value, so we set our
     // newGain value to the value the gainobject internally decided to go for
@@ -109,7 +90,7 @@ int Gain::do_action()
     }
 
     // so this will only be reached after an undo/redo sequence
-    set_gain_animated(m_origGain, m_newGain);
+    QMetaObject::invokeMethod(m_gainObject, "set_gain_animated", Q_ARG(float, m_newGain));
 
     return 1;
 }
@@ -118,7 +99,7 @@ int Gain::undo_action()
 {
     PENTER;
 
-    set_gain_animated(m_newGain, m_origGain);
+    QMetaObject::invokeMethod(m_gainObject, "set_gain_animated", Q_ARG(float, m_origGain));
 
     return 1;
 }
@@ -132,17 +113,23 @@ void Gain::increase_gain(  )
 {
     audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor += 0.2f;
-    apply_new_gain_to_object(dbFactor);
+    apply_new_gain_to_object(dB_to_scale_factor(dbFactor));
 }
 
 void Gain::decrease_gain()
 {
     audio_sample_t dbFactor = coefficient_to_dB(m_newGain);
     dbFactor -= 0.2f;
-    apply_new_gain_to_object(dbFactor);
+    apply_new_gain_to_object(dB_to_scale_factor(dbFactor));
 }
 
-void Gain::set_gain_by_collected_number(float newGain)
+void Gain::set_new_gain(float newGain)
+{
+    m_newGain = newGain;
+    do_action();
+}
+
+void Gain::set_new_gain_numerical_input(float newGain)
 {
     m_newGain = newGain;
 }
@@ -160,7 +147,7 @@ int Gain::process_mouse_move(qreal diffY)
         of = diffY * ((1 - double(dB_to_scale_factor(dbFactor))) / 3);
     }
 
-    apply_new_gain_to_object( dbFactor + float(of) );
+    apply_new_gain_to_object(dB_to_scale_factor(dbFactor + float(of)));
 
     return 1;
 }

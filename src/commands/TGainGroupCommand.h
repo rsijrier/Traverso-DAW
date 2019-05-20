@@ -62,6 +62,7 @@ private:
 public slots:
     void increase_gain();
     void decrease_gain();
+    void reset_gain();
     void toggle_primary_gain_only();
 };
 
