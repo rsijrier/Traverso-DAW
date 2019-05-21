@@ -67,7 +67,7 @@ QString TFunction::getModifierSequence(bool fromInheritedBase)
 	return modifiersString;
 }
 
-QString TFunction::getKeySequence()
+QString TFunction::getKeySequence(bool formatHtml)
 {
 	QString sequence;
 	QStringList sequenceList;
@@ -86,7 +86,7 @@ QString TFunction::getKeySequence()
 
     sequence = sequenceList.join(" , ");
 
-	TShortcutManager::makeShortcutKeyHumanReadable(sequence);
+    TShortcutManager::makeShortcutKeyHumanReadable(sequence, formatHtml);
 
 	return sequence;
 }
@@ -194,22 +194,33 @@ int TFunction::getAutoRepeatStartDelay() const
 	return m_autorepeatStartDelay;
 }
 
-void TShortcutManager::makeShortcutKeyHumanReadable(QString& keyfact)
+void TShortcutManager::makeShortcutKeyHumanReadable(QString& keyfact, bool formatHtml)
 {
     keyfact.replace(QString("MOUSESCROLLVERTICALUP"), tr("Scroll Up"));
 	keyfact.replace(QString("MOUSESCROLLVERTICALDOWN"), tr("Scroll Down"));
 	keyfact.replace(QString("MOUSEBUTTONRIGHT"), tr("Right Button"));
 	keyfact.replace(QString("MOUSEBUTTONLEFT"), tr("Left Button"));
 	keyfact.replace(QString("MOUSEBUTTONMIDDLE"), tr("Center Button"));
-    keyfact.replace(QString("UPARROW"), tr("Up"));
-    keyfact.replace(QString("DOWNARROW"), tr("Down"));
-    keyfact.replace(QString("LEFTARROW"), tr("Left"));
-    keyfact.replace(QString("RIGHTARROW"), tr("Right"));
+    if (formatHtml) {
+        keyfact.replace(QString("UPARROW"), QString("&uarr;"));
+        keyfact.replace(QString("DOWNARROW"), QString("&darr;"));
+        keyfact.replace(QString("LEFTARROW"), QString("&larr;"));
+        keyfact.replace(QString("RIGHTARROW"), QString("&rarr;"));
+        keyfact.replace(QString("PAGEDOWN"), "Page Up");
+        keyfact.replace(QString("PAGEUP"), "Page Down");
+        keyfact.replace(QString("MINUS"), QString("&#45;"));
+        keyfact.replace(QString("PLUS"), QString("&#43;"));
+    } else {
+        keyfact.replace(QString("UPARROW"), tr("Up"));
+        keyfact.replace(QString("DOWNARROW"), tr("Down"));
+        keyfact.replace(QString("LEFTARROW"), tr("Left"));
+        keyfact.replace(QString("RIGHTARROW"), tr("Right"));
+        keyfact.replace(QString("PAGEDOWN"), "PgUp");
+        keyfact.replace(QString("PAGEUP"), "PgDown");
+        keyfact.replace(QString("MINUS"), "-");
+        keyfact.replace(QString("PLUS"), "+");
+    }
 	keyfact.replace(QString("DELETE"), "Delete");
-	keyfact.replace(QString("MINUS"), "-");
-	keyfact.replace(QString("PLUS"), "+");
-	keyfact.replace(QString("PAGEDOWN"), "Page Down");
-	keyfact.replace(QString("PAGEUP"), "Page Up");
 	keyfact.replace(QString("ESC"), "Esc");
 	keyfact.replace(QString("ENTER"), "Enter");
 	keyfact.replace(QString("RETURN"), "Return");
@@ -1319,6 +1330,8 @@ void TShortcutManager::loadShortcuts()
 			}
 		}
 	}
+
+    emit functionKeysChanged();
 }
 
 void TShortcutManager::modifyFunctionKeys(TFunction *function, const QStringList& keys, QStringList modifiers)
@@ -1340,7 +1353,6 @@ void TShortcutManager::modifyFunctionKeys(TFunction *function, const QStringList
 
 	saveFunction(function);
 	loadShortcuts();
-	emit functionKeysChanged();
 }
 
 void TShortcutManager::modifyFunctionInheritedBase(TFunction *function, bool usesInheritedBase)
@@ -1348,7 +1360,6 @@ void TShortcutManager::modifyFunctionInheritedBase(TFunction *function, bool use
 	function->setUsesInheritedbase(usesInheritedBase);
 	saveFunction(function);
 	loadShortcuts();
-	emit functionKeysChanged();
 }
 
 void TShortcutManager::restoreDefaultFor(TFunction *function)
@@ -1361,7 +1372,6 @@ void TShortcutManager::restoreDefaultFor(TFunction *function)
 		userSettings.remove(key);
 	}
 	loadShortcuts();
-	emit functionKeysChanged();
 }
 
 void TShortcutManager::restoreDefaults()
@@ -1369,8 +1379,6 @@ void TShortcutManager::restoreDefaults()
 	QSettings userSettings(QSettings::IniFormat, QSettings::UserScope, "Traverso", "Shortcuts");
 	userSettings.clear();
 	loadShortcuts();
-	emit functionKeysChanged();
-
 }
 
 void TShortcutManager::add_meta_object(const QMetaObject* mo)
@@ -1476,15 +1484,8 @@ QString TShortcutManager::createHtmlForClass(const QString& className, QObject* 
 
 		foreach(TFunction* function, subMenuFunctionList)
 		{
-            QString keySequence = function->getKeySequence();
-			keySequence.replace(QString("Up Arrow"), QString("&uarr;"));
-			keySequence.replace(QString("Down Arrow"), QString("&darr;"));
-			keySequence.replace(QString("Left Arrow"), QString("&larr;"));
-			keySequence.replace(QString("Right Arrow"), QString("&rarr;"));
-			keySequence.replace(QString("-"), QString("&#45;"));
-			keySequence.replace(QString("+"), QString("&#43;"));
+            QString keySequence = function->getKeySequence(true);
 			keySequence.replace(QString(" , "), QString("<br />"));
-
 
 			QString alternatingColor;
 			if ((j % 2) == 1) {

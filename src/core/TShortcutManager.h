@@ -56,7 +56,7 @@ public:
 		m_usesInheritedBase = false;
 	}
 
-	QString getKeySequence();
+    QString getKeySequence(bool formatHtml=false);
 	QString getModifierSequence(bool fromInheritedBase=true);
 	QString getSlotSignature() const;
 	QString getDescription() const;
@@ -166,7 +166,7 @@ public:
 	void loadShortcuts();
 	void restoreDefaultFor(TFunction* function);
 	void restoreDefaults();
-	static void makeShortcutKeyHumanReadable(QString& key);
+    static void makeShortcutKeyHumanReadable(QString& key, bool formatHtml=false);
 
 	bool isCommandClass(const QString& className);
 
