@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2007 Remon Sijrier 
+Copyright (C) 2005-2019 Remon Sijrier
 
 This file is part of Traverso
 
@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 SplitClip::SplitClip(AudioClipView* view)
         : TMoveCommand(view->get_sheetview(), view->get_clip(), tr("Split Clip"))
 {
-    m_canvasCursorFollowsMouseCursor = false;
+    m_canvasCursorFollowsMouseCursor = true;
 	m_clip = view->get_clip();
     m_session = d->sv->get_sheet();
 	m_cv = view;
@@ -51,9 +51,9 @@ SplitClip::SplitClip(AudioClipView* view)
 
 int SplitClip::prepare_actions()
 {
-	if (m_splitPoint == qint64(0)) {
+    if (m_splitPoint == qint64(0)) {
         m_splitPoint = TimeRef(cpointer().scene_x() * d->sv->timeref_scalefactor);
-	}
+    }
 
 	if (m_splitPoint <= m_clip->get_track_start_location() || m_splitPoint >= m_clip->get_track_start_location() + m_clip->get_length()) {
 		return -1;
@@ -112,7 +112,9 @@ int SplitClip::begin_hold()
 {
 	m_splitcursor = new LineView(m_cv);
 	m_splitcursor->set_color(themer()->get_color("AudioClip:contour"));
-	m_cv->scene()->addItem(m_splitcursor);
+    // fake mouse move to update splitcursor position
+    jog();
+
 	return 1;
 }
 
