@@ -177,7 +177,10 @@ private:
 	QHash<int, TShortcut*>		m_shortcuts;
 	QHash<QString, QString>		m_translations;
 	QHash<QString, QList<const QMetaObject*> > m_metaObjects;
-    QHash<QString, QStringList>	m_classes;
+
+    // be sure to only insert into m_classes using registerItemClass()
+    // to avoid overwriting existing entries
+    QMap<QString, QStringList>	m_classes;
 
 	TShortcutManager();
 	TShortcutManager(const TShortcutManager&) : QObject() {}

@@ -369,25 +369,25 @@ void TShortcutManager::loadFunctions()
 //	}
 
     add_translation("ToggleBypassBase", tr("Toggle Bypass"));
-    m_classes.insert("ToggleBypassBase", QStringList() << "ToggleBypassBase");
+    registerItemClass("ToggleBypassBase", "ToggleBypassBase");
 
     add_translation("ToggleVerticalBase", tr("Toggle Vertical"));
-    m_classes.insert("ToggleVerticalBase", QStringList() << "ToggleVerticalBase");
+    registerItemClass("ToggleVerticalBase", "ToggleVerticalBase");
 
 	add_translation("GainBase", tr("Gain"));
-	m_classes.insert("GainBase", QStringList() << "GainBase");
+    registerItemClass("GainBase", "GainBase");
 
 	add_translation("DeleteBase", tr("Remove"));
-	m_classes.insert("DeleteBase", QStringList() << "DeleteBase");
+    registerItemClass("DeleteBase", "DeleteBase");
 
     add_translation("ResetBase", tr("Reset"));
-    m_classes.insert("ResetBase", QStringList() << "ResetBase");
+    registerItemClass("ResetBase", "ResetBase");
 
 	add_translation("MoveBase", tr("Move"));
-	m_classes.insert("MoveBase", QStringList() << "MoveBase");
+    registerItemClass("MoveBase", "MoveBase");
 
 	add_translation("EditPropertiesBase", tr("Edit Properties"));
-	m_classes.insert("EditPropertiesBase", QStringList() << "EditPropertiesBase");
+    registerItemClass("EditPropertiesBase", "EditPropertiesBase");
 
 
 	TFunction* function;
@@ -1392,6 +1392,16 @@ void TShortcutManager::add_meta_object(const QMetaObject* mo)
 	}
 }
 
+/**
+ * @brief TShortcutManager::registerItemClass
+ * Used to support multiple inheritance, but not bother the user with multiple
+ * object names to dispatch shortcuts to.
+ * @param itemName The object name presented to the user in the
+ * shortcut help menu or context menu
+ * @param className The class that is associated with the object
+ * e.g. AudioClip is represented by AudioClipView, AudioClip, TProcessingNode and ViewItem
+ *
+ */
 void TShortcutManager::registerItemClass(const QString &itemName, const QString &className)
 {
 	QStringList classesList = m_classes.value(itemName);
