@@ -30,6 +30,7 @@
 PositionIndicator::PositionIndicator(ViewItem* parentView)
     : ViewItem(parentView, nullptr)
 {
+    m_ignoreContext = true;
 	calculate_bounding_rect();
 	setZValue(200);
 }
