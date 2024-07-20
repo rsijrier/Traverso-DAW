@@ -85,7 +85,7 @@ int PluginChain::set_state( const QDomNode & node )
 				pluginNode = pluginNode.nextSibling();
 				continue;
 			}
-			plugin->set_history_stack(get_history_stack());
+            plugin->set_history_stack(get_history_stack());
 			private_add_plugin(plugin);
             private_plugin_added(plugin);
 		}
@@ -189,3 +189,32 @@ QList<Plugin *> PluginChain::get_post_fader_plugins()
     return postFaderPlugins;
 }
 
+
+void PluginChain::process_pre_fader(AudioBus *bus, nframes_t nframes)
+{
+    for(Plugin* plugin = m_rtPlugins.first(); plugin != nullptr; plugin = plugin->next) {
+        if (plugin == m_fader) {
+            return;
+        }
+        plugin->process(bus, nframes);
+    }
+}
+
+int PluginChain::process_post_fader(AudioBus *bus, nframes_t nframes)
+{
+    if (!m_rtPlugins.size()) {
+        return 0;
+    }
+
+    bool faderWasReached = false;
+
+    for(Plugin* plugin = m_rtPlugins.first(); plugin != nullptr; plugin = plugin->next) {
+        if (faderWasReached) {
+            plugin->process(bus, nframes);
+        } else if (plugin == m_fader) {
+            faderWasReached = true;
+        }
+    }
+
+    return 1;
+}

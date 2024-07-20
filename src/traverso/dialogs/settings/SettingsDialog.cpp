@@ -36,14 +36,14 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 {
 	m_saving = false;
 	
-	contentsWidget = new QListWidget;
+    contentsWidget = new QListWidget(this);
 	contentsWidget->setViewMode(QListView::IconMode);
 	contentsWidget->setIconSize(QSize(32, 32));
-	contentsWidget->setMovement(QListView::Static);
-//	contentsWidget->setMaximumWidth(140);
-	contentsWidget->setMinimumWidth(135);
+    contentsWidget->setMovement(QListView::Static);
+    contentsWidget->setMaximumWidth(140);
+    contentsWidget->setMinimumWidth(135);
 	contentsWidget->setMinimumHeight(390);
-	contentsWidget->setSpacing(12);
+    contentsWidget->setSpacing(12);
 	
 	pagesWidget = new QStackedWidget;
 	pagesWidget->addWidget(new BehaviorConfigPage(this));
@@ -85,7 +85,7 @@ SettingsDialog::SettingsDialog(QWidget* parent)
 	
 	connect(&config(), SIGNAL(configChanged()), this, SLOT(external_change_to_settings()));
 	
-	resize(400, 300);
+    resize(500, 600);
 }
 
 void SettingsDialog::show_page(const QString & page)
@@ -98,51 +98,51 @@ void SettingsDialog::show_page(const QString & page)
 
 void SettingsDialog::createIcons()
 {
-	QListWidgetItem* behaviorButton = new QListWidgetItem(contentsWidget);
+    QListWidgetItem* behaviorButton = new QListWidgetItem(contentsWidget);
 	behaviorButton->setIcon(QIcon(":/sheetmanagement"));
 	behaviorButton->setTextAlignment(Qt::AlignHCenter);
 	behaviorButton->setText(tr("Behavior"));
 	behaviorButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	behaviorButton->setSizeHint(QSize(100, 50));
+    behaviorButton->setSizeHint(QSize(100, 50));
 
-	QListWidgetItem* appearanceButton = new QListWidgetItem(contentsWidget);
+    QListWidgetItem* appearanceButton = new QListWidgetItem(contentsWidget);
 	appearanceButton->setIcon(QIcon(":/appearance"));
 	appearanceButton->setText(tr("Appearance"));
 	appearanceButton->setTextAlignment(Qt::AlignHCenter);
 	appearanceButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	appearanceButton->setSizeHint(QSize(100, 50));
-	
-	QListWidgetItem* driverButton = new QListWidgetItem(contentsWidget);
+    appearanceButton->setSizeHint(QSize(100, 50));
+
+    QListWidgetItem* driverButton = new QListWidgetItem(contentsWidget);
 	driverButton->setIcon(QIcon(":/audiocard"));
 	driverButton->setText(tr("Sound System"));
 	driverButton->setTextAlignment(Qt::AlignHCenter);
 	driverButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	driverButton->setSizeHint(QSize(100, 50));
+    driverButton->setSizeHint(QSize(100, 50));
+
+    QListWidgetItem* diskioButton = new QListWidgetItem(contentsWidget);
+    diskioButton->setIcon(QIcon(":/audiosettings"));
+    diskioButton->setText(tr("Audio Options"));
+    diskioButton->setTextAlignment(Qt::AlignHCenter);
+    diskioButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    diskioButton->setSizeHint(QSize(100, 50));
 	
-	QListWidgetItem* diskioButton = new QListWidgetItem(contentsWidget);
-	diskioButton->setIcon(QIcon(":/audiosettings"));
-	diskioButton->setText(tr("Audio Options"));
-	diskioButton->setTextAlignment(Qt::AlignHCenter);
-	diskioButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	diskioButton->setSizeHint(QSize(100, 50));
-	
-	QListWidgetItem* keyboardButton = new QListWidgetItem(contentsWidget);
-	keyboardButton->setIcon(QIcon(":/keyboard"));
+    QListWidgetItem* keyboardButton = new QListWidgetItem(contentsWidget);
+    keyboardButton->setIcon(QIcon(":/keyboard"));
     keyboardButton->setText(tr("Shortcuts"));
-	keyboardButton->setTextAlignment(Qt::AlignHCenter);
-	keyboardButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	keyboardButton->setSizeHint(QSize(100, 50));
+    keyboardButton->setTextAlignment(Qt::AlignHCenter);
+    keyboardButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    keyboardButton->setSizeHint(QSize(100, 50));
 	
-	QListWidgetItem* performanceButton = new QListWidgetItem(contentsWidget);
-	performanceButton->setIcon(QIcon(":/performance"));
-	performanceButton->setText(tr("Performance"));
-	performanceButton->setTextAlignment(Qt::AlignHCenter);
-	performanceButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	performanceButton->setSizeHint(QSize(100, 50));
+    QListWidgetItem* performanceButton = new QListWidgetItem(contentsWidget);
+    performanceButton->setIcon(QIcon(":/performance"));
+    performanceButton->setText(tr("Performance"));
+    performanceButton->setTextAlignment(Qt::AlignHCenter);
+    performanceButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    performanceButton->setSizeHint(QSize(100, 50));
 	
-	connect(contentsWidget,
-		SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
-		this, SLOT(changePage(QListWidgetItem *, QListWidgetItem*)));
+    connect(contentsWidget,
+        SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)),
+        this, SLOT(changePage(QListWidgetItem *, QListWidgetItem*)));
 }
 
 void SettingsDialog::changePage(QListWidgetItem *current, QListWidgetItem *previous)

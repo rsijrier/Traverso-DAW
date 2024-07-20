@@ -27,10 +27,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "ContextItem.h"
+#include "FadeCurve.h"
 #include "TAudioProcessingNode.h"
-#include "Snappable.h"
+#include "TLocation.h"
 #include "defines.h"
-#include "GainEnvelope.h"
 
 
 class Sheet;
@@ -39,10 +39,9 @@ class WriteSource;
 class AudioTrack;
 class Peak;
 class AudioBus;
-class FadeCurve;
 class PluginChain;
 
-class AudioClip : public TAudioProcessingNode, public Snappable
+class AudioClip : public TAudioProcessingNode
 {
 	Q_OBJECT
 
@@ -60,9 +59,12 @@ public:
 	
 	void set_audio_source(ReadSource* source);
     int init_recording();
-	int process(nframes_t nframes);
-	
-	void set_track_start_location(const TimeRef& location);
+    int process(const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes);
+
+    // Re-implemented from LocationItem::set_location_start
+    // preferably we wouldn't have to re-implement this function
+    // TODO: make every location dependent item not have to re-implement ?
+    void set_location_start(const TTimeRef& location);
 	void set_fade_in(double range);
 	void set_fade_out(double range);
 	void set_track(AudioTrack* track);
@@ -80,12 +82,10 @@ public:
 	FadeCurve* get_fade_in() const;
 	FadeCurve* get_fade_out() const;
 	
-	TimeRef get_source_length() const;
-	TimeRef get_length() const {return m_length;}
-	TimeRef get_track_start_location() const {return m_trackStartLocation;}
-	TimeRef get_track_end_location() const {return m_trackEndLocation;}
-	TimeRef get_source_start_location() const {return m_sourceStartLocation;}
-	TimeRef get_source_end_location() const {return m_sourceEndLocation;}
+    TTimeRef get_source_length() const;
+    TTimeRef get_length() const {return m_length;}
+    TTimeRef get_source_start_location() const {return m_sourceStartLocation;}
+    TTimeRef get_source_end_location() const {return m_sourceEndLocation;}
 	
     uint get_channel_count() const;
     uint get_rate() const;
@@ -93,6 +93,7 @@ public:
 	qint64 get_readsource_id() const;
 	qint64 get_sheet_id() const {return m_sheetId;}
 	ReadSource* get_readsource() const;
+    inline TLocation* get_location() const {return m_locationItem;}
 	
 	QDomNode get_dom_node() const;
 	
@@ -100,10 +101,13 @@ public:
 	bool is_selected();
 	bool is_locked() const {return m_isLocked;}
 	bool has_sheet() const;
-	bool is_readsource_invalid() const {return !m_isReadSourceValid;}
-	bool is_smaller_then(APILinkedListNode* node) {return ((AudioClip*)node)->get_track_start_location() > get_track_start_location();}
-    static bool isLeftMostClip(const AudioClip* left, const AudioClip* right) {return left->get_track_start_location() < right->get_track_start_location();}
-	bool is_moving() const {return m_isMoving;}
+    bool is_readsource_invalid() const {return !m_isReadSourceValid;}
+
+    bool operator<(const AudioClip &other) {
+        return this->get_location()->get_start() < other.get_location()->get_start();
+    }    
+
+    bool is_moving() const {return m_isMoving;}
 
 	int recording_state() const;
 
@@ -111,24 +115,25 @@ public:
 
     void removed_from_track();
 
+    AudioClip* next = nullptr;
+
 
 private:
     Sheet*          m_sheet;
     AudioTrack* 	m_track;
     ReadSource*		m_readSource;
     WriteSource*	m_writer;
-    APILinkedList	m_fades;
+    TRealTimeLinkedList<FadeCurve*>	m_fades;
 	Peak* 			m_peak;
-	FadeCurve*		fadeIn;
-	FadeCurve*		fadeOut;
+    FadeCurve*		m_fadeIn;
+    FadeCurve*		m_fadeOut;
 	QDomNode		m_domNode;
+    TLocation*   m_locationItem;
 	
-	TimeRef 		m_trackStartLocation;
-	TimeRef 		m_trackEndLocation;
-	TimeRef 		m_sourceEndLocation;
-	TimeRef 		m_sourceStartLocation;
-	TimeRef			m_sourceLength;
-	TimeRef 		m_length;
+    TTimeRef 		m_sourceEndLocation;
+    TTimeRef 		m_sourceStartLocation;
+    TTimeRef			m_sourceLength;
+    TTimeRef 		m_length;
 
 	bool 			m_isTake;
 	bool			m_isLocked;
@@ -140,20 +145,19 @@ private:
 	qint64			m_readSourceId;
 	qint64			m_sheetId;
 
-	void create_fade_in();
-	void create_fade_out();
+    void create_fade(FadeCurve::FadeType fadeType);
 	void init();
-	void set_source_end_location(const TimeRef& location);
-	void set_source_start_location(const TimeRef& location);
-	void set_track_end_location(const TimeRef& location);
+    void set_source_end_location(const TTimeRef& location);
+    void set_source_start_location(const TTimeRef& location);
+    void set_track_end_location(const TTimeRef& location);
 	void set_sources_active_state();
 	void process_capture(nframes_t nframes);
 		
 	friend class ResourcesManager;
 
 signals:
-	void muteChanged();
-	void lockChanged();
+    void muteChanged();
+    void lockChanged();
 	void positionChanged();
 	void fadeAdded(FadeCurve*);
 	void fadeRemoved(FadeCurve*);
@@ -162,8 +166,8 @@ signals:
 public slots:
 	void finish_recording();
 	void finish_write_source();
-	void set_left_edge(TimeRef newLeftLocation);
-	void set_right_edge(TimeRef newRightLocation);
+    void set_left_edge(TTimeRef newLeftLocation);
+    void set_right_edge(TTimeRef newRightLocation);
 	void track_audible_state_changed();
 	void toggle_mute();
 	void toggle_lock();

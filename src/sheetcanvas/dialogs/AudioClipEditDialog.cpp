@@ -153,7 +153,7 @@ void AudioClipEditDialog::clip_position_changed()
 	QTime clipLengthTime = timeref_to_qtime(m_clip->get_length());
 	clipLengthEdit->setTime(clipLengthTime);
 	
-	QTime clipStartTime = timeref_to_qtime(m_clip->get_track_start_location());
+	QTime clipStartTime = timeref_to_qtime(m_clip->get_location()->get_start());
 	clipStartEdit->setTime(clipStartTime);
 
 	update_clip_end();
@@ -163,7 +163,7 @@ void AudioClipEditDialog::fadein_length_changed()
 {
 	if (locked) return;
 	
-	TimeRef ref(qint64(m_clip->get_fade_in()->get_range()));
+	TTimeRef ref(qint64(m_clip->get_fade_in()->get_range()));
 	QTime fadeTime = timeref_to_qtime(ref);
 	fadeInEdit->setTime(fadeTime);
 }
@@ -172,7 +172,7 @@ void AudioClipEditDialog::fadeout_length_changed()
 {
 	if (locked) return;
 
-	TimeRef ref(qint64(m_clip->get_fade_out()->get_range()));
+	TTimeRef ref(qint64(m_clip->get_fade_out()->get_range()));
 	QTime fadeTime = timeref_to_qtime(ref);
 	fadeOutEdit->setTime(fadeTime);
 }
@@ -215,7 +215,7 @@ void AudioClipEditDialog::clip_length_edit_changed(const QTime& time)
 
 	locked = true;
 	
-	TimeRef ref = qtime_to_timeref(time);
+	TTimeRef ref = qtime_to_timeref(time);
 
 	if (ref >= m_clip->get_source_length()) {
 		ref = m_clip->get_source_length();
@@ -223,7 +223,7 @@ void AudioClipEditDialog::clip_length_edit_changed(const QTime& time)
 		clipLengthEdit->setTime(clipLengthTime);
 	}
 
-	m_clip->set_right_edge(ref + m_clip->get_track_start_location());
+	m_clip->set_right_edge(ref + m_clip->get_location()->get_start());
 	update_clip_end();
 	locked = false;
 }
@@ -233,7 +233,7 @@ void AudioClipEditDialog::clip_start_edit_changed(const QTime& time)
 	if (ied().is_holding()) return;
 
 	locked = true;
-	m_clip->set_track_start_location(qtime_to_timeref(time));
+	m_clip->set_location_start(qtime_to_timeref(time));
 	update_clip_end();
 	locked = false;
 }
@@ -354,26 +354,26 @@ void AudioClipEditDialog::fadeout_default()
 	fadeOutStrengthBox->setValue(0.5);
 }
 
-TimeRef AudioClipEditDialog::qtime_to_timeref(const QTime & time)
+TTimeRef AudioClipEditDialog::qtime_to_timeref(const QTime & time)
 {
-	TimeRef ref(time.hour() * ONE_HOUR_UNIVERSAL_SAMPLE_RATE + time.minute() * ONE_MINUTE_UNIVERSAL_SAMPLE_RATE + time.second() * UNIVERSAL_SAMPLE_RATE + (time.msec() * UNIVERSAL_SAMPLE_RATE) / 1000);
+    TTimeRef ref(time.hour() * TTimeRef::ONE_HOUR_UNIVERSAL_SAMPLE_RATE + time.minute() * TTimeRef::ONE_MINUTE_UNIVERSAL_SAMPLE_RATE + time.second() * TTimeRef::UNIVERSAL_SAMPLE_RATE + (time.msec() * TTimeRef::UNIVERSAL_SAMPLE_RATE) / 1000);
 	return ref;
 }
 
-QTime AudioClipEditDialog::timeref_to_qtime(const TimeRef& ref)
+QTime AudioClipEditDialog::timeref_to_qtime(const TTimeRef& ref)
 {
 	qint64 remainder;
 	int hours, mins, secs, msec;
 
 	qint64 universalframe = ref.universal_frame();
 	
-	hours = universalframe / (ONE_HOUR_UNIVERSAL_SAMPLE_RATE);
-	remainder = universalframe - (hours * ONE_HOUR_UNIVERSAL_SAMPLE_RATE);
-	mins = remainder / ( ONE_MINUTE_UNIVERSAL_SAMPLE_RATE );
-	remainder = remainder - (mins * ONE_MINUTE_UNIVERSAL_SAMPLE_RATE );
-	secs = remainder / UNIVERSAL_SAMPLE_RATE;
-	remainder -= secs * UNIVERSAL_SAMPLE_RATE;
-	msec = remainder * 1000 / UNIVERSAL_SAMPLE_RATE;
+    hours = universalframe / (TTimeRef::ONE_HOUR_UNIVERSAL_SAMPLE_RATE);
+    remainder = universalframe - (hours * TTimeRef::ONE_HOUR_UNIVERSAL_SAMPLE_RATE);
+    mins = remainder / ( TTimeRef::ONE_MINUTE_UNIVERSAL_SAMPLE_RATE );
+    remainder = remainder - (mins * TTimeRef::ONE_MINUTE_UNIVERSAL_SAMPLE_RATE );
+	secs = remainder / TTimeRef::UNIVERSAL_SAMPLE_RATE;
+	remainder -= secs * TTimeRef::UNIVERSAL_SAMPLE_RATE;
+	msec = remainder * 1000 / TTimeRef::UNIVERSAL_SAMPLE_RATE;
 
 	QTime time(hours, mins, secs, msec);
 	return time;
@@ -405,7 +405,7 @@ void AudioClipEditDialog::fade_curve_added()
 
 void AudioClipEditDialog::update_clip_end()
 {
-	TimeRef clipEndLocation = m_clip->get_track_start_location() + m_clip->get_length();
+	TTimeRef clipEndLocation = m_clip->get_location()->get_start() + m_clip->get_length();
 	QTime clipEndTime = timeref_to_qtime(clipEndLocation);
 	clipEndLineEdit->setText(clipEndTime.toString(TIME_FORMAT));
 }

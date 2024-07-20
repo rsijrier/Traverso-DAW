@@ -81,7 +81,7 @@ private:
 	int m_mimimumheightforinfoarea{};
 	int m_lineOffset{};
 	int m_lineVOffset{};
-	TimeRef m_oldRecordingPos;
+	TTimeRef m_oldRecordingPos;
 	
 	// theme data
 	int m_drawbackground{};

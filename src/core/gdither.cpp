@@ -45,7 +45,6 @@
 #endif
 
 #include <sys/types.h>
-#include "defines.h"
 
 /* Lipshitz's minimally audible FIR, only really works for 46kHz-ish signals */
 static const float shaped_bs[] = { 2.033f, -2.165f, 1.959f, -1.590f, 0.6149f };

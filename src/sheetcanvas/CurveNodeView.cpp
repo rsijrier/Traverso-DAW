@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QPainter>
 #include <QPen>
-#include <utility>
 #include <CurveNode.h>
 #include <Themer.h>
 #include <Curve.h>
@@ -44,8 +43,8 @@ CurveNodeView::CurveNodeView( SheetView * sv, CurveView* curveview, CurveNode * 
 
 	setFlags(QGraphicsItem::ItemIgnoresTransformations);
 
-	load_theme_data();
-    calculate_bounding_rect();
+    CurveNodeView::load_theme_data();
+    CurveNodeView::calculate_bounding_rect();
 
 	connect(m_node->m_curve, SIGNAL(nodePositionChanged()), this, SLOT(update_pos()));
 }
@@ -61,7 +60,7 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
 
-    if (m_curveview->ignore_context()) {
+    if (m_curveview->item_ignores_context()) {
         return;
     }
 
@@ -72,7 +71,7 @@ void CurveNodeView::paint( QPainter * painter, const QStyleOptionGraphicsItem * 
 	QColor color = m_color;
     QColor hardSelectOutlineColor(Qt::white);
 
-    if (m_curveview->ignore_context()) {
+    if (m_curveview->item_ignores_context()) {
         color.setAlpha(75);
         hardSelectOutlineColor.setAlpha(75);
     }
@@ -118,7 +117,7 @@ void CurveNodeView::update_pos( )
 {
 	qreal halfwidth = (m_boundingRect.width() / 2);
 	qreal parentheight = m_parentViewItem->get_height();
-    qreal when = ((TimeRef(m_node->get_when()) - m_curveview->get_start_offset()) / m_sv->timeref_scalefactor) - halfwidth;
+    qreal when = ((TTimeRef(m_node->get_when()) - m_curveview->get_start_offset()) / m_sv->timeref_scalefactor) - halfwidth;
 	qreal value = parentheight - (m_node->get_value() * parentheight + halfwidth);
 	setPos(when, value);
 		

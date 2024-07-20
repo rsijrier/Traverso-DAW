@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "SFAudioWriter.h"
+#include "TExportSpecification.h"
 #include "Utils.h"
 
 #include <QString>
@@ -29,8 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 
-SFAudioWriter::SFAudioWriter()
- : AbstractAudioWriter()
+SFAudioWriter::SFAudioWriter(TExportSpecification *spec)
+    : AbstractAudioWriter(spec)
 {
 	m_sf = 0;
 }
@@ -39,52 +40,11 @@ SFAudioWriter::SFAudioWriter()
 SFAudioWriter::~SFAudioWriter()
 {
 	if (m_sf) {
-		close_private();
+        SFAudioWriter::close_private();
 	}
 }
 
 
-const char* SFAudioWriter::get_extension()
-{
-	if (m_fileType == SF_FORMAT_WAV) {
-		return ".wav";
-	}
-	else if (m_fileType == SF_FORMAT_W64) {
-		return ".w64";
-	}
-	else if (m_fileType == SF_FORMAT_AIFF) {
-		return ".aiff";
-	}
-	else if (m_fileType == SF_FORMAT_FLAC) {
-		return ".flac";
-	}
-	return ".raw";
-}
-
-
-bool SFAudioWriter::set_format_attribute(const QString& key, const QString& value)
-{
-	if (key == "filetype") {
-		if (value == "wav") {
-			m_fileType = SF_FORMAT_WAV;
-			return true;
-		}
-		else if (value == "w64") {
-			m_fileType = SF_FORMAT_W64;
-			return true;
-		}
-		else if (value == "aiff") {
-			m_fileType = SF_FORMAT_AIFF;
-			return true;
-		}
-		else if (value == "flac") {
-			m_fileType = SF_FORMAT_FLAC;
-			return true;
-		}
-	}
-	
-	return false;
-}
 
 
 bool SFAudioWriter::open_private()
@@ -92,10 +52,13 @@ bool SFAudioWriter::open_private()
 	char errbuf[256];
 	
 	memset (&m_sfinfo, 0, sizeof(m_sfinfo));
-	m_sfinfo.format = get_sf_format();
+    m_sfinfo.format = m_exportSpecification->get_data_format() | m_exportSpecification->get_file_format();
+    // TODO: Why on earth setting it to 100 seconds of 48Khz amount of frames?
 	m_sfinfo.frames = 48000*100;
-	m_sfinfo.samplerate = m_rate;
-	m_sfinfo.channels = m_channels;
+    m_sfinfo.samplerate = m_exportSpecification->get_sample_rate();
+    m_sfinfo.channels = m_exportSpecification->get_channel_count();
+    // This commented out line of code has been there since the first upload ofr SFAudioWriter
+    // not clear to me what libsndfile does with this frames number?
 	//m_sfinfo.frames = m_spec->endLocation - m_spec->startLocation + 1;
 	
 	m_file.setFileName(m_fileName);
@@ -109,7 +72,7 @@ bool SFAudioWriter::open_private()
 	
     if (m_sf == nullptr) {
         sf_error_str (nullptr, errbuf, sizeof (errbuf) - 1);
-        PWARN(QString("Export: cannot open output file \"%1\" (%2)").arg(m_fileName).arg(errbuf).toLatin1().data());
+        PWARN(QString("Export: cannot open output file \"%1\" (%2)").arg(m_fileName, errbuf).toLatin1().data());
 		return false;
 	}
 	
@@ -122,21 +85,21 @@ nframes_t SFAudioWriter::write_private(void* buffer, nframes_t frameCount)
 	int written = 0;
 	char errbuf[256];
 	
-	switch (m_sampleWidth) {
-		case 8:
-			written = sf_write_raw (m_sf, (void*) buffer, frameCount * m_channels);
+    switch (m_exportSpecification->get_data_format()) {
+        case SF_FORMAT_PCM_S8:
+            written = sf_write_raw (m_sf, (void*) buffer, frameCount * m_exportSpecification->get_channel_count());
 			break;
 
-		case 16:
+        case SF_FORMAT_PCM_16:
 			written = sf_writef_short (m_sf, (short*) buffer, frameCount);
 			break;
 
-		case 24:
-		case 32:
+        case SF_FORMAT_PCM_24:
+        case SF_FORMAT_PCM_32:
 			written = sf_writef_int (m_sf, (int*) buffer, frameCount);
 			break;
 
-		default:
+        default: // SF_FORMAT_FLOAT
 			written = sf_writef_float (m_sf, (float*) buffer, frameCount);
 			break;
 	}
@@ -158,31 +121,5 @@ bool SFAudioWriter::close_private()
 	m_sf = nullptr;
 	
 	return success;
-}
-
-
-int SFAudioWriter::get_sf_format()
-{
-	int sfBitDepth;
-	
-	switch (m_sampleWidth) {
-		case 8:
-			sfBitDepth = SF_FORMAT_PCM_S8;
-			break;
-		case 16:
-			sfBitDepth = SF_FORMAT_PCM_16;
-			break;
-		case 24:
-			sfBitDepth = SF_FORMAT_PCM_24;
-			break;
-		case 32:
-			sfBitDepth = SF_FORMAT_PCM_32;
-			break;
-		default:
-			sfBitDepth = SF_FORMAT_FLOAT;
-			break;
-	}
-	
-	return (sfBitDepth | m_fileType);
 }
 

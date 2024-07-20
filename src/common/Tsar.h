@@ -24,62 +24,44 @@ $Id: Tsar.h,v 1.4 2008/02/11 10:11:52 r_sijrier Exp $
 #define TSAR_H
 
 #include <QObject>
-#include <QBasicTimer>
-#include <QByteArray>
-#include "RingBufferNPT.h"
-#include <iostream>
+#include <QThread>
 
-#define THREAD_SAVE_INVOKE(caller, argument, slotSignature)  { \
-    TsarEvent event = tsar().create_event(caller, argument, #slotSignature, ""); \
-    while (!tsar().add_event(event)) { std::cout << "THREAD_SAVE_INVOKE: failed to add event, trying again\n";} \
-    }
-
-#define RT_THREAD_EMIT(cal, arg, signalSignature) {\
-    TsarEvent event{}; \
-    event.caller = cal; \
-    event.argument = arg; \
-    event.slotindex = -1; \
-    int retrievedsignalindex = cal->metaObject()->indexOfSignal(#signalSignature); \
-    Q_ASSERT(retrievedsignalindex >= 0); \
-    event.signalindex = retrievedsignalindex; \
-    event.valid = true; \
-    tsar().add_rt_event(event); \
-    }\
-
-
-#define THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(caller, argument, slotSignature, signalSignature)  { \
-    TsarEvent event = tsar().create_event(caller, argument, #slotSignature, #signalSignature); \
-    tsar().add_event(event);\
-    }\
+#include "cameron/readerwritercircularbuffer.h"
 
 
 struct TsarEvent {
-    // used for slot invokation stuff
     QObject* 	caller;
     void*		argument;
-    int		slotindex;
-
-    // Used for the signal emiting stuff
-    int signalindex;
-
-    bool valid;
+    int         slotindex;
+    int         signalindex;
 };
+
+class TsarThread : public QThread
+{
+    Q_OBJECT;
+    void run() {exec();}
+
+public slots:
+    void process_tsar_signals();
+};
+
 
 class Tsar : public QObject
 {
     Q_OBJECT
 
 public:
-    TsarEvent create_event(QObject* caller, void* argument, const char* slotSignature, const char* signalSignature);
+    void prepare_event(TsarEvent &event, QObject* caller, void* argument, const char* slotSignature, const char* signalSignature);
 
-    bool add_event(TsarEvent& event);
-    void add_rt_event(TsarEvent& event);
+    void post_gui_event(const TsarEvent &event);
+    void post_rt_event(const TsarEvent& event);
+
+    void process_event(const TsarEvent &event);
     void process_event_slot(const TsarEvent& event);
-    void process_event_signal(const TsarEvent& event);
-    void process_event_slot_signal(const TsarEvent& event);
+    void process_event_signal(const TsarEvent &event);
 
-protected:
-    void timerEvent(QTimerEvent *event);
+    [[deprecated]] void add_rt_event(QObject *cal, void* arg, const char* signalSignature);
+    [[deprecated]] void add_gui_event(QObject* caller, void* arg, const char* slotSignature, const char* signalSignature);
 
 private:
     Tsar();
@@ -88,25 +70,26 @@ private:
 
     // allow this function to create one instance
     friend Tsar& tsar();
+
     // The AudioDevice instance is the _only_ one who
-    // is allowed to call process_events() !!
+    // is allowed to call process_events_slot() !!
     friend class AudioDevice;
+    friend class TsarThread;
 
-    QList<RingBufferNPT<TsarEvent>*>	m_events;
-    RingBufferNPT<TsarEvent>*           oldEvents;
-    QBasicTimer                         m_timer;
-    int 	m_eventCounter;
-    int 	m_retryCount;
+    moodycamel::BlockingReaderWriterCircularBuffer<TsarEvent>*   m_blockingGuiThreadEventBuffer;
+    moodycamel::BlockingReaderWriterCircularBuffer<TsarEvent>*   m_blockingEmitEventSignalsInGuiThreadQueue;
 
-#if defined (THREAD_CHECK)
-    unsigned long	m_threadId;
-#endif
+    int             m_eventCounter;
+    int             m_retryCount;
 
-    void process_events();
-    void finish_processed_events();
+    void process_rt_event_slots();
+    void process_rt_event_signals();
+
+signals:
+    void audioThreadEventBufferFull(QString);
 };
 
-// use this function to access the context pointer
+// use this function to access the tsar singleton pointer
 Tsar& tsar();
 
 #endif

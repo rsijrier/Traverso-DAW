@@ -1,112 +1,113 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>ExportDialog</class>
- <widget class="QDialog" name="ExportDialog" >
-  <property name="geometry" >
+ <widget class="QDialog" name="ExportDialog">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>453</width>
-    <height>258</height>
+    <width>458</width>
+    <height>262</height>
    </rect>
   </property>
-  <property name="sizePolicy" >
-   <sizepolicy vsizetype="Maximum" hsizetype="Maximum" >
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
     <horstretch>0</horstretch>
     <verstretch>1</verstretch>
    </sizepolicy>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Export</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>9</number>
    </property>
-   <property name="leftMargin" >
+   <property name="leftMargin">
     <number>9</number>
    </property>
-   <property name="topMargin" >
+   <property name="topMargin">
     <number>9</number>
    </property>
-   <property name="rightMargin" >
+   <property name="rightMargin">
     <number>9</number>
    </property>
-   <property name="bottomMargin" >
+   <property name="bottomMargin">
     <number>9</number>
    </property>
    <item>
-    <widget class="QGroupBox" name="generalOptionsGroupBox" >
-     <property name="sizePolicy" >
-      <sizepolicy vsizetype="Maximum" hsizetype="Preferred" >
+    <widget class="QGroupBox" name="generalOptionsGroupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="maximumSize" >
+     <property name="maximumSize">
       <size>
        <width>16777215</width>
        <height>350</height>
       </size>
      </property>
-     <property name="title" >
+     <property name="title">
       <string>General Options</string>
      </property>
-     <layout class="QVBoxLayout" >
-      <property name="spacing" >
+     <layout class="QVBoxLayout">
+      <property name="spacing">
        <number>6</number>
       </property>
-      <property name="leftMargin" >
+      <property name="leftMargin">
        <number>9</number>
       </property>
-      <property name="topMargin" >
+      <property name="topMargin">
        <number>9</number>
       </property>
-      <property name="rightMargin" >
+      <property name="rightMargin">
        <number>9</number>
       </property>
-      <property name="bottomMargin" >
+      <property name="bottomMargin">
        <number>9</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" >
-        <property name="spacing" >
+       <layout class="QHBoxLayout">
+        <property name="spacing">
          <number>6</number>
         </property>
-        <property name="leftMargin" >
+        <property name="leftMargin">
          <number>0</number>
         </property>
-        <property name="topMargin" >
+        <property name="topMargin">
          <number>0</number>
         </property>
-        <property name="rightMargin" >
+        <property name="rightMargin">
          <number>0</number>
         </property>
-        <property name="bottomMargin" >
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
-         <widget class="QRadioButton" name="currentSheetButton" >
-          <property name="text" >
+         <widget class="QRadioButton" name="currentSheetButton">
+          <property name="text">
            <string>Export current Sheet</string>
           </property>
-          <property name="checked" >
+          <property name="checked">
            <bool>true</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="allSheetsButton" >
-          <property name="text" >
+         <widget class="QRadioButton" name="allSheetsButton">
+          <property name="text">
            <string>Export all Sheets</string>
           </property>
          </widget>
         </item>
         <item>
          <spacer>
-          <property name="orientation" >
+          <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0">
            <size>
             <width>0</width>
             <height>20</height>
@@ -117,36 +118,36 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" >
-        <property name="spacing" >
+       <layout class="QHBoxLayout">
+        <property name="spacing">
          <number>6</number>
         </property>
-        <property name="leftMargin" >
+        <property name="leftMargin">
          <number>0</number>
         </property>
-        <property name="topMargin" >
+        <property name="topMargin">
          <number>0</number>
         </property>
-        <property name="rightMargin" >
+        <property name="rightMargin">
          <number>0</number>
         </property>
-        <property name="bottomMargin" >
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
-         <widget class="QLabel" name="label" >
-          <property name="text" >
+         <widget class="QLabel" name="label">
+          <property name="text">
            <string>Export directory</string>
           </property>
-          <property name="alignment" >
+          <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="exportDirName" >
-          <property name="sizePolicy" >
-           <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+         <widget class="QLineEdit" name="exportDirName">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
             <horstretch>5</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -154,8 +155,8 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="fileSelectButton" >
-          <property name="text" >
+         <widget class="QPushButton" name="fileSelectButton">
+          <property name="text">
            <string/>
           </property>
          </widget>
@@ -166,62 +167,68 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="ExportStateGroupBox" >
-     <property name="sizePolicy" >
-      <sizepolicy vsizetype="Maximum" hsizetype="Preferred" >
+    <widget class="QGroupBox" name="ExportStateGroupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="title" >
+     <property name="title">
       <string>Export status</string>
      </property>
-     <layout class="QVBoxLayout" >
-      <property name="spacing" >
+     <layout class="QVBoxLayout">
+      <property name="spacing">
        <number>6</number>
       </property>
-      <property name="leftMargin" >
+      <property name="leftMargin">
        <number>9</number>
       </property>
-      <property name="topMargin" >
+      <property name="topMargin">
        <number>9</number>
       </property>
-      <property name="rightMargin" >
+      <property name="rightMargin">
        <number>9</number>
       </property>
-      <property name="bottomMargin" >
+      <property name="bottomMargin">
        <number>9</number>
       </property>
       <item>
-       <layout class="QHBoxLayout" >
-        <property name="spacing" >
+       <layout class="QHBoxLayout">
+        <property name="spacing">
          <number>6</number>
         </property>
-        <property name="leftMargin" >
+        <property name="leftMargin">
          <number>0</number>
         </property>
-        <property name="topMargin" >
+        <property name="topMargin">
          <number>0</number>
         </property>
-        <property name="rightMargin" >
+        <property name="rightMargin">
          <number>0</number>
         </property>
-        <property name="bottomMargin" >
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
-         <widget class="QLabel" name="currentProcessingSheetName" >
-          <property name="text" >
+         <widget class="QLabel" name="exportMessagesLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
            <string>-</string>
           </property>
          </widget>
         </item>
         <item>
          <spacer>
-          <property name="orientation" >
+          <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0">
            <size>
             <width>40</width>
             <height>20</height>
@@ -232,11 +239,11 @@
        </layout>
       </item>
       <item>
-       <widget class="QProgressBar" name="progressBar" >
-        <property name="value" >
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
          <number>0</number>
         </property>
-        <property name="orientation" >
+        <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
@@ -245,28 +252,28 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="spacing" >
+    <layout class="QHBoxLayout">
+     <property name="spacing">
       <number>6</number>
      </property>
-     <property name="leftMargin" >
+     <property name="leftMargin">
       <number>0</number>
      </property>
-     <property name="topMargin" >
+     <property name="topMargin">
       <number>0</number>
      </property>
-     <property name="rightMargin" >
+     <property name="rightMargin">
       <number>0</number>
      </property>
-     <property name="bottomMargin" >
+     <property name="bottomMargin">
       <number>0</number>
      </property>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -275,34 +282,34 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="abortButton" >
-       <property name="minimumSize" >
+      <widget class="QPushButton" name="cancelExportButton">
+       <property name="minimumSize">
         <size>
          <width>200</width>
          <height>0</height>
         </size>
        </property>
-       <property name="text" >
-        <string>Abort Export</string>
+       <property name="text">
+        <string>Cancel Export</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="startButton" >
-       <property name="minimumSize" >
+      <widget class="QPushButton" name="startButton">
+       <property name="minimumSize">
         <size>
          <width>140</width>
          <height>0</height>
         </size>
        </property>
-       <property name="text" >
+       <property name="text">
         <string>Start Export</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="closeButton" >
-       <property name="text" >
+      <widget class="QPushButton" name="closeButton">
+       <property name="text">
         <string>Close</string>
        </property>
       </widget>

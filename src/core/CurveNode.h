@@ -20,47 +20,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 $Id: CurveNode.h,v 1.9 2007/11/19 11:18:53 r_sijrier Exp $
 */
 
-#ifndef CURVENODE_H
-#define CURVENODE_H
-
-#include "APILinkedList.h"
+#ifndef T_CURVENODE_H
+#define T_CURVENODE_H
 
 class Curve;
 
-class CurveNode : public APILinkedListNode
+class CurveNode
 {
 
 public:
     CurveNode(Curve* curve, double when, double  val);
-    CurveNode();
 
-        ~CurveNode();
+    ~CurveNode();
 	
-	void set_when(double when) {
-		this->when = when;
-	}
+    void set_when(double when);
 	
-	void set_when_and_value(double when, double value);
+    void set_when_and_value(double when, double value);
 	
-	void set_relative_when_and_value(double relwhen, double value);
+    void set_relative_when_and_value(double relwhen, double value);
 	
-	double get_when() const {return when;}
-	double get_value() const {return value;}
-	
-	bool is_smaller_then(APILinkedListNode* node) {return ((CurveNode*)node)->when > when;}
+    inline double get_when() const {return m_when;}
+    inline double get_value() const {return m_value;}
 
-	Curve*	m_curve{};
+    bool operator<(const CurveNode &other) {
+        return this->get_when() < other.get_when();
+    }
+
+    Curve*	m_curve;
 	
-	// declaring friend class Curve seems not to make any difference 
-	// when compiling on windows ? (not allowed to access compile error)
-	double 	when{};
-	double 	value{};
-	
+
+    CurveNode* next;
+
 private:
-    double  coeff[4]{};
-/*	double 	when;
-	double 	value;*/
-	
+    double  coeff[4];
+    double 	m_when;
+    double 	m_value;
+
 	friend class Curve;
 };
 

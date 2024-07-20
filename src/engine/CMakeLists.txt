@@ -13,10 +13,14 @@ TAudioDeviceClient.h
 SET(TRAVERSO_ENGINE_SOURCES
 AudioBus.cpp
 AudioChannel.cpp
+TAudioDeviceSetup.h TAudioDeviceSetup.cpp
 AudioDevice.cpp
 AudioDeviceThread.cpp
 TAudioDeviceClient.cpp
 TAudioDriver.cpp
+TAudioBusConfiguration.h TAudioBusConfiguration.cpp
+TAudioChannelConfiguration.h TAudioChannelConfiguration.cpp
+TVUMonitor.h TVUMonitor.cpp
 memops.cpp
 )
 
@@ -55,8 +59,12 @@ ENDIF(HAVE_PORTAUDIO)
 
 IF(HAVE_PULSEAUDIO)
 	SET(TRAVERSO_ENGINE_SOURCES
-	PulseAudioDriver.cpp
+	TPulseAudioDriver.cpp
 	${TRAVERSO_ENGINE_SOURCES}
+	)
+        SET(TRAVERSO_ENGINE_MOC_CLASSES
+	TPulseAudioDriver.h
+	${TRAVERSO_ENGINE_MOC_CLASSES}
 	)
 ENDIF(HAVE_PULSEAUDIO)
 
@@ -71,7 +79,8 @@ ENDIF(HAVE_COREAUDIO)
 
 SET(TRAVERSO_ENGINE_LIBRARY "traversoaudiobackend")
 
-ADD_LIBRARY(${TRAVERSO_ENGINE_LIBRARY} STATIC ${TRAVERSO_ENGINE_SOURCES} ${TRAVERSO_ENGINE_MOC_SOURCES})
+ADD_LIBRARY(${TRAVERSO_ENGINE_LIBRARY} STATIC ${TRAVERSO_ENGINE_SOURCES} ${TRAVERSO_ENGINE_MOC_SOURCES}
+)
 
 IF(USE_PCH)
     ADD_DEPENDENCIES(traversoaudiobackend precompiled_headers)

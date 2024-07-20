@@ -20,16 +20,13 @@
 */
 
 #include "ExportFormatOptionsWidget.h"
-#include "ui_ExportFormatOptionsWidget.h"
 
 #include "AudioDevice.h"
 #include "TConfig.h"
-#include "Export.h"
+#include "TExportSpecification.h"
+#include <samplerate.h>
 
 RELAYTOOL_WAVPACK;
-RELAYTOOL_FLAC;
-RELAYTOOL_MP3LAME;
-RELAYTOOL_VORBISENC;
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -41,11 +38,11 @@ ExportFormatOptionsWidget::ExportFormatOptionsWidget( QWidget * parent )
 {
         setupUi(this);
 
-	//bitdepthComboBox->addItem("8", 8);
-	bitdepthComboBox->addItem("16", 16);
-	bitdepthComboBox->addItem("24", 24);
-	bitdepthComboBox->addItem("32", 32);
-	bitdepthComboBox->addItem("32 (float)", 1);
+    dataFormatComboBox->addItem("8 bit", SF_FORMAT_PCM_S8);
+    dataFormatComboBox->addItem("16 bit", SF_FORMAT_PCM_16);
+    dataFormatComboBox->addItem("24 bit", SF_FORMAT_PCM_24);
+    dataFormatComboBox->addItem("32 bit", SF_FORMAT_PCM_32);
+    dataFormatComboBox->addItem("32 bit FLOAT", SF_FORMAT_FLOAT);
 	
 	channelComboBox->addItem("Mono", 1);
 	channelComboBox->addItem("Stereo", 2);
@@ -58,28 +55,21 @@ ExportFormatOptionsWidget::ExportFormatOptionsWidget( QWidget * parent )
 	sampleRateComboBox->addItem("88.200 Hz", 88200);
 	sampleRateComboBox->addItem("96.000 Hz", 96000);
 	
-	resampleQualityComboBox->addItem(tr("Best"), 0); // Best
-	resampleQualityComboBox->addItem(tr("High"), 1); // Medium
-	resampleQualityComboBox->addItem(tr("Medium"), 2); // Fastest
-	resampleQualityComboBox->addItem(tr("Fast"), 4); // Linear (Should we use ZERO_HOLD(3) instead?)
+    resampleQualityComboBox->addItem(tr("Best"), SRC_SINC_BEST_QUALITY);
+    resampleQualityComboBox->addItem(tr("High"), SRC_SINC_MEDIUM_QUALITY);
+    resampleQualityComboBox->addItem(tr("Fastest"), SRC_SINC_FASTEST);
+    resampleQualityComboBox->addItem(tr("Zero Order Hold"), SRC_ZERO_ORDER_HOLD);
+    resampleQualityComboBox->addItem(tr("Linear"), SRC_LINEAR);
 	
 	audioTypeComboBox->addItem("WAV", "wav");
 	audioTypeComboBox->addItem("AIFF", "aiff");
-	if (libFLAC_is_present) {
-		audioTypeComboBox->addItem("FLAC", "flac");
-	}
-	if (libwavpack_is_present) {
-		audioTypeComboBox->addItem("WAVPACK", "wavpack");
-	}
-#if defined MP3_ENCODE_SUPPORT
-	if (libmp3lame_is_present) {
-		audioTypeComboBox->addItem("MP3", "mp3");
-	}
-#endif
-	if (libvorbisenc_is_present) {
-		audioTypeComboBox->addItem("OGG", "ogg");
-	}
-	
+    audioTypeComboBox->addItem("FLAC", "flac");
+    audioTypeComboBox->addItem("MP3", "mp3");
+    audioTypeComboBox->addItem("OGG", "ogg");
+    if (libwavpack_is_present) {
+        audioTypeComboBox->addItem("WAVPACK", "wavpack");
+    }
+
 	channelComboBox->setCurrentIndex(channelComboBox->findData(2));
 	
 	int rateIndex = sampleRateComboBox->findData(audiodevice().get_sample_rate());
@@ -187,10 +177,15 @@ ExportFormatOptionsWidget::ExportFormatOptionsWidget( QWidget * parent )
 	index = config().get_property("ExportFormatOptionsWidget", "resampleQualityComboBox", "1").toInt();
 	index = resampleQualityComboBox->findData(index);
 	resampleQualityComboBox->setCurrentIndex(index >= 0 ? index : 1);
-	
-	option = config().get_property("ExportFormatOptionsWidget", "bitdepthComboBox", "16").toString();
-	index = bitdepthComboBox->findData(option);
-	bitdepthComboBox->setCurrentIndex(index >= 0 ? index : 0);
+
+    bool ok;
+    int bitDepth = config().get_property("ExportFormatOptionsWidget", "fileFormatComboBox", SF_FORMAT_PCM_16).toInt(&ok);
+    if (ok) {
+        index = dataFormatComboBox->findData(bitDepth);
+        dataFormatComboBox->setCurrentIndex(index >= 0 ? index : 0);
+    } else {
+        dataFormatComboBox->setCurrentIndex(2);
+    }
 }
 
 
@@ -206,7 +201,7 @@ ExportFormatOptionsWidget::~ ExportFormatOptionsWidget( )
 	config().set_property("ExportDialog", "normalizeCheckBox", normalizeCheckBox->isChecked());
 	config().set_property("ExportDialog", "skipWVXCheckBox", skipWVXCheckBox->isChecked());
 	config().set_property("ExportDialog", "resampleQualityComboBox", resampleQualityComboBox->itemData(resampleQualityComboBox->currentIndex()).toString());
-	config().set_property("ExportDialog", "bitdepthComboBox", bitdepthComboBox->itemData(bitdepthComboBox->currentIndex()).toString());
+    config().set_property("ExportDialog", "fileFormatComboBox", dataFormatComboBox->itemData(dataFormatComboBox->currentIndex()).toInt());
 }
 
 
@@ -236,11 +231,11 @@ void ExportFormatOptionsWidget::audio_type_changed(int index)
 	}
 	
 	if (newType == "mp3" || newType == "ogg" || newType == "flac") {
-		bitdepthComboBox->setCurrentIndex(bitdepthComboBox->findData(16));
-		bitdepthComboBox->setDisabled(true);
+        dataFormatComboBox->setCurrentIndex(dataFormatComboBox->findData(SF_FORMAT_PCM_16));
+        dataFormatComboBox->setDisabled(true);
 	}
 	else {
-		bitdepthComboBox->setEnabled(true);
+        dataFormatComboBox->setEnabled(true);
 	}
 }
 
@@ -287,35 +282,33 @@ void ExportFormatOptionsWidget::ogg_method_changed(int index)
 	}
 }
 
-void ExportFormatOptionsWidget::get_format_options(ExportSpecification * spec)
+void ExportFormatOptionsWidget::get_format_options(TExportSpecification * spec)
 {
 	QString audioType = audioTypeComboBox->itemData(audioTypeComboBox->currentIndex()).toString();
 	if (audioType == "wav") {
-		spec->writerType = "sndfile";
-		spec->extraFormat["filetype"] = "wav";
+        spec->set_file_format(SF_FORMAT_WAV);
 	}
 	else if (audioType == "aiff") {
-		spec->writerType = "sndfile";
-		spec->extraFormat["filetype"] = "aiff";
-	}
+        spec->set_file_format(SF_FORMAT_AIFF);
+    }
 	else if (audioType == "flac") {
-		spec->writerType = "flac";
-	}
+        spec->set_file_format(SF_FORMAT_FLAC);
+    }
 	else if (audioType == "wavpack") {
-		spec->writerType = "wavpack";
+        spec->set_writer_type("wavpack");
 		spec->extraFormat["quality"] = wavpackCompressionComboBox->itemData(wavpackCompressionComboBox->currentIndex()).toString();
 		spec->extraFormat["skip_wvx"] = skipWVXCheckBox->isChecked() ? "true" : "false";
 	}
 	else if (audioType == "mp3") {
-		spec->writerType = "lame";
-		spec->extraFormat["method"] = mp3MethodComboBox->itemData(mp3MethodComboBox->currentIndex()).toString();
+        spec->set_file_format(SF_FORMAT_MPEG);
+        spec->extraFormat["method"] = mp3MethodComboBox->itemData(mp3MethodComboBox->currentIndex()).toString();
 		spec->extraFormat["minBitrate"] = mp3MinBitrateComboBox->itemData(mp3MinBitrateComboBox->currentIndex()).toString();
 		spec->extraFormat["maxBitrate"] = mp3MaxBitrateComboBox->itemData(mp3MaxBitrateComboBox->currentIndex()).toString();
 		spec->extraFormat["quality"] = QString::number(mp3QualitySlider->value());
 	}
 	else if (audioType == "ogg") {
-		spec->writerType = "vorbis";
-		spec->extraFormat["mode"] = oggMethodComboBox->itemData(oggMethodComboBox->currentIndex()).toString();
+        spec->set_file_format(SF_FORMAT_OGG);
+        spec->extraFormat["mode"] = oggMethodComboBox->itemData(oggMethodComboBox->currentIndex()).toString();
 		if (spec->extraFormat["mode"] == "manual") {
 			spec->extraFormat["bitrateNominal"] = oggBitrateComboBox->itemData(oggBitrateComboBox->currentIndex()).toString();
 			spec->extraFormat["bitrateUpper"] = oggBitrateComboBox->itemData(oggBitrateComboBox->currentIndex()).toString();
@@ -324,17 +317,12 @@ void ExportFormatOptionsWidget::get_format_options(ExportSpecification * spec)
 			spec->extraFormat["vbrQuality"] = QString::number(oggQualitySlider->value());
 		}
 	}
-	
-	spec->data_width = bitdepthComboBox->itemData(bitdepthComboBox->currentIndex()).toInt();
-    spec->channels = channelComboBox->itemData(channelComboBox->currentIndex()).toUInt();
-    spec->sample_rate = sampleRateComboBox->itemData(sampleRateComboBox->currentIndex()).toUInt();
-	spec->src_quality = resampleQualityComboBox->itemData(resampleQualityComboBox->currentIndex()).toInt();
 
+    spec->set_data_format(dataFormatComboBox->itemData(dataFormatComboBox->currentIndex()).toInt());
+    spec->set_channel_count(channelComboBox->itemData(channelComboBox->currentIndex()).toUInt());
+    spec->set_sample_rate(sampleRateComboBox->itemData(sampleRateComboBox->currentIndex()).toUInt());
+    spec->set_sample_rate_conversion_quality(resampleQualityComboBox->itemData(resampleQualityComboBox->currentIndex()).toInt());
 
-	spec->normalize = normalizeCheckBox->isChecked();
-	
 	//TODO Make a ComboBox for this one too!
-	spec->dither_type = GDitherTri;
-
-
+    spec->set_dither_type(GDitherTri);
 }

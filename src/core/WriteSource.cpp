@@ -21,29 +21,30 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "WriteSource.h"
 
-#include "Export.h"
+#include "TExportSpecification.h"
 #include <math.h>
 
 #include "AudioBus.h"
 #include <AudioDevice.h>
-#include <AbstractAudioWriter.h>
-#include <SFAudioWriter.h>
+#include "AbstractAudioWriter.h"
 #include "Peak.h"
 #include "Utils.h"
-#include "DiskIO.h"
+
+#include "gdither.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
 
-WriteSource::WriteSource( ExportSpecification* specification )
-	: AudioSource(specification->exportdir, specification->name)
-	, m_spec(specification)
+WriteSource::WriteSource( TExportSpecification* specification )
+    : AudioSource(specification->get_export_dir(), specification->get_export_file_name())
+    , m_exportSpecification(specification)
 {
-    m_diskio = nullptr;
     m_writer = nullptr;
     m_peak = nullptr;
+    m_channelCount = 0;
+    m_isRecording = false;
 }
 
 WriteSource::~WriteSource()
@@ -53,266 +54,223 @@ WriteSource::~WriteSource()
 		delete m_peak;
 	}
 	
-	for(int i=0; i<m_buffers.size(); ++i) {
-		delete m_buffers.at(i);
-	}
-	
-	if (m_spec->isRecording) {
-		delete m_spec;
+    // If the export state was recording it means ownership of the TExportSpecification
+    // was given to this WriteSource instance so we should delete it now
+    if (m_exportSpecification->get_recording_state() == TExportSpecification::RecordingState::RECORDING) {
+        delete m_exportSpecification;
 	}
 	if (m_writer) {
 		delete m_writer;
 	}
 }
 
-int WriteSource::process (nframes_t nframes)
+nframes_t WriteSource::process (nframes_t nframes)
 {
-    float* float_buffer = nullptr;
-    uint chn;
-	uint32_t x;
-	uint32_t i;
-	nframes_t written;
-	nframes_t to_write = 0;
+    float* writeBuffer = nullptr;
+    nframes_t written = 0;
+    nframes_t toWrite = 0;
 	int cnt = 0;
 
 	// nframes MUST be greater then 0, this is a precondition !
-	Q_ASSERT(nframes);
+    Q_ASSERT(nframes > 0);
+    // No channels why are we processing...
+    Q_ASSERT(m_channelCount > 0);
 
+    do {
 
-	do {
+        /* now do sample rate conversion */
 
-		/* now do sample rate conversion */
+        if (m_sampleRate != m_exportSpecification->get_sample_rate()) {
 
-        if (m_sampleRate != m_spec->sample_rate) {
+            int err;
 
-			int err;
+            Q_ASSERT(m_channelCount > 0);
 
-			m_src_data.output_frames = m_out_samples_max / m_channelCount;
-            uint rate = audiodevice().get_sample_rate();
-			m_src_data.end_of_input = (m_spec->pos + TimeRef(nframes, rate)) >= m_spec->endLocation;
-			m_src_data.data_out = m_dataF2;
+            m_srcData.output_frames = m_outSamplesMax / m_channelCount;
+            m_srcData.end_of_input = (m_exportSpecification->get_export_location() + TTimeRef(nframes, m_sampleRate)) >= m_exportSpecification->get_export_end_location();
+            m_srcData.data_out = m_dataBuffer;
 
-			if (m_leftover_frames > 0) {
+            if (m_leftOverFrames > 0) {
 
-				/* input data will be in m_leftoverF rather than dataF */
+                /* input data will be in m_leftOverBuffer rather than dataF */
 
-				m_src_data.data_in = m_leftoverF;
+                m_srcData.data_in = m_leftOverBuffer;
 
-				if (cnt == 0) {
+                if (cnt == 0) {
 
-					/* first time, append new data from dataF into the m_leftoverF buffer */
+                    /* first time, append new data from dataF into the m_leftOverBuffer */
 
-					memcpy (m_leftoverF + (m_leftover_frames * m_channelCount), m_spec->dataF, nframes * m_channelCount * sizeof(float));
-					m_src_data.input_frames = nframes + m_leftover_frames;
-				} else {
+                    memcpy (m_leftOverBuffer + (m_leftOverFrames * m_channelCount), m_exportSpecification->get_render_buffer(), nframes * m_channelCount * sizeof(float));
+                    m_srcData.input_frames = nframes + m_leftOverFrames;
+                } else {
 
-					/* otherwise, just use whatever is still left in m_leftoverF; the contents
-					were adjusted using memmove() right after the last SRC call (see
-					below)
-					*/
+                    /* otherwise, just use whatever is still left in m_leftoverF; the contents
+                    were adjusted using memmove() right after the last SRC call (see
+                    below)
+                    */
 
-					m_src_data.input_frames = m_leftover_frames;
-				}
-			} else {
+                    m_srcData.input_frames = m_leftOverFrames;
+                }
+            } else {
 
-				m_src_data.data_in = m_spec->dataF;
-				m_src_data.input_frames = nframes;
+                m_srcData.data_in = m_exportSpecification->get_render_buffer();
+                m_srcData.input_frames = nframes;
 
-			}
+            }
 
-			++cnt;
+            ++cnt;
 
-			if ((err = src_process (m_src_state, &m_src_data)) != 0) {
+            if ((err = src_process (m_srcState, &m_srcData)) != 0) {
                 PWARN((QString("an error occured during sample rate conversion: %1").arg(src_strerror(err)).toLatin1().data()));
-				return -1;
-			}
+                return written;
+            }
 
-            to_write = nframes_t(m_src_data.output_frames_gen);
-            m_leftover_frames = nframes_t(m_src_data.input_frames - m_src_data.input_frames_used);
+            toWrite = nframes_t(m_srcData.output_frames_gen);
+            m_leftOverFrames = nframes_t(m_srcData.input_frames - m_srcData.input_frames_used);
 
-			if (m_leftover_frames > 0) {
-				if (m_leftover_frames > m_max_leftover_frames) {
-					PWARN("warning, leftover frames overflowed, glitches might occur in output");
-					m_leftover_frames = m_max_leftover_frames;
-				}
-				memmove (m_leftoverF, (char *) (m_src_data.data_in + (m_src_data.input_frames_used * m_channelCount)),
-					 m_leftover_frames * m_channelCount * sizeof(float));
-			}
+            if (m_leftOverFrames > 0) {
+                if (m_leftOverFrames > m_leftOverBufferSize) {
+                    PWARN("warning, leftover frames overflowed, glitches might occur in output");
+                    m_leftOverFrames = m_leftOverBufferSize;
+                }
+                memmove (m_leftOverBuffer, (char *) (m_srcData.data_in + (m_srcData.input_frames_used * m_channelCount)),
+                     m_leftOverFrames * m_channelCount * sizeof(float));
+            }
 
-			float_buffer = m_dataF2;
+            writeBuffer = m_dataBuffer;
 
-		} else {
+        } else {
 
-			/* no SRC, keep it simple */
+            /* no SRC, keep it simple */
 
-			to_write = nframes;
-			m_leftover_frames = 0;
-			float_buffer = m_spec->dataF;
-		}
+            toWrite = nframes;
+            m_leftOverFrames = 0;
+            writeBuffer = m_exportSpecification->get_render_buffer();
+        }
 
-		if (m_output_data) {
-			memset (m_output_data, 0, m_sample_bytes * to_write * m_channelCount);
-		}
+        if (m_outputData) {
+            memset (m_outputData, 0, m_sampleBytes * toWrite * m_channelCount);
+        }
 
-		switch (m_spec->data_width) {
-		case 8:
-		case 16:
-		case 24:
-			for (chn = 0; chn < m_channelCount; ++chn) {
-				gdither_runf (m_dither, chn, to_write, float_buffer, m_output_data);
-			}
-			/* and export to disk */
-			written = m_writer->write(m_output_data, to_write);
-			break;
+        switch (m_exportSpecification->get_data_format()) {
+        case SF_FORMAT_PCM_S8:
+        case SF_FORMAT_PCM_16:
+        case SF_FORMAT_PCM_24:
+            for (uint chn = 0; chn < m_channelCount; ++chn) {
+                gdither_runf (m_dither, chn, toWrite, writeBuffer, m_outputData);
+            }
+            /* and export to disk */
+            written += m_writer->write(m_outputData, toWrite);
+            break;
 
-		case 32:
-			for (chn = 0; chn < m_channelCount; ++chn) {
-
-                int *ob = static_cast<int *>(m_output_data);
+        case SF_FORMAT_PCM_32:
+            for (uint chn = 0; chn < m_channelCount; ++chn) {
+                Q_ASSERT(m_outputData);
+                int *ob = static_cast<int *>(m_outputData);
                 const double int_max = double(INT_MAX);
                 const double int_min = double(INT_MIN);
 
-				for (x = 0; x < to_write; ++x) {
-					i = chn + (x * m_channelCount);
+                for (nframes_t x = 0; x < toWrite; ++x) {
+                    uint i = chn + (x * m_channelCount);
 
-					if (float_buffer[i] > 1.0f) {
-						ob[i] = INT_MAX;
-					} else if (float_buffer[i] < -1.0f) {
-						ob[i] = INT_MIN;
-					} else {
-						if (float_buffer[i] >= 0.0f) {
-							ob[i] = lrintf (int_max * float_buffer[i]);
-						} else {
-							ob[i] = - lrintf (int_min * float_buffer[i]);
-						}
-					}
-				}
-			}
-			/* and export to disk */
-			written = m_writer->write(m_output_data, to_write);
-			break;
+                    if (writeBuffer[i] > 1.0f) {
+                        ob[i] = INT_MAX;
+                    } else if (writeBuffer[i] < -1.0f) {
+                        ob[i] = INT_MIN;
+                    } else {
+                        if (writeBuffer[i] >= 0.0f) {
+                            ob[i] = lrintf (int_max * writeBuffer[i]);
+                        } else {
+                            ob[i] = - lrintf (int_min * writeBuffer[i]);
+                        }
+                    }
+                }
+            }
+            /* and export to disk */
+            written += m_writer->write(m_outputData, toWrite);
+            break;
+        // default is SF_FORMAT_FLOAT
+        default:
+            // TODO / FIXME
+            // we're clipping to max/min 1.0f but do we want this?
+            for (nframes_t x = 0; x < toWrite * m_channelCount; ++x) {
+                if (writeBuffer[x] > 1.0f) {
+                    writeBuffer[x] = 1.0f;
+                } else if (writeBuffer[x] < -1.0f) {
+                    writeBuffer[x] = -1.0f;
+                }
+            }
+            /* and export to disk */
+            written += m_writer->write(writeBuffer, toWrite);
+            break;
+        }
 
-		default:
-			for (x = 0; x < to_write * m_channelCount; ++x) {
-				if (float_buffer[x] > 1.0f) {
-					float_buffer[x] = 1.0f;
-				} else if (float_buffer[x] < -1.0f) {
-					float_buffer[x] = -1.0f;
-				}
-			}
-			/* and export to disk */
-			written = m_writer->write(float_buffer, to_write);
-			break;
-		}
+    } while (m_leftOverFrames >= nframes);
 
-	} while (m_leftover_frames >= nframes);
-
-	return 0;
+    return written;
 }
 
 int WriteSource::prepare_export()
 {
 	PENTER;
 	
-	Q_ASSERT(m_spec->is_valid() == 1);
-	
-	GDitherSize dither_size;
+    Q_ASSERT(m_exportSpecification->is_valid() == 1);
 
-	m_sampleRate = audiodevice().get_sample_rate();
-	m_channelCount = m_spec->channels;
-	m_processPeaks = false;
-    m_diskio = nullptr;
-    m_dataF2 = m_leftoverF = nullptr;
+    // FIXME: review sample rate variables for correctnes
+    m_sampleRate = m_exportSpecification->get_sample_rate();
+    m_outputRate = audiodevice().get_sample_rate();
+
+    m_channelCount = m_exportSpecification->get_channel_count();
+    m_sampleBytes = m_exportSpecification->get_sample_bytes();
+
+    m_processPeaks = false;
+    m_dataBuffer = m_leftOverBuffer = nullptr;
+    m_leftOverBufferSize = 0;
+    m_leftOverFrames = 0;
+    m_outSamplesMax = 0;
     m_dither = nullptr;
-    m_output_data = nullptr;
-    m_src_state = nullptr;
-	
-
-	switch (m_spec->data_width) {
-	case 8:
-		dither_size = GDither8bit;
-		break;
-
-	case 16:
-		dither_size = GDither16bit;
-		break;
-
-	case 24:
-		dither_size = GDither32bit;
-		break;
-
-	default:
-		dither_size = GDitherFloat;
-		break;
-	}
+    m_outputData = nullptr;
+    m_srcState = nullptr;
 
 	if (m_writer) {
 		delete m_writer;
 	}
+
+    set_name(get_name() + m_exportSpecification->get_file_extension());
+
+    m_writer = AbstractAudioWriter::create_audio_writer(m_exportSpecification);
 	
-	m_writer = AbstractAudioWriter::create_audio_writer(m_spec->writerType);
-	m_writer->set_rate(m_spec->sample_rate);
-	m_writer->set_bits_per_sample(m_spec->data_width);
-	m_writer->set_num_channels(m_channelCount);
-	
-	QString key;
-	foreach (key, m_spec->extraFormat.keys()) {
-		if (m_writer->set_format_attribute(key, m_spec->extraFormat[key]) == false) {
-			printf("Invalid Extra Format Info: %s=%s\n", QS_C(key), QS_C(m_spec->extraFormat[key]));
-		}
-	}
-	
-	set_name(get_name() + m_writer->get_extension());
-	
-	if (m_writer->open(m_fileName) == false) {
+    if (!m_writer->open(m_fileName)) {
+        PERROR("Write Source failed to open");
 		return -1;
 	}
 	
-    if (m_spec->sample_rate != m_sampleRate) {
+    if (m_sampleRate != m_exportSpecification->get_sample_rate()) {
 		qDebug("Doing samplerate conversion");
 		int err;
 
-        if ((m_src_state = src_new (m_spec->src_quality, int(m_channelCount), &err)) == nullptr) {
+        if ((m_srcState = src_new (m_exportSpecification->get_sample_rate_conversion_quality(), int(m_channelCount), &err)) == nullptr) {
             PWARN(QString("cannot initialize sample rate conversion: %1").arg(src_strerror(err)).toLatin1().data());
 			return -1;
 		}
 
-        m_src_data.src_ratio = m_spec->sample_rate / double(m_sampleRate);
-        m_out_samples_max = nframes_t(ceil (m_spec->blocksize * m_src_data.src_ratio * m_channelCount));
-		m_dataF2 = new audio_sample_t[m_out_samples_max];
+        m_srcData.src_ratio = m_exportSpecification->get_sample_rate() / double(m_sampleRate);
+        m_outSamplesMax = nframes_t(ceil (m_exportSpecification->get_block_size() * m_srcData.src_ratio * m_channelCount));
+        m_dataBuffer = new audio_sample_t[m_outSamplesMax];
 
-		m_max_leftover_frames = 4 * m_spec->blocksize;
-		m_leftoverF = new audio_sample_t[m_max_leftover_frames * m_channelCount];
-		m_leftover_frames = 0;
+        m_leftOverBufferSize = 4 * m_exportSpecification->get_block_size();
+        m_leftOverBuffer = new audio_sample_t[m_leftOverBufferSize * m_channelCount];
+        m_leftOverFrames = 0;
 	} else {
-		m_out_samples_max = m_spec->blocksize * m_channelCount;
+        m_outSamplesMax = m_exportSpecification->get_block_size() * m_channelCount;
 	}
 
-	m_dither = gdither_new (m_spec->dither_type, m_channelCount, dither_size, m_spec->data_width);
+    m_dither = gdither_new (m_exportSpecification->get_dither_type(), m_channelCount, m_exportSpecification->get_dither_size(), m_exportSpecification->get_bit_depth());
 
-	/* allocate buffers where dithering and output will occur */
 
-	switch (m_spec->data_width) {
-	case 8:
-		m_sample_bytes = 1;
-		break;
-
-	case 16:
-		m_sample_bytes = 2;
-		break;
-
-	case 24:
-	case 32:
-		m_sample_bytes = 4;
-		break;
-
-	default:
-		m_sample_bytes = 0; // float format
-		break;
-	}
-
-	if (m_sample_bytes) {
-        m_output_data = static_cast<void*>(malloc (m_sample_bytes * m_out_samples_max));
+    /* allocate buffers where dithering and output will occur */
+    if (m_sampleBytes) {
+        m_outputData = static_cast<void*>(malloc (m_sampleBytes * m_outSamplesMax));
 	}
 
 	return 0;
@@ -329,13 +287,13 @@ int WriteSource::finish_export( )
         m_writer = nullptr;
 	}
 	
-    if (m_dataF2) {
-        delete [] m_dataF2;
-        m_dataF2 = nullptr;
+    if (m_dataBuffer) {
+        delete [] m_dataBuffer;
+        m_dataBuffer = nullptr;
     }
-    if (m_leftoverF) {
-        delete [] m_leftoverF;
-        m_leftoverF = nullptr;
+    if (m_leftOverBuffer) {
+        delete [] m_leftOverBuffer;
+        m_leftOverBuffer = nullptr;
     }
 
 	if (m_dither) {
@@ -343,24 +301,20 @@ int WriteSource::finish_export( )
         m_dither = nullptr;
 	}
 
-	if (m_output_data) {
-		free (m_output_data);
-        m_output_data = nullptr;
+    if (m_outputData) {
+        free (m_outputData);
+        m_outputData = nullptr;
 	}
 
-	if (m_src_state) {
-		src_delete (m_src_state);
-        m_src_state = nullptr;
+    if (m_srcState) {
+        src_delete (m_srcState);
+        m_srcState = nullptr;
 	}
 
 	if (m_peak && m_peak->finish_processing() < 0) {
 		PERROR("WriteSource::finish_export : peak->finish_processing() failed!");
 	}
 		
-	if (m_diskio) {
-		m_diskio->unregister_write_source(this);
-	}
-
     // FIXME (?)
     // Be sure to connect to this signal using Qt::queuedConnection!
     // This signal is emited from DiskIO thread!!!!
@@ -369,24 +323,51 @@ int WriteSource::finish_export( )
 	return 1;
 }
 
-int WriteSource::rb_write(AudioBus* bus, nframes_t nframes)
+nframes_t WriteSource::ringbuffer_write(AudioBus* bus, nframes_t nframes, bool realTime)
 {
-        if (bus->get_channel_count() != m_channelCount) {
-                // invalid bus configuration for this write source!
-                return 0;
+    Q_ASSERT(bus->get_channel_count() == m_channelCount);
+
+    QueueBufferSlot* slot = nullptr;
+
+    if ((slot = dequeue_from_free_queue(realTime)) )
+    {
+        Q_ASSERT(slot);
+
+        for (uint chan=0; chan < m_channelCount; ++chan) {
+            AudioChannel* audioChannel = bus->get_channel(chan);
+            Q_ASSERT(audioChannel);
+
+            slot->write_buffer(TTimeRef(), audioChannel->get_buffer(nframes), chan, nframes);
         }
 
-	int written = 0;
-	
-        for (int i= int(m_channelCount-1); i>=0; --i) {
-                AudioChannel* chan = bus->get_channel(uint(i));
-                if (chan) {
-                        written = m_buffers.at(i)->write(chan->get_buffer(nframes), nframes);
-                }
-	}
-	
-	return written;
+        m_rtBufferSlotsQueue->try_enqueue(slot);
+
+        return slot->get_buffer_size();
+    }
+
+    return 0;
 }
+
+QueueBufferSlot* WriteSource::dequeue_from_free_queue(bool realTime)
+{
+    QueueBufferSlot* slot = nullptr;
+
+    if (realTime) {
+        if (m_freeBufferSlotsQueue->try_dequeue(slot)) {
+            return slot;
+        } else {
+            // FIXME
+            // What about feedback to user that we couldn't
+            // write the audiostream to storage media?
+            slot = nullptr;
+        }
+    } else {
+        m_freeBufferSlotsQueue->wait_dequeue(slot);
+    }
+
+    return slot;
+}
+
 
 void WriteSource::set_process_peaks( bool process )
 {
@@ -410,48 +391,51 @@ void WriteSource::set_process_peaks( bool process )
 	}
 }
 
-int WriteSource::rb_file_write(nframes_t cnt)
+int WriteSource::rb_file_write(QueueBufferSlot* slot)
 {
-	uint read = 0;
+    nframes_t written = 0;
     uint chan;
+
+    nframes_t nframes = slot->get_buffer_size();
 	
     // FIXME make it support any channel count, not just some high enough number?
     audio_sample_t* readbuffer[6];
-	
+    for (int index = 0; index < 6; ++index) {
+        readbuffer[index] = nullptr;
+    }
+
 	for (chan=0; chan<m_channelCount; ++chan) {
 		
-		readbuffer[chan] = new audio_sample_t[cnt * m_channelCount];
+        readbuffer[chan] = new audio_sample_t[nframes * m_channelCount];
 
-		read = m_buffers.at(chan)->read(readbuffer[chan], cnt);
-		
-		if (read != cnt) {
-			printf("WriteSource::rb_file_write() : could only process %d frames, %d were requested!\n", read, cnt);
-		}
-		
-		m_peak->process(chan, readbuffer[chan], read);
+        slot->read_buffer(readbuffer[chan], chan, nframes);
+
+        m_peak->process(chan, readbuffer[chan], nframes);
 	}
 
-	if (read > 0) {
-		if (m_channelCount == 1) {
-			m_spec->dataF = readbuffer[0];
-		} else {
-			// Interlace data into dataF buffer!
-			for (uint f=0; f<read; f++) {
-				for (chan = 0; chan < m_channelCount; chan++) {
-					m_spec->dataF[f * m_channelCount + chan] = readbuffer[chan][f];
-				}
-			}
-		}
-		
-		process(read);
-	}
+    if (m_channelCount == 1) {
+        m_exportSpecification->set_render_buffer(readbuffer[0]);
+    } else {
+        // Interlace data into dataF buffer!
+        for (uint f=0; f<nframes; f++) {
+            for (chan = 0; chan < m_channelCount; chan++) {
+                m_exportSpecification->get_render_buffer()[f * m_channelCount + chan] = readbuffer[chan][f];
+            }
+        }
+    }
+
+    written = process(nframes);
+
+    if (written != nframes) {
+        // Say something
+        PERROR(QString("Different read / write count: read = %1, write = %2").arg(nframes, written))
+    }
+
+    for (chan=0; chan<m_channelCount; ++chan) {
+        delete [] readbuffer[chan];
+    }
 	
-	for (chan=0; chan<m_channelCount; ++chan) {
-		delete [] readbuffer[chan];
-        readbuffer[chan] = nullptr;
-	}
-	
-    return int(read);
+    return written;
 }
 
 void WriteSource::set_recording(bool rec )
@@ -459,33 +443,34 @@ void WriteSource::set_recording(bool rec )
 	m_isRecording = rec;
 }
 
-void WriteSource::process_ringbuffer(audio_sample_t* buffer)
+// Called from DiskIO::do_work in DiskAudioThread
+// TODO: make sure this function is thread save
+void WriteSource::process_realtime_buffers()
 {
-	m_spec->dataF = buffer;
-	int readSpace = m_buffers.at(0)->read_space();
+    m_exportSpecification->set_render_buffer(m_diskIOFramebuffer);
+
+    QueueBufferSlot* slot = nullptr;
+
+    while (m_rtBufferSlotsQueue->try_dequeue(slot)) {
+        rb_file_write(slot);
+        m_freeBufferSlotsQueue->try_enqueue(slot);
+    }
 
 	if (! m_isRecording ) {
-		PMESG("Writing remaining  (%d) samples to ringbuffer", readSpace);
-		rb_file_write(readSpace);
 		finish_export();
-		return;
-	}
-
-	rb_file_write(readSpace);
-}
-
-void WriteSource::prepare_rt_buffers( )
-{
-	m_bufferSize = m_sampleRate * DiskIO::writebuffertime;
-	m_chunkSize = m_bufferSize / DiskIO::bufferdividefactor;
-	for (int i=0; i<m_channelCount; ++i) {
-		m_buffers.append(new RingBufferNPT<audio_sample_t>(m_bufferSize));
 	}
 }
 
-void WriteSource::set_diskio( DiskIO * io )
+BufferStatus* WriteSource::get_buffer_status()
 {
-	m_diskio = io;
-	prepare_rt_buffers();
+    m_bufferstatus.fillStatus = ((m_freeBufferSlotsQueue->size_approx() * 100) / slotcount);
+    // FIXME
+    // Ugly hack to let DiskIO keep calling process_realtime_buffers()
+    // which will then call finish_export()
+    if (!m_isRecording) {
+        m_bufferstatus.fillStatus = 70;
+    }
+    m_bufferstatus.set_sync_status(BufferStatus::IN_SYNC);
+    return &m_bufferstatus;
 }
 

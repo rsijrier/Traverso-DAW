@@ -54,6 +54,9 @@ int AddRemoveClip::prepare_actions()
 int AddRemoveClip::do_action()
 {
 	PENTER;
+    //FIXME: this is creating new addremove objects for every do/undo on the history stack
+    // that's not how it should work :)
+
 	if (m_type == REMOVE) {
 		m_group.remove_all_clips_from_tracks();
 	}
@@ -68,6 +71,8 @@ int AddRemoveClip::do_action()
 int AddRemoveClip::undo_action()
 {
 	PENTER;
+    //FIXME: this is creating new addremove objects for every do/undo on the history stack
+    // that's not how it should work :)
 
 	if (m_type == REMOVE) {
 		m_group.add_all_clips_to_tracks();

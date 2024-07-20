@@ -21,10 +21,13 @@
 
 #include "PlayHeadMove.h"
 
-#include <libtraversocore.h>
 #include "SheetView.h"
 #include "ClipsViewPort.h"
 #include "Cursors.h"
+#include "SnapList.h"
+#include "TSession.h"
+#include "TConfig.h"
+#include "TInputEventDispatcher.h"
 
 #include <Debugger.h>
 
@@ -50,7 +53,7 @@ int PlayHeadMove::finish_hold()
             m_playhead->hide();
         }
 
-        m_session->set_transport_pos(m_newTransportLocation);
+        m_session->set_transport_location(m_newTransportLocation);
     }
     return -1;
 }
@@ -103,13 +106,13 @@ int PlayHeadMove::jog()
     if (x != m_newXPos) {
         m_playhead->setPos(x, 0);
 
-        m_newTransportLocation = TimeRef(x * d->sv->timeref_scalefactor);
+        m_newTransportLocation = TTimeRef(x * d->sv->timeref_scalefactor);
 
         if (m_resync && m_session->is_transport_rolling()) {
-            m_session->set_transport_pos(m_newTransportLocation);
+            m_session->set_transport_location(m_newTransportLocation);
         }
 
-        cpointer().set_canvas_cursor_text(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
+        cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
     }
 
     cpointer().set_canvas_cursor_pos(QPointF(x, y));
@@ -153,18 +156,18 @@ void PlayHeadMove::prev_snap_pos()
     do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_newTransportLocation), true);
 }
 
-void PlayHeadMove::do_keyboard_move(TimeRef newLocation, bool centerInView)
+void PlayHeadMove::do_keyboard_move(TTimeRef newLocation, bool centerInView)
 {
     ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
-    if (newLocation < TimeRef()) {
-        newLocation = TimeRef();
+    if (newLocation < TTimeRef()) {
+        newLocation = TTimeRef();
     }
 
     m_newTransportLocation = newLocation;
 
     if (m_resync && m_session->is_transport_rolling()) {
-        m_session->set_transport_pos(m_newTransportLocation);
+        m_session->set_transport_location(m_newTransportLocation);
     } else {
         m_playhead->setPos(newLocation / d->sv->timeref_scalefactor, 0);
 
@@ -184,7 +187,7 @@ void PlayHeadMove::do_keyboard_move(TimeRef newLocation, bool centerInView)
     }
 
 
-    cpointer().set_canvas_cursor_text(timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_text(m_newTransportLocation, d->sv->timeref_scalefactor));
     d->sv->set_canvas_cursor_pos(QPointF(m_playhead->scenePos().x(), m_holdCursorSceneY), AbstractViewPort::CursorMoveReason::KEYBOARD_NAVIGATION);
 }
 
@@ -195,5 +198,5 @@ void PlayHeadMove::move_to_work_cursor()
 
 void PlayHeadMove::move_to_start()
 {
-    do_keyboard_move(TimeRef());
+    do_keyboard_move(TTimeRef());
 }

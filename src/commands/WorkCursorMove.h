@@ -23,7 +23,7 @@
 #define WORKCURSOR_MOVE_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 class TSession;
 class SheetView;
@@ -50,11 +50,11 @@ private :
 	TSession*	m_session;
 	PlayHead*	m_playCursor;
 	WorkCursor*     m_workCursor;
-	TimeRef		m_origPos;
+	TTimeRef		m_origPos;
 	int             m_holdCursorSceneY;
 	bool            m_browseMarkers;
 
-	void do_keyboard_move(TimeRef newLocation);
+	void do_keyboard_move(TTimeRef newLocation);
 	void browse_to_next_marker();
 	void browse_to_previous_marker();
 	void remove_markers_from_active_context();

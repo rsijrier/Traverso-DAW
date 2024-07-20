@@ -37,7 +37,7 @@ public slots:
 	TCommand* set_recordable_and_start_transport();
 	TCommand* to_start();
 	TCommand* to_end();
-	TCommand* set_transport_position();
+	TCommand* set_transport_location();
 };
 
 #endif // TTRANSPORT_H

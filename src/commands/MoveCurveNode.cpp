@@ -32,8 +32,8 @@ MoveCurveNode::MoveCurveNode(Curve* curve,
 	QList<CurveNode*> nodes,
 	float height,
 	qint64 scalefactor,
-	TimeRef minWhenDiff,
-	TimeRef maxWhenDiff,
+	TTimeRef minWhenDiff,
+	TTimeRef maxWhenDiff,
 	double	minValueDiff,
 	double	maxValueDiff,
 	const QString& des)
@@ -174,7 +174,7 @@ int MoveCurveNode::jog()
 int MoveCurveNode::check_and_apply_when_and_value_diffs()
 {
     if (mcnd->verticalOnly) {
-		m_whenDiff = TimeRef();
+		m_whenDiff = TTimeRef();
 	}
 
     if (m_whenDiff > mcnd->maxWhenDiff) {

@@ -58,6 +58,7 @@ signals:
 	
 private slots:
 	void audiodevice_message(const QString &message, int severity);
+    void tsar_message(const QString& message);
 };
 
 // use this function to propagate the Information

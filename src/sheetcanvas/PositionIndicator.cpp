@@ -21,8 +21,6 @@
 
 #include "PositionIndicator.h"
 
-#include "SheetView.h"
-
 #include <QColor>
 #include "Utils.h"
 #include "Themer.h"
@@ -30,8 +28,7 @@
 PositionIndicator::PositionIndicator(ViewItem* parentView)
     : ViewItem(parentView, nullptr)
 {
-    m_ignoreContext = true;
-	calculate_bounding_rect();
+    set_ignore_context(true);
 	setZValue(200);
 }
 
@@ -44,7 +41,7 @@ void PositionIndicator::paint(QPainter * painter, const QStyleOptionGraphicsItem
 	painter->drawPixmap(0, 0, m_background);
 	painter->setPen(Qt::black);
 	painter->setFont(themer()->get_font("TrackPanel:fontscale:name"));
-    painter->drawText(m_boundingRect, Qt::AlignCenter, m_value);
+    painter->drawText(10, 16, m_primaryText);
     painter->restore();
 }
 
@@ -52,8 +49,14 @@ void PositionIndicator::calculate_bounding_rect()
 {
 	prepareGeometryChange();
     QFontMetrics fm(themer()->get_font("TrackPanel:fontscale:name"));
-    QRect rect = fm.boundingRect(m_value);
-    m_boundingRect = QRectF(0, 0, rect.width() + 16, rect.height() + 8);
+    QRect primaryTextRect = fm.boundingRect(m_primaryText);
+    int height = 0;
+    int verticalspacing = 8;
+    if (!m_primaryText.isEmpty()) {
+        height += primaryTextRect.height() + verticalspacing;
+    }
+
+    m_boundingRect = QRectF(0, 0, primaryTextRect.width() + 20, height);
 
     m_background = QPixmap(int(m_boundingRect.width()), int(m_boundingRect.height()));
 	m_background.fill(QColor(Qt::transparent));
@@ -62,13 +65,13 @@ void PositionIndicator::calculate_bounding_rect()
 	painter.setRenderHint(QPainter::Antialiasing);
 	painter.setBrush(QColor(255, 255, 255, 200));
 	painter.setPen(Qt::NoPen);
-    qreal rounding = m_boundingRect.height() / 2;
+    qreal rounding = m_boundingRect.height() / 4;
 	painter.drawRoundedRect(m_boundingRect, rounding, rounding);
 }
 
-void PositionIndicator::set_value(const QString & value)
+void PositionIndicator::set_text(const QString& primary)
 {
-	m_value = value;
+    m_primaryText = primary;
     calculate_bounding_rect();
 	update();
 }

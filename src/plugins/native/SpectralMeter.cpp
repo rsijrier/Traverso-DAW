@@ -42,7 +42,7 @@ SpectralMeter::SpectralMeter()
 	m_windowingFunction = 1;
 	m_bufferreadouts = 0;
 
-    init();
+    SpectralMeter::init();
 
 	// constructs a ringbuffer that can hold 16384 samples
 	m_databufferL = new RingBufferNPT<float>(16384);

@@ -42,7 +42,7 @@ dialogs/CDWritingDialog.cpp
 dialogs/ThemeModifierDialog.cpp
 dialogs/TTrackSelector.cpp
 dialogs/TShortcutEditorDialog.cpp
-widgets/BusMonitor.cpp
+widgets/TAudioBusVUMonitorWidget.cpp
 widgets/CorrelationMeterWidget.cpp
 widgets/ExportFormatOptionsWidget.cpp
 widgets/InfoWidgets.cpp
@@ -51,13 +51,13 @@ widgets/MeterWidget.cpp
 widgets/ResourcesWidget.cpp
 widgets/SpectralMeterWidget.cpp
 widgets/TransportConsoleWidget.cpp
-widgets/VUMeter.cpp
+widgets/TVUMeterWidget.cpp
 widgets/WelcomeWidget.cpp
 widgets/TSessionTabWidget.cpp
 widgets/TContextHelpWidget.cpp
 )
 
-QT5_ADD_RESOURCES(TRAVERSO_RESOURCES
+QT6_ADD_RESOURCES(TRAVERSO_RESOURCES
 ../../resources/traverso.qrc
 )
 
@@ -169,8 +169,8 @@ ADD_EXECUTABLE(traverso
 )
 
 TARGET_LINK_LIBRARIES(traverso
-        ${Qt5Widgets_LIBRARIES}
-        ${Qt5Xml_LIBRARIES}
+	${Qt6Widgets_LIBRARIES}
+	${Qt6Xml_LIBRARIES}
         traversosheetcanvas
         traversocore
         traversoaudiofileio
@@ -180,11 +180,11 @@ TARGET_LINK_LIBRARIES(traverso
         traversocommands
         samplerate
         wavpack
-        ${OGG_LIB}
+	${OGG_LIB}
         ${VORBIS_LIB}
         ${VORBIS_FILE_LIB}
         ${VORBIS_ENC_LIB}
-        ${FLAC_LIB}
+	${FLAC_LIB}
 # 	rt
         dl
 )
@@ -210,7 +210,8 @@ ENDIF(HAVE_PORTAUDIO)
 
 IF(HAVE_PULSEAUDIO)
         TARGET_LINK_LIBRARIES(traverso
-                pulse
+		pulse-simple
+		pulse
         )
 ENDIF(HAVE_PULSEAUDIO)
 
@@ -219,12 +220,6 @@ IF(HAVE_LILV)
 		${LIBLILV_LIBRARIES}
 	)
 ENDIF(HAVE_LILV)
-
-IF(HAVE_MP3_DECODING)
-        TARGET_LINK_LIBRARIES(traverso
-                ${MAD_LIB}
-        )
-ENDIF(HAVE_MP3_DECODING)
 
 IF(HAVE_MP3_ENCODING)
         TARGET_LINK_LIBRARIES(traverso

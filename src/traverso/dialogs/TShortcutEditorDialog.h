@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QDialog>
 
-class TFunction;
+class TShortCutFunction;
 class QAbstractButton;
 
 namespace Ui {
@@ -45,7 +45,7 @@ protected:
 private:
 	Ui::TShortcutEditorDialog *ui;
 
-	TFunction* getSelectedFunction();
+	TShortCutFunction* getSelectedFunction();
 	void  moveItemUpDown(int direction);
 
 private slots:

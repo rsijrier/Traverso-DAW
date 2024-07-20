@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define PROCESSING_DATA_H
 
 #include "ContextItem.h"
-#include "APILinkedList.h"
+#include "TRealTimeLinkedList.h"
 #include "GainEnvelope.h"
 #include "defines.h"
 
@@ -37,66 +37,61 @@ class PluginChain;
 class TSession;
 
 
-class TAudioProcessingNode : public ContextItem, public APILinkedListNode
+class TAudioProcessingNode : public ContextItem
 {
-        Q_OBJECT
-    Q_PROPERTY(qreal gain READ get_gain WRITE set_gain)
+    Q_OBJECT
+    Q_PROPERTY(float gain READ get_gain WRITE set_gain)
 
 
 public:
-        TAudioProcessingNode (TSession* session=0);
-        virtual ~TAudioProcessingNode () {}
-	
-        TCommand* add_plugin(Plugin* plugin);
-        TCommand* remove_plugin(Plugin* plugin);
+    TAudioProcessingNode (TSession* session=0);
+    virtual ~TAudioProcessingNode () {}
 
-        PluginChain* get_plugin_chain() const {return m_pluginChain;}
-        TSession* get_session() const {return m_session;}
-        QString get_name() const {return m_name;}
-        float get_pan() const {return m_pan;}
+    TCommand* add_plugin(Plugin* plugin);
+    TCommand* remove_plugin(Plugin* plugin);
 
-        void set_muted(bool muted);
-        virtual void set_name(const QString& name);
-        void set_pan(float pan);
+    PluginChain* get_plugin_chain() const {return m_pluginChain;}
+    TSession* get_session() const {return m_session;}
+    QString get_name() const {return m_name;}
+    float get_pan() const {return m_pan;}
 
-        bool is_muted() const {return m_isMuted;}
-        virtual bool is_smaller_then(APILinkedListNode* node) = 0;
+    void set_muted(bool muted);
+    virtual void set_name(const QString& name);
+    void set_pan(float pan);
 
+    bool is_muted() const {return m_isMuted;}
 
 
 protected:
 
-        AudioBus*       m_processBus;
-        TSession*       m_session;
-        GainEnvelope*   m_fader;
-        PluginChain*    m_pluginChain;
-        QString         m_name;
-        audio_sample_t  m_maxGainAmplification;
-        bool            m_isMuted;
-        float           m_pan;
+    AudioBus*       m_processBus;
+    TSession*       m_session;
+    GainEnvelope*   m_fader;
+    PluginChain*    m_pluginChain;
+    QString         m_name;
+    audio_sample_t  m_maxGainAmplification;
+    bool            m_isMuted;
+    float           m_pan;
 
 private:
-        QPointer<QPropertyAnimation>  m_gainAnimation;
-
+    QPointer<QPropertyAnimation>  m_gainAnimation;
 
 
 public slots:
-	float get_gain() const;
-        void set_gain(float gain);
-        void set_gain_animated(float gain);
-        TCommand* mute();
+    float get_gain() {
+        return m_fader->get_gain();
+    }
+
+    void set_gain(float gain);
+    void set_gain_animated(float gain);
+    TCommand* mute();
 
 signals:
-        void audibleStateChanged();
-        void stateChanged();
-        void muteChanged(bool isMuted);
-        void panChanged();
+    void audibleStateChanged();
+    void stateChanged();
+    void muteChanged(bool isMuted);
+    void panChanged();
 };
-
-inline float TAudioProcessingNode::get_gain( ) const
-{
-	return m_fader->get_gain();
-}
 
 
 #endif

@@ -20,15 +20,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 
-#ifndef PLUGIN_H
-#define PLUGIN_H
+#ifndef T_AUDIO_PLUGIN_H
+#define T_AUDIO_PLUGIN_H
 
 #include "ContextItem.h"
 #include <QString>
 #include <QDomNode>
 
 #include "defines.h"
-#include "APILinkedList.h"
 
 class AudioBus;
 class PluginChain;
@@ -50,15 +49,13 @@ struct PluginInfo {
     QString uri;
 };
 
-class Plugin : public ContextItem, public APILinkedListNode
+class Plugin : public ContextItem
 {
     Q_OBJECT
 
 public:
     Plugin(TSession* session = nullptr);
     virtual ~Plugin(){}
-
-    virtual bool is_smaller_then(APILinkedListNode* node);
 
     virtual int init() {return 1;}
     virtual	QDomNode get_state(QDomDocument doc);
@@ -74,6 +71,12 @@ public:
     bool is_bypassed() const {return m_bypass;}
 
     void automate_port(int index, bool automate);
+
+    bool operator<(const Plugin& /*other*/) {
+        return true;
+    }
+
+    Plugin* next = nullptr;
 
 protected:
     Plugin*                         m_slave;

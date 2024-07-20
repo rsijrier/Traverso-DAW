@@ -36,10 +36,10 @@ public:
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 	void calculate_bounding_rect();
 	
-	void set_value(const QString& value);
+    void set_text(const QString& primary);
 	
 private:
-	QString m_value;
+    QString m_primaryText;
 	QPixmap m_background;
 };
 

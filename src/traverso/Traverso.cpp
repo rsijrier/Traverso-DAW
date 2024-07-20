@@ -29,7 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Traverso.h"
 #include "Mixer.h"
 #include "ProjectManager.h"
-#include "Project.h"
 #include "TMainWindow.h"
 #include "Themer.h"
 #include "TConfig.h"
@@ -37,11 +36,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioDevice.h"
 #include "ContextPointer.h"
 #include "Information.h"
-#include "TShortcutManager.h"
+#include "TShortCutManager.h"
 #include "widgets/SpectralMeterWidget.h"
 #include "widgets/CorrelationMeterWidget.h"
 
-#include "defines.h"
 #include "fpu.h"
 #ifdef __SSE__
 #include <xmmintrin.h>
@@ -103,7 +101,7 @@ Traverso::Traverso(int &argc, char **argv )
     QCoreApplication::setOrganizationDomain("traverso-daw.org");
 
     qRegisterMetaType<InfoStruct>("InfoStruct");
-    qRegisterMetaType<TimeRef>("TimeRef");
+    qRegisterMetaType<TTimeRef>("TTimeRef");
 
     config().check_and_load_configuration();
 
@@ -121,10 +119,10 @@ Traverso::Traverso(int &argc, char **argv )
 Traverso::~Traverso()
 {
     PENTERDES;
+    audiodevice().shutdown();
     delete TMainWindow::instance();
     delete themer();
     config().save();
-    audiodevice().shutdown();
 }
 
 void Traverso::create_interface( )

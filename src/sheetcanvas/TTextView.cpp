@@ -23,8 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <Themer.h>
 
-const int INDENT = 10;
-
 TTextView::TTextView(ViewItem *parent)
     :ViewItem (parent)
 {

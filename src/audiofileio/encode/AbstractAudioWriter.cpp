@@ -21,29 +21,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "AbstractAudioWriter.h"
 #include "SFAudioWriter.h"
+#include "TExportSpecification.h"
 #include "WPAudioWriter.h"
-#if defined MP3_ENCODE_SUPPORT
-#include "LameAudioWriter.h"
-#endif
-#include "VorbisAudioWriter.h"
-#include "FlacAudioWriter.h"
 
 #include <QString>
 
 RELAYTOOL_WAVPACK;
-RELAYTOOL_MP3LAME;
-RELAYTOOL_FLAC;
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
 
-AbstractAudioWriter::AbstractAudioWriter()
+AbstractAudioWriter::AbstractAudioWriter(TExportSpecification *spec)
+    : m_exportSpecification(spec)
 {
-	m_channels = 0;
-	m_rate = 0;
-	m_sampleWidth = 0;
 	m_writePos = 0;
 	
 	m_isOpen = false;
@@ -53,25 +45,6 @@ AbstractAudioWriter::AbstractAudioWriter()
 AbstractAudioWriter::~AbstractAudioWriter()
 {
 }
-
-
-void AbstractAudioWriter::set_num_channels(uint channels)
-{
-	m_channels = channels;
-}
-
-
-void AbstractAudioWriter::set_bits_per_sample(int bits)
-{
-	m_sampleWidth = bits;
-}
-
-
-void AbstractAudioWriter::set_rate(uint rate)
-{
-	m_rate = rate;
-}
-
 
 bool AbstractAudioWriter::set_format_attribute(const QString& key, const QString& value)
 {
@@ -132,24 +105,13 @@ nframes_t AbstractAudioWriter::write(void* buffer, nframes_t count)
 
 
 // Static method used by other classes to get an AudioWriter for the correct file type
-AbstractAudioWriter* AbstractAudioWriter::create_audio_writer(const QString& type)
+AbstractAudioWriter* AbstractAudioWriter::create_audio_writer(TExportSpecification *spec)
 {
-	if (type == "sndfile") {
-		return new SFAudioWriter();
+    if (spec->get_writer_type() == "sndfile") {
+        return new SFAudioWriter(spec);
 	}
-	else if (libwavpack_is_present && type == "wavpack") {
-		return new WPAudioWriter();
-	}
-#if defined MP3_ENCODE_SUPPORT
-	else if (libmp3lame_is_present && type == "lame") {
-		return new LameAudioWriter();
-	}
-#endif
-	else if (type == "vorbis") {
-		return new VorbisAudioWriter();
-	}
-	else if (libFLAC_is_present && type == "flac") {
-		return new FlacAudioWriter();
+    else if (libwavpack_is_present && spec->get_writer_type() == "wavpack") {
+        return new WPAudioWriter(spec);
 	}
 	
     return nullptr;

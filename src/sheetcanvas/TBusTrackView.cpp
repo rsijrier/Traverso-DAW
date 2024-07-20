@@ -39,7 +39,7 @@ TBusTrackView::TBusTrackView(SheetView* sv, TBusTrack* group)
 
     m_sv = sv;
 
-    load_theme_data();
+    TBusTrackView::load_theme_data();
 
     auto pluginsLaneview = new TTrackLaneView(this);
     pluginsLaneview->set_height(28);

@@ -59,25 +59,22 @@ QVector<float> VUMeterView::lut;
 VUMeterView::VUMeterView(ViewItem* parent, Track* track)
         : ViewItem(parent)
 {
-        load_theme_data();
-        m_audioTrack = qobject_cast<AudioTrack*>(track);
-        m_orientation = Qt::Horizontal;
+    VUMeterView::load_theme_data();
+    m_audioTrack = qobject_cast<AudioTrack*>(track);
 
-        for (int i = 0; i < 2; ++i) {
-                VUMeterLevelView* level = new VUMeterLevelView(this, track->get_vumonitors().at(i));
-                m_levels.append(level);
-        }
-
-        update_orientation();
+    for (int i = 0; i < 2; ++i) {
+            VUMeterLevelView* level = new VUMeterLevelView(this, track->get_vumonitors().at(i));
+            m_levels.append(level);
+    }
 
 //        add a ruler with tickmarks and labels
 //        ruler = new VUMeterRulerView(this);
 //        ruler->setPos(0, 10);
 
-        connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
-        if (m_audioTrack) {
-            connect(m_audioTrack, SIGNAL(armedChanged(bool)), this, SLOT(audiotrack_armed_changed()));
-        }
+    connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
+    if (m_audioTrack) {
+        connect(m_audioTrack, SIGNAL(armedChanged(bool)), this, SLOT(audiotrack_armed_changed()));
+    }
 }
 
 VUMeterView::~ VUMeterView( )
@@ -144,17 +141,17 @@ void VUMeterView::set_bounding_rect(QRectF rect)
 //        ruler->set_bounding_rect(rect);
 }
 
-void VUMeterView::update_orientation()
+void VUMeterView::update_orientation(Qt::Orientation orientation)
 {
-        m_orientation = static_cast<Qt::Orientation>(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
-        foreach(VUMeterLevelView* level, m_levels) {
-                level->set_orientation(m_orientation);
-        }
+    m_orientation = orientation;
+    foreach(VUMeterLevelView* level, m_levels) {
+            level->set_orientation(orientation);
+    }
 }
 
 void VUMeterView::calculate_lut_data()
 {
-        for (float i = 60; i >= -700; i -= 2) {
+        for (int i = 60; i >= -700; i -= 2) {
                 if (i >= -200) {
                         lut.push_back(100.0f + i * 2.5f / 10.0f);
                 } else if (i >= -300) {
@@ -216,7 +213,7 @@ VUMeterRulerView::VUMeterRulerView(ViewItem* parent)
         m_presetMark.push_back(-24);
         m_presetMark.push_back(-70);
 
-        load_theme_data();
+        VUMeterRulerView::load_theme_data();
         connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
 }
 
@@ -225,7 +222,6 @@ void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     PENTER4;
     painter->save();
 
-    QString spm;
     int deltaY;
 
     painter->setFont(m_font);
@@ -246,9 +242,11 @@ void VUMeterRulerView::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         }
 
         deltaY = int( VUMeterView::VUMeterView_lut()->at(idx)/115.0  * levelRange );
-        spm.sprintf("%2i", m_presetMark[j]);
+        QString spm("%1");
+        spm = spm.arg(m_presetMark[j], 2, 10, QLatin1Char('0'));
 
-        painter->drawText(deltaY - m_fontLabelAscent + 2, m_fontLabelAscent + 3, spm);
+
+        painter->drawText(deltaY - m_fontLabelAscent + 2, m_fontLabelAscent + 3, "spm");
         painter->drawLine(deltaY, - 6, deltaY, TICK_LINE_LENGTH - 6);
     }
     painter->restore();
@@ -296,7 +294,7 @@ static const int PEAK_HOLD_MODE = 1;		// 0 = no peak hold, 1 = dynamic, 2 = cons
 static const bool SHOW_RMS = false;		// toggle RMS lines on / off
 
 
-VUMeterLevelView::VUMeterLevelView(ViewItem* parent, VUMonitor* monitor)
+VUMeterLevelView::VUMeterLevelView(ViewItem* parent, TVUMonitor* monitor)
         : ViewItem(parent)
 {
         m_monitor = monitor;
@@ -435,6 +433,10 @@ void VUMeterLevelView::set_orientation(Qt::Orientation orientation)
 
 void VUMeterLevelView::update_peak( )
 {
+    //FIXME
+    // We use a timer in TMainWindow to call this function at 25 frames/sec
+    // What about TVUMonitor does the calculation after having process x amount of
+    // frames and then emit the new peak value instead ?
         m_peak = m_monitor->get_peak_value();
 
         // if the meter drops to -inf, reset the 'over LED' and peak hold values

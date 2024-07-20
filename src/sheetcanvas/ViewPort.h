@@ -24,13 +24,12 @@
 
 #include <QGraphicsView>
 #include <QGraphicsItem>
-#include "ContextItem.h"
 #include "AbstractViewPort.h"
 
 class ViewItem;
 class SheetView;
 class ContextItem;
-class Import;
+class TAudioFileImportCommand;
 class AudioTrack;
 class HoldCursor;
 class QGraphicsTextItem;
@@ -66,7 +65,7 @@ public :
 
 protected:
     virtual bool event(QEvent *event);
-    virtual void enterEvent ( QEvent * );
+    virtual void enterEvent (QEnterEvent * );
     virtual void leaveEvent ( QEvent * );
     virtual void paintEvent( QPaintEvent* e);
     virtual void mouseMoveEvent(QMouseEvent* e);
@@ -85,7 +84,7 @@ protected:
     SheetView* m_sv;
 
 private:
-    QPoint      m_oldMousePos;
+    QPoint      m_previousMousePos;
 };
 
 #endif

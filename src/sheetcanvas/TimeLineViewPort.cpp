@@ -47,7 +47,7 @@ PENTERDES;
 
 void TimeLineViewPort::wheelEvent ( QWheelEvent * e )
 {
-	if (e->delta() > 0) {
+    if (e->angleDelta().y() > 0) {
 		m_sv->scroll_left();
 	} else {
 		m_sv->scroll_right();

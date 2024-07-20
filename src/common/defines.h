@@ -1,337 +1,15 @@
 #ifndef TRAVERSO_TYPES_H
 #define TRAVERSO_TYPES_H
 
-#include <inttypes.h>
-#include <QtGlobal>
-#include <QMetaType>
 #include <QString>
 #include <QStringList>
-#include "FastDelegate.h"
 
-// Implementation for atomic int get/set from glibc's atomic.h/c
-// to get rid of the glib dependency!
-// Arches that need memory bariers: ppc (which we support)
-// and sparc, alpha, ia64 which we do not support ??
-
-#if defined(__ppc__) || defined(__powerpc__) || defined(__PPC__)
-
-#  define T_ATOMIC_MEMORY_BARRIER __asm__ ("sync" : : : "memory")
-
-static inline int t_atomic_int_get (volatile int *atomic)
-{
-	T_ATOMIC_MEMORY_BARRIER;
-	return *atomic;
-}
-
-static inline void t_atomic_int_set (volatile int *atomic, int newval)
-{
-	*atomic = newval;
-	T_ATOMIC_MEMORY_BARRIER; 
-}
-
-#else
-
-# define t_atomic_int_get(atomic) 		(*(atomic))
-# define t_atomic_int_set(atomic, newval) 	((void) (*(atomic) = (newval)))
-
-#endif // ENDIF __ppc__
-
-
-using namespace fastdelegate;
 
 /**
  * Type used to represent sample frame counts.
  */
 typedef uint32_t     nframes_t;
 
-enum {
-	TransportStopped = 0,
-	TransportRolling = 1,
-  	TransportLooping = 2,
-  	TransportStarting = 3
-};
-
-// Universal samplerate for the frequences 22050, 32000, 44100, 88200, 96000 and 192000 Hz
-static const qint64 UNIVERSAL_SAMPLE_RATE = 28224000;
-static const qint64 ONE_HOUR_UNIVERSAL_SAMPLE_RATE = 101606400000LL;
-static const qint64 ONE_MINUTE_UNIVERSAL_SAMPLE_RATE = 1693440000LL;
-
-struct TimeRef {
-	
-	TimeRef() {
-		m_position = 0;
-	}
-	explicit TimeRef(qint64 position) : m_position(position) {}
-        explicit TimeRef(double position) : m_position(qint64(position)) {}
-	
-    TimeRef(nframes_t frame, uint rate) {
-		m_position = (UNIVERSAL_SAMPLE_RATE / rate) * frame;
-	}
-	
-    TimeRef(qreal frame, uint rate) {
-		m_position = qint64((qreal(UNIVERSAL_SAMPLE_RATE) / rate) * frame);
-	}
-	
-    void add_frames(nframes_t frames, uint rate) {
-		m_position += ((UNIVERSAL_SAMPLE_RATE / rate) * frames);
-	}
-	
-    nframes_t to_frame(uint rate) {
-		Q_ASSERT(rate);
-		return nframes_t(m_position / (UNIVERSAL_SAMPLE_RATE / rate));
-	}
-	
-	qint64 universal_frame() const {return m_position;}
-	
-	TimeRef& operator =(const qint64 value) {
-		m_position = value;
-		return *this;
-	}
-	
-	TimeRef& operator =(double value) {
-		m_position = qint64(value);
-		return *this;
-	}
-	
-	friend int operator!=(const TimeRef& left, const TimeRef& right) {
-		return left.m_position != right.m_position;
-	}
-	
-	friend int operator!=(const TimeRef& left, qint64 right) {
-		return left.m_position != right;
-	}
-	
-	friend int operator!=(const TimeRef& left, double right) {
-		return left.m_position != qint64(right);
-	}
-	
-	friend TimeRef operator-(const TimeRef& left, const TimeRef& right) {
-		return TimeRef(left.m_position - right.m_position);
-	}
-	
-	friend TimeRef operator-(const TimeRef& left, qint64 right) {
-		return TimeRef(left.m_position - right);
-	}
-	
-	friend TimeRef operator-(const TimeRef& left, double right) {
-		return TimeRef(left.m_position - qint64(right));
-	}
-	
-	friend TimeRef& operator-=(TimeRef& left, const TimeRef& right) {
-		left.m_position -= right.m_position;
-		return left;
-	}
-	
-	friend TimeRef& operator-=(TimeRef& left, qint64 right) {
-		left.m_position -= right;
-		return left;
-	}
-	
-	friend TimeRef& operator-=(TimeRef& left, double right) {
-		left.m_position -= qint64(right);
-		return left;
-	}
-	
-	friend TimeRef operator+(const TimeRef& left, const TimeRef& right) {
-		return TimeRef(left.m_position + right.m_position);
-	}
-	
-	friend TimeRef operator+(const TimeRef& left, qint64 right) {
-		return TimeRef(left.m_position + right);
-	}
-	
-	friend TimeRef operator+(const TimeRef& left, double right) {
-		return TimeRef(left.m_position + qint64(right));
-	}
-	
-	friend TimeRef& operator+=(TimeRef& left, const TimeRef& right) {
-		left.m_position += right.m_position;
-		return left;
-	}
-	
-	friend TimeRef& operator+=(TimeRef& left, qint64 right) {
-		left.m_position += right;
-		return left;
-	}
-	
-	friend TimeRef& operator+=(TimeRef& left, double right) {
-		left.m_position += qint64(right);
-		return left;
-	}
-	
-	friend TimeRef operator/(const TimeRef& left, const TimeRef& right) {
-		Q_ASSERT(right.m_position != 0);
-		return TimeRef(left.m_position / right.m_position);
-	}
-	
-	friend qreal operator/(const TimeRef& left, const qint64 right) {
-		Q_ASSERT(right != 0);
-        return qreal(left.m_position) / right;
-	}
-	
-	friend qreal operator/(const TimeRef& left, double right) {
-        Q_ASSERT(!qFuzzyCompare(right, 0.0));
-        return qreal(left.m_position) / qint64(right);
-	}
-	
-	friend TimeRef operator*(const qint64 left, TimeRef& right) {
-		return TimeRef(left * right.m_position);
-	}
-	
-	friend TimeRef operator*(const TimeRef& left, const TimeRef& right) {
-		return TimeRef(left.m_position * right.m_position);
-	}
-	
-	friend TimeRef operator*(const TimeRef& left, double right) {
-		return TimeRef(left.m_position * qint64(right));
-	}
-	
-	friend int operator<(const TimeRef& left, const TimeRef& right) {
-		return left.m_position < right.m_position;
-	}
-	
-	friend int operator<(const TimeRef& left, qint64 right) {
-		return left.m_position < right;
-	}
-	
-	friend int operator<(const TimeRef& left, double right) {
-		return left.m_position < qint64(right);
-	}
-	
-	friend int operator<(double left, const TimeRef& right) {
-		return (qint64(left) < right.m_position);
-	}
-	
-	friend int operator>(const TimeRef& left, const TimeRef& right) {
-		return left.m_position > right.m_position;
-	}
-	
-	friend int operator>(const TimeRef& left, qint64 right) {
-		return left.m_position > right;
-	}
-	
-	friend int operator>(const TimeRef& left, double right) {
-		return left.m_position > qint64(right);
-	}
-	
-	friend int operator>(double left, const TimeRef& right) {
-		return left > right.m_position;
-	}
-	
-	friend int operator<=(const TimeRef& left, const TimeRef& right) {
-		return left.m_position <= right.m_position;
-	}
-	
-	friend int operator<=(const TimeRef& left, qint64 right) {
-		return left.m_position <= right;
-	}
-	
-	friend int operator<=(const TimeRef& left, double right) {
-		return left.m_position <= qint64(right);
-	}
-	
-	friend int operator>=(const TimeRef& left, const TimeRef& right) {
-		return left.m_position >= right.m_position;
-	}
-	
-	friend int operator>=(const TimeRef& left, qint64 right) {
-		return left.m_position >= right;
-	}
-	
-	friend int operator>=(const TimeRef& left, double right) {
-		return left.m_position >= qint64(right);
-	}
-	
-	friend int operator==(const TimeRef& left, const TimeRef& right) {
-		return left.m_position == right.m_position;
-	}
-	
-	friend int operator==(const TimeRef& left, qint64 right) {
-		return left.m_position == right;
-	}
-	
-	friend int operator==(const TimeRef& left, double right) {
-		return left.m_position == qint64(right);
-	}
-	
-private:
-	qint64 m_position;
-};
-
-Q_DECLARE_METATYPE(TimeRef);
-		
-typedef struct {
-	int transport;
-	bool isSlave;
-	bool realtime;
-	TimeRef location;
-} transport_state_t;
-
-
-enum ChannelFlags {
-        ChannelIsInput = 1,
-        ChannelIsOutput = 2
-};
-
-enum AudioBusFlags {
-        BusIsHardware = 1,
-        BusIsSoftware = 2
-};
-
-typedef struct {
-        QString name;
-        QString type;
-        QString destination;
-} ChannelConfig;
-
-struct BusConfig {
-        BusConfig() {
-                id = -1;
-                channelcount = 0;
-                isInternalBus = false;
-                bustype = "software";
-        }
-
-        QString name;
-        QStringList channelNames;
-        QString type;
-        QString bustype;
-        int channelcount;
-        bool isInternalBus;
-        qint64 id;
-};
-
-class AudioChannel;
-struct AudioDeviceSetup {
-        AudioDeviceSetup() {
-                rate = 44100;
-                bufferSize = 1024;
-                driverType = "default";
-                playback = capture = true;
-                cardDevice = "";
-                ditherShape = "None";
-        }
-
-        QList<BusConfig>        busConfigs;
-        QList<ChannelConfig>    channelConfigs;
-        QList<AudioChannel*>    jackChannels;
-        uint             rate;
-        nframes_t       bufferSize;
-        QString         driverType;
-        bool            capture;
-        bool            playback;
-        QString         cardDevice;
-        QString         ditherShape;
-};
-
-#define MouseScrollHorizontalLeft -1
-#define MouseScrollHorizontalRight -2
-#define MouseScrollVerticalUp -3
-#define MouseScrollVerticalDown -4
-
-
-class VUMonitor;
-typedef QList<VUMonitor*> VUMonitors;
 
 /**
  * Type used to represent the value of free running
@@ -339,24 +17,9 @@ typedef QList<VUMonitor*> VUMonitors;
  */
 typedef long trav_time_t;
 
-typedef unsigned long          channel_t;
+typedef unsigned long channel_t;
 
 typedef float audio_sample_t;
-// typedef unsigned char peak_data_t;
-typedef short peak_data_t;
-
-
-typedef FastDelegate1<nframes_t, int> ProcessCallback;
-typedef FastDelegate0<int> RunCycleCallback;
-typedef FastDelegate1<transport_state_t, int> TransportControlCallback;
-
-
-/**
- * Used for the type argument of jack_port_register() for default
- * audio ports.
- */
-#define JACK_DEFAULT_AUDIO_TYPE "32 bit float mono audio"
-
 
 
 /**
@@ -457,15 +120,6 @@ typedef uint8_t            u_int8_t;
 
 #endif
 
-
-static inline long get_microseconds()
-{
-	struct timeval now;
-    gettimeofday(&now, nullptr);
-    long time = (now.tv_sec * 1000000 + now.tv_usec);
-	return time;
-}
-
 #if defined (RELAYTOOL_PRESENT)
 
 #define RELAYTOOL_JACK \
@@ -552,10 +206,8 @@ static inline long get_microseconds()
 #endif // endif RELAYTOOL_PRESENT
 
 
-#define PROFILE_START trav_time_t starttime = get_microseconds();
-#define PROFILE_END(args...) int processtime = (int) (get_microseconds() - starttime);printf("Process time for %s: %d useconds\n\n", args, processtime);
-
-#define DEFAULT_RESAMPLE_QUALITY 2
+#define PROFILE_START auto starttime = TTimeRef::get_microseconds_since_epoch();
+#define PROFILE_END(args...) auto processtime = (TTimeRef::get_microseconds_since_epoch() - starttime); printf("Process time for %s: %ld useconds\n\n", args, processtime);
 
 #endif // endif TRAVERSO_TYPES_H
 

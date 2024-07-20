@@ -21,14 +21,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "SnapList.h"
 
-#include "Peak.h"
 #include "TSession.h"
 #include "Sheet.h"
 #include "AudioClip.h"
 #include "AudioClipManager.h"
 #include "TConfig.h"
-#include "ContextPointer.h"
-#include "TimeLine.h"
+#include "TTimeLineRuler.h"
 #include "Utils.h"
 #include "Marker.h"
 
@@ -36,7 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <Debugger.h>
 
-//#define debugsnaplist
+#define debugsnaplist
 
 #if defined(debugsnaplist)
 #define SLPRINT(args...) printf(args)
@@ -48,8 +46,8 @@ SnapList::SnapList(TSession* sheet)
 	: m_sheet(sheet)
 {
 	m_isDirty = true;
-	m_rangeStart = TimeRef();
-	m_rangeEnd = TimeRef();
+	m_rangeStart = TTimeRef();
+	m_rangeEnd = TTimeRef();
 	m_scalefactor = 1;
 }
 
@@ -73,22 +71,22 @@ void SnapList::update_snaplist()
                 acList.append(sheet->get_audioclip_manager()->get_clip_list());
         }
 	
-	SLPRINT("acList size is %d\n", acList.size());
+    SLPRINT("acList size is %d\n", acList.size());
 
 	// Be able to snap to trackstart
-        if (m_rangeStart == TimeRef()) {
-		m_xposList.append(TimeRef());
+        if (m_rangeStart == TTimeRef()) {
+		m_xposList.append(TTimeRef());
 	}
 
 	for( int i = 0; i < acList.size(); i++ ) {
 
 		AudioClip* clip = acList.at(i);
-		if ( ! clip->is_snappable()) {
+        if ( ! clip->get_location()->is_snappable()) {
 			continue;
 		}
 
-		TimeRef startlocation = clip->get_track_start_location();
-		TimeRef endlocation = clip->get_track_end_location();
+		TTimeRef startlocation = clip->get_location()->get_start();
+        TTimeRef endlocation = clip->get_location()->get_end();
 
 		if (startlocation > endlocation) {
 			PERROR("clip xstart > xend, this must be a programming error!");
@@ -105,13 +103,13 @@ void SnapList::update_snaplist()
 	// add all on-screen markers
 	QList<Marker*> markerList = m_sheet->get_timeline()->get_markers();
 	for (int i = 0; i < markerList.size(); ++i) {
-		if (markerList.at(i)->is_snappable() && markerList.at(i)->get_when() >= m_rangeStart && markerList.at(i)->get_when() <= m_rangeEnd) {
+        if (markerList.at(i)->get_location()->is_snappable() && markerList.at(i)->get_when() >= m_rangeStart && markerList.at(i)->get_when() <= m_rangeEnd) {
 			m_xposList.append(markerList.at(i)->get_when());
 		}
 	}
 
 	// add the working cursor's position
-	TimeRef worklocation = m_sheet->get_work_location();
+	TTimeRef worklocation = m_sheet->get_work_location();
 	//printf("worklocation xpos is %d\n",  worklocation / m_scalefactor);
 	if (m_sheet->get_work_snap()->is_snappable() && worklocation >= m_rangeStart && worklocation <= m_rangeEnd) {
 		m_xposList.append(m_sheet->get_work_location());
@@ -119,17 +117,17 @@ void SnapList::update_snaplist()
 	
 
 	// sort the list
-	qSort(m_xposList);
+    std::sort(m_xposList.begin(), m_xposList.end());
 
     int range = int((m_rangeEnd - m_rangeStart) / m_scalefactor);
 
 	// create a linear lookup table
 	for (int i = 0; i <= range; ++i) {
-		m_xposLut.push_back(TimeRef());
+		m_xposLut.push_back(TTimeRef());
 		m_xposBool.push_back(false);
 	}
 
-	TimeRef lastVal;
+	TTimeRef lastVal;
 	long lastIndex = -1;
 	// now modify the regions around snap points in the lookup table
 	for (int i = 0; i < m_xposList.size(); i++) {
@@ -171,7 +169,7 @@ void SnapList::update_snaplist()
 }
 
 
-TimeRef SnapList::get_snap_value(const TimeRef& pos)
+TTimeRef SnapList::get_snap_value(const TTimeRef& pos)
 {
     bool didSnap;
     return get_snap_value(pos, didSnap);
@@ -179,7 +177,7 @@ TimeRef SnapList::get_snap_value(const TimeRef& pos)
 
 // public function that checks if there is a snap position
 // within +- snap-range of the supplied value i
-TimeRef SnapList::get_snap_value(const TimeRef& pos, bool& didSnap)
+TTimeRef SnapList::get_snap_value(const TTimeRef& pos, bool& didSnap)
 {
     if (m_isDirty) {
         update_snaplist();
@@ -207,18 +205,18 @@ TimeRef SnapList::get_snap_value(const TimeRef& pos, bool& didSnap)
     }
 
     if (is_snap_value(pos)) {
-        SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
+        SLPRINT("get_snap_value returns: %s (was %s)\n", TTimeRef::timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data(), TTimeRef::timeref_to_ms_3(pos).toLatin1().data());
         didSnap = true;
         return m_xposLut.at(i);
     }
 
 
-    SLPRINT("get_snap_value returns: %s (was %s)\n", timeref_to_ms_3(pos).toLatin1().data(), timeref_to_ms_3(pos).toLatin1().data());
+    SLPRINT("get_snap_value returns: %s (was %s)\n", TTimeRef::timeref_to_ms_3(pos).toLatin1().data(), TTimeRef::timeref_to_ms_3(pos).toLatin1().data());
     return pos;
 }
 
 // returns true if i is inside a snap area, else returns false
-bool SnapList::is_snap_value(const TimeRef& pos)
+bool SnapList::is_snap_value(const TTimeRef& pos)
 {
 	if (m_isDirty) {
 		update_snaplist();
@@ -242,7 +240,7 @@ bool SnapList::is_snap_value(const TimeRef& pos)
 
 // returns the difference between the unsnapped and snapped location.
 // The return value is negative if the supplied value is < snapped value
-qint64 SnapList::get_snap_diff(const TimeRef& pos)
+qint64 SnapList::get_snap_diff(const TTimeRef& pos)
 {
 	if (m_isDirty) {
 		update_snaplist();
@@ -260,13 +258,13 @@ qint64 SnapList::get_snap_diff(const TimeRef& pos)
 		return 0;
 	}
 
-        SLPRINT("get_snap_diff returns: %s\n", timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data());
+        SLPRINT("get_snap_diff returns: %s\n", TTimeRef::timeref_to_ms_3(m_xposLut.at(i)).toLatin1().data());
 	return (pos - m_xposLut.at(i)).universal_frame();
 }
 
-void SnapList::set_range(const TimeRef& start, const TimeRef& end, qint64 scalefactor)
+void SnapList::set_range(const TTimeRef& start, const TTimeRef& end, qint64 scalefactor)
 {
-        SLPRINT("setting xstart %s, xend %s scalefactor %d\n", timeref_to_ms_3(start).toLatin1().data(), timeref_to_ms_3(end).toLatin1().data(), scalefactor);
+        SLPRINT("setting xstart %s, xend %s scalefactor %lld\n", TTimeRef::timeref_to_ms_3(start).toLatin1().data(), TTimeRef::timeref_to_ms_3(end).toLatin1().data(), scalefactor);
 
 	if (m_rangeStart == start && m_rangeEnd == end && m_scalefactor == scalefactor) {
 		return;
@@ -278,7 +276,7 @@ void SnapList::set_range(const TimeRef& start, const TimeRef& end, qint64 scalef
 	m_isDirty = true;
 };
 
-TimeRef SnapList::next_snap_pos(const TimeRef& pos)
+TTimeRef SnapList::next_snap_pos(const TTimeRef& pos)
 {
 	if (m_isDirty) {
 		update_snaplist();
@@ -288,9 +286,9 @@ TimeRef SnapList::next_snap_pos(const TimeRef& pos)
 
         SLPRINT("next_snap_pos: index %d\n", index);
 	
-	if (pos < TimeRef()) {
+	if (pos < TTimeRef()) {
 		PERROR("pos < 0");
-		return TimeRef();
+		return TTimeRef();
 	}
 	
         if (index >= m_xposLut.size()) {
@@ -298,12 +296,12 @@ TimeRef SnapList::next_snap_pos(const TimeRef& pos)
 		index = m_xposLut.size() - 1;
 	}
 	
-	TimeRef newpos = pos;
+	TTimeRef newpos = pos;
 	
         // TODO: find out why using the found index above doesn't work
         // whem moving the workcursor. Using linear search seems to work ok
         for (int i=0; i<m_xposLut.size(); ++i) {
-		TimeRef snap = m_xposLut.at(i);
+		TTimeRef snap = m_xposLut.at(i);
 		if (snap > pos) {
 			newpos = snap;
 			break;
@@ -313,15 +311,15 @@ TimeRef SnapList::next_snap_pos(const TimeRef& pos)
 	return newpos;
 }
 
-TimeRef SnapList::prev_snap_pos(const TimeRef& pos)
+TTimeRef SnapList::prev_snap_pos(const TTimeRef& pos)
 {
 	if (m_isDirty) {
 		update_snaplist();
 	}
 	
-	if (pos < TimeRef()) {
+	if (pos < TTimeRef()) {
 		PERROR("pos < 0");
-		return TimeRef();
+		return TTimeRef();
 	}
 	
 	if (! m_xposLut.size()) {
@@ -334,11 +332,11 @@ TimeRef SnapList::prev_snap_pos(const TimeRef& pos)
 		index = m_xposLut.size() - 1;
 	}
 	
-	TimeRef newpos = pos;
+	TTimeRef newpos = pos;
 	
 	do {
-		TimeRef snap = m_xposLut.at(index);
-		if (snap < pos && snap != TimeRef()) {
+		TTimeRef snap = m_xposLut.at(index);
+		if (snap < pos && snap != TTimeRef()) {
 			newpos = snap;
 			break;
 		}
@@ -346,7 +344,7 @@ TimeRef SnapList::prev_snap_pos(const TimeRef& pos)
 	} while (index >= 0);
 	
 	if (index == -1) {
-		return TimeRef();
+		return TTimeRef();
 	}
 	
 	if (newpos == pos) {
@@ -357,7 +355,7 @@ TimeRef SnapList::prev_snap_pos(const TimeRef& pos)
 }
 
 
-TimeRef SnapList::calculate_snap_diff(TimeRef leftlocation, TimeRef rightlocation)
+TTimeRef SnapList::calculate_snap_diff(TTimeRef leftlocation, TTimeRef rightlocation)
 {
 	// "nframe_t" domain, but must be signed ints because they can become negative
 	qint64 snapStartDiff = 0;
@@ -395,7 +393,7 @@ TimeRef SnapList::calculate_snap_diff(TimeRef leftlocation, TimeRef rightlocatio
 			snapDiff = snapEndDiff;
 	}
 	
-	return TimeRef(snapDiff);
+	return TTimeRef(snapDiff);
 }
 
 bool SnapList::was_dirty()

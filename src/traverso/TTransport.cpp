@@ -59,7 +59,7 @@ TCommand * TTransport::to_start()
 {
 	if (m_session)
 	{
-		m_session->set_transport_pos(TimeRef());
+		m_session->set_transport_location(TTimeRef());
 	}
 
     return nullptr;
@@ -69,13 +69,13 @@ TCommand* TTransport::to_end()
 {
 	if (m_session)
 	{
-		m_session->set_transport_pos(m_session->get_last_location());
+		m_session->set_transport_location(m_session->get_last_location());
 	}
 
     return nullptr;
 }
 
-TCommand* TTransport::set_transport_position()
+TCommand* TTransport::set_transport_location()
 {
     if (m_session) {
         Sheet* sheet = m_project->get_active_sheet();

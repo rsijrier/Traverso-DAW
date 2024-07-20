@@ -57,7 +57,7 @@ public:
         ContextItem(parentViewItem)
       , QGraphicsItem(parentViewItem)
     {
-        set_context_item(parentContext);
+        set_core_context_item(parentContext);
         m_parentViewItem = parentViewItem;
         m_hasMouseTracking = false;
     }
@@ -83,7 +83,6 @@ public:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem *option, QWidget *widget) = 0;
 
     virtual int type() const;
-    virtual void set_ignore_context(bool ignoreContext) {m_ignoreContext = ignoreContext;}
     virtual int get_height() const {return int(m_boundingRect.height());}
     virtual QString get_name() const {return m_parentViewItem ? m_parentViewItem->get_name() : "";}
 

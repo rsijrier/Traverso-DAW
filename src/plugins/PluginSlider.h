@@ -47,7 +47,7 @@ protected:
 	void mouseMoveEvent(QMouseEvent *e);
 	void mouseReleaseEvent(QMouseEvent *e);
         void leaveEvent( QEvent* );
-        void enterEvent( QEvent* );
+        void enterEvent( QEnterEvent* );
         void wheelEvent(QWheelEvent* e );
 	
 private:

@@ -74,7 +74,7 @@ private:
 		vboxLayout->setSpacing(6);
 #endif
 #ifndef Q_OS_MAC
-		vboxLayout->setMargin(9);
+//		vboxLayout->setMargin(9);
 #endif
 		vboxLayout->setObjectName(QString::fromUtf8("vboxLayout"));
 		objectToAddPluginTooLabel = new QLabel(PluginSelectorDialog);
@@ -91,7 +91,7 @@ private:
 #ifndef Q_OS_MAC
 		hboxLayout->setSpacing(6);
 #endif
-		hboxLayout->setMargin(0);
+//		hboxLayout->setMargin(0);
 		hboxLayout->setObjectName(QString::fromUtf8("hboxLayout"));
 		spacerItem = new QSpacerItem(131, 31, QSizePolicy::Expanding, QSizePolicy::Minimum);
 

@@ -25,11 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <cmath>
 
 #include "AudioClip.h"
-#include "AudioClipManager.h"
 #include "PluginChain.h"
 #include "TSession.h"
-#include "limits"
-#include "Mixer.h"
 
 
 #include "Debugger.h"
@@ -121,7 +118,7 @@ TCommand* TAudioProcessingNode::remove_plugin( Plugin * plugin )
 }
 
 
-void TAudioProcessingNode::set_gain_animated(float newGain)
+void TAudioProcessingNode::set_gain_animated(float gain)
 {
     if (m_gainAnimation.isNull()) {
         m_gainAnimation = new QPropertyAnimation(this, "gain");
@@ -132,7 +129,7 @@ void TAudioProcessingNode::set_gain_animated(float newGain)
     }
 
     m_gainAnimation->setStartValue(get_gain());
-    m_gainAnimation->setEndValue(newGain);
+    m_gainAnimation->setEndValue(gain);
     m_gainAnimation->setDuration(300);
     m_gainAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 }

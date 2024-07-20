@@ -20,11 +20,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "SplitClip.h"
-		
-#include <libtraversocore.h>
+
+#include "AudioClip.h"
+#include "AudioTrack.h"
+#include "ProjectManager.h"
+#include "ResourcesManager.h"
+#include "Sheet.h"
 #include "SheetView.h"
 #include "AudioClipView.h"
 #include "LineView.h"
+#include "SnapList.h"
 #include "ViewItem.h"
 #include "Fade.h"
 #include "Themer.h"
@@ -44,7 +49,7 @@ SplitClip::SplitClip(AudioClipView* view)
 	m_track = m_clip->get_track();
 	leftClip = nullptr;
 	rightClip = nullptr;
-	m_splitPoint = TimeRef();
+	m_splitPoint = TTimeRef();
 	Q_ASSERT(m_clip->get_sheet());
 }
 
@@ -52,10 +57,10 @@ SplitClip::SplitClip(AudioClipView* view)
 int SplitClip::prepare_actions()
 {
     if (m_splitPoint == qint64(0)) {
-        m_splitPoint = TimeRef(cpointer().scene_x() * d->sv->timeref_scalefactor);
+        m_splitPoint = TTimeRef(cpointer().scene_x() * d->sv->timeref_scalefactor);
     }
 
-	if (m_splitPoint <= m_clip->get_track_start_location() || m_splitPoint >= m_clip->get_track_start_location() + m_clip->get_length()) {
+	if (m_splitPoint <= m_clip->get_location()->get_start() || m_splitPoint >= m_clip->get_location()->get_start() + m_clip->get_length()) {
 		return -1;
 	}
 
@@ -63,7 +68,7 @@ int SplitClip::prepare_actions()
 	rightClip = resources_manager()->get_clip(m_clip->get_id());
 	
 	leftClip->set_sheet(m_clip->get_sheet());
-	leftClip->set_track_start_location(m_clip->get_track_start_location());
+	leftClip->set_location_start(m_clip->get_location()->get_start());
 	leftClip->set_right_edge(m_splitPoint);
 	if (leftClip->get_fade_out()) {
 		FadeRange* cmd = (FadeRange*)leftClip->reset_fade_out();
@@ -73,7 +78,7 @@ int SplitClip::prepare_actions()
 	
 	rightClip->set_sheet(m_clip->get_sheet());
 	rightClip->set_left_edge(m_splitPoint);
-	rightClip->set_track_start_location(m_splitPoint);
+	rightClip->set_location_start(m_splitPoint);
 	if (rightClip->get_fade_in()) {
 		FadeRange* cmd = (FadeRange*)rightClip->reset_fade_in();
         cmd->set_do_not_push_to_historystack();
@@ -165,7 +170,7 @@ int SplitClip::jog()
 	}
 	m_splitcursor->setPos(xpos, 0);
 
-    cpointer().set_canvas_cursor_text(timeref_to_text(m_splitPoint, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_text(m_splitPoint, d->sv->timeref_scalefactor));
 	
 	return 1;
 }
@@ -203,15 +208,15 @@ void SplitClip::prev_snap_pos()
         do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_splitPoint));
 }
 
-void SplitClip::do_keyboard_move(TimeRef location)
+void SplitClip::do_keyboard_move(TTimeRef location)
 {
         m_splitPoint = location;
 
-        if (m_splitPoint < m_clip->get_track_start_location()) {
-                m_splitPoint = m_clip->get_track_start_location();
+        if (m_splitPoint < m_clip->get_location()->get_start()) {
+                m_splitPoint = m_clip->get_location()->get_start();
         }
-        if (m_splitPoint > m_clip->get_track_end_location()) {
-                m_splitPoint = m_clip->get_track_end_location();
+        if (m_splitPoint > m_clip->get_location()->get_end()) {
+                m_splitPoint = m_clip->get_location()->get_end();
         }
 
         QPointF pos = m_cv->mapFromScene(m_splitPoint / d->sv->timeref_scalefactor, m_splitcursor->scenePos().y());

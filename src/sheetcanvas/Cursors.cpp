@@ -51,7 +51,7 @@ PlayHead::PlayHead(SheetView* sv, TSession* session, ClipsViewPort* vp)
 	
 	// TODO: Make duration scale with scalefactor? (nonlinerly?)
 	m_animation.setDuration(ANIME_DURATION);
-	m_animation.setCurveShape(QTimeLine::EaseInOutCurve);
+    m_animation.setEasingCurve(QEasingCurve::InOutQuad);
 	
 	connect(m_session, SIGNAL(transportStarted()), this, SLOT(play_start()));
 	connect(m_session, SIGNAL(transportStopped()), this, SLOT(play_stop()));
@@ -61,7 +61,8 @@ PlayHead::PlayHead(SheetView* sv, TSession* session, ClipsViewPort* vp)
 	connect(&m_animation, SIGNAL(frameChanged(int)), this, SLOT(set_animation_value(int)));
 	connect(&m_animation, SIGNAL(finished()), this, SLOT(animation_finished()));
         connect(themer(), SIGNAL(themeLoaded()), this, SLOT(load_theme_data()), Qt::QueuedConnection);
-        load_theme_data();
+
+    PlayHead::load_theme_data();
 
 	setZValue(99);
 }
@@ -146,9 +147,9 @@ void PlayHead::enable_follow()
 void PlayHead::update_position()
 {
 	QPointF newPos(m_session->get_transport_location() / m_sv->timeref_scalefactor, 1);
-	qreal playBufferTimePositionCompensation = 0;
+    qreal playBufferTimePositionCompensation = 0;
 	if (m_session->is_transport_rolling()) {
-		playBufferTimePositionCompensation = audiodevice().get_buffer_latency() / m_sv->timeref_scalefactor;
+        playBufferTimePositionCompensation = audiodevice().get_buffer_latency() / m_sv->timeref_scalefactor;
 	}
 	qreal newXPos = newPos.x() - playBufferTimePositionCompensation;
 	if (newXPos < 0.0) {

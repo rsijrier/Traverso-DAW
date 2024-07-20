@@ -27,21 +27,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSession.h"
 #include "AudioDevice.h"
 
+#include "Mixer.h"
+
+
 TBusTrack::TBusTrack(TSession* session, const QString& name, int channelCount)
         : Track(session)
 {
         QObject::tr("Bus Track");
-        m_id = create_id();
 
         m_name = name;
         m_channelCount = channelCount;
 
         create_process_bus();
 
-        m_processBus->set_id(m_id);
+        m_processBus->set_id(get_id());
         m_processBus->set_name(m_name);
 
-        session->set_track_height(m_id, INITIAL_HEIGHT);
+        session->set_track_height(get_id(), INITIAL_HEIGHT);
 }
 
 TBusTrack::TBusTrack(TSession *session, QDomNode /*node*/)
@@ -76,7 +78,7 @@ int TBusTrack::set_state( const QDomNode & node )
 
         create_process_bus();
 
-        m_processBus->set_id(m_id);
+        m_processBus->set_id(get_id());
         m_processBus->set_name(m_name);
 
         return 1;
@@ -89,12 +91,12 @@ void TBusTrack::create_process_bus()
                 return;
         }
         m_type = BUS;
-        BusConfig busConfig;
+        TAudioBusConfiguration busConfig;
         busConfig.name = m_name;
         busConfig.channelcount = m_channelCount;
         busConfig.type = "output";
         busConfig.isInternalBus = true;
-        busConfig.id = m_id;
+        busConfig.id = get_id();
         m_processBus = new AudioBus(busConfig);
 }
 
@@ -104,7 +106,7 @@ void TBusTrack::set_name( const QString & name )
         Track::set_name(name);
 }
 
-int TBusTrack::process(nframes_t nframes)
+int TBusTrack::process(const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes)
 {
     if (m_isMuted || (get_gain() == 0.0f) ) {
         return 0;
@@ -133,10 +135,8 @@ int TBusTrack::process(nframes_t nframes)
     for(uint chan=0; chan<m_processBus->get_channel_count(); chan++) {
         mixdown[chan] = m_processBus->get_buffer(chan, nframes);
     }
-    TimeRef location = m_session->get_transport_location();
-    TimeRef endlocation = location + TimeRef(nframes, audiodevice().get_sample_rate());
 
-    m_fader->process_gain(mixdown, location, endlocation, nframes, m_processBus->get_channel_count());
+    m_fader->process_gain(mixdown, startLocation, endLocation, nframes, m_processBus->get_channel_count());
 
     m_pluginChain->process_post_fader(m_processBus, nframes);
 

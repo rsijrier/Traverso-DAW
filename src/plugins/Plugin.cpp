@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AddRemove.h"
 #include "Curve.h"
 #include "TSession.h"
-#include "Sheet.h"
 
 #include "Debugger.h"
 
@@ -33,11 +32,6 @@ Plugin::Plugin(TSession* session)
         , m_session(session)
 {
     m_bypass = false;
-}
-
-bool Plugin::is_smaller_then(APILinkedListNode *node)
-{
-    return true;
 }
 
 QDomNode Plugin::get_state(QDomDocument doc)
@@ -184,7 +178,7 @@ PluginControlPort::PluginControlPort(Plugin* parent, const QDomNode node)
 	, m_plugin(parent)
 	, m_automation(false)
 {
-	set_state(node);
+    PluginControlPort::set_state(node);
 }
 
 QDomNode PluginControlPort::get_state(QDomDocument doc)
@@ -235,7 +229,7 @@ void PluginControlPort::set_use_automation(bool automation)
 	if (!m_curve) {
 		m_curve = new Curve(m_plugin);
 		// Add the first default node:
-		CurveNode* node = new CurveNode(m_curve, 0.0, 1.0);
+        CurveNode* node = new CurveNode(m_curve, 0.0, 1.0);
 		AddRemove* cmd = (AddRemove*)m_curve->add_node(node, false);
 		cmd->set_instantanious(true);
 		TCommand::process_command(cmd);

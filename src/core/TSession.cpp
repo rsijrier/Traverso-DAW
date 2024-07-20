@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TBusTrack.h"
 #include "Sheet.h"
 #include "SnapList.h"
-#include "Snappable.h"
-#include "TimeLine.h"
+#include "TLocation.h"
+#include "TTimeLineRuler.h"
 
 #include "Debugger.h"
 
@@ -41,9 +41,9 @@ TSession::TSession(TSession *parentSession)
 	m_parentSession = nullptr;
 
 	if (!parentSession) {
-		m_timeline = new TimeLine(this);
+		m_timeline = new TTimeLineRuler(this);
 		m_snaplist = new SnapList(this);
-		m_workSnap = new Snappable();
+        m_workSnap = new TLocation(this);
 		m_workSnap->set_snap_list(m_snaplist);
 	} else {
 		set_parent_session(parentSession);
@@ -55,15 +55,13 @@ TSession::TSession(TSession *parentSession)
 void TSession::init()
 {
 	// TODO seek to old position on project exit ?
-	m_workLocation = TimeRef();
-	m_transportLocation = TimeRef();
-	m_mode = EDIT;
-	m_sbx = m_sby = 0;
+	m_workLocation = TTimeRef();
+	m_transportLocation = TTimeRef();
+    m_scrollBarXValue = m_scrollBarYValue = 0;
 	m_hzoom = config().get_property("Sheet", "hzoomLevel", 8192).toInt();
-	m_transport = 0;
+    m_transportRolling.store(false);
 	m_isSnapOn=true;
 	m_isProjectSession = false;
-	m_id = create_id();
 
 	connect(this, SIGNAL(privateTrackAdded(Track*)), this, SLOT(private_track_added(Track*)));
 	connect(this, SIGNAL(privateTrackRemoved(Track*)), this, SLOT(private_track_removed(Track*)));
@@ -76,14 +74,14 @@ void TSession::set_parent_session(TSession *parentSession)
 		if (m_parentSession) {
 			disconnect(m_parentSession, SIGNAL(transportStarted()), this, SIGNAL(transportStarted()));
 			disconnect(m_parentSession, SIGNAL(transportStopped()), this, SIGNAL(transportStopped()));
-			disconnect(m_parentSession, SIGNAL(transportPosSet()), this, SIGNAL(transportPosSet()));
+            disconnect(m_parentSession, SIGNAL(transportLocationChanged()), this, SIGNAL(transportLocationChanged()));
 			disconnect(m_parentSession, SIGNAL(workingPosChanged()), this, SIGNAL(workingPosChanged()));
 			disconnect(m_parentSession, SIGNAL(hzoomChanged()), this, SIGNAL(hzoomChanged()));
 			disconnect(m_parentSession, SIGNAL(horizontalScrollBarValueChanged()), this, SIGNAL(horizontalScrollBarValueChanged()));
 		}
 		connect(parentSession, SIGNAL(transportStarted()), this, SIGNAL(transportStarted()));
 		connect(parentSession, SIGNAL(transportStopped()), this, SIGNAL(transportStopped()));
-		connect(parentSession, SIGNAL(transportPosSet()), this, SIGNAL(transportPosSet()));
+        connect(parentSession, SIGNAL(transportLocationChanged()), this, SIGNAL(transportLocationChanged()));
 		connect(parentSession, SIGNAL(workingPosChanged()), this, SIGNAL(workingPosChanged()));
 		connect(parentSession, SIGNAL(hzoomChanged()), this, SIGNAL(hzoomChanged()));
 		connect(parentSession, SIGNAL(horizontalScrollBarValueChanged()), this, SIGNAL(horizontalScrollBarValueChanged()));
@@ -92,7 +90,7 @@ void TSession::set_parent_session(TSession *parentSession)
 	m_parentSession = parentSession;
 
 	if (!m_isProjectSession) {
-		set_history_stack(m_parentSession->get_history_stack());
+        set_history_stack(m_parentSession->get_history_stack());
 	}
 
 	emit horizontalScrollBarValueChanged();
@@ -107,9 +105,9 @@ int TSession::set_state( const QDomNode & node )
 	QDomElement e = node.toElement();
 
 	m_name = e.attribute("name", "" );
-	m_id = e.attribute("id", "0").toLongLong();
-	m_sbx = e.attribute("sbx", "0").toInt();
-	m_sby = e.attribute("sby", "0").toInt();
+    set_id(e.attribute("id", "0").toLongLong());
+    m_scrollBarXValue = e.attribute("sbx", "0").toInt();
+    m_scrollBarYValue = e.attribute("sby", "0").toInt();
 
 	QDomNode tracksNode = node.firstChildElement("Tracks");
 	QDomNode trackNode = tracksNode.firstChild();
@@ -121,7 +119,9 @@ int TSession::set_state( const QDomNode & node )
 
 		Track* track = m_parentSession->get_track(id);
 		if (track) {
-			add_track(track);
+            // add_track(track) should not return a TCommand object
+            // but directly add track and return nullptr, this is by design
+            Q_ASSERT(add_track(track) == nullptr);
 			set_track_height(track->get_id(), e.attribute("height", "90").toInt());
 		}
 
@@ -136,7 +136,7 @@ QDomNode TSession::get_state(QDomDocument doc)
 {
 	QDomElement sheetNode = doc.createElement("WorkSheet");
 
-	sheetNode.setAttribute("id", m_id);
+    sheetNode.setAttribute("id", get_id());
 	sheetNode.setAttribute("name", m_name);
 	sheetNode.setAttribute("sbx", get_scrollbar_xy().x());
 	sheetNode.setAttribute("sby", get_scrollbar_xy().y());
@@ -173,10 +173,10 @@ TBusTrack* TSession::get_master_out_bus_track() const
 QList<Track*> TSession::get_tracks() const
 {
 	QList<Track*> list;
-	foreach(AudioTrack* track, m_audioTracks) {
+    for(AudioTrack* track : m_audioTracks) {
 		list.append(track);
 	}
-	foreach(TBusTrack* track, m_busTracks) {
+    for(TBusTrack* track : m_busTracks) {
 		list.append(track);
 	}
 
@@ -206,7 +206,7 @@ SnapList* TSession::get_snap_list() const
 	return m_snaplist;
 }
 
-Snappable* TSession::get_work_snap() const
+TLocation* TSession::get_work_snap() const
 {
 	if (m_parentSession) {
 		return m_parentSession->get_work_snap();
@@ -215,7 +215,7 @@ Snappable* TSession::get_work_snap() const
 	return m_workSnap;
 }
 
-TimeLine* TSession::get_timeline() const
+TTimeLineRuler* TSession::get_timeline() const
 {
 	if (m_parentSession) {
 		return m_parentSession->get_timeline();
@@ -224,7 +224,7 @@ TimeLine* TSession::get_timeline() const
 	return m_timeline;
 }
 
-TimeRef TSession::get_work_location() const
+TTimeRef TSession::get_work_location() const
 {
 	if (m_parentSession) {
 		return m_parentSession->get_work_location();
@@ -232,7 +232,7 @@ TimeRef TSession::get_work_location() const
 	return m_workLocation;
 }
 
-TimeRef TSession::get_last_location() const
+TTimeRef TSession::get_last_location() const
 {
 	if (m_parentSession) {
 		return m_parentSession->get_last_location();
@@ -240,10 +240,10 @@ TimeRef TSession::get_last_location() const
 
 	PERROR("TSession::get_last_location(): unsupported configuration, this function needs a parentSession to work!");
 
-	return TimeRef();
+	return TTimeRef();
 }
 
-TimeRef TSession::get_transport_location() const
+TTimeRef TSession::get_transport_location() const
 {
 	if (m_parentSession) {
 		return m_parentSession->get_transport_location();
@@ -267,10 +267,10 @@ QPoint TSession::get_scrollbar_xy()
 	if (m_parentSession) {
 		point.setX(m_parentSession->get_scrollbar_xy().x());
 	} else {
-		point.setX(m_sbx);
+        point.setX(m_scrollBarXValue);
 	}
 
-	point.setY(m_sby);
+    point.setY(m_scrollBarYValue);
 
 	return point;
 }
@@ -280,7 +280,7 @@ bool TSession::is_transport_rolling() const
 	if (m_parentSession) {
 		return m_parentSession->is_transport_rolling();
 	}
-    return m_transport == 1;
+    return m_transportRolling.load();
 }
 
 bool TSession::is_child_session() const
@@ -327,17 +327,17 @@ void TSession::set_hzoom( qreal hzoom )
 	emit hzoomChanged();
 }
 
-void TSession::set_work_at(TimeRef location, bool isFolder)
+void TSession::set_work_at(TTimeRef location, bool isFolder)
 {
 	if (m_parentSession) {
         m_parentSession->set_work_at(location, isFolder);
     }
 }
 
-void TSession::set_transport_pos(TimeRef location)
+void TSession::set_transport_location(TTimeRef location)
 {
 	if (m_parentSession) {
-		m_parentSession->set_transport_pos(location);
+		m_parentSession->set_transport_location(location);
 	}
 }
 
@@ -361,14 +361,14 @@ void TSession::set_scrollbar_x(int x)
 		return m_parentSession->set_scrollbar_x(x);
 	}
 
-	m_sbx = x;
+    m_scrollBarXValue = x;
 
 	emit horizontalScrollBarValueChanged();
 }
 
 void TSession::set_scrollbar_y(int y)
 {
-	m_sby = y;
+    m_scrollBarYValue = y;
 
 	emit verticalScrollBarValueChanged();
 }
@@ -387,13 +387,15 @@ TCommand* TSession::toggle_solo()
 
 	bool hasSolo = false;
 
-	QList<Track*> tracks= get_tracks();
+    const auto tracks = get_tracks();
 
-	foreach(Track* track, tracks) {
-		if (track->is_solo()) hasSolo = true;
+    for(Track* track : tracks) {
+        if (track->is_solo()) {
+            hasSolo = true;
+        }
 	}
 
-	foreach(Track* track, tracks) {
+    for (Track* track : tracks) {
 		track->set_solo(!hasSolo);
 		track->set_muted_by_solo(false);
 	}
@@ -408,11 +410,13 @@ TCommand* TSession::toggle_mute()
 	}
 
 	bool hasMute = false;
-	foreach(AudioTrack* track, m_audioTracks) {
-		if (track->is_muted()) hasMute = true;
+    for(AudioTrack* track : m_audioTracks) {
+        if (track->is_muted()) {
+            hasMute = true;
+        }
 	}
 
-	foreach(AudioTrack* track, m_audioTracks) {
+    for(AudioTrack* track : m_audioTracks) {
 		track->set_muted(!hasMute);
 	}
 
@@ -462,7 +466,7 @@ TCommand* TSession::add_track(Track* track, bool historable)
 	return new AddRemove(this, track, historable, this,
 		"private_add_track(Track*)", "privateTrackAdded(Track*)",
 		"private_remove_track(Track*)", "privateTrackRemoved(Track*)",
-		tr("Added %1: %2").arg(track->metaObject()->className()).arg(track->get_name()));
+        tr("Added %1: %2").arg(track->metaObject()->className(), track->get_name()));
 }
 
 
@@ -476,17 +480,17 @@ TCommand* TSession::remove_track(Track* track, bool historable)
 	return new AddRemove(this, track, historable, this,
 		"private_remove_track(Track*)", "privateTrackRemoved(Track*)",
 		"private_add_track(Track*)", "privateTrackAdded(Track*)",
-		tr("Removed %1: %2").arg(track->metaObject()->className()).arg(track->get_name()));
+        tr("Removed %1: %2").arg(track->metaObject()->className(), track->get_name()));
 }
 
 void TSession::private_add_track(Track* track)
 {
 	switch (track->get_type()) {
 	case Track::AUDIOTRACK:
-		m_rtAudioTracks.append(track);
+        m_rtAudioTracks.append(qobject_cast<AudioTrack*>(track));
 		break;
 	case Track::BUS:
-		m_rtBusTracks.append(track);
+        m_rtBusTracks.append(qobject_cast<TBusTrack*>(track));
 		break;
 	default:
         qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
@@ -498,10 +502,10 @@ void TSession::private_remove_track(Track* track)
 {
 	switch (track->get_type()) {
 	case Track::AUDIOTRACK:
-		m_rtAudioTracks.remove(track);
+        m_rtAudioTracks.remove(qobject_cast<AudioTrack*>(track));
 		break;
 	case Track::BUS:
-		m_rtBusTracks.remove(track);
+        m_rtBusTracks.remove(qobject_cast<TBusTrack*>(track));
 		break;
 	default:
         qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");

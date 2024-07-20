@@ -55,9 +55,9 @@ PluginView::PluginView(PluginChainView* parent, PluginChain* chain, Plugin* plug
 	m_name = plugin->get_name();
 	
 	QFontMetrics fm(themer()->get_font("Plugin:fontscale:name"));
-	m_textwidth = fm.width(m_name);
-	
-	calculate_bounding_rect();
+    m_textwidth = fm.horizontalAdvance(m_name);
+
+    PluginView::calculate_bounding_rect();
 	
 	connect(m_plugin, SIGNAL(bypassChanged()), this, SLOT(repaint()));
         connect(m_plugin, SIGNAL(activeContextChanged()), this, SLOT(repaint()));
@@ -84,7 +84,7 @@ void PluginView::paint(QPainter* painter, const QStyleOptionGraphicsItem *option
 	}
 
     if (has_active_context()) {
-        color = color.light(120);
+        color = color.lighter(120);
     }
 
     painter->save();

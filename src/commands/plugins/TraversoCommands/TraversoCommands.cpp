@@ -24,13 +24,22 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QInputDialog>
 #include <QStringList>
 
-#include "libtraversocore.h"
+#include "AudioClipManager.h"
+#include "AudioTrack.h"
+#include "Information.h"
+#include "Project.h"
+#include "ProjectManager.h"
+#include "Sheet.h"
+#include "TBusTrack.h"
+#include "TInputEventDispatcher.h"
+#include "TShortCutFunction.h"
+#include "TTimeLineRuler.h"
 #include "libtraversosheetcanvas.h"
 #include "commands.h"
 #include <cfloat>
 #include "TMainWindow.h"
 #include "TTransport.h"
-#include "TShortcutManager.h"
+#include "TShortCutManager.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -38,9 +47,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 /**
  *	\class TraversoCommands
-    \brief The Traverso CommandPlugin class which 'implements' many of the default Commands
+    \brief The Traverso TCommandPlugin class which 'implements' many of the default Commands
 
-    With this plugin, the InputEngine is able to dispatch key actions by directly
+    With this plugin, the TInputEventDispatcher is able to dispatch key actions by directly
     asking this Plugin for the needed Command object.
  */
 
@@ -58,7 +67,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_meta_object(&AudioClipView::staticMetaObject);
     tShortCutManager().add_meta_object(&Curve::staticMetaObject);
     tShortCutManager().add_meta_object(&CurveView::staticMetaObject);
-    tShortCutManager().add_meta_object(&TimeLine::staticMetaObject);
+    tShortCutManager().add_meta_object(&TTimeLineRuler::staticMetaObject);
     tShortCutManager().add_meta_object(&TimeLineView::staticMetaObject);
     tShortCutManager().add_meta_object(&Plugin::staticMetaObject);
     tShortCutManager().add_meta_object(&PluginView::staticMetaObject);
@@ -118,7 +127,7 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("Marker",tr("Marker"));
     tShortCutManager().add_translation("Sheet",tr("Sheet"));
     tShortCutManager().add_translation("TBusTrack",tr("Bus Track"));
-    tShortCutManager().add_translation("TimeLine",tr("Time Line"));
+    tShortCutManager().add_translation("TTimeLineRuler",tr("Time Line"));
     tShortCutManager().add_translation("TBusTrackPanel", tr("Bus Track"));
     tShortCutManager().add_translation("TMainWindow", tr("Global"));
     tShortCutManager().add_translation("ProjectManager", tr("Project Manager"));
@@ -144,43 +153,43 @@ TraversoCommands::TraversoCommands()
     tShortCutManager().add_translation("HoldCommand", tr("Hold Command"));
     tShortCutManager().add_translation("Navigate", tr("Navigate"));
 
-    TFunction* function;
+    TShortCutFunction* function;
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "SheetView::ArrowKeyBrowser";
     function->setSlotSignature("up");
     function->setDescription(tr("Up"));
     function->commandName = "ArrowKeyBrowserUp";
     add_function(function, ArrowKeyBrowserCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "SheetView::ArrowKeyBrowser";
     function->setSlotSignature("down");
     function->setDescription(tr("Down"));
     function->commandName = "ArrowKeyBrowserDown";
     add_function(function, ArrowKeyBrowserCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "SheetView::ArrowKeyBrowser";
     function->setSlotSignature("left");
     function->setDescription(tr("Left"));
     function->commandName = "ArrowKeyBrowserLeft";
     add_function(function, ArrowKeyBrowserCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "SheetView::ArrowKeyBrowser";
     function->setSlotSignature("right");
     function->setDescription(tr("Right"));
     function->commandName = "ArrowKeyBrowserRight";
     add_function(function, ArrowKeyBrowserCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "AudioTrack";
     function->setDescription(tr("Import Audio"));
     function->commandName = "ImportAudio";
     add_function(function, ImportAudioCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "AudioTrackView";
     function->setDescription(tr("Fold Track"));
     function->commandName = "FoldTrack";
@@ -188,7 +197,7 @@ TraversoCommands::TraversoCommands()
     function->arguments << "fold_track";
     add_function(function, MoveClipCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "TimeLineView";
     function->setDescription(tr("Fold Markers"));
     function->commandName = "FoldMarkers";
@@ -196,7 +205,7 @@ TraversoCommands::TraversoCommands()
     function->arguments << "fold_markers";
     add_function(function, MoveClipCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "TrackView";
     function->setDescription(tr("Move Up/Down"));
     function->commandName = "MoveTrack";
@@ -204,7 +213,7 @@ TraversoCommands::TraversoCommands()
     function->setInheritedBase("MoveBase");
     add_function(function, MoveTrackCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "CurveView";
     function->setDescription(tr("Move Curve Node(s)"));
     function->commandName = "MoveCurveNodes";
@@ -212,21 +221,21 @@ TraversoCommands::TraversoCommands()
     function->setInheritedBase("MoveBase");
     add_function(function, MoveCurveNodesCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "AudioTrack";
     function->setDescription(tr("Gain"));
     function->commandName = "AudioTrackGain";
     function->setInheritedBase("GainBase");
     add_function(function, GainCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "TBusTrack";
     function->setDescription(tr("Gain"));
     function->commandName = "BusTrackGain";
     function->setInheritedBase("GainBase");
     add_function(function, GainCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "SheetView";
     function->setDescription(tr("Zoom"));
     function->commandName = "Zoom";
@@ -234,7 +243,7 @@ TraversoCommands::TraversoCommands()
     function->arguments << "HJogZoom" << "1.2" << "0.2";
     add_function(function, ZoomCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "TimeLineView";
     function->setDescription(tr("Move Marker"));
     function->commandName = "TimeLineMoveMarker";
@@ -242,7 +251,7 @@ TraversoCommands::TraversoCommands()
     function->setInheritedBase("MoveBase");
     add_function(function, MoveMarkerCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "MarkerView";
     function->setDescription(tr("Move Marker"));
     function->commandName = "MoveMarker";
@@ -250,34 +259,34 @@ TraversoCommands::TraversoCommands()
     function->setInheritedBase("MoveBase");
     add_function(function, MoveMarkerCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "Track";
     function->setDescription(tr("Track Pan"));
     function->commandName = "TrackPan";
     add_function(function, TrackPanCommand);
 
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "Track";
     function->commandName = "RemoveTrack";
     function->setInheritedBase("DeleteBase");
     add_function(function, RemoveTrackCommand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "PluginView";
     function->commandName = "RemovePlugin";
     function->setInheritedBase("DeleteBase");
     add_function(function, RemovePluginCommand);
 
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "CurveView";
     function->commandName = "RemoveCurveNode";
     function->setDescription("Remove Node(s)");
     function->setInheritedBase("DeleteBase");
     add_function(function, RemoveCurveNodeCommmand);
 
-    function = new TFunction();
+    function = new TShortCutFunction();
     function->object = "TPanKnobView";
     function->setDescription(tr("Panorama"));
     function->commandName = "PanKnobPanorama";
@@ -304,7 +313,7 @@ TraversoCommands::TraversoCommands()
     create_and_add_function("SheetView", tr("Shuttle"), "Shuttle", ShuttleCommand, QStringList(), "", true, true);
 }
 
-void TraversoCommands::add_function(TFunction *function, TraversoCommand command)
+void TraversoCommands::add_function(TShortCutFunction *function, TraversoCommand command)
 {
     function->pluginname = "TraversoCommands";
     m_dict.insert(function->commandName, command);
@@ -319,7 +328,7 @@ void TraversoCommands::create_and_add_function(const QString &object, const QStr
 void TraversoCommands::create_and_add_function(const QString &object, const QString &description, const QString &commandName, TraversoCommand command,
                                                QStringList arguments, const QString &inheritedBase, bool useX, bool useY)
 {
-    auto function = new TFunction();
+    auto function = new TShortCutFunction();
     function->object = object;
     function->setDescription(description);
     function->commandName = commandName;
@@ -342,11 +351,11 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         ContextItem* item = qobject_cast<ContextItem*>(obj);
 
         if (item->metaObject()->className() == QString("TrackPanelGain")) {
-            item = item->get_context();
+            item = item->get_related_context_item();
         } else if (AudioClipView* view = qobject_cast<AudioClipView*>(item)) {
-            item = view->get_context();
+            item = view->get_related_context_item();
         } else if (TrackView* view = qobject_cast<TrackView*>(item)) {
-            item = view->get_context();
+            item = view->get_related_context_item();
         }
 
 
@@ -407,7 +416,10 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
                    "ImportAudioCommand needs a Track as argument");
             return 0;
         }
-        return new Import(track, TimeRef());
+
+        auto audioFileImportCommand = new TAudioFileImportCommand(track);
+        audioFileImportCommand->set_track(track);
+        return audioFileImportCommand;
     }
 
     case InsertSilenceCommand:
@@ -418,8 +430,12 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
                    "ImportAudioCommand needs a Track as argument");
             return 0;
         }
-        TimeRef length(10*UNIVERSAL_SAMPLE_RATE);
-        return new Import(track, length, true);
+        TTimeRef length(10*TTimeRef::UNIVERSAL_SAMPLE_RATE);
+        auto audioFileImportCommand = new TAudioFileImportCommand(track);
+        audioFileImportCommand->set_track(track);
+        audioFileImportCommand->set_length(length);
+        audioFileImportCommand->set_silent(true);
+        return audioFileImportCommand;
     }
 
     case AddNewAudioTrackCommand:

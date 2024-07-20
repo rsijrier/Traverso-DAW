@@ -24,7 +24,6 @@
 
 #include "ViewItem.h"
 #include "AbstractViewPort.h"
-#include <QTimer>
 #include <QPropertyAnimation>
 
 class AudioClip;
@@ -126,7 +125,7 @@ public :
 	void browse_to_curve_node_view(CurveNodeView* nodeView);
 	void browse_to_marker_view(MarkerView* markerView);
 	void center_in_view(ViewItem* item, enum Qt::AlignmentFlag = Qt::AlignHCenter);
-    void keyboard_move_canvas_cursor_to_location(TimeRef location, qreal sceneY);
+    void keyboard_move_canvas_cursor_to_location(TTimeRef location, qreal sceneY);
 
 	qint64		timeref_scalefactor;
 

@@ -23,7 +23,7 @@
 #define MOVEMARKER_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 class Marker;
 class MarkerView;
@@ -45,8 +45,8 @@ public:
 
 private :
         Marker*		m_marker;
-        TimeRef		m_origWhen;
-        TimeRef		m_newWhen;
+        TTimeRef		m_origLocation;
+        TTimeRef		m_newLocation;
         struct MoveMarkerData {
                 MarkerView*	view;
                 qint64 		scalefactor;

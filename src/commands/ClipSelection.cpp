@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "ClipSelection.h"
 #include "AudioClipManager.h"
 #include <AudioClip.h>
-#include "ContextPointer.h"
 #include <Sheet.h>
 #include <Utils.h>
 
@@ -62,7 +61,7 @@ int ClipSelection::do_action()
 {
     foreach(AudioClip* clip, m_clips) {
         if ( ! QMetaObject::invokeMethod(m_acmanager, m_slot, Q_ARG(AudioClip*, clip))) {
-            PERROR(QString("AudioClip::%1 failed for %2").arg(m_slot).arg(clip->get_name()));
+            PERROR(QString("AudioClip::%1 failed for %2").arg(m_slot, clip->get_name()));
         }
     }
 

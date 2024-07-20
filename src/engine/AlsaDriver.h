@@ -47,7 +47,7 @@ class AlsaDriver : public TAudioDriver
 {
         Q_OBJECT
 public:
-    AlsaDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
+    AlsaDriver(AudioDevice* device);
 	~AlsaDriver();
 
 	int start();
@@ -60,7 +60,7 @@ public:
 	int detach();
 	int bufsize(nframes_t nframes);
 	int restart();
-	int setup(bool capture=true, bool playback=true, const QString& pcmName="hw:0", const QString& dither="None");
+    int setup(bool capture=true, bool playback=true, const QString& pcmName="hw:0", const QString& dither="None");
         bool supports_software_channels() {return false;}
 
 	QString get_device_name();
@@ -135,7 +135,7 @@ private:
 
 	inline void write_to_channel (channel_t channel, audio_sample_t *buf, nframes_t nsamples)
 	{
-		write_via_copy (playback_addr[channel], buf, nsamples, playback_interleave_skip[channel], dither_state + channel);
+		write_via_copy (playback_addr[channel], buf, nsamples, playback_interleave_skip[channel], m_ditherState + channel);
 		mark_channel_done (channel);
 	}
 

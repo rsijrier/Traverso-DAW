@@ -35,8 +35,8 @@
 // TODO If there is some portaudio shutdown callback, connect to _on_pa_shutdown_callback
 //	and make it work!
 
-PADriver::PADriver( AudioDevice * dev , int rate, nframes_t bufferSize)
-        : TAudioDriver(dev, rate, bufferSize)
+PADriver::PADriver( AudioDevice * device)
+        : TAudioDriver(device)
 {
 	read = MakeDelegate(this, &PADriver::_read);
 	write = MakeDelegate(this, &PADriver::_write);
@@ -176,6 +176,9 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
 {
 	// TODO In case of hostapi == "alsa", the callback thread prio needs to be set to realtime.
 	// 	there has been some discussion on this on the pa mailinglist, digg it up!
+
+    m_frameRate = m_device->get_sample_rate();
+    m_framesPerCycle = m_device->get_buffer_size();
 	
         QStringList deviceInfos = deviceInfo.split("::");
         QString hostapi, inputDeviceName, outputDeviceName;
@@ -189,15 +192,15 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
                 outputDeviceName = deviceInfos.at(2);
         }
 
-        device->driverSetupMessage(tr("Setting up PortAudio using %1").arg(Pa_GetVersionText()), AudioDevice::DRIVER_SETUP_INFO);
-        device->driverSetupMessage(tr("Driver: %1, capture: %2, playback: %3 <br />Input Device: %4 <br />Output Device: %5").
+        m_device->driverSetupMessage(tr("Setting up PortAudio using %1").arg(Pa_GetVersionText()), AudioDevice::DRIVER_SETUP_INFO);
+        m_device->driverSetupMessage(tr("Driver: %1, capture: %2, playback: %3 <br />Input Device: %4 <br />Output Device: %5").
                         arg(hostapi).arg(capture ? tr("yes") : tr("no")).arg(playback ? tr("yes") : tr("no")).
                         arg(inputDeviceName).arg(outputDeviceName), AudioDevice::DRIVER_SETUP_INFO);
 	
 	PaError err = Pa_Initialize();
 	
 	if( err != paNoError ) {
-                device->driverSetupMessage((tr("Failed to initialize PortAudio: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
+                m_device->driverSetupMessage((tr("Failed to initialize PortAudio: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
                 Pa_Terminate();
 		return -1;
         }
@@ -209,7 +212,7 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
         PaHostApiIndex hostIndex = host_index_for_host_api(hostapi);
 
         if (hostIndex == paHostApiNotFound) {
-                device->driverSetupMessage(tr("PADriver:: hostapi %1 was not found by Portaudio!").arg(hostapi), AudioDevice::DRIVER_SETUP_FAILURE);
+                m_device->driverSetupMessage(tr("PADriver:: hostapi %1 was not found by Portaudio!").arg(hostapi), AudioDevice::DRIVER_SETUP_FAILURE);
                 Pa_Terminate();
                 return -1;
 	}
@@ -255,14 +258,14 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
 			&m_paStream,
                         capture ? &inputParameters : 0,	// The input parameter
                         playback ? &outputParameters : 0,	// The outputparameter
-			frame_rate,		// Set in the constructor
-			frames_per_cycle,	// Set in the constructor
+            m_frameRate,		// Set in the constructor
+            m_framesPerCycle,	// Set in the constructor
 			paNoFlag,		// Don't use any flags
 			_process_callback, 	// our callback function
 			this );
 	
 	if( err != paNoError ) {
-                device->driverSetupMessage((tr("Failed to open PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
+                m_device->driverSetupMessage((tr("Failed to open PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
                 Pa_Terminate();
 		return -1;
         }
@@ -276,7 +279,7 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
                         snprintf (buf, sizeof(buf) - 1, "playback_%d", chn+1);
 
                         audiochannel = add_playback_channel(buf);
-                        audiochannel->set_latency(frames_per_cycle + capture_frame_latency);
+                        audiochannel->set_latency(m_framesPerCycle + m_captureFrameLatency);
                 }
         }
 
@@ -286,7 +289,7 @@ int PADriver::setup(bool capture, bool playback, const QString& deviceInfo)
                         snprintf (buf, sizeof(buf) - 1, "capture_%d", chn+1);
 
                         audiochannel = add_capture_channel(buf);
-                        audiochannel->set_latency(frames_per_cycle + capture_frame_latency);
+                        audiochannel->set_latency(m_framesPerCycle + m_captureFrameLatency);
                 }
         }
 
@@ -305,11 +308,11 @@ int PADriver::start( )
 	PaError err = Pa_StartStream( m_paStream );
 	
 	if( err != paNoError ) {
-                device->driverSetupMessage((tr("Failed to start PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
+                m_device->driverSetupMessage((tr("Failed to start PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::DRIVER_SETUP_FAILURE);
                 Pa_Terminate();
 		return -1;
 	} else {
-                device->driverSetupMessage(tr("Succesfully started PortAudio stream!"), AudioDevice::DRIVER_SETUP_SUCCESS);
+                m_device->driverSetupMessage(tr("Succesfully started PortAudio stream!"), AudioDevice::DRIVER_SETUP_SUCCESS);
 	}
 	
 	return 1;
@@ -321,7 +324,7 @@ int PADriver::stop( )
 	PaError err = Pa_CloseStream( m_paStream );
 	
 	if( err != paNoError ) {
-                device->message((tr("PADriver:: Failed to close PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::WARNING);
+                m_device->message((tr("PADriver:: Failed to close PortAudio stream: %1").arg(Pa_GetErrorText( err ))), AudioDevice::WARNING);
 		Pa_Terminate();
 	} else {
 		printf("PADriver:: Succesfully closed portaudio stream\n\n");
@@ -332,7 +335,7 @@ int PADriver::stop( )
 
 int PADriver::process_callback (nframes_t nframes)
 {
-	if (device->run_cycle( nframes, 0.0) == -1) {
+    if (m_device->run_cycle( nframes, 0.0) == -1) {
 		return paAbort;
 	}
 	
@@ -354,7 +357,7 @@ QString PADriver::get_device_longname( )
 int PADriver::_xrun_callback( void * arg )
 {
 	PADriver* driver  = static_cast<PADriver *> (arg);
-	driver->device->xrun();
+    driver->m_device->xrun();
 	return 0;
 }
 

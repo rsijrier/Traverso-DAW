@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <AudioClip.h>
 #include <AudioClipView.h>
 #include <AudioTrack.h>
-#include "TInputEventDispatcher.h"
 #include <ReadSource.h>
 #include <ProjectManager.h>
 #include <Project.h>
@@ -59,10 +58,10 @@ ExternalProcessingDialog::ExternalProcessingDialog(QWidget * parent, AudioClipEx
 	
 	connect(m_processor, SIGNAL(readyReadStandardOutput()), this, SLOT(read_standard_output()));
 	connect(m_processor, SIGNAL(started()), this, SLOT(process_started()));
-	connect(m_processor, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(process_finished(int, QProcess::ExitStatus)));
-	connect(m_processor, SIGNAL(error( QProcess::ProcessError)), this, SLOT(process_error(QProcess::ProcessError)));
-	connect(argsComboBox, SIGNAL(activated(const QString&)), this, SLOT(arg_combo_index_changed(const QString&)));
-	connect(programLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(command_lineedit_text_changed(const QString&)));
+    connect(m_processor, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(process_finished(int,QProcess::ExitStatus)));
+    connect(m_processor, SIGNAL(errorOccurred(QProcess::ProcessError)), this, SLOT(process_error(QProcess::ProcessError)));
+    connect(argsComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(arg_combo_index_changed(int)));
+    connect(programLineEdit, SIGNAL(textChanged(QString)), this, SLOT(command_lineedit_text_changed(QString)));
 	connect(startButton, SIGNAL(clicked()), this, SLOT(prepare_for_external_processing()));
 	connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 }
@@ -114,7 +113,8 @@ void ExternalProcessingDialog::start_external_processing()
 	
 	m_arguments.append(m_infilename);
 	m_arguments.append(m_outfilename);
-	m_arguments += m_commandargs.split(QRegExp("\\s+"));
+    static QRegularExpression expression("\\s+");
+    m_arguments += m_commandargs.split(expression);
 	
 	m_processor->start(m_program, m_arguments);
 }
@@ -122,7 +122,7 @@ void ExternalProcessingDialog::start_external_processing()
 void ExternalProcessingDialog::read_standard_output()
 {
 	if (m_queryOptions) {
-		QString result = m_processor->readAllStandardOutput();
+        QString result = m_processor->readAllStandardOutput();
 		// This list is used to collect the availabe arguments for the 
 		// arugment lineedit completer.
 		QStringList completionlist;
@@ -133,7 +133,8 @@ void ExternalProcessingDialog::read_standard_output()
 			foreach(QString string, list) {
                 if (string.contains("Supported effects:") || string.contains("effect:") || string.contains("EFFECTS:")) {
                     result = string.remove("Supported effects:").remove("effect:").remove("EFFECTS:");
-					QStringList options = string.split(QRegExp("\\s+"));
+                    static QRegularExpression expression("\\s+");
+                    QStringList options = string.split(expression);
 					foreach(QString string, options) {
 						if (!string.isEmpty()) {
 							argsComboBox->addItem(string);
@@ -158,10 +159,11 @@ void ExternalProcessingDialog::read_standard_output()
 	QString result = m_processor->readAllStandardOutput();
 	
 	if (result.contains("%")) {
-		QStringList tokens = result.split(QRegExp("\\s+"));
+        static QRegularExpression expression("\\s+");
+        QStringList tokens = result.split(expression);
 		foreach(QString token, tokens) {
 			if (token.contains("%")) {
-				token = token.remove("%").remove("(").remove(")");
+                token = token.remove("%").remove("(").remove(")").remove("In:");
 				bool ok;
 				int number = (int)token.toDouble(&ok);
 				if (ok && number > progressBar->value()) {
@@ -216,7 +218,7 @@ void ExternalProcessingDialog::process_finished(int exitcode, QProcess::ExitStat
 	// Clips live at project level, we have to set its Sheet, Track and ReadSource explicitely!!
 	m_acep->m_resultingclip->set_sheet(m_acep->m_clip->get_sheet());
 	m_acep->m_resultingclip->set_track(m_acep->m_clip->get_track());
-	m_acep->m_resultingclip->set_track_start_location(m_acep->m_clip->get_track_start_location());
+	m_acep->m_resultingclip->set_location_start(m_acep->m_clip->get_location()->get_start());
 	
 	close();
 }
@@ -228,9 +230,9 @@ void ExternalProcessingDialog::query_options()
 	m_processor->start(m_program, QStringList() << "-h");
 }
 
-void ExternalProcessingDialog::arg_combo_index_changed(const QString & text)
-{
-	argumentsLineEdit->setText(text);	
+void ExternalProcessingDialog::arg_combo_index_changed(int /*index*/)
+{    
+    argumentsLineEdit->setText(argsComboBox->currentText());
 }
 
 void ExternalProcessingDialog::command_lineedit_text_changed(const QString & text)

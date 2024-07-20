@@ -24,24 +24,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define MARKER_H
 
 #include "ContextItem.h"
-#include "Snappable.h"
-#include "defines.h"
+#include "TLocation.h"
 #include <QDomNode>
 
-class TimeLine;
+class TTimeLineRuler;
 
-class Marker : public ContextItem, public Snappable
+class Marker : public ContextItem
 {
 	Q_OBJECT
 	
 public:
-	enum Type {
+    enum MarkerType {
 		CDTRACK,
 		ENDMARKER
 	};
 
-	Marker(TimeLine* tl, const TimeRef when, Type type = CDTRACK);
-	Marker(TimeLine* tl, const QDomNode& node);
+    Marker(TTimeLineRuler* tl, const TTimeRef when, MarkerType type = CDTRACK);
+	Marker(TTimeLineRuler* tl, const QDomNode& node);
         ~Marker() {}
 	
 	QDomNode get_state(QDomDocument doc);
@@ -58,8 +57,10 @@ public:
 	void set_copyprotect(bool);
 	void set_index(int);
 
-	TimeLine * get_timeline() const {return m_timeline;}
-	TimeRef get_when() const {return m_when;}
+	TTimeLineRuler * get_timeline() const {return m_timeline;}
+	TTimeRef get_when() const {return m_when;}
+    TLocation* get_location() const {return m_location;}
+
 	QString get_description() const {return m_description;}
 	QString get_performer() const {return m_performer;}
 	QString get_composer() const {return m_composer;}
@@ -69,28 +70,28 @@ public:
 	QString get_isrc() const {return m_isrc;}
 	bool get_preemphasis();
 	bool get_copyprotect();
-        Type get_type() {return m_type;}
-        int get_index() {return m_index;}
-	
+    MarkerType get_type() {return m_type;}
+    int get_index() {return m_index;}
 
 public slots:
-	void set_when (const TimeRef& when);
+	void set_when (const TTimeRef& when);
 
 
 private:
-	TimeLine* m_timeline;
-	TimeRef m_when;
+	TTimeLineRuler* m_timeline;
+    TTimeRef        m_when;
+    TLocation*      m_location;
 	QString	m_description,
-		m_performer,
-		m_composer,
-		m_songwriter,
-		m_arranger,
-		m_message,
-		m_isrc;
-	bool	m_preemph{},
-		m_copyprotect{};
-	Type	m_type;
-	int	m_index{};
+    m_performer,
+    m_composer,
+    m_songwriter,
+    m_arranger,
+    m_message,
+    m_isrc;
+    bool	m_preemph{};
+    bool	m_copyprotect{};
+    MarkerType	m_type;
+    int     m_index{};
 	
 signals:
 	void positionChanged();

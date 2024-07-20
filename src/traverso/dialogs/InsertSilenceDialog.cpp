@@ -23,7 +23,7 @@
 #include "ProjectManager.h"
 #include "Project.h"
 #include "Sheet.h"
-#include "Import.h"
+#include "TAudioFileImportCommand.h"
 #include "AudioTrack.h"
 #include "AudioClip.h"
 
@@ -83,8 +83,11 @@ void InsertSilenceDialog::accept()
             m_track = shortestTrack;
         }
 
-        TimeRef length = TimeRef(lengthSpinBox->value() * UNIVERSAL_SAMPLE_RATE);
-        Import* cmd = new Import(m_track, length, true);
+        TTimeRef length = TTimeRef(lengthSpinBox->value() * TTimeRef::UNIVERSAL_SAMPLE_RATE);
+        TAudioFileImportCommand* cmd = new TAudioFileImportCommand(m_track);
+        cmd->set_track(m_track);
+        cmd->set_length(length);
+        cmd->set_silent(true);
         TCommand::process_command(cmd);
     }
 

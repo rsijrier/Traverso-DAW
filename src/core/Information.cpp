@@ -22,6 +22,7 @@
 #include "Information.h"
 #include "Utils.h"
 #include "AudioDevice.h"
+#include "Tsar.h"
 
 #include "Debugger.h"
 
@@ -31,6 +32,16 @@ Information& info()
         static Information information;
         return information;
 }
+
+
+Information::Information()
+{
+    connect(&audiodevice(), SIGNAL(message(QString,int)),
+            this, SLOT(audiodevice_message(QString,int)));
+    connect(&tsar(), SIGNAL(audioThreadEventBufferFull(QString)),
+            this, SLOT(tsar_message(QString)));
+}
+
 
 void Information::information( const QString & mes )
 {
@@ -73,9 +84,7 @@ void Information::audiodevice_message(const QString& message, int severity)
 	}
 }
 
-Information::Information()
+void Information::tsar_message(const QString& message)
 {
-	connect(&audiodevice(), SIGNAL(message(QString, int)),
-		 this, SLOT(audiodevice_message(QString, int)));
+    critical(message);
 }
-

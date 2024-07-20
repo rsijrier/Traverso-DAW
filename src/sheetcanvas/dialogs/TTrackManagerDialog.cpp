@@ -36,6 +36,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Themer.h"
 #include "TMainWindow.h"
 
+#include "Mixer.h"
+
 #include <QMenu>
 
 #include "Debugger.h"
@@ -334,13 +336,16 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                 }
         }
 
+        //FIXME
+        // What does this code actually do?
+        // clang says, item is a potentential memory leak
         if (m_track->get_type() == Track::AUDIOTRACK) {
                 QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                 AudioBus* bus = m_track->get_input_bus();
                 if (bus) {
                         item->setText(bus->get_name());
                         if (!bus->is_valid()) {
-                                item->setTextColor(QColor(Qt::lightGray));
+                                item->setForeground(QColor(Qt::lightGray));
                         }
                 }
         }
@@ -354,7 +359,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                 item->setText(send->get_name());
                 AudioBus* bus = send->get_bus();
                 if (bus && !bus->is_valid()) {
-                        item->setTextColor(QColor(Qt::lightGray));
+                        item->setForeground(QColor(Qt::lightGray));
                 }
                 item->setData(Qt::UserRole, send->get_id());
         }
@@ -366,7 +371,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
                 item->setText(send->get_name());
                 AudioBus* bus = send->get_bus();
                 if (bus && !bus->is_valid()) {
-                        item->setTextColor(QColor(Qt::lightGray));
+                        item->setForeground(QColor(Qt::lightGray));
                 }
                 item->setData(Qt::UserRole, send->get_id());
         }

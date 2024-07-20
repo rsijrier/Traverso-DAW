@@ -60,7 +60,7 @@ private slots:
 	void prepare_for_external_processing();
 	void process_started();
 	void process_finished(int exitcode, QProcess::ExitStatus exitstatus);
-	void arg_combo_index_changed ( const QString & text );
+    void arg_combo_index_changed (int index);
 	void start_external_processing();
 	void command_lineedit_text_changed(const QString & text);
 	void process_error(QProcess::ProcessError error);

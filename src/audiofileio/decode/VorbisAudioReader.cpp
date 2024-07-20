@@ -58,7 +58,7 @@ VorbisAudioReader::VorbisAudioReader(const QString& filename)
 	m_channels = m_vi->channels;
 	m_nframes = ov_pcm_total(&m_vf, -1);
 	m_rate = m_vi->rate;
-	m_length = TimeRef(m_nframes, m_rate);
+	m_length = TTimeRef(m_nframes, m_rate);
 }
 
 
@@ -138,7 +138,7 @@ nframes_t VorbisAudioReader::read_private(DecodeBuffer* buffer, nframes_t frameC
 			break;
 		}
 		
-		for (int c=0; c < m_channels; c++) {
+        for (uint c=0; c < m_channels; c++) {
 			memcpy(buffer->destination[c] + totalFramesRead, tmp[c], framesRead * sizeof(audio_sample_t));
 		}
 		totalFramesRead += framesRead;

@@ -42,7 +42,7 @@ PluginChainView::PluginChainView(SheetView* sv, ViewItem* parent, PluginChain* c
 
     setZValue(parent->zValue() + 10);
     m_sv = sv;
-    calculate_bounding_rect();
+    PluginChainView::calculate_bounding_rect();
 
     for(auto plugin : chain->get_plugins()) {
         add_plugin(plugin);

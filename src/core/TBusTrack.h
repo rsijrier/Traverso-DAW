@@ -27,52 +27,58 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 class TBusTrack : public Track
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-        TBusTrack(TSession* session, const QString& name, int channelCount);
-        TBusTrack(TSession* session, const QDomNode node);
-        ~TBusTrack();
+    TBusTrack(TSession* session, const QString& name, int channelCount);
+    TBusTrack(TSession* session, const QDomNode node);
+    ~TBusTrack();
 
-        QDomNode get_state(QDomDocument doc, bool istemplate=false);
-        virtual int set_state( const QDomNode & node );
-        void set_name(const QString& name);
-        int process(nframes_t nframes);
+    QDomNode get_state(QDomDocument doc, bool istemplate=false);
+    virtual int set_state( const QDomNode & node );
+    void set_name(const QString& name);
+    int process(const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes);
+
+    bool operator<(const TBusTrack& other) {
+        return this->get_sort_index() < other.get_sort_index();
+    }
+
+    TBusTrack* next = nullptr;
 
 protected:
-        int m_channelCount{};
+    int m_channelCount{};
 
 private:
-        void create_process_bus();
+    void create_process_bus();
 };
 
 class MasterOutSubGroup : public TBusTrack
 {
-        Q_OBJECT
+    Q_OBJECT
 
 public:
-        MasterOutSubGroup(TSession* session, const QString& name) : TBusTrack(session, name, 2) {}
-        MasterOutSubGroup(TSession* session, const QDomNode node) : TBusTrack(session, node) {}
-        ~MasterOutSubGroup() {}
+    MasterOutSubGroup(TSession* session, const QString& name) : TBusTrack(session, name, 2) {}
+    MasterOutSubGroup(TSession* session, const QDomNode node) : TBusTrack(session, node) {}
+    ~MasterOutSubGroup() {}
 
-//        void add_output_bus(const QString& name) {
-//                // this should not happen, but just in case...
-//                if (!(name == tr("Sheet Master")) || !(name == tr("Master"))) {
-//                        Track::add_output_bus(name);
-//                } else {
-//                        // try to be 'smart' and pick a sane default.
-//                        Track::add_output_bus("Playback 1");
-//                }
-//        }
+    //        void add_output_bus(const QString& name) {
+    //                // this should not happen, but just in case...
+    //                if (!(name == tr("Sheet Master")) || !(name == tr("Master"))) {
+    //                        Track::add_output_bus(name);
+    //                } else {
+    //                        // try to be 'smart' and pick a sane default.
+    //                        Track::add_output_bus("Playback 1");
+    //                }
+    //        }
 
-        int set_state( const QDomNode& node ) {
-                TBusTrack::set_state(node);
+    int set_state( const QDomNode& node ) {
+        TBusTrack::set_state(node);
 
-                // force proper values for the following parameters that
-                // are fixed for Master Buses:
-                m_channelCount = 2;
-                return 1;
-        }
+        // force proper values for the following parameters that
+        // are fixed for Master Buses:
+        m_channelCount = 2;
+        return 1;
+    }
 
 };
 

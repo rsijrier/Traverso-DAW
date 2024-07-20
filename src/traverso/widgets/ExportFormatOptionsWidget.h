@@ -26,7 +26,7 @@
 
 #include <QWidget>
 
-struct ExportSpecification;
+class TExportSpecification;
 
 class ExportFormatOptionsWidget : public QWidget, protected Ui::ExportFormatOptionsWidget
 {
@@ -36,7 +36,7 @@ public:
 	ExportFormatOptionsWidget(QWidget* parent = 0);
 	~ExportFormatOptionsWidget();
 	
-	void get_format_options(ExportSpecification* spec);
+	void get_format_options(TExportSpecification* spec);
 
 
 private slots:

@@ -54,7 +54,7 @@ NewTrackDialog::NewTrackDialog(QWidget * parent)
     connect(addTrackBusButton, SIGNAL(clicked()), this, SLOT(create_track()));
     connect(isBusTrack, SIGNAL(toggled(bool)), this, SLOT(update_buses_comboboxes()));
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(reset_information_label()));
-    connect(trackName, SIGNAL(textChanged(const QString&)), SLOT(update_completer(const QString&)));
+    connect(trackName, SIGNAL(textChanged(QString)), SLOT(update_completer(QString)));
 }
 
 void NewTrackDialog::showEvent(QShowEvent */*event*/)
@@ -106,7 +106,7 @@ void NewTrackDialog::create_track()
 
 
         TCommand* command = session->add_track(track);
-        command->setText(tr("Added %1: %2").arg(track->metaObject()->className()).arg(track->get_name()));
+        command->setText(tr("Added %1: %2").arg(track->metaObject()->className(), track->get_name()));
         TCommand::process_command(command);
 
         if (driver == "Jack") {
@@ -203,7 +203,7 @@ void NewTrackDialog::update_buses_comboboxes()
 
         QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
         item->setText(tr("Internal Buses:"));
-        item->setTextColor(QColor("grey"));
+        item->setForeground(QColor("grey"));
         item->setFlags(Qt::NoItemFlags);
 
         QList<TBusTrack*> subs;
@@ -220,15 +220,15 @@ void NewTrackDialog::update_buses_comboboxes()
 
         item = new QListWidgetItem(routingOutputListWidget);
         item->setText(tr("External Outputs:"));
-        item->setTextColor(QColor("grey"));
+        item->setForeground(QColor("grey"));
         item->setFlags(Qt::NoItemFlags);
         foreach(AudioBus* bus, hardwareBuses) {
-            if (isAudioTrack->isChecked() && bus->get_type() == ChannelIsInput) {
+            if (isAudioTrack->isChecked() && bus->get_type() == AudioChannel::ChannelIsInput) {
                 QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                 item->setText(bus->get_name());
                 item->setData(Qt::UserRole, bus->get_id());
             }
-            if (bus->get_type() == ChannelIsOutput) {
+            if (bus->get_type() == AudioChannel::ChannelIsOutput) {
                 QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
                 item->setText(bus->get_name());
                 item->setData(Qt::UserRole, bus->get_id());

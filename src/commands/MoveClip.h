@@ -39,7 +39,7 @@ class Zoom;
 
 typedef struct {
 	Marker*	marker;
-	TimeRef origin;
+	TTimeRef origin;
 } MarkerAndOrigin;
 
 class MoveClip : public TMoveCommand
@@ -75,8 +75,8 @@ private :
         TSession*	m_session;
 	AudioClipGroup  m_group;
 	QList<MarkerAndOrigin>	m_markers;
-        TimeRef 	m_trackStartLocation;
-        TimeRef 	m_posDiff;
+        TTimeRef 	m_trackStartLocation;
+        TTimeRef 	m_posDiff;
 	ActionType	m_actionType;
 	int		m_origTrackIndex;
 	int		m_newTrackIndex;
@@ -86,12 +86,12 @@ private :
         int 		pointedTrackIndex;
 		bool		verticalOnly;
 		Zoom*		zoom;
-        TimeRef     relativeWorkCursorPos;
+        TTimeRef     relativeWorkCursorPos;
 	};
 	
-    MoveClipData* mcd;
+    MoveClipData* m_d;
 
-	void do_prev_next_snap(TimeRef trackStartLocation, TimeRef trackEndLocation);
+	void do_prev_next_snap(TTimeRef trackStartLocation, TTimeRef trackEndLocation);
 	void do_move();
 	
 public slots:

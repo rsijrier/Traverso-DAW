@@ -53,20 +53,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-11  USA.
 #include "ViewPort.h"
 #include "TMoveCommand.h"
 
-#include "AddRemove.h"
 #include "ProjectManager.h"
 #include "Project.h"
-
-#include "AudioDevice.h"
 
 #include <Debugger.h>
 
 QHash<QString, QString> SheetView::m_cursorsDict;
-
-static bool smallerTrackView(const TrackView* left, const TrackView* right )
-{
-	return left->get_track()->get_sort_index() < right->get_track()->get_sort_index();
-}
 
 SheetView::SheetView(SheetWidget* sheetwidget,
 	ClipsViewPort* viewPort,
@@ -87,7 +79,7 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 	m_viewportReady = false;
     m_sheetMasterOutView = nullptr;
     m_projectMasterOutView = nullptr;
-	timeref_scalefactor = UNIVERSAL_SAMPLE_RATE;
+    timeref_scalefactor = TTimeRef::UNIVERSAL_SAMPLE_RATE;
     m_hasMouseTracking = true;
 
 	m_clipsViewPort->scene()->addItem(this);
@@ -111,7 +103,7 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 
 	connect(m_session, SIGNAL(workingPosChanged()), m_workCursor, SLOT(update_position()));
 	connect(m_session, SIGNAL(transportStarted()), this, SLOT(follow_play_head()));
-	connect(m_session, SIGNAL(transportPosSet()), this, SLOT(transport_position_set()));
+	connect(m_session, SIGNAL(transportLocationChanged()), this, SLOT(transport_position_set()));
 	connect(m_session, SIGNAL(workingPosChanged()), this, SLOT(stop_follow_play_head()));
 	connect(m_session, SIGNAL(verticalScrollBarValueChanged()), this, SLOT(session_vertical_scrollbar_position_changed()));
 	connect(m_session, SIGNAL(horizontalScrollBarValueChanged()), this, SLOT(session_horizontal_scrollbar_position_changed()));
@@ -148,7 +140,7 @@ SheetView::SheetView(SheetWidget* sheetwidget,
 
 	// this will call layout_tracks() for us too
 	// which will continue now, due m_viewportReady is true now
-	load_theme_data();
+    SheetView::load_theme_data();
 
 	// Everything is in place to scroll to the last position
 	// we were at, at closing this view.
@@ -170,7 +162,7 @@ void SheetView::scale_factor_changed( )
 		// will be zero too, and we use timeref_scalefactor as a divider so...:
 		zoom = config().get_property("Sheet", "hzoomLevel", 8192).toInt();
 	}
-	timeref_scalefactor = qint64(zoom * (UNIVERSAL_SAMPLE_RATE / 44100));
+    timeref_scalefactor = qint64(zoom * (TTimeRef::UNIVERSAL_SAMPLE_RATE / 44100));
 	m_tlvp->scale_factor_changed();
 
 	update_tracks_bounding_rect();
@@ -243,9 +235,6 @@ void SheetView::move_trackview_up(TrackView *trackView)
 
 	trackView->get_track()->set_sort_index(newindex);
 
-	qSort(m_audioTrackViews.begin(), m_audioTrackViews.end(), smallerTrackView);
-	qSort(m_busTrackViews.begin(), m_busTrackViews.end(), smallerTrackView);
-
 	layout_tracks();
 }
 
@@ -287,9 +276,6 @@ void SheetView::move_trackview_down(TrackView *trackView)
 
 	trackView->get_track()->set_sort_index(newindex);
 
-	qSort(m_audioTrackViews.begin(), m_audioTrackViews.end(), smallerTrackView);
-	qSort(m_busTrackViews.begin(), m_busTrackViews.end(), smallerTrackView);
-
 	layout_tracks();
 
 }
@@ -318,9 +304,6 @@ void SheetView::to_bottom(TrackView *trackView)
 		btv->get_track()->set_sort_index(list.size());
 	}
 
-
-	qSort(m_audioTrackViews.begin(), m_audioTrackViews.end(), smallerTrackView);
-	qSort(m_busTrackViews.begin(), m_busTrackViews.end(), smallerTrackView);
 
 	layout_tracks();
 }
@@ -357,15 +340,12 @@ void SheetView::to_top(TrackView *trackView)
 	}
 
 
-	qSort(m_audioTrackViews.begin(), m_audioTrackViews.end(), smallerTrackView);
-	qSort(m_busTrackViews.begin(), m_busTrackViews.end(), smallerTrackView);
-
 	layout_tracks();
 }
 
 void SheetView::add_new_track_view(Track* track)
 {
-	TrackView* view;
+    TrackView* view = nullptr;
 
 	AudioTrack* audioTrack = qobject_cast<AudioTrack*>(track);
 	TBusTrack* busTrack = qobject_cast<TBusTrack*>(track);
@@ -388,10 +368,9 @@ void SheetView::add_new_track_view(Track* track)
 		m_busTrackViews.append(view);
 	}
 
-	connect(view, SIGNAL(totalTrackHeightChanged()), this, SLOT(layout_tracks()));
-
-	qSort(m_audioTrackViews.begin(), m_audioTrackViews.end(), smallerTrackView);
-	qSort(m_busTrackViews.begin(), m_busTrackViews.end(), smallerTrackView);
+    if (view) {
+        connect(view, SIGNAL(totalTrackHeightChanged()), this, SLOT(layout_tracks()));
+    }
 
 	layout_tracks();
 }
@@ -409,8 +388,8 @@ void SheetView::remove_track_view(Track* track)
 			scene()->removeItem(view);
 			m_audioTrackViews.removeAll(view);
 			m_busTrackViews.removeAll(view);
-			delete view;
-			delete panel;
+            delete view;
+            delete panel;
 			break;
 		}
 	}
@@ -543,11 +522,14 @@ void SheetView::hzoom(qreal factor)
 
 
 void SheetView::layout_tracks()
-{
+{    
 	int verticalposition = m_trackTopIndent;
 	int totalTrackHeightPrimaryLanes = 0;
 
 	QList<TrackView*> views = get_track_views();
+    std::sort(views.begin(), views.end(), [&](TrackView* left, TrackView* right) {
+        return left->get_track()->get_sort_index() < right->get_track()->get_sort_index();
+    });
 
 	for (int i=0; i<views.size(); ++i) {
 		TrackView* view = views.at(i);
@@ -575,10 +557,11 @@ void SheetView::update_tracks_bounding_rect()
 	layout_tracks();
 }
 
+
 TCommand* SheetView::center()
 {
 	PENTER2;
-	TimeRef centerX;
+	TTimeRef centerX;
 	if (m_session->is_transport_rolling() && m_actOnPlayHead) {
 		centerX = m_session->get_transport_location();
 	} else {
@@ -601,13 +584,13 @@ void SheetView::transport_position_set()
 
 void SheetView::stop_follow_play_head()
 {
-	m_session->set_temp_follow_state(false);
+    m_session->set_temp_follow_state(false);
 }
 
 
 void SheetView::follow_play_head()
 {
-	m_session->set_temp_follow_state(true);
+    m_session->set_temp_follow_state(true);
 }
 
 
@@ -626,7 +609,7 @@ void SheetView::set_follow_state(bool state)
 TCommand* SheetView::goto_begin()
 {
 	stop_follow_play_head();
-	m_session->set_work_at(TimeRef());
+	m_session->set_work_at(TTimeRef());
 	center();
     return nullptr;
 }
@@ -635,7 +618,7 @@ TCommand* SheetView::goto_begin()
 TCommand* SheetView::goto_end()
 {
 	stop_follow_play_head();
-	TimeRef lastlocation = m_session->get_last_location();
+	TTimeRef lastlocation = m_session->get_last_location();
 	m_session->set_work_at(lastlocation);
 	center();
     return nullptr;
@@ -661,19 +644,27 @@ TCommand * SheetView::touch( )
 {
     ViewPort* viewPort = dynamic_cast<ViewPort*>(cpointer().get_viewport());
 
+    if (!viewPort) {
+        return ied().failure();
+    }
+
     if (viewPort == m_tpvp) {
 		return ied().did_not_implement();
 	}
 
 	int x;
 
+    // FIXME
+    // we already checked for !viewPort so next if(!viewPort) never holds true
+    // so x=on_first_input_event_x() must have served a purpose in the past
+    // The whole logic of placing cursors needs to be reviewed anyways :)
     if (!viewPort) {
 		x = cpointer().on_first_input_event_x();
 	} else {
         x = cpointer().mouse_viewport_x();
 	}
 
-    m_session->set_work_at(TimeRef(qRound(viewPort->map_to_scene(QPoint(x, 0)).x()) * timeref_scalefactor));
+    m_session->set_work_at(TTimeRef(qRound(viewPort->map_to_scene(QPoint(x, 0)).x()) * timeref_scalefactor));
 
     return nullptr;
 }
@@ -689,7 +680,7 @@ TCommand * SheetView::touch_play_cursor( )
 	} else {
         x = cpointer().mouse_viewport_x();
 	}
-	m_session->set_transport_pos(TimeRef(qRound(m_clipsViewPort->mapToScene(x, 0).x()) * timeref_scalefactor));
+	m_session->set_transport_location(TTimeRef(qRound(m_clipsViewPort->mapToScene(x, 0).x()) * timeref_scalefactor));
 
 	return nullptr;
 }
@@ -697,8 +688,8 @@ TCommand * SheetView::touch_play_cursor( )
 void SheetView::set_snap_range(int start)
 {
 // 	printf("SheetView::set_snap_range\n");
-	m_session->get_snap_list()->set_range(TimeRef(start * timeref_scalefactor),
-				TimeRef((start + m_clipsViewPort->viewport()->width()) * timeref_scalefactor),
+	m_session->get_snap_list()->set_range(TTimeRef(start * timeref_scalefactor),
+				TTimeRef((start + m_clipsViewPort->viewport()->width()) * timeref_scalefactor),
 				timeref_scalefactor);
 }
 
@@ -781,7 +772,7 @@ TCommand * SheetView::add_marker_at_work_cursor()
 
 TCommand * SheetView::center_playhead( )
 {
-	TimeRef centerX = m_session->get_transport_location();
+	TTimeRef centerX = m_session->get_transport_location();
 	set_hscrollbar_value(int(centerX / timeref_scalefactor - m_clipsViewPort->width() / 2));
 
 	follow_play_head();
@@ -855,9 +846,9 @@ void SheetView::browse_to_audio_clip_view(AudioClipView* acv)
 	activeList.append(this);
 
     if (m_canvasCursor->get_pos().x() > acv->scenePos().x() && (m_canvasCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
-        keyboard_move_canvas_cursor_to_location(TimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        keyboard_move_canvas_cursor_to_location(TTimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     } else {
-        keyboard_move_canvas_cursor_to_location(TimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        keyboard_move_canvas_cursor_to_location(TTimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     }
 
 
@@ -891,7 +882,7 @@ void SheetView::browse_to_marker_view(MarkerView *markerView)
 		}
 	}
 
-    keyboard_move_canvas_cursor_to_location(TimeRef(markerView->get_marker()->get_when()), cpointer().scene_y());
+    keyboard_move_canvas_cursor_to_location(TTimeRef(markerView->get_marker()->get_when()), cpointer().scene_y());
 
 	contexts.prepend(markerView);
 	cpointer().set_active_context_items_by_keyboard_input(contexts);
@@ -909,7 +900,7 @@ void SheetView::browse_to_curve_node_view(CurveNodeView *nodeView)
 	activeList.append(acv->get_audio_track_view());
 	activeList.append(this);
 
-    keyboard_move_canvas_cursor_to_location(TimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
+    keyboard_move_canvas_cursor_to_location(TTimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
 			   nodeView->scenePos().y() + nodeView->boundingRect().height() / 2);
 
 	cpointer().set_active_context_items_by_keyboard_input(activeList);
@@ -963,13 +954,16 @@ TCommand* SheetView::to_upper_context_level()
 	collect_item_browser_data(data);
 
 	if (data.currentContext == "TimeLineView" || data.currentContext == "MarkerView") {
+        Q_ASSERT(data.tv);
 		browse_to_track(data.tv->get_track());
 	} else if (data.currentContext == "AudioTrackView") {
+        Q_ASSERT(data.atv);
 		AudioClipView* nearestClipView = data.atv->get_nearest_audioclip_view(m_session->get_work_location());
 		if (nearestClipView) {
 			browse_to_audio_clip_view(nearestClipView);
 		}
 	} else if (data.currentContext == "AudioClipView") {
+        Q_ASSERT(data.acv);
 		if (data.acv->get_gain_curve_view()->isVisible())
 		{
 			browse_to_curve_view(data.acv->get_gain_curve_view());
@@ -1114,6 +1108,7 @@ TCommand* SheetView::browse_to_next_context_item()
 
 	}
 	if (data.currentContext == "CurveView") {
+        Q_ASSERT(data.curveView);
         CurveNodeView* nodeView = data.curveView->get_node_view_after(m_session->get_work_location());
 		if (!nodeView) {
 			return nullptr;
@@ -1123,7 +1118,9 @@ TCommand* SheetView::browse_to_next_context_item()
 	}
 
 	if (data.currentContext == "AudioClipView") {
-		AudioClip* nextClip = data.atv->get_track()->get_clip_after(data.acv->get_clip()->get_track_start_location());
+        Q_ASSERT(data.atv);
+        Q_ASSERT(data.acv);
+        AudioClip* nextClip = data.atv->get_track()->get_clip_after(data.acv->get_clip()->get_location()->get_start());
 		if (!nextClip) {
 			return nullptr;
 		}
@@ -1161,6 +1158,7 @@ TCommand* SheetView::browse_to_previous_context_item()
 	collect_item_browser_data(data);
 
 	if (data.currentContext == "TimeLineView" || data.currentContext == "MarkerView") {
+        Q_ASSERT(m_tlvp);
 		MarkerView* markerView = m_tlvp->get_timeline_view()->get_marker_view_before(m_session->get_work_location());
 		if (!markerView) {
 			return nullptr;
@@ -1179,7 +1177,7 @@ TCommand* SheetView::browse_to_previous_context_item()
 	}
 
 	if (data.currentContext == "AudioClipView") {
-		AudioClip* nextClip = data.atv->get_track()->get_clip_before(data.acv->get_clip()->get_track_start_location());
+        AudioClip* nextClip = data.atv->get_track()->get_clip_before(data.acv->get_clip()->get_location()->get_start());
 		if (!nextClip) {
 			return nullptr;
 		}
@@ -1217,7 +1215,7 @@ void SheetView::center_in_view(ViewItem *item, enum Qt::AlignmentFlag flag)
 	}
 }
 
-void SheetView::keyboard_move_canvas_cursor_to_location(TimeRef location, qreal sceneY)
+void SheetView::keyboard_move_canvas_cursor_to_location(TTimeRef location, qreal sceneY)
 {
     m_session->set_work_at(location);
 
@@ -1245,7 +1243,7 @@ void SheetView::keyboard_move_canvas_cursor_to_location(TimeRef location, qreal 
 	QPoint pos = m_clipsViewPort->mapFromScene(location / timeref_scalefactor, sceneY);
     cpointer().store_canvas_cursor_position(pos);
 
-    m_canvasCursor->set_text(timeref_to_text(location, timeref_scalefactor));
+    m_canvasCursor->set_text(TTimeRef::timeref_to_text(location, timeref_scalefactor));
     do_keyboard_canvas_cursor_move(QPointF(location / timeref_scalefactor, sceneY));
 }
 

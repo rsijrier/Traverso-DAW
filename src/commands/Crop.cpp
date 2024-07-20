@@ -65,7 +65,7 @@ void CropItemView::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
 
 
 CropClip::CropClip(AudioClipView* view)
-	: TCommand(view->get_context(), tr("AudioClip: Magnetic Cut"))
+	: TCommand(view->get_related_context_item(), tr("AudioClip: Magnetic Cut"))
 	, m_cv(view)
 {
 	m_clip = view->get_clip();
@@ -91,8 +91,8 @@ int CropClip::prepare_actions()
 	rightClip = resources_manager()->get_clip(m_clip->get_id());
 
 	leftClip->set_sheet(m_clip->get_sheet());
-	leftClip->set_track_start_location(m_clip->get_track_start_location());
-	leftClip->set_right_edge(TimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_track_start_location());
+	leftClip->set_location_start(m_clip->get_location()->get_start());
+	leftClip->set_right_edge(TTimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location()->get_start());
 	if (leftClip->get_fade_out()) {
         auto cmd = leftClip->reset_fade_out();
         cmd->set_do_not_push_to_historystack();
@@ -100,8 +100,8 @@ int CropClip::prepare_actions()
 	}
 
 	rightClip->set_sheet(m_clip->get_sheet());
-	rightClip->set_left_edge(TimeRef(x2 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_track_start_location());
-	rightClip->set_track_start_location(leftClip->get_track_end_location());
+	rightClip->set_left_edge(TTimeRef(x2 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location()->get_start());
+    rightClip->get_location()->set_start(leftClip->get_location()->get_end());
 	if (rightClip->get_fade_in()) {
         auto cmd = rightClip->reset_fade_in();
         cmd->set_do_not_push_to_historystack();

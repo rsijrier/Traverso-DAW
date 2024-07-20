@@ -29,7 +29,7 @@
 #include <ProjectManager.h>
 #include <Project.h>
 #include <Sheet.h>
-#include <TimeLine.h>
+#include <TTimeLineRuler.h>
 #include <Marker.h>
 #include <Utils.h>
 #include <QDebug>
@@ -99,11 +99,11 @@ void MarkerDialog::update_marker_treeview()
 	m_marker = (Marker*)nullptr;
 	markersTreeWidget->clear();
 
-        TimeLine* tl = m_session->get_timeline();
+        TTimeLineRuler* tl = m_session->get_timeline();
 		
 	foreach(Marker* marker, tl->get_markers()) {
 		QString name = marker->get_description();
-		QString pos = timeref_to_cd_including_hours(marker->get_when());
+		QString pos = TTimeRef::timeref_to_cd_including_hours(marker->get_when());
 
 		QTreeWidgetItem* item = new QTreeWidgetItem(markersTreeWidget);
 		item->setText(0, pos.simplified());
@@ -133,7 +133,7 @@ void MarkerDialog::item_changed(QTreeWidgetItem * current, QTreeWidgetItem * pre
 
 	if (previous) {
 		Marker *marker = get_marker(previous->data(0, Qt::UserRole).toLongLong());
-		marker->set_when(cd_to_timeref_including_hours(lineEditPosition->text()));
+		marker->set_when(TTimeRef::cd_to_timeref_including_hours(lineEditPosition->text()));
 		marker->set_description(lineEditTitle->text());
 		marker->set_performer(lineEditPerformer->text());
 		marker->set_composer(lineEditComposer->text());
@@ -145,7 +145,7 @@ void MarkerDialog::item_changed(QTreeWidgetItem * current, QTreeWidgetItem * pre
 		marker->set_copyprotect(checkBoxCopy->isChecked());
 	}
 
-	lineEditPosition->setText(timeref_to_cd_including_hours(m_marker->get_when()));
+	lineEditPosition->setText(TTimeRef::timeref_to_cd_including_hours(m_marker->get_when()));
 	lineEditTitle->setText(m_marker->get_description());
 	lineEditPerformer->setText(m_marker->get_performer());
 	lineEditComposer->setText(m_marker->get_composer());
@@ -186,15 +186,15 @@ void MarkerDialog::position_changed(const QString &s)
 // 	But the realtime thing plays not nice, what about only
 // 	calling this function when the user hits enter ?
 
-// 	TimeRef newpos = cd_to_timeref(s);
-// 	TimeRef oldpos = m_marker->get_when();
+// 	TTimeRef newpos = TTimeRef::cd_to_timeref(s);
+// 	TTimeRef oldpos = m_marker->get_when();
 // 	QVariant newv, oldv;
 // 	newv.setValue(newpos);
 // 	oldv.setValue(oldpos);
 // 	PCommand* command = new PCommand(m_marker, "set_when", oldv, newv, tr("Move Marker (from Marker Editor)"));
 // 	Command::process_command(command);
 
-	TimeRef location = cd_to_timeref_including_hours(s);
+	TTimeRef location = TTimeRef::cd_to_timeref_including_hours(s);
 	m_marker->set_when(location);
 	markersTreeWidget->sortItems(0, Qt::AscendingOrder);
 }
@@ -202,7 +202,7 @@ void MarkerDialog::position_changed(const QString &s)
 // find the marker based on it's id.
 Marker * MarkerDialog::get_marker(qint64 id)
 {
-        TimeLine* tl = m_session->get_timeline();
+        TTimeLineRuler* tl = m_session->get_timeline();
 
 	foreach(Marker* marker, tl->get_markers()) {
 		if (marker->get_id() == id) {
@@ -447,7 +447,7 @@ void MarkerDialog::remove_marker()
 		return;
 	}
 
-        TimeLine* tl = m_session->get_timeline();
+        TTimeLineRuler* tl = m_session->get_timeline();
 		
 	AddRemove *ar = (AddRemove*) tl->remove_marker(m_marker);
 	TCommand::process_command(ar);
@@ -481,10 +481,10 @@ void MarkerDialog::export_toc()
 	out << "    <hr>\n";
 	out << "    <table>\n      <tr><th>Position (mm:ss:frames)</th><th>Title</th>\n";
 
-        TimeLine* tl = m_session->get_timeline();
+        TTimeLineRuler* tl = m_session->get_timeline();
 	foreach(Marker* marker, tl->get_markers()) {
 		QString name = marker->get_description();
-		QString pos = timeref_to_cd(marker->get_when());
+		QString pos = TTimeRef::timeref_to_cd(marker->get_when());
 
 		out << "      <tr><td>" << pos << "</td>\n        <td>" << name << "</td></tr>\n";
 	}	

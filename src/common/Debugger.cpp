@@ -97,10 +97,10 @@ void TraversoDebugger::close_log()
 
 void TraversoDebugger::log(const QString& s)
 {
-        const char* sc = s.toLatin1();
+//        const char* sc = s.toLatin1();
         int len = s.length();
         logFile = fopen(logFileName.toLatin1(),"a+");
-        fwrite(sc,len,1,logFile);
+        fwrite(s.toLatin1(),len,1,logFile);
         fclose(logFile);
 }
 
@@ -126,7 +126,7 @@ static void print_enter(int lvl, const char* file, const char* function)
                         CHANGE_COLOR_GREEN;
                         std::cout << "ENTERING ";
                         CHANGE_COLOR_WHITE;
-                        std::cout << QString("%1::%2").arg(file).arg(function).toLatin1().data() << &std::endl;
+                        std::cout << QString("%1::%2").arg(file, function).toLatin1().data() << &std::endl;
                         more_tabs();
                 }
         }

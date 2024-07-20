@@ -40,7 +40,7 @@ public:
 
 protected:
         void leaveEvent( QEvent* );
-        void enterEvent( QEvent* );
+        void enterEvent( QEnterEvent* );
 
 private:
         TSession*       m_session;

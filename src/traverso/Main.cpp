@@ -26,14 +26,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QLocale>
 #include <QTranslator>
-#include <QtPlugin>
 
 #include "TConfig.h"
 #include "Traverso.h"
 #include "Project.h"
 #include "ProjectManager.h"
 #include "TMainWindow.h"
-#include "Main.h"
 #include "../config.h"
 #include <cstdlib>
 #include <unistd.h>
@@ -123,27 +121,26 @@ int main( int argc, char **argv )
         // fire quite often (<= 20 ms).
         // T doesn't need the glib event loop so turn it of:
 #if defined(Q_OS_UNIX)
-        setenv("QT_NO_GLIB", "1", true);
+    // july 2024: With Qt > 6.x this seems not to be the case anymore
+        // setenv("QT_NO_GLIB", "1", true);
 #endif
-
-	// using the raster graphics backend is faster on my system
-	// then using native (X11). Not sure if this is the case on
-	// systems with a high-end graphics card that properly accelerate
-	// all the XRender calls used by QPainter ?
-//	QApplication::setGraphicsSystem("raster");
 
 	traverso = new Traverso(argc, argv);
 	
 	QTranslator traversoTranslator;
 	QString systemLanguage = QLocale::system().name();
 	QString userLanguage = config().get_property("Interface", "LanguageFile", "").toString();
+    bool translaterLoaded = false;
 	if (userLanguage.isEmpty() || userLanguage.isNull()) {
-		traversoTranslator.load(":/translations/traverso_" + systemLanguage );
+        translaterLoaded = traversoTranslator.load(":/translations/traverso_" + systemLanguage );
 	} else {
-		traversoTranslator.load(userLanguage);
+        translaterLoaded = traversoTranslator.load(userLanguage);
 	}
-	traverso->installTranslator(&traversoTranslator);
-	
+
+    if (translaterLoaded) {
+        traverso->installTranslator(&traversoTranslator);
+    }
+
         traverso->create_interface();
 
         if (argc > 1) {

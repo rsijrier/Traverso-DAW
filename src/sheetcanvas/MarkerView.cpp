@@ -50,8 +50,8 @@ MarkerView::MarkerView(Marker* marker, SheetView* sv, ViewItem* parentView)
     m_width = 16;
     m_height = m_width;
     m_line->setPos(m_width / 2, m_height);
-	
-	load_theme_data();
+
+    MarkerView::load_theme_data();
 	
 	
 	connect(m_marker, SIGNAL(positionChanged()), this, SLOT(update_position()));
@@ -99,7 +99,7 @@ void MarkerView::paint(QPainter * painter, const QStyleOptionGraphicsItem * opti
 	}
 
 	if (m_dragging) {
-                m_posIndicator->set_value(timeref_to_text(m_marker->get_when(), m_sv->timeref_scalefactor));
+        m_posIndicator->set_text(TTimeRef::timeref_to_text(m_marker->get_when(), m_sv->timeref_scalefactor));
 	}
 
 	painter->restore();
@@ -119,7 +119,7 @@ void MarkerView::calculate_bounding_rect()
 
 
 	QFontMetrics fm(themer()->get_font("Timeline:fontscale:marker"));
-	int descriptionwidth = fm.width(desc) + 1;
+    int descriptionwidth = fm.horizontalAdvance(desc) + 1;
 
 	m_line->set_bounding_rect(QRectF(0, 0, 1, m_sv->get_clips_viewport()->sceneRect().height()));
     m_line->setPos(m_width / 2, m_height);
@@ -149,7 +149,7 @@ void MarkerView::load_theme_data()
 	} else {
 		m_fillColor = themer()->get_color("Marker:default");
 	}
-	calculate_bounding_rect();
+    MarkerView::calculate_bounding_rect();
 }
 
 void MarkerView::set_active(bool b)

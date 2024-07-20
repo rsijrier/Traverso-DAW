@@ -21,7 +21,7 @@ ExternalProcessingDialog.cpp
 Fade.cpp
 Gain.cpp
 TGainGroupCommand.cpp
-Import.cpp
+TAudioFileImportCommand.cpp
 MoveClip.cpp
 MoveCurveNode.cpp
 MoveEdge.cpp

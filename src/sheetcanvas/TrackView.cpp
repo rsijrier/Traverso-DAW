@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TMainWindow.h"
 
 #include <Sheet.h>
-#include "TBusTrack.h"
 #include <Track.h>
 #include <Utils.h>
 #include "PluginChain.h"
@@ -57,7 +56,7 @@ TrackView::TrackView(SheetView* sv, Track * track)
 
 	m_sv->scene()->addItem(this);
 
-	load_theme_data();
+    TrackView::load_theme_data();
 
 	m_isMoving = false;
 
@@ -89,24 +88,27 @@ void TrackView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 	int xstart = (int)option->exposedRect.x();
 	int pixelcount = (int)option->exposedRect.width();
 
-	if (m_topborderwidth > 0) {
-		QColor color = themer()->get_color("Track:cliptopoffset");
-		painter->fillRect(xstart, 0, pixelcount+1, m_topborderwidth, color);
-	}
+    // if (m_topborderwidth > 0) {
+    // 	QColor color = themer()->get_color("Track:cliptopoffset");
+    // 	painter->fillRect(xstart, 0, pixelcount+1, m_topborderwidth, color);
+    // }
 
-	if (m_bottomborderwidth > 0) {
-		QColor color = themer()->get_color("Track:clipbottomoffset");
-		painter->fillRect(xstart, get_total_height() - m_bottomborderwidth, pixelcount+1, m_bottomborderwidth, color);
-	}
+ //    if (m_bottomborderwidth > 0) {
+ //        QColor color = themer()->get_color("Track:clipbottomoffset");
+ //        painter->fillRect(xstart, get_total_height() - m_bottomborderwidth, pixelcount+1, m_bottomborderwidth, color);
+ //    }
 
     if (m_track->has_active_context()) {
 		QPen pen;
 		int penwidth = 1;
 		pen.setWidth(penwidth);
-		pen.setColor(themer()->get_color("Track:mousehover"));
+        pen.setColor(themer()->get_color("Track:mousehover"));
 		painter->setPen(pen);
-		painter->drawLine(xstart, m_topborderwidth, xstart+pixelcount, m_topborderwidth);
-		painter->drawLine(xstart, get_total_height() - m_bottomborderwidth - 1, xstart+pixelcount, get_total_height() - m_bottomborderwidth - 1);
+        painter->drawLine(xstart, m_topborderwidth, xstart+pixelcount, m_topborderwidth);
+        painter->drawLine(xstart, get_total_height() - m_bottomborderwidth - 1, xstart+pixelcount, get_total_height() - m_bottomborderwidth - 1);
+
+        painter->fillRect(option->exposedRect, themer()->get_color("Track:mousehover").lighter(260));
+
 	}
 
     if (m_isMoving) {

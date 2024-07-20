@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TCanvasCursor.h"
 
-#include "ClipsViewPort.h"
 #include "SheetView.h"
 #include "ViewPort.h"
 #include "PositionIndicator.h"
@@ -32,12 +31,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 TCanvasCursor::TCanvasCursor(SheetView* )
     : ViewItem(nullptr)
 {
-    m_textItem = new PositionIndicator(this);
-    m_infoItem = new PositionIndicator(this);
-    m_textItem->hide();
-    m_infoItem->hide();
+    m_positionIndicator = new PositionIndicator(this);
+    m_positionIndicator->hide();
 
-    m_ignoreContext = true;
+    set_ignore_context(true);
     m_shape = "";
     m_xOffset = m_yOffset = 0.0;
 
@@ -101,32 +98,27 @@ void TCanvasCursor::create_cursor_pixmap(const QString &shape)
     painter.drawText(textRect, Qt::AlignCenter, shape);
 }
 
-void TCanvasCursor::set_text( const QString & text, int mseconds)
+void TCanvasCursor::set_text(const QString & first, int mseconds)
 {
-    m_text = text;
+    m_primaryText = first;
 
-    if (m_timer.isActive())
-    {
+    if (m_timer.isActive()) {
         m_timer.stop();
     }
 
-    if (!m_text.isEmpty()) {
-        m_textItem->set_value(m_text);
-        update_textitem_pos();
-        m_textItem->show();
-        if (mseconds > 0)
-        {
-            m_timer.start(mseconds);
-        }
-    } else {
-        m_textItem->hide();
+    if (m_primaryText.isEmpty()) {
+        m_positionIndicator->hide();
+        return;
+    }
+
+    m_positionIndicator->set_text(m_primaryText);
+    update_textitem_pos();
+    m_positionIndicator->show();
+    if (mseconds > 0){
+        m_timer.start(mseconds);
     }
 }
 
-void TCanvasCursor::set_info(const QString &info)
-{
-    m_infoItem->set_value(info);
-}
 
 void TCanvasCursor::set_cursor_shape(const QString &shape, int alignment)
 {
@@ -178,34 +170,34 @@ void TCanvasCursor::set_cursor_shape(const QString &shape, int alignment)
 void TCanvasCursor::update_textitem_pos()
 {
     ViewPort* vp = static_cast<ViewPort*>(cpointer().get_viewport());
-    if (!vp || !m_textItem->isVisible())
+    if (!vp || !m_positionIndicator->isVisible())
     {
         return;
     }
 
-    qreal textItemX = 30;
-    int textItemY = 40;
+    qreal textItemX = 25;
+    int textItemY = 25;
 
     QPointF textPos(textItemX, textItemY);
 
-    qreal xRightTextItem = vp->mapFromScene(scenePos()).x()  + m_textItem->boundingRect().width() + textItemX;
+    qreal xRightTextItem = vp->mapFromScene(scenePos()).x()  + m_positionIndicator->boundingRect().width() + textItemX;
     qreal xLeftTextItem = vp->mapFromScene(scenePos()).x() + textItemX;
 
     int viewPortWidth = vp->width();
 
     if (xLeftTextItem < 0)
     {
-        textItemX = mapFromScene(vp->mapToScene(0, int(m_textItem->scenePos().y()))).x();
+        textItemX = mapFromScene(vp->mapToScene(0, int(m_positionIndicator->scenePos().y()))).x();
     }
 
     if (xRightTextItem > viewPortWidth)
     {
-        textItemX = mapFromScene(vp->mapToScene(viewPortWidth - int(m_textItem->boundingRect().width()),int(m_textItem->scenePos().y()))).x();
+        textItemX = mapFromScene(vp->mapToScene(viewPortWidth - int(m_positionIndicator->boundingRect().width()),int(m_positionIndicator->scenePos().y()))).x();
     }
 
     textPos.setX(textItemX);
 
-    m_textItem->setPos(textPos);
+    m_positionIndicator->setPos(textPos);
 }
 
 void TCanvasCursor::timer_timeout()

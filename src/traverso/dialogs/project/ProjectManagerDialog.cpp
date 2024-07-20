@@ -21,7 +21,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "ProjectManagerDialog.h"
 
-#include "libtraversocore.h"
+#include "Information.h"
+#include "ProjectManager.h"
+
 #include <QStringList>
 #include <QInputDialog>
 #include <QHeaderView>
@@ -30,12 +32,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QFileDialog>
 #include <QDir>
 #include <QMessageBox>
+#include <QUndoStack>
 #include <dialogs/project/NewSheetDialog.h>
+#include "Project.h"
+#include "Sheet.h"
+#include "TCommand.h"
 #include "TMainWindow.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
+#include "Utils.h"
 
 ProjectManagerDialog::ProjectManagerDialog( QWidget * parent )
 	: QDialog(parent)
@@ -75,12 +82,13 @@ void ProjectManagerDialog::set_project(Project* project)
 	if (m_project) {
 		connect(m_project, SIGNAL(sheetAdded(Sheet*)), this, SLOT(update_sheet_list()));
 		connect(m_project, SIGNAL(sheetRemoved(Sheet*)), this, SLOT(update_sheet_list()));
-		connect(m_project->get_history_stack(), SIGNAL(redoTextChanged ( const QString &)),
-			this, SLOT(redo_text_changed(const QString&)));
-		connect(m_project->get_history_stack(), SIGNAL(undoTextChanged ( const QString &)),
-			this, SLOT(undo_text_changed(const QString&)));
-		setWindowTitle("Manage Project - " + m_project->get_title());
+        connect(m_project->get_history_stack(), SIGNAL(redoTextChanged(QString)),
+            this, SLOT(redo_text_changed(QString)));
+        connect(m_project->get_history_stack(), SIGNAL(undoTextChanged(QString)),
+            this, SLOT(undo_text_changed(QString)));
+        setWindowTitle("Manage Project - " + m_project->get_title());
 		descriptionTextEdit->setText(m_project->get_description());
+        createdDateLabel->setText("Created on: " + extract_date_time(m_project->get_id()).toString());
 		lineEditTitle->setText(m_project->get_title());
 		lineEditId->setText(m_project->get_discid());
 		lineEditUPC->setText(m_project->get_upc_ean());
@@ -146,7 +154,7 @@ void ProjectManagerDialog::update_sheet_list( )
 		QString sheetNr = QString::number(m_project->get_sheet_index(sheet->get_id()));
                 QString sheetName = "Sheet " + sheetNr + " - " + sheet->get_name();
 		QString numberOfTracks = QString::number(sheet->get_audio_track_count());
-		QString sheetLength = timeref_to_ms_2(sheet->get_last_location());
+		QString sheetLength = TTimeRef::timeref_to_ms_2(sheet->get_last_location());
 		QString sheetStatus = sheet->is_changed()?"UnSaved":"Saved";
 		QString sheetSpaceAllocated = "Unknown";
 
@@ -226,12 +234,12 @@ void ProjectManagerDialog::on_createSheetButton_clicked( )
 	TMainWindow::instance()->show_newsheet_dialog();
 }
 
-void ProjectManagerDialog::redo_text_changed(const QString & text)
+void ProjectManagerDialog::redo_text_changed(QString text)
 {
 	redoButton->setText(text);
 }
 
-void ProjectManagerDialog::undo_text_changed(const QString & text)
+void ProjectManagerDialog::undo_text_changed(QString text)
 {
 	undoButton->setText(text);
 }

@@ -29,31 +29,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QFile>
 
-class QString;
+class TExportSpecification;
 
 class SFAudioWriter : public AbstractAudioWriter
 {
 	
 public:
-	SFAudioWriter();
+    SFAudioWriter(TExportSpecification* spec);
 	~SFAudioWriter();
-	
-	bool set_format_attribute(const QString& key, const QString& value);
-	const char* get_extension();
-	
+		
 protected:
 	bool open_private();
 	nframes_t write_private(void* buffer, nframes_t frameCount);
 	bool close_private();
-	int get_sf_format();
 	
-	int		m_fileType{};	
 	SNDFILE*	m_sf;
 	SF_INFO 	m_sfinfo{};
 	
 private:
 	QFile m_file;
-
 };
 
 #endif

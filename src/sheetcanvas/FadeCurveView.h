@@ -35,7 +35,7 @@ class FadeCurveView : public ViewItem
 	Q_OBJECT
 		
 public:
-	FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve* fadeCuve);
+    FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve* fadeCurve);
 	~FadeCurveView();
 	
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);

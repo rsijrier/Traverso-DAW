@@ -78,25 +78,21 @@ Plugin* PluginManager::get_plugin(const  QDomNode& node )
 	QDomElement e = node.toElement();
 	QString type = e.attribute( "type", "");
 
-	Plugin* plugin = 0;
+    Plugin* plugin = 0;
         TSession* session = pm().get_project()->get_current_session();
 
+    if (type == "LV2Plugin") {
 #if defined (LV2_SUPPORT)
-	if (type == "LV2Plugin") {
                 plugin = new LV2Plugin(session);
-	}
 #endif
-	
-// Well, this looks a little ehm, ugly hehe
-// I'll investigate sometime in the future to make 
-// a Plugin a _real_ plugin, by using the Qt Plugin
-// framework. (loading it as a shared library object...)
-
-	if (type == "CorrelationMeterPlugin") {
+    }
+    // Well, this looks a little ehm, ugly hehe
+    // I'll investigate sometime in the future to make
+    // a Plugin a _real_ plugin, by using the Qt Plugin
+    // framework. (loading it as a shared library object...)
+     else if (type == "CorrelationMeterPlugin") {
 		plugin = new CorrelationMeter();
-	}
-
-	if (type == "SpectralMeterPlugin") {
+    } else if (type == "SpectralMeterPlugin") {
 		plugin = new SpectralMeter();
 	}
 	

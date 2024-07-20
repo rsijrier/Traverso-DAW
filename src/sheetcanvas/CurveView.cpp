@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "SheetView.h"
 #include "CurveNodeView.h"
 #include <Themer.h>
-#include "AudioDevice.h"
 
 #include <Curve.h>
 #include <CurveNode.h>
@@ -41,7 +40,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define NODE_SOFT_SELECTION_DISTANCE 40
 
 
-#include <climits>
 #include <cfloat>
 
 CurveView::CurveView(SheetView* sv, ViewItem* parentViewItem, Curve* curve)
@@ -52,15 +50,15 @@ CurveView::CurveView(SheetView* sv, ViewItem* parentViewItem, Curve* curve)
     setFlags(QGraphicsItem::ItemUsesExtendedStyleOption);
 
     m_sv = sv;
-    load_theme_data();
+    CurveView::load_theme_data();
 
     m_blinkColorDirection = 1;
     m_blinkingNode = nullptr;
-    m_startoffset = TimeRef();
+    m_startoffset = TTimeRef();
     m_guicurve = new Curve(nullptr);
     m_guicurve->set_sheet(sv->get_sheet());
 
-    apill_foreach(CurveNode* node, CurveNode*, m_curve->get_nodes()) {
+    for(CurveNode* node = m_curve->get_nodes().first(); node != nullptr; node = node->next) {
         add_curvenode_view(node);
     }
 
@@ -79,10 +77,6 @@ CurveView::~ CurveView( )
     delete m_guicurve;
 }
 
-static bool smallerpoint(const QPointF& left, const QPointF& right) {
-    return left.x() < right.x();
-}
-
 void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * option, QWidget * widget )
 {
     Q_UNUSED(widget);
@@ -91,7 +85,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         return;
     }
 
-    if (ignore_context() && m_nodeViews.size() == 1) {
+    if (item_ignores_context() && m_nodeViews.size() == 1) {
         return;
     }
 
@@ -108,7 +102,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
     QColor penColor;
     // NOTE: setting penwidth to 2 increases cpu load by at least 5 times for this function
     pen.setWidth(1);
-    if (ignore_context()) {
+    if (item_ignores_context()) {
         penColor = themer()->get_color("Curve:inactive");
     } else {
          penColor = themer()->get_color("Curve:active");
@@ -121,15 +115,18 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 
 
     if (m_nodeViews.size() == 1) {
-        int y = int(height - (m_nodeViews.first()->value * height));
+        int y = int(height - (m_nodeViews.first()->get_value() * height));
         painter->drawLine(xstart, y, xstart + pixelcount, y);
         painter->restore();
         return;
     }
 
-    if (m_nodeViews.first()->when > xstart) {
-        int y = int(height - (m_nodeViews.first()->value * height));
-        int length = int(m_nodeViews.first()->when) - xstart - offset;
+    Q_ASSERT(m_nodeViews.size() > 0);
+
+    CurveNodeView* firstNodeView = m_nodeViews.constFirst();
+    if (firstNodeView->get_when() > xstart) {
+        int y = int(height - (firstNodeView->get_value() * height));
+        int length = int(firstNodeView->get_when()) - xstart - offset;
         if (length > 0) {
             painter->drawLine(xstart, y, xstart + length, y);
             xstart += length;
@@ -141,10 +138,11 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
         }
     }
 
-    if (m_nodeViews.last()->when < (xstart + pixelcount + offset)) {
-        int y = int(height - (m_nodeViews.last()->value * height));
-        int x = int(m_nodeViews.last()->when) - offset;
-        int length = (xstart + pixelcount) - int(m_nodeViews.last()->when) + offset;
+    CurveNodeView* lastNodeView = m_nodeViews.constLast();
+    if (lastNodeView->get_when() < (xstart + pixelcount + offset)) {
+        int y = int(height - (lastNodeView->get_value() * height));
+        int x = int(lastNodeView->get_when()) - offset;
+        int length = (xstart + pixelcount) - int(lastNodeView->get_when()) + offset;
         if (length > 0) {
             painter->drawLine(x, y, x + length - 1, y);
             pixelcount -= length;
@@ -184,7 +182,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
     // vertically at the exact same x position. The curve line won't be painted
     // by the routine above (it doesn't catch the second node position obviously)
     // so we add curvenodes _always_ to solve this problem easily :-)
-    apill_foreach(CurveNodeView* view, CurveNodeView*, m_nodeViews) {
+    for(CurveNodeView* view : m_nodeViews) {
         qreal x = view->x();
         if ( (x > xstart) && x < (xstart + pixelcount)) {
             polygon <<  QPointF( x + view->boundingRect().width() / 2,
@@ -193,7 +191,9 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
     }
 
     // Which means we have to sort the polygon
-    qSort(polygon.begin(), polygon.end(), smallerpoint);
+    std::sort(polygon.begin(), polygon.end(), [&](const QPointF &left, const QPointF &right){
+        return left.x() < right.x();
+    });
 
     painter->drawPolyline(polygon);
     painter->restore();
@@ -201,7 +201,7 @@ void CurveView::paint( QPainter * painter, const QStyleOptionGraphicsItem * opti
 
 int CurveView::get_vector(qreal xstart, qreal pixelcount, float* arg)
 {
-    if (m_guicurve->get_nodes().size() == 1 && ((CurveNode*)m_guicurve->get_nodes().first())->value == 1.0) {
+    if (m_guicurve->get_nodes().size() == 1 && m_guicurve->get_nodes().first()->get_value() == 1.0) {
         return 0;
     }
 
@@ -220,7 +220,9 @@ void CurveView::add_curvenode_view(CurveNode* node)
         cmd->set_instantanious(true);
         TCommand::process_command(cmd);
 
-        qSort(m_nodeViews.begin(), m_nodeViews.end(), Curve::smallerNode);
+        std::sort(m_nodeViews.begin(), m_nodeViews.end(), [&](CurveNodeView* left, CurveNodeView* right){
+            return left->get_when() < right->get_when();
+        });
 
         update();
     }
@@ -228,7 +230,7 @@ void CurveView::add_curvenode_view(CurveNode* node)
 
 void CurveView::remove_curvenode_view(CurveNode* node)
 {
-    apill_foreach(CurveNodeView* nodeview, CurveNodeView*, m_nodeViews) {
+    for(CurveNodeView* nodeview : m_nodeViews) {
         if (nodeview->get_curve_node() == node) {
             m_nodeViews.removeAll(nodeview);
             if (nodeview == m_blinkingNode) {
@@ -359,7 +361,7 @@ void CurveView::update_blink_color()
 
     QColor blinkColor = themer()->get_color("CurveNode:blink");
 
-    m_blinkingNode->set_color(blinkColor.light(m_blinkDarkness));
+    m_blinkingNode->set_color(blinkColor.lighter(m_blinkDarkness));
 
     m_blinkingNode->update();
 }
@@ -423,33 +425,33 @@ TCommand* CurveView::drag_node()
         return ied().failure();
     }
 
-    TimeRef min(qint64(0));
-    TimeRef max(qint64(DBL_MAX));
-    APILinkedList nodeList = m_curve->get_nodes();
+    TTimeRef min(qint64(0));
+    TTimeRef max(qint64(DBL_MAX));
+    TRealTimeLinkedList<CurveNode*> nodeList = m_curve->get_nodes();
 
     int indexFirstNode = nodeList.indexOf(selectedNodes.first());
     int indexLastNode = nodeList.indexOf(selectedNodes.last());
 
     if (indexFirstNode > 0) {
-        min = TimeRef(((CurveNode*)nodeList.at(indexFirstNode-1))->get_when() + 1);
+        min = TTimeRef(((CurveNode*)nodeList.at(indexFirstNode-1))->get_when() + 1);
     }
 
     if (nodeList.size() > (indexLastNode + 1)) {
-        max = TimeRef(((CurveNode*)nodeList.at(indexLastNode+1))->get_when() - 1);
+        max = TTimeRef(((CurveNode*)nodeList.at(indexLastNode+1))->get_when() - 1);
     }
 
     if (boundingRect().width() * m_sv->timeref_scalefactor < max) {
         max = boundingRect().width() * m_sv->timeref_scalefactor;
     }
 
-    if ((min - get_start_offset()) < TimeRef()) {
+    if ((min - get_start_offset()) < TTimeRef()) {
         min = get_start_offset();
     }
 
-    TimeRef startLocation = TimeRef(selectedNodes.first()->get_when());
-    TimeRef endLocation  = TimeRef(selectedNodes.last()->get_when());
-    TimeRef minWhenDiff = min - startLocation;
-    TimeRef maxWhenDiff = max - endLocation + m_startoffset;
+    TTimeRef startLocation = TTimeRef(selectedNodes.first()->get_when());
+    TTimeRef endLocation  = TTimeRef(selectedNodes.last()->get_when());
+    TTimeRef minWhenDiff = min - startLocation;
+    TTimeRef maxWhenDiff = max - endLocation + m_startoffset;
 
 
     double maxValue = DBL_MIN;
@@ -532,10 +534,10 @@ void CurveView::node_moved( )
 
 void CurveView::load_theme_data()
 {
-    calculate_bounding_rect();
+    CurveView::calculate_bounding_rect();
 }
 
-void CurveView::set_start_offset(TimeRef offset)
+void CurveView::set_start_offset(TTimeRef offset)
 {
     m_startoffset = offset;
 }
@@ -551,14 +553,14 @@ float CurveView::get_default_value()
         return 1.0f;
     }
 
-    return float(static_cast<CurveNode*>(m_guicurve->get_nodes().first())->value);
+    return float(m_guicurve->get_nodes().first()->get_value());
 }
 
 TCommand * CurveView::remove_all_nodes()
 {
     CommandGroup* group = new CommandGroup(m_curve, tr("Clear Nodes"));
 
-    apill_foreach(CurveNode* node, CurveNode*, m_curve->get_nodes()) {
+    for(CurveNode* node = m_curve->get_nodes().first(); node != nullptr; node = node->next) {
         group->add_command(m_curve->remove_node(node));
     }
 
@@ -602,13 +604,13 @@ TCommand* CurveView::toggle_select_all_nodes()
     return ied().succes();
 }
 
-CurveNodeView* CurveView::get_node_view_before(TimeRef location) const
+CurveNodeView* CurveView::get_node_view_before(TTimeRef location) const
 {
-    TimeRef curveStartOffset = m_curve->get_start_offset();
+    TTimeRef curveStartOffset = m_curve->get_start_offset();
 
     for (int i = m_nodeViews.size() - 1; i>=0; --i) {
         CurveNodeView* nodeview = m_nodeViews.at(i);
-        TimeRef absoluteLocation = TimeRef(nodeview->get_curve_node()->get_when()) + curveStartOffset;
+        TTimeRef absoluteLocation = TTimeRef(nodeview->get_curve_node()->get_when()) + curveStartOffset;
         if (absoluteLocation < location) {
             return nodeview;
         }
@@ -617,12 +619,12 @@ CurveNodeView* CurveView::get_node_view_before(TimeRef location) const
     return nullptr;
 }
 
-CurveNodeView* CurveView::get_node_view_after(TimeRef location) const
+CurveNodeView* CurveView::get_node_view_after(TTimeRef location) const
 {
-    TimeRef curveStartOffset = m_curve->get_start_offset();
+    TTimeRef curveStartOffset = m_curve->get_start_offset();
 
     foreach(CurveNodeView* nodeview, m_nodeViews) {
-        TimeRef absoluteLocation = TimeRef(nodeview->get_curve_node()->get_when()) + curveStartOffset;
+        TTimeRef absoluteLocation = TTimeRef(nodeview->get_curve_node()->get_when()) + curveStartOffset;
         if (absoluteLocation > location) {
             return nodeview;
         }

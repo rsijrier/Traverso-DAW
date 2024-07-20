@@ -46,9 +46,9 @@ WPAudioReader::WPAudioReader(const QString& filename)
 	m_bitsPerSample = WavpackGetBitsPerSample(m_wp);
 	m_bytesPerSample = WavpackGetBytesPerSample(m_wp);
 	m_channels = WavpackGetReducedChannels(m_wp);
-	m_nframes = WavpackGetNumSamples(m_wp);
-	m_rate = WavpackGetSampleRate(m_wp);
-	m_length = TimeRef(m_nframes, m_rate);
+	m_fileFrames = WavpackGetNumSamples(m_wp);
+	m_fileSampleRate = WavpackGetSampleRate(m_wp);
+	m_length = TTimeRef(m_fileFrames, m_fileSampleRate);
 }
 
 
@@ -85,7 +85,7 @@ bool WPAudioReader::seek_private(nframes_t start)
 	Q_ASSERT(m_wp);
 	
 	
-	if (start >= m_nframes) {
+	if (start >= m_fileFrames) {
 		return false;
 	}
 	
@@ -124,7 +124,7 @@ nframes_t WPAudioReader::read_private(DecodeBuffer* buffer, nframes_t frameCount
 				break;	
 			default:
 				for (nframes_t f = 0; f < framesRead; f++) {
-					for (int c = 0; c < m_channels; c++) {
+                    for (uint c = 0; c < m_channels; c++) {
 						buffer->destination[c][f] = ((float*)readbuffer)[f * m_channels + c];
 					}
 				}
@@ -146,7 +146,7 @@ nframes_t WPAudioReader::read_private(DecodeBuffer* buffer, nframes_t frameCount
 				break;	
 			default:
 				for (nframes_t f = 0; f < framesRead; f++) {
-					for (int c = 0; c < m_channels; c++) {
+                    for (uint c = 0; c < m_channels; c++) {
 						buffer->destination[c][f] = (float)((float)readbuffer[f * m_channels + c]/ divider);
 					}
 				}

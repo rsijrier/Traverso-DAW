@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QList>
 
 #include "ContextItem.h"
+#include "TRealTimeLinkedList.h"
 #include "Track.h"
 
 #include "defines.h"
@@ -47,16 +48,16 @@ public :
         AudioClip* init_recording();
         TCommand* add_clip(AudioClip* clip, bool historable=true, bool ismove=false);
         TCommand* remove_clip(AudioClip* clip, bool historable=true, bool ismove=false);
-        AudioClip* get_clip_after(const TimeRef& pos);
-        AudioClip* get_clip_before(const TimeRef& pos);
+        AudioClip* get_clip_after(const TTimeRef& pos);
+        AudioClip* get_clip_before(const TTimeRef& pos);
         Sheet* get_sheet() const {return m_sheet;}
         QDomNode get_state(QDomDocument doc, bool istemplate=false);
         QList<AudioClip*> get_audioclips() const {return  m_audioClips;}
 
         // Return the rightmost AudioClip track end location
-        TimeRef get_end_location() const;
+        TTimeRef get_end_location() const;
 
-        void get_render_range(TimeRef& startlocation, TimeRef& endlocation);
+        bool get_export_range(TTimeRef& trackExportStartLocation, TTimeRef& trackExportEndLocation);
 	bool show_clip_volume_automation() const {return m_showClipVolumeAutomation;}
 
         int set_state( const QDomNode& node );
@@ -64,7 +65,15 @@ public :
         int arm();
         bool armed();
         int disarm();
-        int process(nframes_t nframes);
+        int process(const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes);
+
+        bool operator<(const AudioTrack &other) {
+            printf("bool operator<(const AudioTrack &other)\n");
+            return this->get_sort_index() < other.get_sort_index();
+        }
+
+
+        AudioTrack* next = nullptr;
 
 protected:
         void add_input_bus(AudioBus* bus);
@@ -73,7 +82,7 @@ private :
         Sheet*          m_sheet;
 
         // only to be accessed/modified by AudioThread
-        APILinkedList 	m_rtAudioClips;
+        TRealTimeLinkedList<AudioClip*> m_rtAudioClipsLinkedList;
 
         // only to be accessed from GUI thread
         QList<AudioClip*>   m_audioClips;

@@ -83,6 +83,7 @@ void GainEnvelope::set_session(TSession * session)
 {
     m_session = session;
     set_history_stack(m_session->get_history_stack());
+
 	if (get_curve()) {
                 get_curve()->set_sheet(session);
 	}
@@ -90,7 +91,7 @@ void GainEnvelope::set_session(TSession * session)
 
 void GainEnvelope::process(AudioBus * bus, nframes_t nframes)
 {
-    for (int chan=0; chan<bus->get_channel_count(); ++chan) {
+    for (uint chan=0; chan<bus->get_channel_count(); ++chan) {
         Mixer::apply_gain_to_buffer(bus->get_buffer(chan, nframes), nframes, get_gain());
     }
 }
@@ -105,7 +106,7 @@ Curve * GainEnvelope::get_curve()
 }
 
 
-void GainEnvelope::process_gain(audio_sample_t** buffer, const TimeRef& startlocation, const TimeRef& endlocation, nframes_t nframes, uint channels)
+void GainEnvelope::process_gain(audio_sample_t** buffer, const TTimeRef& startlocation, const TTimeRef& endlocation, nframes_t nframes, uint channels)
 {
         PluginControlPort* port = m_controlPorts.at(0);
 

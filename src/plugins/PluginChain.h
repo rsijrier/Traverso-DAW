@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 #include "Plugin.h"
 #include "GainEnvelope.h"
+#include "TRealTimeLinkedList.h"
 
 class TSession;
 class AudioBus;
@@ -56,7 +57,7 @@ public:
     GainEnvelope*   get_fader() const {return m_fader;}
 
 private:
-    APILinkedList	m_rtPlugins;
+    TRealTimeLinkedList<Plugin*>	m_rtPlugins;
     QList<Plugin*>  m_plugins;
     GainEnvelope*	m_fader;
     TSession*	m_session{};
@@ -73,35 +74,6 @@ signals:
     void privatePluginRemoved(Plugin*);
     void privatePluginAdded(Plugin*);
 };
-
-inline void PluginChain::process_pre_fader(AudioBus * bus, nframes_t nframes)
-{
-    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
-        if (plugin == m_fader) {
-            return;
-        }
-        plugin->process(bus, nframes);
-    }
-}
-
-inline int PluginChain::process_post_fader(AudioBus * bus, nframes_t nframes)
-{
-    if (!m_rtPlugins.size()) {
-        return 0;
-    }
-
-    bool faderWasReached = false;
-
-    apill_foreach(Plugin* plugin, Plugin*, m_rtPlugins) {
-        if (faderWasReached) {
-            plugin->process(bus, nframes);
-        } else if (plugin == m_fader) {
-            faderWasReached = true;
-        }
-    }
-
-    return 1;
-}
 
 #endif
 

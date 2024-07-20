@@ -50,8 +50,8 @@ void PluginSlider::paintEvent(QPaintEvent *)
 	QColor background = themer()->get_color("PluginSlider:background");
 	
 	if (highlight) {
-		color = color.light(110);
-		background = background.light(105);
+        color = color.lighter(110);
+        background = background.lighter(105);
 	}
 	
 	// avoid painting at 0, it looks bad...
@@ -72,18 +72,18 @@ void PluginSlider::paintEvent(QPaintEvent *)
 void PluginSlider::mousePressEvent( QMouseEvent * e )
 {
 	dragging = true;
-	calculate_new_value(e->x());
+    calculate_new_value(e->position().x());
 }
 
 void PluginSlider::mouseMoveEvent( QMouseEvent * e )
 {
-	calculate_new_value(e->x());
+    calculate_new_value(e->position().x());
 }
 
 void PluginSlider::mouseReleaseEvent( QMouseEvent * e )
 {
 	dragging = false;
-	calculate_new_value(e->x());
+    calculate_new_value(e->position().x());
 }
 
 void PluginSlider::calculate_new_value(float mouseX)
@@ -118,7 +118,7 @@ void PluginSlider::leaveEvent( QEvent * )
 	update();
 }
 
-void PluginSlider::enterEvent( QEvent * )
+void PluginSlider::enterEvent(QEnterEvent * )
 {
 	highlight = true;
 	update();
@@ -126,14 +126,14 @@ void PluginSlider::enterEvent( QEvent * )
 
 void PluginSlider::wheelEvent( QWheelEvent* e )
 {
-	if (e->orientation() == Qt::Vertical) {
-		if (e->delta() > 0) {
+//	if (e->orientation() == Qt::Vertical) {
+        if (e->angleDelta().y() > 0) {
 			m_value += m_stepvalue;
 			if (m_value > m_max) {
 				m_value = m_max;
 			}
 		}
-		if (e->delta() < 0) {
+        if (e->angleDelta().y() < 0) {
 			m_value -= m_stepvalue;
 			if (m_value < m_min) {
 				m_value = m_min;
@@ -141,7 +141,7 @@ void PluginSlider::wheelEvent( QWheelEvent* e )
 		}
 		
 		update_slider_position();
-	}
+//	}
 }
 
 void PluginSlider::update_slider_position( )

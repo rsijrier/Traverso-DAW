@@ -51,7 +51,7 @@ int CommandGroup::prepare_actions()
 	
 	foreach(TCommand* cmd, m_commands) {
 		if (cmd->prepare_actions() == -1) {
-			printf("one of the commands in the group failed prepare_actions\n");
+            PWARN("CommandGroup::prepare_actions: one of the commands in the group failed prepare_actions\n");
 			result = -1;
 		}
 	}

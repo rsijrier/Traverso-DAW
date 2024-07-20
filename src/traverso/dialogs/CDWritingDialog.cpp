@@ -22,10 +22,10 @@
 #include "CDWritingDialog.h"
 
 #include <QMessageBox>
+#include <samplerate.h>
 
-#include "Export.h"
+#include "TExportSpecification.h"
 #include "TConfig.h"
-#include "AudioDevice.h"
 #include "Project.h"
 #include "ProjectManager.h"
 #include "Information.h"
@@ -69,8 +69,8 @@ CDWritingDialog::CDWritingDialog( QWidget * parent )
 	
 	connect(m_burnprocess, SIGNAL(readyReadStandardOutput()), this, SLOT(read_standard_output()));
 	connect(m_burnprocess, SIGNAL(started()), this, SLOT(cdrdao_process_started()));
-	connect(m_burnprocess, SIGNAL(finished(int, QProcess::ExitStatus)),
-		this, SLOT(cdrdao_process_finished(int, QProcess::ExitStatus)));
+    connect(m_burnprocess, SIGNAL(finished(int,QProcess::ExitStatus)),
+        this, SLOT(cdrdao_process_finished(int,QProcess::ExitStatus)));
 	connect(startButton, SIGNAL(clicked()), this, SLOT(start_burn_process()));
 	connect(stopButton, SIGNAL(clicked()), this, SLOT(stop_burn_process()));
 	connect(refreshButton, SIGNAL(clicked()), this, SLOT(query_devices()));
@@ -106,8 +106,7 @@ bool CDWritingDialog::is_safe_to_export()
 
 void CDWritingDialog::on_stopButton_clicked( )
 {
-	m_exportSpec->stop = true;
-	m_exportSpec->breakout = true;
+    m_exportSpec->cancel_export();
 }
 
 void CDWritingDialog::set_export_message(QString message)
@@ -123,19 +122,9 @@ void CDWritingDialog::set_project(Project * project)
 	if (! m_project) {
 		info().information(tr("No project loaded, to write a project to CD, load it first!"));
 		setEnabled(false);
-		if (m_exportSpec) {
-			delete m_exportSpec;
-            m_exportSpec = nullptr;
-		}
 	} else {
 		setEnabled(true);
-		if (m_exportSpec) {
-			delete m_exportSpec;
-            m_exportSpec = nullptr;
-		}
-		m_exportSpec = new ExportSpecification;
-		m_exportSpec->exportdir = m_project->get_root_dir() + "/Export/";
-		m_exportSpec->renderfinished = false;
+        m_exportSpec = m_project->get_export_specification();
 	}
 }
 
@@ -205,9 +194,7 @@ void CDWritingDialog::stop_burn_process()
 	
 	if (m_writingState == RENDER) {
 		update_cdburn_status(tr("Aborting Render process ..."), NORMAL_MESSAGE);
-		m_exportSpec->stop = true;
-		m_exportSpec->breakout = true;
-		m_exportSpec->renderfinished = false;
+        m_exportSpec->cancel_export();
 	}
 	if (m_writingState == BURNING) {
 		update_cdburn_status(tr("Aborting CD Burn process ..."), NORMAL_MESSAGE);
@@ -302,46 +289,33 @@ void CDWritingDialog::cd_render()
 	
 	// FIXME: We should instead check export wav file timestamps/revision numbers as a dirty test
 	if (! cdAllSheetsButton->isChecked() && m_lastSheetExported != m_project->get_current_sheet_id()) {
-		m_exportSpec->renderfinished = false;
+        // m_exportSpec->renderfinished = false;
 	}
 	
-	if (m_wasClosed && m_exportSpec->renderfinished && (m_exportSpec->allSheets == cdAllSheetsButton->isChecked()) ) {
+    if (m_wasClosed) {
 		
 		if (QMessageBox::question(this, tr("Rerender CD content"), 
 		    		tr("There is already a CD render available.\nShould I re-render the CD content?"), 
 				QMessageBox::Yes | QMessageBox::No, 
 				QMessageBox::No) == QMessageBox::Yes)
 		{
-			m_exportSpec->renderfinished = false;
+            // m_exportSpec->renderfinished = false;
 		}
 	}
 
 	m_wasClosed = false;
 	
-	if ( !	(m_exportSpec->renderfinished && 
-		(m_exportSpec->allSheets == cdAllSheetsButton->isChecked()) &&
-		(m_exportSpec->normalize == cdNormalizeCheckBox->isChecked())) ) {
-		
-		m_exportSpec->data_width = 16;
-		m_exportSpec->writerType = "sndfile";
-		m_exportSpec->extraFormat["filetype"] = "wav";
-		m_exportSpec->channels = 2;
-		m_exportSpec->sample_rate = 44100;
+    if (true) {
+
+        m_exportSpec->set_data_format(SF_FORMAT_PCM_16);
+        m_exportSpec->set_channel_count(2);
 		m_exportSpec->writeToc = true;
-		m_exportSpec->dither_type = GDitherTri;
-		m_exportSpec->src_quality = SRC_SINC_MEDIUM_QUALITY; // SRC_SINC_BEST_QUALITY  SRC_SINC_FASTEST  SRC_ZERO_ORDER_HOLD  SRC_LINEAR
-		if (cdAllSheetsButton->isChecked()) {
-			m_exportSpec->allSheets = true;
-		} else {
-			m_exportSpec->allSheets = false;
-		}
-		m_exportSpec->normalize = cdNormalizeCheckBox->isChecked();
-		m_exportSpec->isRecording = false;
-		m_exportSpec->stop = false;
-		m_exportSpec->breakout = false;
-		m_exportSpec->isCdExport = true;
+        m_exportSpec->set_dither_type(GDitherTri);
+        // TODO
+        // What about offering user option to select samplerate conversion quality?
+        m_exportSpec->set_is_cd_export(true);
 		
-		if (m_project->create_cdrdao_toc(m_exportSpec) < 0) {
+        if (m_exportSpec->create_cdrdao_toc(m_exportSpec) < 0) {
 			info().warning(tr("Creating CDROM table of contents failed, unable to write CD"));
 			return;
 		}
@@ -354,7 +328,7 @@ void CDWritingDialog::cd_render()
 		update_cdburn_status(tr("Rendering Sheet(s)"), NORMAL_MESSAGE);
 		
 		disable_ui_interaction();
-		m_project->export_project(m_exportSpec);
+        m_project->export_project();
 		m_lastSheetExported = m_project->get_current_sheet_id();
 	} else {
 		if (cdDiskExportOnlyCheckBox->isChecked()) {
@@ -438,8 +412,7 @@ void CDWritingDialog::cd_export_finished()
 	disconnect(m_project, SIGNAL(overallExportProgressChanged(int)), this, SLOT(cd_export_progress(int)));
 	disconnect(m_project, SIGNAL(exportFinished()), this, SLOT(cd_export_finished()));
 	
-	if (m_exportSpec->breakout) {
-		m_exportSpec->renderfinished = false;
+    if (m_exportSpec->cancel_export_requested()) {
 		update_cdburn_status(tr("Render process stopped on user request."), NORMAL_MESSAGE);
 		enable_ui_interaction();
 		return;
@@ -451,7 +424,6 @@ void CDWritingDialog::cd_export_finished()
 		return;
 	}
 	
-	m_exportSpec->renderfinished = true;
 	write_to_cd();
 }
 
@@ -510,7 +482,7 @@ void CDWritingDialog::read_standard_output()
 #else
 			if (data.contains("/dev/") || data.contains("dev=")) {
 #endif
-				QStringList strlist = QString(data).split(QRegExp("\\s+"));
+                QStringList strlist = QString(data).split(QRegularExpression("\\s+"));
 				QString deviceName = "No Device Available";
 				QString device = "/no/device/detected";
 				
@@ -601,7 +573,7 @@ void CDWritingDialog::read_standard_output()
 	}
 	
 	if (sout.contains("Writing track")) {
-		QStringList strlist = sout.split(QRegExp("\\s+"));
+        QStringList strlist = sout.split(QRegularExpression("\\s+"));
 		if (strlist.size() > 3) {
 			QString text = strlist.at(0) + " " + strlist.at(1) + " " + strlist.at(2);
 			update_cdburn_status(text, NORMAL_MESSAGE);
@@ -610,7 +582,7 @@ void CDWritingDialog::read_standard_output()
 	}	
 	
 	if (sout.contains("%") && sout.contains("(") && sout.contains(")")) {
-		QStringList strlist = sout.split(QRegExp("\\s+"));
+        QStringList strlist = sout.split(QRegularExpression("\\s+"));
 		if (strlist.size() > 7) {
 			int written = strlist.at(1).toInt();
 			int total = strlist.at(3).toInt();
@@ -693,9 +665,9 @@ QString CDWritingDialog::get_device(int index)
 /// modes are no longer there so find out what this was doing I guess ?
 //void CDWritingDialog::sheet_mode_changed(bool b)
 //{
-//        TimeRef t = TimeRef();
+//        TTimeRef t = TTimeRef();
 //        m_exportSpec->allSheets = !b;
 //        t = m_project->get_cd_totaltime(m_exportSpec);
-//        cdTotalTimeLabel->setText(timeref_to_cd(t));
+//        cdTotalTimeLabel->setText(TTimeRef::timeref_to_cd(t));
 //}
 

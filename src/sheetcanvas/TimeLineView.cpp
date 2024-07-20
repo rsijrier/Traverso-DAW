@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TimeLineViewPort.h"
 
 #include <Sheet.h>
-#include <TimeLine.h>
+#include <TTimeLineRuler.h>
 #include <Marker.h>
 #include <ContextPointer.h>
 #include <Utils.h>
@@ -50,12 +50,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #define MARKER_SOFT_SELECTION_DISTANCE 50
 
-static bool smallerMarker(const MarkerView* left, const MarkerView* right )
-{
-        return left->get_marker()->get_when() < right->get_marker()->get_when();
-}
-
-
 TimeLineView::TimeLineView(SheetView* view)
     : ViewItem(nullptr, view->get_sheet()->get_timeline())
     , m_blinkingMarker(nullptr)
@@ -65,8 +59,8 @@ TimeLineView::TimeLineView(SheetView* view)
 	m_sv = view;
 	m_boundingRect = QRectF(0, 0, MAX_CANVAS_WIDTH, TIMELINE_HEIGHT);
 	m_timeline = m_sv->get_sheet()->get_timeline();
-	
-	load_theme_data();
+
+    TimeLineView::load_theme_data();
 	
 	// Create MarkerViews for existing markers
 	foreach(Marker* marker, m_timeline->get_markers()) {
@@ -142,29 +136,29 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
         }
         painter->fillRect(QRectF(xstart, 0,  pixelcount, height), backgroundColor);
 	
-	TimeRef major;
+	TTimeRef major;
 	
 	if (m_zooms.contains(m_sv->timeref_scalefactor)) {
-		major = msms_to_timeref(m_zooms[m_sv->timeref_scalefactor]);
+		major = TTimeRef::msms_to_timeref(m_zooms[m_sv->timeref_scalefactor]);
 	} else {
 		major = 120 * m_sv->timeref_scalefactor;
 	}
 
 	// minor is double so they line up right with the majors,
 	// despite not always being an even number of frames
-	// @Ben : is still still the same when using TimeRef based calculations?
+	// @Ben : is still still the same when using TTimeRef based calculations?
 	double minor = double(major/double(10));
 
-	TimeRef firstLocation = (TimeRef(xstart * m_sv->timeref_scalefactor)/major)*major;
-	TimeRef lastLocation = TimeRef(xstart * m_sv->timeref_scalefactor + pixelcount * m_sv->timeref_scalefactor);
+	TTimeRef firstLocation = (TTimeRef(xstart * m_sv->timeref_scalefactor)/major)*major;
+	TTimeRef lastLocation = TTimeRef(xstart * m_sv->timeref_scalefactor + pixelcount * m_sv->timeref_scalefactor);
 	int xstartoffset = m_sv->hscrollbar_value();
 	
-	painter->setMatrixEnabled(false);
+    painter->setWorldMatrixEnabled(false);
 
-    qint64 count = TimeRef((lastLocation-firstLocation+major) / minor).universal_frame();
+    qint64 count = TTimeRef((lastLocation-firstLocation+major) / minor).universal_frame();
 
 	QList<int> minorTicks, majorTicks;
-	QList<TimeRef> majorTimeRefs;
+	QList<TTimeRef> majorTimeRefs;
 
 	// calculate minor tick x values
 	for (qint64 i = 0; i < count; i++ ) {
@@ -173,7 +167,7 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 	}
 	
 	// calculate major tick x values
-	for (TimeRef location = firstLocation; location < lastLocation; location += major) {
+	for (TTimeRef location = firstLocation; location < lastLocation; location += major) {
 		int x = int(location/m_sv->timeref_scalefactor - xstartoffset);
 		majorTicks.append(x);
 		majorTimeRefs.append(location);
@@ -200,7 +194,7 @@ void TimeLineView::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 	// Draw text
 	for (int i=0; i<majorTicks.size(); ++i) {
 		int x = majorTicks.at(i);
-		painter->drawText(x + 4, height - 8, timeref_to_text(majorTimeRefs.at(i), m_sv->timeref_scalefactor));
+		painter->drawText(x + 4, height - 8, TTimeRef::timeref_to_text(majorTimeRefs.at(i), m_sv->timeref_scalefactor));
 	}
 	
 	painter->restore();
@@ -242,7 +236,7 @@ TCommand* TimeLineView::add_marker()
         if (x < 0) {
                 return nullptr;
         }
-        TimeRef when(x * m_sv->timeref_scalefactor);
+        TTimeRef when(x * m_sv->timeref_scalefactor);
 	
 	return add_marker_at(when);
 }
@@ -257,19 +251,19 @@ TCommand* TimeLineView::add_marker_at_work_cursor()
         return add_marker_at(m_sv->get_sheet()->get_work_location());
 }
 
-TCommand* TimeLineView::add_marker_at(const TimeRef when)
+TCommand* TimeLineView::add_marker_at(const TTimeRef when)
 {
 	CommandGroup* group = new CommandGroup(m_timeline, "");
 
 	// check if it is the first marker added to the timeline
 	if (m_timeline->get_markers().empty()) {
-		if (when > TimeRef()) {  // add one at the beginning of the sheet
-			Marker* m = new Marker(m_timeline, TimeRef(), Marker::CDTRACK);
+		if (when > TTimeRef()) {  // add one at the beginning of the sheet
+			Marker* m = new Marker(m_timeline, TTimeRef(), Marker::CDTRACK);
 			m->set_description("");
 			group->add_command(m_timeline->add_marker(m));
 		}
 
-		TimeRef lastlocation = m_sv->get_sheet()->get_last_location();
+		TTimeRef lastlocation = m_sv->get_sheet()->get_last_location();
 		if (when < lastlocation) {  // add one at the end of the sheet
 			Marker* me = new Marker(m_timeline, lastlocation, Marker::ENDMARKER);
 			me->set_description(tr("End"));
@@ -291,7 +285,7 @@ TCommand* TimeLineView::playhead_to_marker()
         update_softselected_marker(cpointer().on_first_input_event_scene_pos());
 
 	if (m_blinkingMarker) {
-		m_sv->get_sheet()->set_transport_pos(m_blinkingMarker->get_marker()->get_when());
+		m_sv->get_sheet()->set_transport_location(m_blinkingMarker->get_marker()->get_when());
         return nullptr;
 	}
 
@@ -412,33 +406,37 @@ TCommand * TimeLineView::clear_markers()
 void TimeLineView::load_theme_data()
 {
 	// TODO Load pixmap, fonts, colors from themer() !!
-	calculate_bounding_rect();
+    TimeLineView::calculate_bounding_rect();
 }
 
-MarkerView* TimeLineView::get_marker_view_after(TimeRef location)
+MarkerView* TimeLineView::get_marker_view_after(TTimeRef location)
 {
-        // FIXME: only keep this list sorted if markers are added/moved??
-        qSort(m_markerViews.begin(), m_markerViews.end(), smallerMarker);
+    // FIXME: only keep this list sorted if markers are added/moved??
+    std::sort(m_markerViews.begin(), m_markerViews.end(), [&](MarkerView* left, MarkerView* right) {
+        return left->get_marker()->get_when() < right->get_marker()->get_when();
+    });
 
-        foreach(MarkerView* markerView, m_markerViews) {
-                if (markerView->get_marker()->get_when() > location) {
-                        return markerView;
-                }
+    foreach(MarkerView* markerView, m_markerViews) {
+        if (markerView->get_marker()->get_when() > location) {
+            return markerView;
         }
-        return nullptr;
+    }
+    return nullptr;
 }
 
-MarkerView* TimeLineView::get_marker_view_before(TimeRef location)
+MarkerView* TimeLineView::get_marker_view_before(TTimeRef location)
 {
-        // FIXME: only keep this list sorted if markers are added/moved??
-        qSort(m_markerViews.begin(), m_markerViews.end(), smallerMarker);
+    // FIXME: only keep this list sorted if markers are added/moved??
+    std::sort(m_markerViews.begin(), m_markerViews.end(), [&](MarkerView* left, MarkerView* right) {
+        return left->get_marker()->get_when() < right->get_marker()->get_when();
+    });
 
-        for (int i=m_markerViews.size() - 1; i>= 0; --i) {
-                MarkerView* markerView = m_markerViews.at(i);
-                if (markerView->get_marker()->get_when() < location) {
-                        return markerView;
-                }
+    for (int i=m_markerViews.size() - 1; i>= 0; --i) {
+        MarkerView* markerView = m_markerViews.at(i);
+        if (markerView->get_marker()->get_when() < location) {
+            return markerView;
         }
-
-        return nullptr;
+    }
+    
+    return nullptr;
 }

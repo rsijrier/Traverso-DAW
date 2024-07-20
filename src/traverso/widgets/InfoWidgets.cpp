@@ -76,8 +76,10 @@ SystemResources::SystemResources(QWidget * parent)
 	m_readBufferStatus = new SystemValueBar(this);
 	m_readBufferStatus->setToolTip(tr("Read Buffer Status"));
 	m_writeBufferStatus->setToolTip(tr("Write Buffer Status"));
-	m_cpuUsage = new SystemValueBar(this);
-	m_icon = new QPushButton();
+    m_dspCpuUsage = new SystemValueBar(this);
+    m_diskReadCpuUsage = new SystemValueBar(this);
+    m_diskWriteCpuUsage = new SystemValueBar(this);
+    m_icon = new QPushButton();
 	m_icon->setIcon(find_pixmap(":/memorysmall"));
 	m_icon->setFlat(true);
 	m_icon->setMaximumWidth(20);
@@ -92,63 +94,99 @@ SystemResources::SystemResources(QWidget * parent)
 	m_writeBufferStatus->add_range_color(40, 60, QColor(255, 255, 0));
 	m_writeBufferStatus->add_range_color(60, 100, QColor(227, 254, 227));
 	m_writeBufferStatus->setMinimumWidth(60);
-	
+    m_writeBufferStatus->set_text("W");
+
 	m_readBufferStatus->set_range(0, 100);
 	m_readBufferStatus->add_range_color(0, 40, QColor(255, 0, 0));
 	m_readBufferStatus->add_range_color(40, 60, QColor(255, 255, 0));
 	m_readBufferStatus->add_range_color(60, 100, QColor(227, 254, 227));
 	m_readBufferStatus->setMinimumWidth(60);
-	
-	m_cpuUsage->set_range(0, 100);
-	m_cpuUsage->set_int_rounding(false);
-	m_cpuUsage->setMinimumWidth(90);
-	m_cpuUsage->add_range_color(0, 60, QColor(227, 254, 227));
-	m_cpuUsage->add_range_color(60, 75, QColor(255, 255, 0));
-	m_cpuUsage->add_range_color(75, 100, QColor(255, 0, 0));
-	
-        m_readBufferStatus->set_text("R");
-	m_writeBufferStatus->set_text("W");
-        m_cpuUsage->set_text("DSP");
-	
-        QHBoxLayout* lay = new QHBoxLayout(this);
-	lay->addSpacing(6);
-	lay->addWidget(m_readBufferStatus);
-	lay->addWidget(m_icon);
-	lay->addWidget(m_writeBufferStatus);
-	lay->addWidget(m_cpuUsage);
-        lay->addWidget(TMainWindow::instance()->get_track_finder());
-        lay->addWidget(m_collectedNumber);
-	lay->setMargin(0);
-	lay->addSpacing(6);
-	setLayout(lay);
-	setFrameStyle(QFrame::NoFrame);
-	
+    m_readBufferStatus->set_text("R");
+
+    m_dspCpuUsage->set_range(0, 100);
+    m_dspCpuUsage->set_int_rounding(false);
+    m_dspCpuUsage->setMinimumWidth(90);
+    m_dspCpuUsage->add_range_color(0, 60, QColor(227, 254, 227));
+    m_dspCpuUsage->add_range_color(60, 75, QColor(255, 255, 0));
+    m_dspCpuUsage->add_range_color(75, 100, QColor(255, 0, 0));
+    m_dspCpuUsage->set_text("DSP CPU");
+
+    m_diskReadCpuUsage->set_range(0, 100);
+    m_diskReadCpuUsage->set_int_rounding(false);
+    m_diskReadCpuUsage->setMinimumWidth(70);
+    m_diskReadCpuUsage->add_range_color(0, 60, QColor(227, 254, 227));
+    m_diskReadCpuUsage->add_range_color(60, 75, QColor(255, 255, 0));
+    m_diskReadCpuUsage->add_range_color(75, 100, QColor(255, 0, 0));
+    m_diskReadCpuUsage->set_text("CPU");
+
+    m_diskWriteCpuUsage->set_range(0, 100);
+    m_diskWriteCpuUsage->set_int_rounding(false);
+    m_diskWriteCpuUsage->setMinimumWidth(70);
+    m_diskWriteCpuUsage->add_range_color(0, 60, QColor(227, 254, 227));
+    m_diskWriteCpuUsage->add_range_color(60, 75, QColor(255, 255, 0));
+    m_diskWriteCpuUsage->add_range_color(75, 100, QColor(255, 0, 0));
+    m_diskWriteCpuUsage->set_text("CPU");
+
+    QHBoxLayout* lay = new QHBoxLayout(this);
+    lay->addSpacing(6);
+
+    lay->addWidget(m_readBufferStatus);
+    lay->addWidget(m_diskReadCpuUsage);
+
+    lay->addSpacing(12);
+
+    lay->addWidget(m_writeBufferStatus);
+    lay->addWidget(m_diskWriteCpuUsage);
+
+    lay->addSpacing(12);
+
+    lay->addWidget(m_dspCpuUsage);
+    lay->addSpacing(12);
+
+    lay->addWidget(TMainWindow::instance()->get_track_finder());
+    lay->addWidget(m_collectedNumber);
+
+    lay->setContentsMargins(0, 0, 0, 0);
+    lay->addSpacing(6);
+    setLayout(lay);
+    setFrameStyle(QFrame::NoFrame);
+
 	connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(update_status()));
 	
 	update_status();
-	
-        m_updateTimer.start(700);
 
-        connect(&ied(), SIGNAL(collectedNumberChanged()), this, SLOT(collected_number_changed()));
+    m_updateTimer.start(750);
+
+    connect(&ied(), SIGNAL(collectedNumberChanged()), this, SLOT(collected_number_changed()));
 }
 
 void SystemResources::update_status( )
 {
-	float time = audiodevice().get_cpu_time();
+    float time = audiodevice().get_cpu_time();
+
 	int bufReadStatus = 100;
 	int bufWriteStatus = 100;
 	
 	if (m_project) {
-		foreach(Sheet* sheet, m_project->get_sheets() ) {
-			bufReadStatus = std::min(sheet->get_diskio()->get_read_buffers_fill_status(), bufReadStatus);
-			bufWriteStatus = std::min(sheet->get_diskio()->get_write_buffers_fill_status(), bufWriteStatus);
-		}
+        auto sheet = m_project->get_active_sheet();
+        if (!sheet) {
+            return;
+        }
+
+        bufReadStatus = sheet->get_read_diskio()->get_buffers_fill_status();
+        bufWriteStatus = sheet->get_write_diskio()->get_buffers_fill_status();
+        float time;
+        if (sheet->get_read_diskio()->get_cpu_time(time)) {
+            m_diskReadCpuUsage->set_value(time);
+        }
+        if (sheet->get_write_diskio()->get_cpu_time(time)) {
+            m_diskWriteCpuUsage->set_value(time);
+        }
 	}
 
-	
-	m_readBufferStatus->set_value(bufReadStatus);
+    m_readBufferStatus->set_value(bufReadStatus);
 	m_writeBufferStatus->set_value(bufWriteStatus);
-	m_cpuUsage->set_value(time);
+    m_dspCpuUsage->set_value(time);
 }
 
 
@@ -178,14 +216,14 @@ DriverInfo::DriverInfo( QWidget * parent )
 	
     QHBoxLayout* lay = new QHBoxLayout(this);
     lay->addWidget(m_driver);
-	lay->setMargin(0);
+    lay->setContentsMargins(0, 0, 0, 0);
 	setLayout(lay);
 	
 	setFrameStyle(QFrame::NoFrame);
 	
 	connect(&audiodevice(), SIGNAL(driverParamsChanged()), this, SLOT(update_driver_info()));
 	connect(&audiodevice(), SIGNAL(bufferUnderRun()), this, SLOT(update_xrun_info()));
-    connect(m_driver, SIGNAL(clicked( bool )), TMainWindow::instance(), SLOT(show_settings_dialog_sound_system_page()));
+    connect(m_driver, SIGNAL(clicked(bool)), TMainWindow::instance(), SLOT(show_settings_dialog_sound_system_page()));
 	
 	update_driver_info();
 }
@@ -211,6 +249,11 @@ void DriverInfo::draw_information( )
         text += "   " + QString::number(audiodevice().get_sample_rate() / 1000.0, 'f', 1) + "KHz @ " + latency + xruns;
     }
     m_driver->setText(text);
+    if (audiodevice().get_driver_type() == "Null Driver") {
+        m_driver->setStyleSheet("QPushButton {color: red;}");
+    } else {
+        m_driver->setStyleSheet("");
+    }
     updateGeometry();
 }
 
@@ -225,7 +268,7 @@ QSize DriverInfo::sizeHint() const
 	return QSize(m_driver->width(), SONG_TOOLBAR_HEIGHT);
 }
 
-void DriverInfo::enterEvent(QEvent * /*event*/)
+void DriverInfo::enterEvent(QEnterEvent * /*event*/)
 {
 //	m_driver->setFlat(false);
 }
@@ -247,46 +290,48 @@ HDDSpaceInfo::HDDSpaceInfo(QWidget* parent )
 	m_button->setEnabled(false);
 	
         QHBoxLayout* lay = new QHBoxLayout;
-	lay->setMargin(0);
+    lay->setContentsMargins(0, 0, 0, 0);
 	lay->addWidget(m_button);
 	setLayout(lay);
 	
 	setFrameStyle(QFrame::NoFrame);
 	
-	connect(&updateTimer, SIGNAL(timeout()), this, SLOT(update_status()));
+    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(update_status()));
 	
 	update_status();
-	updateTimer.start(20000);
+    updateTimer.start(20000);
 }
 
 
 void HDDSpaceInfo::set_session(TSession* session)
 {
         m_session = session;
-	
+
         if (! m_session) {
-		updateTimer.start(20000);
-		return;
-	}
-	
-	update_status();
-	
-        connect(m_session, SIGNAL(transportStopped()), this, SLOT(sheet_stopped()));
-        connect(m_session, SIGNAL(transportStarted()), this, SLOT(sheet_started()));
+        updateTimer.start(20000);
+        return;
+    }
+
+    update_status();
+
+    connect(m_session, SIGNAL(transportStopped()), this, SLOT(sheet_stopped()), Qt::UniqueConnection);
+    connect(m_session, SIGNAL(transportStarted()), this, SLOT(sheet_started()), Qt::UniqueConnection);
 }
 
 void HDDSpaceInfo::sheet_started()
 {
-	updateTimer.start(5000);
-	m_button->setEnabled(true);
-	update_status();
+    updateTimer.start(5000);
+    m_button->setEnabled(true);
+    update_status();
 }
 
 void HDDSpaceInfo::sheet_stopped()
 {
-	updateTimer.start(60000);
-	m_button->setEnabled(false);
-	update_status();
+    printf("HDDSpaceInfo::sheet_stopped call time: %ld\n", TTimeRef::get_microseconds_since_epoch());
+
+    updateTimer.start(60000);
+    m_button->setEnabled(false);
+    update_status();
 }
 
 
@@ -337,19 +382,14 @@ void HDDSpaceInfo::update_status( )
 	
 	if (recordingSheets.size()) {
 		int recChannelCount = 0;
-		foreach(Sheet* sheet, recordingSheets) {
-                        foreach(AudioTrack* track, sheet->get_audio_tracks()) {
-				if (track->armed()) {
-                                        // FIXME !!!!!!!
-                                        recChannelCount = 2;
-//					recChannelCount += track->capture_left_channel() ? 1 : 0;
-//					recChannelCount += track->capture_right_channel() ? 1 : 0;
-				}
-			}
-		}
-		
+        foreach(Sheet* sheet, recordingSheets) {
+            foreach(AudioTrack* track, sheet->get_armed_tracks()) {
+                recChannelCount += track->get_channel_count();
+            }
+        }
+
 		uint rate = audiodevice().get_sample_rate();
-		double availabletime = (double(UNIVERSAL_SAMPLE_RATE) / rate) * space * 1048576.0;
+		double availabletime = (double(TTimeRef::UNIVERSAL_SAMPLE_RATE) / rate) * space * 1048576.0;
 		availabletime /= double(sizeof(float) * recChannelCount);
  		
 		QString recordFormat = config().get_property("Recording", "FileFormat", "wav").toString();
@@ -364,8 +404,8 @@ void HDDSpaceInfo::update_status( )
 			}
 		}
 		
-		TimeRef time(availabletime);
-		text = timeref_to_hms(time);
+		TTimeRef time(availabletime);
+		text = TTimeRef::timeref_to_hms(time);
 		if (text < "00:30:00") {
 			QPalette pal;
 			pal.setColor(QPalette::ButtonText, QColor(Qt::red));
@@ -463,15 +503,7 @@ void SystemValueBar::set_value(float value)
 	}
 	
 	m_current = value;
-	
-        if (m_current > m_max) {
-                m_current  = m_max;
-        }
-	
-        if (m_current < m_min) {
-                m_current = m_min;
-        }
-	
+
 	update();
 }
 
@@ -489,6 +521,16 @@ void SystemValueBar::set_text(const QString & text)
 
 void SystemValueBar::paintEvent(QPaintEvent* )
 {
+    int value = m_current;
+
+    if (value > m_max) {
+        value  = m_max;
+    }
+
+    if (value < m_min) {
+        value = m_min;
+    }
+
 	QPainter painter(this);
 	painter.setRenderHints(QPainter::Antialiasing);
 	
@@ -496,7 +538,7 @@ void SystemValueBar::paintEvent(QPaintEvent* )
 	
 	for (int i=0; i<m_rangecolors.size(); ++i) {
 		RangeColor range = m_rangecolors.at(i);
-		if (m_current <= range.x1 && m_current >= range.x0) {
+        if (value <= range.x1 && value >= range.x0) {
 			color = range.color;
 			break;
 		}
@@ -508,18 +550,18 @@ void SystemValueBar::paintEvent(QPaintEvent* )
 	painter.setBrush(color);
 	painter.setPen(Qt::NoPen);
 	float scalefactor = width() / m_max;
-	rect = QRect(1, (height() - 15) / 2 + 1, width() - 2 - (int)(scalefactor* (m_max - m_current)), 13);
+    rect = QRect(1, (height() - 15) / 2 + 1, width() - 2 - (int)(scalefactor* (m_max - value)), 13);
 	painter.drawRect(rect);
 	
-	painter.setPen(Qt::black);
+    painter.setPen(Qt::black);
 	painter.setFont(themer()->get_font("InfoWidget:fontscale:values"));
 	
 	if (m_introunding) {
 		painter.drawText(0, 0, width(), height(), Qt::AlignCenter, 
 				m_text + " " + QString::number((int)m_current).append("%"));
 	} else {
-		painter.drawText(0, 0, width(), height(), Qt::AlignCenter, 
-                 m_text + " " + QString::number(double(m_current), 'f', 1).append("%"));
+        painter.drawText(0, 0, width(), height(), Qt::AlignCenter,
+                 m_text + " " + QString::number(double(m_current), 'f', 2).append("%"));
 	}
 }
 

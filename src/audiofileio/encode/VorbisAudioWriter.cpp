@@ -237,7 +237,6 @@ bool VorbisAudioWriter::writeOggHeaders()
 	// This ensures the actual
 	// audio data will start on a new page, as per spec
 	//
-	QByteArray data;
 	while (ogg_stream_flush(d->oggStream, d->oggPage)) {
 		fwrite((char*)d->oggPage->header, 1, d->oggPage->header_len, d->fid);
 		fwrite((char*)d->oggPage->body, 1, d->oggPage->body_len, d->fid);

@@ -34,25 +34,26 @@ class Sheet;
 class AudioClip;
 class AudioBus;
 
-class FadeCurve : public Curve, public APILinkedListNode
+class FadeCurve : public Curve
 {
 	Q_OBJECT	
 	
 public:
 	static QStringList defaultShapes;
-	
-	FadeCurve(AudioClip* clip, Sheet* sheet, const QString &type);
+
+    enum FadeType {
+        FadeIn = 0,
+        FadeOut = 1
+    };
+
+    FadeCurve(AudioClip* clip, FadeType fadeType);
 	~FadeCurve();
 	
-	enum FadeType {
-		FadeIn,
-		FadeOut
-	};
 	
 	QDomNode get_state(QDomDocument doc);
 	int set_state( const QDomNode & node );
-	
-        void process(AudioBus* bus, nframes_t nframes);
+
+    void process(AudioBus* bus, const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes);
 	
 	float get_bend_factor() {return m_bendFactor;}
 	float get_strength_factor() {return m_strenghtFactor;}
@@ -64,13 +65,20 @@ public:
 	void set_strength_factor(float factor);
 	
 	FadeType get_fade_type() const {return m_type;}
-	QList<QPointF> get_control_points();
+    QList<QPointF> get_control_points() const;
 	
 	bool is_bypassed() const {return m_bypass;}
-	bool is_smaller_then(APILinkedListNode* node) {Q_UNUSED(node); return false;}
 	
 	void set_range(double pos);
 	void set_mode(int m);
+
+    QString fade_type_to_string() const;
+
+    bool operator<(const FadeCurve& /*other*/) {
+        return false;
+    }
+
+    FadeCurve* next;
 
 private:
 	AudioClip*	m_clip;
@@ -78,9 +86,8 @@ private:
 	float 		m_strenghtFactor;
 	bool		m_bypass;
 	int 		m_mode;
-	int		m_raster;
+    int         m_raster;
 	FadeType	m_type;
-	QString		m_sType;
 	QList<QPointF> 	m_controlPoints;
 	
 	QPointF get_curve_point(float f);

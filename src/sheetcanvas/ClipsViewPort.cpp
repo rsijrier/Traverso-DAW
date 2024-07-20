@@ -21,16 +21,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "ClipsViewPort.h"
 
+#include "AudioTrack.h"
+#include "Project.h"
+#include "ProjectManager.h"
+#include "ReadSource.h"
+#include "ResourcesManager.h"
 #include "SheetWidget.h"
 #include "SheetView.h"
+#include "Sheet.h"
 #include "AudioTrackView.h"
 #include "ViewItem.h"
-#include <libtraversocore.h>
-#include <Import.h>
-#include <CommandGroup.h>
+#include "TAudioFileImportCommand.h"
+#include "CommandGroup.h"
 #include "RemoveClip.h"
 
-#include "AudioDevice.h"
 
 #include <QScrollBar>
 #include <QSet>
@@ -100,14 +104,15 @@ void ClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
                 continue;
 			}
 			
-			Import* import = new Import(fileName);
+            TAudioFileImportCommand* import = new TAudioFileImportCommand(pm().get_project());
+            import->set_file_name(fileName);
 			m_imports.append(import);
 			
 			// If a readsource fails to init, the D&D should be
 			// marked as failed, cleanup allready created imports,
 			// and clear the import list.
             if (import->create_readsource() == -1) {
-				foreach(Import* import, m_imports) {
+                foreach(TAudioFileImportCommand* import, m_imports) {
 					delete import;
 				}
 				m_imports.clear();
@@ -133,7 +138,7 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 	CommandGroup* group = new CommandGroup(m_sw->get_sheet(), 
                tr("Import %n audiofile(s)", "", m_imports.size() + m_resourcesImport.size()));
 	
-	TimeRef startpos = TimeRef(mapFromGlobal(QCursor::pos()).x() * m_sw->get_sheetview()->timeref_scalefactor);
+	TTimeRef startpos = TTimeRef(mapFromGlobal(QCursor::pos()).x() * m_sw->get_sheetview()->timeref_scalefactor);
 	
 	foreach(qint64 id, m_resourcesImport) {
 		AudioClip* clip = resources_manager()->get_clip(id);
@@ -144,8 +149,8 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 			if (!hadSheet) {
 				clip->set_state(clip->get_dom_node());
 			}
-			clip->set_track_start_location(startpos);
-			startpos = clip->get_track_end_location();
+			clip->set_location_start(startpos);
+            startpos = clip->get_location()->get_end();
 			AddRemoveClip* arc = new AddRemoveClip(clip, AddRemoveClip::ADD);
 			group->add_command(arc);
 			continue;
@@ -156,19 +161,19 @@ void ClipsViewPort::dropEvent(QDropEvent* event )
 			resources_manager()->set_source_for_clip(clip, source);
 			clip->set_sheet(m_importTrack->get_sheet());
 			clip->set_track(m_importTrack);
-			clip->set_track_start_location(startpos);
-			startpos = clip->get_track_end_location();
+			clip->set_location_start(startpos);
+            startpos = clip->get_location()->get_end();
 			AddRemoveClip* arc = new AddRemoveClip(clip, AddRemoveClip::ADD);
 			group->add_command(arc);
 		}
 	}
 	
 	bool firstItem = true;
-	foreach(Import* import, m_imports) {
+    foreach(TAudioFileImportCommand* import, m_imports) {
 		import->set_track(m_importTrack);
 		if (firstItem) {
 			// Place first item at cursor, others at end of track.
-			import->set_position(startpos);
+			import->set_import_location(startpos);
 			firstItem = false;
 		}
 		group->add_command(import);

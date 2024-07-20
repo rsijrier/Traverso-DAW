@@ -23,46 +23,12 @@ $Id: AudioChannel.h,v 1.8 2008/11/24 21:11:04 r_sijrier Exp $
 #ifndef AUDIOCHANNEL_H
 #define AUDIOCHANNEL_H
 
+#include "TVUMonitor.h"
 #include "defines.h"
 #include <QString>
+#include <QObject>
 #include <QVarLengthArray>
-#include "Mixer.h"
-#include "RingBuffer.h"
-#include "APILinkedList.h"
-
-class RingBuffer;
-class AudioDevice;
-
-class VUMonitor : public APILinkedListNode
-{
-
-public:
-    VUMonitor() {
-        m_flag = 0;
-        m_peak = 0;
-    }
-    ~VUMonitor() {}
-
-    virtual bool is_smaller_then(APILinkedListNode* /*node*/);
-
-    void process(float peakValue) {
-        if (m_flag) {
-            m_peak = 0.0f;
-            m_flag = 0;
-        }
-
-        if (peakValue > m_peak) {
-            m_peak = peakValue;
-        }
-    }
-
-    audio_sample_t get_peak_value();
-    inline void set_read() {m_flag = 1;}
-
-private:
-    int    m_flag;
-    audio_sample_t m_peak;
-};
+#include "TRealTimeLinkedList.h"
 
 class AudioChannel : public QObject
 {
@@ -71,6 +37,11 @@ class AudioChannel : public QObject
 public:
     AudioChannel(const QString& name, uint channelNumber, int type, qint64 id=0);
     ~AudioChannel();
+
+    enum ChannelFlags {
+        ChannelIsInput = 1,
+        ChannelIsOutput = 2
+    };
 
     inline audio_sample_t* get_buffer(nframes_t nframes) {
         Q_ASSERT(int(nframes) <= m_buffer.size());
@@ -86,10 +57,10 @@ public:
 
     void set_buffer_size(nframes_t size);
     void set_monitoring(bool monitor);
-    void process_monitoring(VUMonitor* monitor=nullptr);
+    void process_monitoring(TVUMonitor* monitor=nullptr);
 
-    void add_monitor(VUMonitor* monitor);
-    void remove_monitor(VUMonitor* monitor);
+    void add_monitor(TVUMonitor* monitor);
+    void remove_monitor(TVUMonitor* monitor);
 
     QString get_name() const {return m_name;}
     uint get_number() const {return m_number;}
@@ -98,7 +69,7 @@ public:
     qint64 get_id() const {return m_id;}
 
 private:
-    APILinkedList           m_monitors;
+    TRealTimeLinkedList<TVUMonitor*>    m_monitors;
     QVarLengthArray<audio_sample_t>     m_buffer;
     uint 			m_bufferSize;
     uint 			m_latency;
@@ -119,8 +90,12 @@ private:
     void read_from_hardware_port(audio_sample_t* buf, nframes_t nframes);
 
 private slots:
-    void private_add_monitor(VUMonitor* monitor);
-    void private_remove_monitor(VUMonitor* monitor);
+    void private_add_monitor(TVUMonitor* monitor);
+    void private_remove_monitor(TVUMonitor* monitor);
+
+signals:
+    void vuMonitorAdded(TVUMonitor*);
+    void vuMonitorRemoved(TVUMonitor*);
 };
 
 #endif

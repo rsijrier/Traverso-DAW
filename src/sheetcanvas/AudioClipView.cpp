@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioClipView.h"
 #include "SheetView.h"
 #include "AudioTrackView.h"
-#include "TTrackLaneView.h"
 #include "FadeCurveView.h"
 #include "CurveView.h"
 
@@ -52,7 +51,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <cmath>
 #include "dialogs/AudioClipEditDialog.h"
 #include "Fade.h"
-#include "AudioDevice.h"
+
+#include "TTrackLaneView.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -72,7 +72,7 @@ AudioClipView::AudioClipView(SheetView* sv, AudioTrackView* parent, AudioClip* c
     m_sv = sv;
     m_sheet = m_clip->get_sheet();
 
-    load_theme_data();
+    AudioClipView::load_theme_data();
 
     m_waitingForPeaks = false;
     m_progress = 0;
@@ -95,8 +95,8 @@ AudioClipView::AudioClipView(SheetView* sv, AudioTrackView* parent, AudioClip* c
     connect(m_clip, SIGNAL(stateChanged()), this, SLOT(clip_state_changed()));
     connect(m_clip, SIGNAL(activeContextChanged()), this, SLOT(active_context_changed()));
     connect(m_clip, SIGNAL(lockChanged()), this, SLOT(repaint()));
-    connect(m_clip, SIGNAL(fadeAdded(FadeCurve*)), this, SLOT(add_new_fade_curve_view( FadeCurve*)));
-    connect(m_clip, SIGNAL(fadeRemoved(FadeCurve*)), this, SLOT(remove_fade_curve_view( FadeCurve*)));
+    connect(m_clip, SIGNAL(fadeAdded(FadeCurve*)), this, SLOT(add_new_fade_curve_view(FadeCurve*)));
+    connect(m_clip, SIGNAL(fadeRemoved(FadeCurve*)), this, SLOT(remove_fade_curve_view(FadeCurve*)));
     connect(m_clip, SIGNAL(positionChanged()), this, SLOT(position_changed()));
 
     if (m_clip->recording_state() == AudioClip::RECORDING) {
@@ -164,13 +164,8 @@ void AudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *opt
     if (m_clip->is_muted()) {
         m_waveBrush = m_brushFgMuted;
     } else {
-        if (m_sheet->get_mode() == Sheet::EDIT) {
-            if (mousehover) m_waveBrush = m_brushFgHover;
-            else            m_waveBrush = m_brushFg;
-        } else {
-            if (mousehover) m_waveBrush = m_brushFgEditHover;
-            else            m_waveBrush = m_brushFgEdit;
-        }
+        if (mousehover) m_waveBrush = m_brushFgHover;
+        else            m_waveBrush = m_brushFg;
     }
 
     int channels = m_clip->get_channel_count();
@@ -204,8 +199,8 @@ void AudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *opt
     }
 
     // Draw the contour
-    painter->setPen(themer()->get_color("AudioClip:contour"));
-    painter->drawRect(m_boundingRect.adjusted(0, 0, -1.5, -1));
+    // painter->setPen(themer()->get_color("AudioClip:contour"));
+    // painter->drawRect(m_boundingRect.adjusted(0, 0, -1.5, -1));
 
     // Paint a pixmap if the clip is locked
     if (m_clip->is_locked()) {
@@ -236,7 +231,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
     }
 
     bool microView = m_sheet->get_hzoom() < 64 ? true : false;
-    TimeRef clipstartoffset = m_clip->get_source_start_location();
+    TTimeRef clipstartoffset = m_clip->get_source_start_location();
     uint channels = m_clip->get_channel_count();
     int peakdatacount = microView ? pixelcount : pixelcount * 2;
     // FIXME: make it so it supports any channel count
@@ -301,12 +296,12 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
 
     // Load peak data, mix curvedata and start painting it
     // if no peakdata is returned for a certain Peak object, schedule it for loading.
-    for (int chan=0; chan < channels; ++chan) {
+    for (uint chan=0; chan < channels; ++chan) {
 
         int availpeaks = peak->calculate_peaks(
                     chan,
                     &pixeldata[chan],
-                    TimeRef(xstart * m_sv->timeref_scalefactor) + clipstartoffset,
+            TTimeRef(xstart * m_sv->timeref_scalefactor) + clipstartoffset,
                     peakdatacount,
                     m_sheet->get_hzoom());
 
@@ -390,7 +385,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
             }
 
             ytrans = height * chan;
-            p->setMatrix(matrix().translate(xstart, ytrans), true);
+            p->translate(xstart, ytrans);
             p->drawLine(0, 0, pixelcount, 0);
             p->restore();
         }
@@ -411,7 +406,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
                 ytrans = (height / 2) + (chan * height);
             }
 
-            p->setMatrix(matrix().translate(xstart, ytrans), true);
+            p->translate(xstart, ytrans);
 
             if (m_clip->is_selected()) {
                 p->setPen(themer()->get_color("AudioClip:channelseperator:selected"));
@@ -470,7 +465,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
                     ytrans = (height / 2) + (chan * height);
                 }
 
-                p->setMatrix(matrix().translate(xstart, ytrans), true);
+                p->translate(xstart, ytrans);
 
                 m_polygon.clear();
                 m_polygon.reserve(pixelcount*2);
@@ -504,7 +499,7 @@ void AudioClipView::draw_peaks(QPainter* p, qreal xstart, int pixelcount)
                     scaleFactor *= channels;
                 }
 
-                p->setMatrix(matrix().translate(xstart, ytrans), true);
+                p->translate(xstart, ytrans);
 
                 m_polygon.clear();
                 m_polygon.reserve(pixelcount + 2);
@@ -531,8 +526,8 @@ void AudioClipView::draw_clipinfo_area(QPainter* p, double xstart)
         return;
     }
 
-    int margin = 6;
-    p->drawPixmap(margin, m_height - m_clipInfo.height() - margin, m_clipInfo);
+    int margin = 3;
+    p->drawPixmap(margin, /*m_height - m_clipInfo.height() -*/ margin, m_clipInfo);
 }
 
 
@@ -558,7 +553,7 @@ void AudioClipView::draw_db_lines(QPainter* p, qreal xstart, int pixelcount)
     if (m_classicView || microView) { // classicView = non-rectified
 
         // translate the painter to set the first channel center line to 0
-        p->setMatrix(matrix().translate(0, height / 2), true);
+        p->translate(0, height / 2);
 
         // determine the distance of the db line from the center line
         int zeroDb = 0.9 * height / 2;
@@ -580,12 +575,12 @@ void AudioClipView::draw_db_lines(QPainter* p, qreal xstart, int pixelcount)
             }
 
 
-            p->setMatrix(matrix().translate(0, height), true);
+//            p->translate(0, height);
         }
     } else {  // rectified
 
         // translate the painter to set the first channel base line to 0
-        p->setMatrix(matrix().translate(0, height), true);
+        p->translate(0, height);
 
         // determine the distance of the db line from the center line
         int zeroDb = 0.95 * height;
@@ -602,7 +597,7 @@ void AudioClipView::draw_db_lines(QPainter* p, qreal xstart, int pixelcount)
                 p->drawText(0.0, -msixDb + m_lineVOffset, " -6 dB");
             }
 
-            p->setMatrix(matrix().translate(0, height), true);
+//            p->translate(0, height);
         }
     }
 
@@ -735,7 +730,7 @@ void AudioClipView::repaint( )
 void AudioClipView::update_start_pos()
 {
     // 	printf("AudioClipView::update_start_pos()\n");
-    setPos((double(m_clip->get_track_start_location().universal_frame()) / m_sv->timeref_scalefactor), 0);
+    setPos((double(m_clip->get_location()->get_start().universal_frame()) / m_sv->timeref_scalefactor), 0);
 }
 
 TCommand * AudioClipView::fade_range()
@@ -799,11 +794,11 @@ void AudioClipView::load_theme_data()
     minINFLineColor = themer()->get_color("AudioClip:channelseperator");
     m_paintWithOutline = config().get_property("Themer", "paintwavewithoutline", true).toBool();
     m_drawDbGrid = config().get_property("Themer", "drawdbgrid", false).toBool();
-    calculate_bounding_rect();
+    AudioClipView::calculate_bounding_rect();
 
     QFont dblfont = themer()->get_font("AudioClip:fontscale:dblines");
     QFontMetrics fm(dblfont);
-    m_lineOffset = fm.width(" -6 dB ");
+    m_lineOffset = fm.horizontalAdvance(" -6 dB ");
     m_lineVOffset = fm.ascent()/2;
 
     create_brushes();
@@ -844,7 +839,7 @@ TCommand * AudioClipView::select_fade_out_shape( )
 
 void AudioClipView::start_recording()
 {
-    m_oldRecordingPos = TimeRef();
+    m_oldRecordingPos = TTimeRef();
     connect(&m_recordingTimer, SIGNAL(timeout()), this, SLOT(update_recording()));
     m_recordingTimer.start(750);
 }
@@ -864,7 +859,7 @@ void AudioClipView::update_recording()
         return;
     }
 
-    TimeRef newPos = m_clip->get_length();
+    TTimeRef newPos = m_clip->get_length();
     m_boundingRect = QRectF(0, 0, (newPos / m_sv->timeref_scalefactor), m_height);
 
     int updatewidth = int((newPos - m_oldRecordingPos) / m_sv->timeref_scalefactor);

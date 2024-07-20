@@ -29,7 +29,7 @@
 #include "ViewPort.h"
 
 class SheetWidget;
-class Import;
+class TAudioFileImportCommand;
 		
 class ClipsViewPort : public ViewPort
 {
@@ -49,7 +49,7 @@ protected:
 
 private:
 	SheetWidget*	m_sw;
-	QList<Import*>	m_imports;
+	QList<TAudioFileImportCommand*>	m_imports;
 	QList<qint64 >	m_resourcesImport;
 	AudioTrack*     m_importTrack{};
 };

@@ -23,7 +23,7 @@
 #define MOVECURVENODE_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 #include <QRectF>
 
 class CurveView;
@@ -41,8 +41,8 @@ public:
                   QList<CurveNode*> nodes,
                   float height,
                   qint64 scalefactor,
-                  TimeRef minWhenDiff,
-                  TimeRef maxWhenDiff,
+                  TTimeRef minWhenDiff,
+                  TTimeRef maxWhenDiff,
                   double	minValueDiff,
                   double	maxValueDiff,
                   const QString& des);
@@ -72,8 +72,8 @@ private :
         float		height;
         double		maxValueDiff;
         double		minValueDiff;
-        TimeRef		maxWhenDiff;
-        TimeRef		minWhenDiff;
+        TTimeRef		maxWhenDiff;
+        TTimeRef		minWhenDiff;
     };
 
     MoveCurveNode::MoveCurveNodeData* mcnd;
@@ -85,7 +85,7 @@ private :
     };
 
     double	m_valueDiff;
-    TimeRef	m_whenDiff;
+    TTimeRef	m_whenDiff;
 
     QList<CurveNodeData> m_nodeDatas;
 

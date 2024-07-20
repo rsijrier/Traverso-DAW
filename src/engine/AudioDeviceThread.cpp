@@ -76,10 +76,10 @@ protected:
 	}
 };
 
-AudioDeviceThread::AudioDeviceThread(AudioDevice* device)
+AudioDeviceThread::AudioDeviceThread(AudioDevice* device, bool realTime)
 {
 	m_device = device;
-	m_realTime = true;
+    m_realTime = realTime;
 	setTerminationEnabled(true);
 
 	watchdogCheck = 1;
@@ -88,13 +88,15 @@ AudioDeviceThread::AudioDeviceThread(AudioDevice* device)
 
 void AudioDeviceThread::run()
 {
-	run_on_cpu( 0 );
+    run_on_cpu( 0 );
 
 	
 	WatchDogThread watchdog(this);
 	watchdog.start();
 
-	become_realtime(m_realTime);
+    if (m_realTime) {
+        become_realtime();
+    }
 	
 	if (m_device->m_driver->start() < 0) {
 		watchdog.terminate();
@@ -114,28 +116,30 @@ void AudioDeviceThread::run()
 	watchdog.wait();
 }
 
-
-int AudioDeviceThread::become_realtime( bool realtime )
+void AudioDeviceThread::set_real_time(bool realTime)
 {
-	m_realTime = realtime;
+    m_realTime = realTime;
+}
+
+
+int AudioDeviceThread::become_realtime()
+{
 #if defined (Q_OS_UNIX) || defined (Q_OS_MAC)
 
 	/* RTC stuff */
-	if (realtime) {
-		struct sched_param param;
-		param.sched_priority = 70;
-		if (pthread_setschedparam (pthread_self(), SCHED_FIFO, &param) != 0) {
-			m_device->message(tr("Unable to set Audiodevice Thread to realtime priority!!!"
-				"This most likely results in unreliable playback/capture and "
-				"lots of buffer underruns (== sound drops)."
-				"In the worst case the program can even malfunction!"
-				"Please make sure you run this program with realtime privileges!!!"), AudioDevice::CRITICAL);
-			return -1;
-		} else {
-			printf("AudioThread: Running with realtime priority\n");
-			return 1;
-		}
-	}
+    struct sched_param param;
+    param.sched_priority = 70;
+    if (pthread_setschedparam (pthread_self(), SCHED_FIFO, &param) != 0) {
+        m_device->message(tr("Unable to set Audiodevice Thread to realtime priority!!!"
+            "This most likely results in unreliable playback/capture and "
+            "lots of buffer underruns (== sound drops)."
+            "In the worst case the program can even malfunction!"
+            "Please make sure you run this program with realtime privileges!!!"), AudioDevice::CRITICAL);
+        return -1;
+    } else {
+        printf("AudioThread: Running with realtime priority\n");
+        return 1;
+    }
 
 #endif
 
@@ -169,4 +173,5 @@ void AudioDeviceThread::run_on_cpu( int cpu )
 	}
 #endif
 }
+
 

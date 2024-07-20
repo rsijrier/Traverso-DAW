@@ -74,8 +74,8 @@ int AudioClipExternalProcessing::finish_hold()
 int AudioClipExternalProcessing::do_action()
 {
 	PENTER;
-        // Remove has to be done BEFORE adding, else the APILinkedList logic
-        // gets messed up for the Tracks AudioClipList, which is an APILinkedList :(
+        // Remove has to be done BEFORE adding, else the TRealTimeLinkedList logic
+        // gets messed up for the Tracks AudioClipList, which is an TRealTimeLinkedList :(
 	TCommand::process_command(m_track->remove_clip(m_clip, false));
 	TCommand::process_command(m_track->add_clip(m_resultingclip, false));
 	
@@ -85,8 +85,8 @@ int AudioClipExternalProcessing::do_action()
 int AudioClipExternalProcessing::undo_action()
 {
 	PENTER;
-        // Remove has to be done BEFORE adding, else the APILinkedList logic
-        // gets messed up for the Tracks AudioClipList, which is an APILinkedList :(
+        // Remove has to be done BEFORE adding, else the TRealTimeLinkedList logic
+        // gets messed up for the Tracks AudioClipList, which is an TRealTimeLinkedList :(
 	TCommand::process_command(m_track->remove_clip(m_resultingclip, false));
 	TCommand::process_command(m_track->add_clip(m_clip, false));
 	return 1;

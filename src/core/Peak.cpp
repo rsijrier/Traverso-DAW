@@ -19,13 +19,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 */
 
-#include "libtraversocore.h"
-
 #include "Peak.h"
 
 #include "AbstractAudioReader.h" // Needed for DecodeBuffer declaration
+#include "Project.h"
+#include "ProjectManager.h"
 #include "ReadSource.h"
 #include "ResourcesManager.h"
+#include "Utils.h"
 #include "defines.h"
 #include "Mixer.h"
 #include "FileHelpers.h"
@@ -47,6 +48,8 @@ int Peak::zoomStep[] = {
 };
 
 QHash<int, int> Peak::chacheIndexLut;
+
+typedef short peak_data_t;
 
 Peak::Peak(AudioSource* source)
 {
@@ -209,7 +212,7 @@ void Peak::start_peak_loading()
 int Peak::calculate_peaks(
         int chan,
         float ** buffer,
-        TimeRef startlocation,
+        const TTimeRef &startlocation,
         int peakDataCount,
         qreal framesPerPeak)
 {
@@ -243,7 +246,7 @@ int Peak::calculate_peaks(
         }
 
 
-        nframes_t startPos = startlocation.to_frame(44100);
+        nframes_t startPos = TTimeRef::to_frame(startlocation, 44100);
 
         int index = cache_index_lut()->value(nearestpow2, -1);
         if(index >= 0) {
@@ -257,7 +260,7 @@ int Peak::calculate_peaks(
         if ( (peakDataCount + offset) > data->headerdata.peakDataSizeForLevel[index]) {
             truncate = peakDataCount - (data->headerdata.peakDataSizeForLevel[index] - offset);
             //FIXME: nothing done here?
-            //            qDebug("Peak::calculate_peaks truncate: %d", truncate);
+                       qDebug("Peak::calculate_peaks truncate: %d", truncate);
             //            peakDataCount = data->headerdata.peakDataSizeForLevel[index] - offset;
         }
 
@@ -309,8 +312,8 @@ int Peak::calculate_peaks(
     // the stepSize depends on the real file sample rate, Peak assumes 44100 Hz
     // so if the file sample rate differs, the stepSize becomes the ratio of
     // the file sample rate and 44100
-    pd.stepSize = TimeRef(qreal(44100) / m_source->get_file_rate(), m_source->get_file_rate());
-    pd.processRange = TimeRef(framesPerPeak, m_source->get_file_rate());
+    pd.stepSize = TTimeRef(qreal(44100) / m_source->get_file_rate(), m_source->get_file_rate());
+    pd.processRange = TTimeRef(framesPerPeak, m_source->get_file_rate());
 
     for (uint i=0; i < readFrames; i++) {
 
@@ -395,8 +398,8 @@ int Peak::prepare_processing(uint rate)
         data->file.seek(data->headerdata.headerSize);
 
         data->pd = new Peak::ProcessData;
-        data->pd->stepSize = TimeRef(nframes_t(1), rate);
-        data->pd->processRange = TimeRef(nframes_t(64), 44100);
+        data->pd->stepSize = TTimeRef(nframes_t(1), rate);
+        data->pd->processRange = TTimeRef(nframes_t(64), 44100);
     }
 
 
@@ -590,7 +593,7 @@ int Peak::create_from_scratch()
 
     int progression = 0;
 
-    if (m_source->get_length() == TimeRef()) {
+    if (m_source->get_length() == TTimeRef()) {
         qWarning("Peak::create_from_scratch() : m_source (%s) has length 0", m_source->get_name().toLatin1().data());
         return ret;
     }
@@ -649,7 +652,7 @@ out:
 }
 
 
-audio_sample_t Peak::get_max_amplitude(TimeRef startlocation, TimeRef endlocation)
+audio_sample_t Peak::get_max_amplitude(const TTimeRef &startlocation, const TTimeRef &endlocation)
 {
     foreach(ChannelData* data, m_channelData) {
         if (!data->file.isOpen() || !m_peaksAvailable) {
@@ -658,8 +661,8 @@ audio_sample_t Peak::get_max_amplitude(TimeRef startlocation, TimeRef endlocatio
         }
     }
     int rate = m_source->get_file_rate();
-    nframes_t startframe = startlocation.to_frame(rate);
-    nframes_t endframe = endlocation.to_frame(rate);
+    nframes_t startframe = TTimeRef::to_frame(startlocation, rate);
+    nframes_t endframe = TTimeRef::to_frame(endlocation, rate);
     int startpos = startframe / NORMALIZE_CHUNK_SIZE;
     uint count = (endframe / NORMALIZE_CHUNK_SIZE) - startpos;
 

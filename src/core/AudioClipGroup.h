@@ -22,23 +22,22 @@
 #ifndef AUDIO_CLIP_GROUP_H
 #define AUDIO_CLIP_GROUP_H
 
-#include "defines.h"
 
 #include "AudioClip.h"
 
 class AudioClipGroup
 {
 public:
-        AudioClipGroup(){}
+    AudioClipGroup();
 	AudioClipGroup(QList<AudioClip*> clips);
 	
 	void add_clip(AudioClip* clip);
 	void set_clips(QList<AudioClip*> clips);
-	void move_to(int trackIndex, TimeRef location);
+	void move_to(int trackIndex, TTimeRef location);
 	
 	void set_snappable(bool snap);
 	void set_as_moving(bool move);
-	void check_valid_track_index_delta(int& delta);
+    int check_valid_track_index_delta(int delta);
 	
 	QList<AudioClip*> copy_clips();
 	void add_all_clips_to_tracks();
@@ -46,17 +45,14 @@ public:
 	
 	int get_size() const {return m_clips.size();}
 	int get_track_index() const {return m_topTrackIndex;}
+    TLocation* get_location() const {return m_location;}
 	
 	bool is_locked() const;
-	
-	TimeRef get_track_start_location() const {return m_trackStartLocation;}
-	TimeRef get_track_end_location() const {return m_trackEndLocation;}
-	TimeRef get_length() const {return m_trackEndLocation - m_trackStartLocation;}
-	
+		
 private:
 	QList<AudioClip*> m_clips;
-	TimeRef m_trackEndLocation;
-	TimeRef m_trackStartLocation;
+    TLocation*        m_location;
+
 	int	m_topTrackIndex;
 	int	m_bottomTrackIndex;
 	

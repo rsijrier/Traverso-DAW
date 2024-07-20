@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #ifndef ABSTRACTAUDIOREADER_H
 #define ABSTRACTAUDIOREADER_H
 
+#include "TTimeRef.h"
 #include "defines.h"
 
 #include <QString>
@@ -44,13 +45,9 @@ public:
 
 private:
 	uint m_channels;
-	uint m_smallerReadCounter;
-	quint64 m_totalCheckSize;
-	uint m_bufferSizeCheckCounter;
 	
 	void delete_destination_buffers();
 	void delete_readbuffer();
-	void delete_resample_buffers();
 
 };
 
@@ -62,8 +59,8 @@ public:
 	virtual ~AbstractAudioReader();
 	
     uint get_num_channels();
-	const TimeRef& get_length() const {return m_length;}
-	nframes_t get_nframes() const {return m_nframes;}
+    TTimeRef get_length() const {return m_length;}
+    nframes_t get_nframes() const {return m_fileFrames;}
     uint get_file_rate();
 	bool eof();
 	nframes_t pos();
@@ -72,11 +69,11 @@ public:
 	bool seek(nframes_t start);
 	nframes_t read(DecodeBuffer* buffer, nframes_t frameCount);
 	
-	bool is_valid() {return (m_channels > 0 && m_nframes > 0);}
+    bool is_valid() {return (m_channels > 0 && m_fileFrames > 0);}
 	virtual QString decoder_type() const = 0;
 	virtual void clear_buffers() {}
 	
-	static AbstractAudioReader* create_audio_reader(const QString& filename, const QString& decoder = 0);
+    static AbstractAudioReader* create_audio_reader(const QString& filename);
 	
 protected:
 	virtual bool seek_private(nframes_t start) = 0;
@@ -86,9 +83,9 @@ protected:
 
 	nframes_t	m_readPos;
     uint		m_channels;
-	TimeRef		m_length;
-	nframes_t	m_nframes;
-    uint		m_rate;
+    TTimeRef	m_length;
+    nframes_t	m_fileFrames;
+    uint		m_fileSampleRate;
 };
 
 #endif

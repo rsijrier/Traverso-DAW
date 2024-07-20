@@ -167,18 +167,18 @@ void TCommand::set_valid(bool valid)
 	m_isValid = valid;
 }
 
-// Internal function, not to be used outside of InputEngine
+// Internal function, not to be used outside of TInputEventDispatcher
 int TCommand::push_to_history_stack( )
 {
-	PENTER3;
+    PENTER3;
 	
 	if (! m_isValid) {
-		PMESG3("This command is invalid, deleting the command");
+        PMESG3("This command is invalid, deleting the command");
 		return -1;
 	}
 	
 	if (! m_historyStack) {
-		PMESG3("This command has no HistoryStack, deleting the command");
+        PMESG3("This command has no HistoryStack, deleting the command");
 		return -1;
 	}
 		
@@ -284,8 +284,8 @@ void TCommand::set_cursor_shape( int useX, int useY )
 void TCommand::process_command(TCommand * cmd)
 {
 	Q_ASSERT(cmd);
-	
-	if (cmd->prepare_actions() != -1) {
+
+    if (cmd->prepare_actions() != -1) {
 		cmd->set_valid(true);
 		if (cmd->push_to_history_stack() < 0) {
 			// QUndoStack calls redo() for us, now it's not

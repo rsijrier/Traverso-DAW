@@ -44,56 +44,37 @@ class ContextItem : public QObject
 {
     Q_OBJECT
 public:
-    ContextItem(QObject* parent)
-        : QObject(parent)
-        , m_hs(nullptr)
-        , m_ignoreContext(false)
-        , m_contextItem(nullptr)
-        , m_hasActiveContext(false)
-    {}
+    ContextItem(ContextItem* parent=nullptr);
+    virtual ~ContextItem();
 
-    ContextItem()
-        : ContextItem(nullptr)
-    {}
+    ContextItem* get_related_context_item() const {return m_relatedContextItem;}
 
-    virtual ~ContextItem() {
-        if (m_hasActiveContext) {
-            cpointer().about_to_delete(this);
-        }
-    }
+    QUndoStack* get_history_stack() const;
+    void set_history_stack(QUndoStack* stack);
+    static QUndoGroup* get_undogroup();
 
-    ContextItem* get_context() const {return m_contextItem;}
+    qint64 get_id();
 
-    QUndoStack* get_history_stack() const {return m_hs;}
-    qint64 get_id() const {return m_id;}
+    void set_core_context_item(ContextItem* item) {m_relatedContextItem = item;}
+    void set_has_active_context(bool context);
+    void set_ignore_context(bool ignoreContext);
+    void set_id(qint64 id);
 
-    void set_history_stack(QUndoStack* hs) {m_hs = hs;}
-    void set_context_item(ContextItem* item) {m_contextItem = item;}
-    void set_has_active_context(bool context) {
-        if (context == m_hasActiveContext) {
-            return;
-        }
-
-        m_hasActiveContext = context;
-
-        if (m_contextItem) {
-            m_contextItem->set_has_active_context(context);
-        }
-
-        emit activeContextChanged();
-    }
     bool has_active_context() const {return m_hasActiveContext;}
-    bool ignore_context() const {return m_ignoreContext;}
+    bool item_ignores_context() const {return m_ignoreContext;}
+
+    void create_history_stack();
 
 
 protected:
-    QUndoStack*     m_hs;
-    qint64          m_id;
-    bool            m_ignoreContext;
 
 private:
-    QPointer<ContextItem>    m_contextItem;
-    bool                     m_hasActiveContext;
+    QUndoStack*             m_historyStack;
+    qint64                  m_id;
+    QPointer<ContextItem>   m_parentContextItem;
+    QPointer<ContextItem>   m_relatedContextItem;
+    bool                    m_hasActiveContext;
+    bool                    m_ignoreContext;
 
 signals:
     void activeContextChanged();

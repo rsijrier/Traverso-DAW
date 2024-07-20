@@ -26,7 +26,7 @@
 #include "SnapList.h"
 #include "Sheet.h"
 #include "SheetView.h"
-#include "TimeLine.h"
+#include "TTimeLineRuler.h"
 #include "TInputEventDispatcher.h"
 
 
@@ -48,8 +48,8 @@ int MoveMarker::prepare_actions()
 
 int MoveMarker::begin_hold()
 {
-	m_origWhen = m_newWhen = m_marker->get_when();
-    m_marker->set_snappable(false);
+    m_origLocation = m_newLocation = m_marker->get_when();
+    m_marker->get_location()->set_snappable(false);
     mmd->view->set_dragging(true);
 	return 1;
 }
@@ -65,16 +65,16 @@ int MoveMarker::finish_hold()
 
 int MoveMarker::do_action()
 {
-	m_marker->set_when(m_newWhen);
-	m_marker->set_snappable(true);
+    m_marker->set_when(m_newLocation);
+    m_marker->get_location()->set_snappable(true);
 	return 1;
 }
 
 int MoveMarker::undo_action()
 {
 	PENTER;
-	m_marker->set_when(m_origWhen);
-	m_marker->set_snappable(true);
+    m_marker->set_when(m_origLocation);
+    m_marker->get_location()->set_snappable(true);
 	return 1;
 }
 
@@ -92,12 +92,12 @@ void MoveMarker::move_left()
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	// Move 1 pixel to the left
-    TimeRef newpos = TimeRef(m_newWhen - (mmd->scalefactor * d->speed));
-	if (newpos < TimeRef()) {
-		newpos = TimeRef();
+    TTimeRef newpos = TTimeRef(m_newLocation - (mmd->scalefactor * d->speed));
+	if (newpos < TTimeRef()) {
+		newpos = TTimeRef();
 	}
-	m_newWhen = newpos;
-	m_marker->set_when(m_newWhen);
+    m_newLocation = newpos;
+    m_marker->set_when(m_newLocation);
 }
 
 void MoveMarker::move_right()
@@ -108,8 +108,8 @@ void MoveMarker::move_right()
 
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	// Move 1 pixel to the right
-    m_newWhen = m_newWhen + (mmd->scalefactor * d->speed);
-	m_marker->set_when(m_newWhen);
+    m_newLocation = m_newLocation + (mmd->scalefactor * d->speed);
+    m_marker->set_when(m_newLocation);
 }
 
 void MoveMarker::next_snap_pos()
@@ -117,8 +117,8 @@ void MoveMarker::next_snap_pos()
 	
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
-	m_newWhen = slist->next_snap_pos(m_newWhen);
-	m_marker->set_when(m_newWhen);
+    m_newLocation = slist->next_snap_pos(m_newLocation);
+    m_marker->set_when(m_newLocation);
 }
 
 void MoveMarker::prev_snap_pos()
@@ -126,14 +126,14 @@ void MoveMarker::prev_snap_pos()
 	
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 	SnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
-	m_newWhen = slist->prev_snap_pos(m_newWhen);
-	m_marker->set_when(m_newWhen);
+    m_newLocation = slist->prev_snap_pos(m_newLocation);
+    m_marker->set_when(m_newLocation);
 }
 
 
 int MoveMarker::jog()
 {
-    TimeRef newpos = TimeRef(cpointer().scene_x() * mmd->scalefactor);
+    TTimeRef newpos = TTimeRef(cpointer().scene_x() * mmd->scalefactor);
 
     bool didSnap = false;
 
@@ -142,12 +142,12 @@ int MoveMarker::jog()
         newpos = slist->get_snap_value(newpos, didSnap);
 	}
 
-	if (newpos < TimeRef()) {
-		newpos = TimeRef();
+	if (newpos < TTimeRef()) {
+		newpos = TTimeRef();
 	}
 
-	m_newWhen = newpos;
-	m_marker->set_when(m_newWhen);
+    m_newLocation = newpos;
+    m_marker->set_when(m_newLocation);
     if (didSnap) {
         QPointF scenePos = cpointer().scene_pos();
         scenePos.setX(mmd->view->x());

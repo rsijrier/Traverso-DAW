@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Sheet.h"
 #include "ProjectManager.h"
 #include "Project.h"
+#include "TAudioBusConfiguration.h"
 #include "Utils.h"
 #include "TBusTrack.h"
 #include "TSend.h"
@@ -47,7 +48,7 @@ Track::Track(TSession* session)
         m_channelCount = 2;
 
         for (int i=0; i<2; ++i) {
-                m_vumonitors.append(new VUMonitor());
+                m_vumonitors.append(new TVUMonitor());
         }
 
         Project* project = pm().get_project();
@@ -69,7 +70,7 @@ Track::~Track()
 void Track::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
 {
         if (! istemplate ) {
-                node.setAttribute("id", m_id);
+        node.setAttribute("id", get_id());
         } else {
                 node.setAttribute("id", create_id());
         }
@@ -80,7 +81,7 @@ void Track::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
         node.setAttribute("mutedbysolo", m_mutedBySolo);
 	node.setAttribute("showtrackvolumeautomation", m_showTrackVolumeAutomation);
 	node.setAttribute("sortindex", m_sortIndex);
-        node.setAttribute("height", m_session->get_track_height(m_id));
+    node.setAttribute("height", m_session->get_track_height(get_id()));
 
         QDomNode pluginChainNode = doc.createElement("PluginChain");
         pluginChainNode.appendChild(m_pluginChain->get_state(node.toDocument()));
@@ -88,10 +89,10 @@ void Track::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
 
         QDomNode sendsNode = doc.createElement("Sends");
 
-        apill_foreach(TSend* send, TSend*, m_postSends) {
+        for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
             sendsNode.appendChild(send->get_state(node.toDocument()));
         }
-        apill_foreach(TSend* send, TSend*, m_preSends) {
+        for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
                 sendsNode.appendChild(send->get_state(node.toDocument()));
         }
 
@@ -114,12 +115,8 @@ int Track::set_state( const QDomNode & node )
         set_solo(e.attribute( "solo", "" ).toInt());
         set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
         set_pan( e.attribute( "pan", "" ).toFloat() );
-        m_id = e.attribute("id", "0").toLongLong();
-        if (m_id == 0) {
-                m_id = create_id();
-        }
-
-        m_session->set_track_height(m_id, e.attribute( "height", "90" ).toInt());
+        set_id(e.attribute("id", "0").toLongLong());
+        m_session->set_track_height(get_id(), e.attribute( "height", "90" ).toInt());
 
         QDomNode m_pluginChainNode = node.firstChildElement("PluginChain");
         if (!m_pluginChainNode.isNull()) {
@@ -253,7 +250,7 @@ int Track::get_sort_index( ) const
 void Track::add_input_bus(AudioBus *bus)
 {
         if (m_session && m_session->is_transport_rolling()) {
-                THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, bus, private_add_input_bus(AudioBus*), routingConfigurationChanged())
+        tsar().add_gui_event(this, bus, "private_add_input_bus(AudioBus*)", "routingConfigurationChanged()");
         } else {
                 private_add_input_bus(bus);
                 emit routingConfigurationChanged();
@@ -263,7 +260,7 @@ void Track::add_input_bus(AudioBus *bus)
 void Track::remove_input_bus(AudioBus *bus)
 {
         if (m_session && m_session->is_transport_rolling()) {
-                THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, bus, private_remove_input_bus(AudioBus*), routingConfigurationChanged())
+        tsar().add_gui_event(this, bus, "private_remove_input_bus(AudioBus*)", "routingConfigurationChanged()");
         } else {
                 private_remove_input_bus(bus);
                 emit routingConfigurationChanged();
@@ -279,22 +276,23 @@ void Track::add_input_bus(qint64 busId)
 
 void Track::add_post_send(qint64 busId)
 {
-        apill_foreach(TSend* send, TSend*, m_postSends) {
-                if (send->get_bus_id() == busId) {
-                        printf("Track %s already has this bus (bus id: %lld) as Post Send\n", m_name.toLatin1().data(), busId);
-                        return;
-                }
+    for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+
+        if (send->get_bus_id() == busId) {
+            printf("Track %s already has this bus (bus id: %lld) as Post Send\n", m_name.toLatin1().data(), busId);
+            return;
         }
+    }
 
-        Project* project = pm().get_project();
-        AudioBus* bus = project->get_audio_bus(busId);
+    Project* project = pm().get_project();
+    AudioBus* bus = project->get_audio_bus(busId);
 
-        if (!bus) {
-                printf("bus with id %lld could not be found by project!\n", busId);
-                return;
-        }
+    if (!bus) {
+        printf("bus with id %lld could not be found by project!\n", busId);
+        return;
+    }
 
-        add_post_send(bus);
+    add_post_send(bus);
 }
 
 void Track::add_post_send(AudioBus *bus)
@@ -303,62 +301,64 @@ void Track::add_post_send(AudioBus *bus)
     postSend->set_type(TSend::POSTSEND);
 
     if (!m_session || (m_session && m_session->is_transport_rolling())) {
-            THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, postSend, private_add_post_send(TSend*), routingConfigurationChanged())
+        tsar().add_gui_event(this, postSend, "private_add_post_send(TSend*)", "routingConfigurationChanged()");
     } else {
-            private_add_post_send(postSend);
-            emit routingConfigurationChanged();
+        private_add_post_send(postSend);
+        emit routingConfigurationChanged();
     }
 }
 
 
 void Track::add_pre_send(qint64 busId)
 {
-        apill_foreach(TSend* send, TSend*, m_preSends) {
-                if (send->get_bus_id() == busId) {
-                        printf("Track %s already has this bus (bus id: %lld) as Pre Send\n", m_name.toLatin1().data(), busId);
-                        return;
-                }
+    for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
+        if (send->get_bus_id() == busId) {
+            printf("Track %s already has this bus (bus id: %lld) as Pre Send\n", m_name.toLatin1().data(), busId);
+            return;
         }
+    }
 
-        Project* project = pm().get_project();
-        AudioBus* bus = project->get_audio_bus(busId);
+    Project* project = pm().get_project();
+    AudioBus* bus = project->get_audio_bus(busId);
 
-        if (!bus) {
-                printf("bus with id %lld could not be found by project!\n", busId);
-                return;
-        }
+    if (!bus) {
+        printf("bus with id %lld could not be found by project!\n", busId);
+        return;
+    }
 
-        TSend* preSend = new TSend(this, bus);
-        preSend->set_type(TSend::PRESEND);
+    TSend* preSend = new TSend(this, bus);
+    preSend->set_type(TSend::PRESEND);
 
-        if (!m_session || (m_session && m_session->is_transport_rolling())) {
-                THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, preSend, private_add_pre_send(TSend*), routingConfigurationChanged())
-        } else {
-                private_add_pre_send(preSend);
-                emit routingConfigurationChanged();
-        }
+    if (!m_session || (m_session && m_session->is_transport_rolling())) {
+        tsar().add_gui_event(this, preSend, "private_add_pre_send(TSend*)", "routingConfigurationChanged()");
+    } else {
+        private_add_pre_send(preSend);
+        emit routingConfigurationChanged();
+    }
 }
 
 void Track::remove_post_sends(QList<qint64> sendIds)
 {
-        QList<TSend*> sendsToBeRemoved;
-        foreach(qint64 id, sendIds) {
-                apill_foreach(TSend* send, TSend*, m_postSends) {
-                        if (send->get_id() == id) {
-                                sendsToBeRemoved.append(send);
-                        }
-                }
-        }
+    QList<TSend*> sendsToBeRemoved;
 
-        foreach(TSend* send, sendsToBeRemoved) {
-            remove_post_send(send);
+    for(qint64 id : sendIds)
+    {
+        for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+            if (send->get_id() == id) {
+                sendsToBeRemoved.append(send);
+            }
         }
+    }
+
+    for(TSend* send : sendsToBeRemoved) {
+        remove_post_send(send);
+    }
 }
 
 void Track::remove_post_send(TSend *send)
 {
     if (!m_session || (m_session && m_session->is_transport_rolling())) {
-        THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, send, private_remove_post_send(TSend*), routingConfigurationChanged())
+        tsar().add_gui_event(this, send, "private_remove_post_send(TSend*)", "routingConfigurationChanged()");
     } else {
         private_remove_post_send(send);
         emit routingConfigurationChanged();
@@ -367,30 +367,31 @@ void Track::remove_post_send(TSend *send)
 
 void Track::remove_all_post_sends()
 {
-    apill_foreach(TSend* send, TSend*, m_postSends) {
+    for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
         remove_post_send(send);
     }
 }
 
 void Track::remove_pre_sends(QList<qint64> sendIds)
 {
-        QList<TSend*> sendsToBeRemoved;
-        foreach(qint64 id, sendIds) {
-                apill_foreach(TSend* send, TSend*, m_preSends) {
-                        if (send->get_id() == id) {
-                                sendsToBeRemoved.append(send);
-                        }
-                }
-        }
+    QList<TSend*> sendsToBeRemoved;
 
-        foreach(TSend* send, sendsToBeRemoved) {
-                if (!m_session || (m_session && m_session->is_transport_rolling())) {
-                        THREAD_SAVE_INVOKE_AND_EMIT_SIGNAL(this, send, private_remove_pre_send(TSend*), routingConfigurationChanged())
-                } else {
-                        private_remove_pre_send(send);
-                        emit routingConfigurationChanged();
-                }
+    for(qint64 id : sendIds) {
+        for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
+            if (send->get_id() == id) {
+                sendsToBeRemoved.append(send);
+            }
         }
+    }
+
+    for(TSend* send : sendsToBeRemoved) {
+        if (!m_session || (m_session && m_session->is_transport_rolling())) {
+            tsar().add_gui_event(this, send, "private_remove_pre_send(TSend*)", "routingConfigurationChanged()");
+        } else {
+            private_remove_pre_send(send);
+            emit routingConfigurationChanged();
+        }
+    }
 }
 
 void Track::private_add_post_send(TSend* postSend)
@@ -438,86 +439,86 @@ void Track::add_input_bus(const QString &name)
 
 void Track::process_post_sends(nframes_t nframes)
 {
-        apill_foreach(TSend* postSend, TSend*, m_postSends) {
-                process_send(postSend, nframes);
-        }
+    for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+        process_send(send, nframes);
+    }
 }
 
 void Track::process_pre_sends(nframes_t nframes)
 {
-        apill_foreach(TSend* preSend, TSend*, m_preSends) {
-                process_send(preSend, nframes);
-        }
+    for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
+        process_send(send, nframes);
+    }
 }
 
 void Track::process_send(TSend *send, nframes_t nframes)
 {
-        AudioChannel* sender;
-        AudioChannel* receiver;
-        float gainFactor;
-        float panFactor;
+    AudioChannel* sender;
+    AudioChannel* receiver;
+    float gainFactor;
+    float panFactor;
 
-        AudioBus* receiverBus = send->get_bus();
-        for (int i=0; i<m_processBus->get_channel_count(); i++) {
-                sender = m_processBus->get_channel(i);
-                receiver = receiverBus->get_channel(i);
-                if (sender && receiver) {
-                        panFactor = 1.0f;
-                        // Left channel
-                        if (i == 0) {
-                                panFactor = 1 - send->get_pan();
-                        }
-                        // Right channel
-                        if (i == 1) {
-                                panFactor = 1 + send->get_pan();
-                        }
+    AudioBus* receiverBus = send->get_bus();
+    for (uint i=0; i<m_processBus->get_channel_count(); i++) {
+        sender = m_processBus->get_channel(i);
+        receiver = receiverBus->get_channel(i);
+        if (sender && receiver) {
+            panFactor = 1.0f;
+            // Left channel
+            if (i == 0) {
+                panFactor = 1 - send->get_pan();
+            }
+            // Right channel
+            if (i == 1) {
+                panFactor = 1 + send->get_pan();
+            }
 
-                        gainFactor = panFactor * send->get_gain();
+            gainFactor = panFactor * send->get_gain();
 
-                        if (gainFactor == 1.0f) {
-                                Mixer::mix_buffers_no_gain(receiver->get_buffer(nframes), sender->get_buffer(nframes), nframes);
-                        } else {
-                                Mixer::mix_buffers_with_gain(receiver->get_buffer(nframes), sender->get_buffer(nframes), nframes, gainFactor);
-                        }
-                }
-
+            if (gainFactor == 1.0f) {
+                Mixer::mix_buffers_no_gain(receiver->get_buffer(nframes), sender->get_buffer(nframes), nframes);
+            } else {
+                Mixer::mix_buffers_with_gain(receiver->get_buffer(nframes), sender->get_buffer(nframes), nframes, gainFactor);
+            }
         }
+
+    }
 }
 
 QList<TSend* > Track::get_post_sends() const
 {
-        QList<TSend*> sends;
+    QList<TSend*> sends;
 
-        apill_foreach(TSend* postSend, TSend*, m_postSends) {
-                sends.append(postSend);
-        }
-        return sends;
+    for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+        sends.append(send);
+    }
+    return sends;
 }
 
 QList<TSend* > Track::get_pre_sends() const
 {
-        QList<TSend*> sends;
+    QList<TSend*> sends;
 
-        apill_foreach(TSend* preSend, TSend*, m_preSends) {
-                sends.append(preSend);
-        }
-        return sends;
+    for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
+        sends.append(send);
+    }
+    return sends;
 }
 
 TSend* Track::get_send(qint64 sendId)
 {
-        apill_foreach(TSend* postSend, TSend*, m_postSends) {
-                if (postSend->get_id() == sendId) {
-                        return postSend;
+    for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+                if (send->get_id() == sendId) {
+                        return send;
                 }
         }
-        apill_foreach(TSend* preSend, TSend*, m_preSends) {
-                if (preSend->get_id() == sendId) {
-                        return preSend;
-                }
+    for(TSend* send = m_preSends.first(); send != nullptr; send = send->next) {
+        if (send->get_id() == sendId) {
+            return send;
         }
+    }
 
-        return 0;
+    return 0;
 }
 
 bool Track::connect_to_jack(bool inports, bool outports)
@@ -537,11 +538,11 @@ bool Track::connect_to_jack(bool inports, bool outports)
         Project* project = pm().get_project();
         AudioBus* bus = 0;
 
-        BusConfig busconfig;
+        TAudioBusConfiguration busconfig;
         busconfig.channelcount = m_channelCount;
         busconfig.name = m_name;
 
-        ChannelConfig channelconfig;
+        TAudioChannelConfiguration channelconfig;
 
         if (outports) {
                 for (int chan=0; chan<m_channelCount; ++chan) {
@@ -583,8 +584,8 @@ bool Track::disconnect_from_jack(bool inports, bool outports)
 
         if (outports) {
                 QList<qint64> jackSends;
-                apill_foreach(TSend* send, TSend*, m_postSends) {
-                        if (send->get_bus()->get_bus_type() == BusIsSoftware) {
+            for(TSend* send = m_postSends.first(); send != nullptr; send = send->next) {
+                    if (send->get_bus()->get_bus_type() == AudioBus::BusIsSoftware) {
                                 jackSends.append(send->get_id());
                                 project->remove_software_audio_bus(send->get_bus());
                         }

@@ -10,7 +10,7 @@
 #include "PlayHeadMove.h"
 #include "TrackPan.h"
 #include "Zoom.h"
-#include "Import.h"
+#include "TAudioFileImportCommand.h"
 #include "PCommand.h"
 #include "ClipSelection.h"
 #include "Fade.h"

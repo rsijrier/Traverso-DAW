@@ -24,12 +24,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "AudioSource.h"
 
-#include "gdither.h"
 #include <samplerate.h>
+#include "gdither_types.h"
 
-struct ExportSpecification;
+class TExportSpecification;
 class Peak;
-class DiskIO;
 class AbstractAudioWriter;
 class AudioBus;
 
@@ -39,62 +38,67 @@ class WriteSource : public AudioSource
 	Q_OBJECT
 
 public :
-	WriteSource(ExportSpecification* spec);
+	WriteSource(TExportSpecification* spec);
 	~WriteSource();
 
-        int rb_write(AudioBus* bus, nframes_t nframes);
-	int rb_file_write(nframes_t cnt);
+    nframes_t ringbuffer_write(AudioBus* bus, nframes_t nframes, bool realTime);
+    int rb_file_write(QueueBufferSlot* slot);
 	void process_ringbuffer(audio_sample_t* buffer);
-	int get_processable_buffer_space() const;
-	int get_chunck_size() const {return m_chunkSize;}
-	int get_buffer_size() const {return m_bufferSize;}
+
+    BufferStatus* get_buffer_status() final;
+
 	Peak* get_peak() {return m_peak;}
 
-	int process(nframes_t nframes);
+    nframes_t process(nframes_t nframes);
 	
 	int prepare_export();
 	int finish_export();
+
 	void set_process_peaks(bool process);
     void set_recording(bool rec);
 
     bool is_recording() const;
 
-	void set_diskio(DiskIO* io );
-
 private:
 	AbstractAudioWriter*	m_writer;
-	ExportSpecification*	m_spec;
-	Peak*			m_peak;
+	TExportSpecification*	m_exportSpecification;
+    Peak*                   m_peak;
 	
-	DiskIO*		m_diskio;
-	GDither         m_dither{};
-	bool		m_processPeaks{};
-    bool            m_isRecording{};
-	nframes_t       m_sampleRate{};
-	uint32_t        m_sample_bytes{};
+    GDither         m_dither;
+    bool            m_processPeaks;
+    bool            m_isRecording;
+    nframes_t       m_sampleRate;
+    uint32_t        m_sampleBytes;
 	
 	// Sample rate conversion variables
-	nframes_t       m_out_samples_max{};
-	nframes_t       m_leftover_frames{};
-	SRC_DATA        m_src_data{};
-	SRC_STATE*      m_src_state{};
-	nframes_t       m_max_leftover_frames{};
-	float*		m_leftoverF{};
-	float*		m_dataF2{};
-	void*           m_output_data{};
-	
-	
-	void prepare_rt_buffers();
-	
+    nframes_t       m_outSamplesMax;
+    nframes_t       m_leftOverFrames;
+    SRC_DATA        m_srcData{};
+    SRC_STATE*      m_srcState;
+    nframes_t       m_leftOverBufferSize; // in frames to hold interleaved data
+    float*          m_leftOverBuffer;
+    float*          m_dataBuffer;
+    void*           m_outputData;
+
+    QueueBufferSlot* dequeue_from_free_queue(bool realTime);
+
+    friend class DiskIO;
+    void process_realtime_buffers() final;
+    void rb_seek_to_transport_location(const TTimeRef &/*transportLocation*/) final {
+        // WriteSource does not support seeking atm
+    }
+    void set_output_rate_and_convertor_type(int /*outputRate*/, int /*converterType*/) final {
+        // WriteSource does not support rate/convert type change atm
+    }
+    void set_decode_buffers(DecodeBuffer * /*fileReadBuffer*/, DecodeBuffer */*resampleDecodeBuffer*/) final {
+        // Writesource does not support DecodeBuffers yet
+    }
+
+
+
 signals:
 	void exportFinished();
 };
-
-
-inline int WriteSource::get_processable_buffer_space( ) const
-{
-	return m_buffers.at(0)->read_space();
-}
 
 inline bool WriteSource::is_recording( ) const
 {

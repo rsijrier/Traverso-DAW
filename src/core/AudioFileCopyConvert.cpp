@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QMutexLocker>
 #include <QFileInfo>
 
-#include "Export.h"
+#include "TExportSpecification.h"
 #include "AbstractAudioReader.h"
 #include "ProjectManager.h"
 #include "ResourcesManager.h"
@@ -52,7 +52,7 @@ AudioFileCopyConvert::AudioFileCopyConvert()
  * @param trackname
  */
 void AudioFileCopyConvert::enqueue_task(ReadSource * source,
-	ExportSpecification* spec,
+	TExportSpecification* spec,
 	const QString& dir,
 	const QString& outfilename,
 	int tracknumber,
@@ -92,28 +92,19 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 {
 	emit taskStarted(task.readsource->get_name());
 
-	uint buffersize = 16384;
 	DecodeBuffer decodebuffer;
-	
-	task.spec->startLocation = TimeRef();
-	task.spec->endLocation = task.readsource->get_length();
-	task.spec->totalTime = task.spec->endLocation;
-	task.spec->pos = TimeRef();
-	task.spec->isRecording = false;
-	
-	task.spec->exportdir = task.dir;
-	task.spec->writerType = "sndfile";
+
+    task.spec->set_export_start_location(TTimeRef());
+    task.spec->set_export_end_location(task.readsource->get_length());
+
+    task.spec->set_export_dir(task.dir);
 	task.spec->extraFormat["filetype"] = "wav";
-	task.spec->data_width = 1;	// 1 means float
-	task.spec->channels = task.readsource->get_channel_count();
-	task.spec->sample_rate = task.readsource->get_rate();
-	task.spec->blocksize = buffersize;
-	task.spec->name = task.outFileName;
-	task.spec->dataF = new audio_sample_t[buffersize * 2];
+    task.spec->set_channel_count(task.readsource->get_channel_count());
+    task.spec->set_sample_rate(task.readsource->get_sample_rate());
+    task.spec->set_export_file_name(task.outFileName);
 	
 	WriteSource* writesource = new WriteSource(task.spec);
 	bool failedToPrepareWritesource = false;
-	int oldprogress = 0;
 
 	if (writesource->prepare_export() == -1) {
 		failedToPrepareWritesource = true;
@@ -130,40 +121,37 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 			goto out;
 		}
 			
-		nframes_t diff = (task.spec->endLocation - task.spec->pos).to_frame(task.readsource->get_rate());
-		nframes_t this_nframes = std::min(diff, buffersize);
+        nframes_t diff = task.spec->get_remaining_export_frames();
+        nframes_t this_nframes = std::min(diff, task.spec->get_block_size());
 		nframes_t nframes = this_nframes;
-		
-		memset (task.spec->dataF, 0, sizeof (task.spec->dataF[0]) * nframes * task.spec->channels);
-		
-		task.readsource->file_read(&decodebuffer, task.spec->pos, nframes);
+
+        task.spec->silence_render_buffer(nframes);
+
+        task.readsource->file_read(&decodebuffer, task.spec->get_export_location(), nframes);
 			
 		for (uint x = 0; x < nframes; ++x) {
-            for (uint y = 0; y < task.spec->channels; ++y) {
-				task.spec->dataF[y + x*task.spec->channels] = decodebuffer.destination[y][x];
+            for (uint y = 0; y < task.spec->get_channel_count(); ++y) {
+                task.spec->get_render_buffer()[y + x*task.spec->get_channel_count()] = decodebuffer.destination[y][x];
 			}
 		}
 		
 		// due the fact peak generating does _not_ happen in writesource->process
 		// but in a function used by DiskIO, we have to hack the peak processing 
 		// in here.
-        for (uint y = 0; y < task.spec->channels; ++y) {
+        for (uint y = 0; y < task.spec->get_channel_count(); ++y) {
 			writesource->get_peak()->process(y, decodebuffer.destination[y], nframes);
 		}
 		
 		// Process the data, and write to disk
-		writesource->process(buffersize);
+        // FIXME
+        // Shouldn't we use the actual read frames count instead of block size?
+        // The end of the file will be most likely not a multiple of block size.
+        writesource->process(task.spec->get_block_size());
 		
-		task.spec->pos.add_frames(nframes, task.readsource->get_rate());
-		
-		int currentprogress = int(double(task.spec->pos.universal_frame()) / double(task.spec->totalTime.universal_frame()) * 100);
-		if (currentprogress > oldprogress) {
-			oldprogress = currentprogress;
-			emit progress(currentprogress);
-		}
-			
-	} while (task.spec->pos != task.spec->totalTime);
-		
+        task.spec->add_exported_range(TTimeRef(nframes, task.readsource->get_sample_rate()));
+
+    } while (task.spec->get_remaining_export_frames() > 0);
+
 	
 	out:
 	if (!failedToPrepareWritesource) {
@@ -171,7 +159,6 @@ void AudioFileCopyConvert::process_task(CopyTask task)
 	}
 	delete writesource;
     writesource = nullptr;
-	delete [] task.spec->dataF;
 	resources_manager()->remove_source(task.readsource);
 	
 	//  The user asked to stop processing, exit the event loop

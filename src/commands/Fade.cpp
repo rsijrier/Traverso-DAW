@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Fade.h"
 
-#include "Curve.h"
 #include "AudioClip.h"
 #include "ContextPointer.h"
 #include <ViewPort.h>
@@ -39,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-static const float CURSOR_SPEED		= 150.0;
+static const float CURSOR_SPEED		= 75.0;
 static const float RASTER_SIZE		= 0.05;
 
 
@@ -92,7 +91,7 @@ int FadeRange::finish_hold()
 
 int FadeRange::do_action()
 {
-	m_curve->set_range( m_newRange );
+    m_curve->set_range( m_newRange );
 	return 1;
 }
 
@@ -130,8 +129,8 @@ int FadeRange::jog()
 	
 	m_curve->set_range( m_newRange );
 	
-	TimeRef location = TimeRef(m_newRange);
-    cpointer().set_canvas_cursor_text(timeref_to_ms_3(location));
+	TTimeRef location = TTimeRef(m_newRange);
+    cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_ms_3(location));
 	
 	return 1;
 }
@@ -167,16 +166,16 @@ void FadeRange::reset_length()
 void FadeRange::next_snap_pos()
 {
 
-        TimeRef snap = frp->sheet->get_snap_list()->next_snap_pos(frp->clip->get_track_start_location() + m_newRange);
-        TimeRef newpos = snap - frp->clip->get_track_start_location();
+        TTimeRef snap = frp->sheet->get_snap_list()->next_snap_pos(frp->clip->get_location()->get_start() + m_newRange);
+        TTimeRef newpos = snap - frp->clip->get_location()->get_start();
         do_keyboard_move(newpos.universal_frame());
 }
 
 void FadeRange::prev_snap_pos()
 {
 
-        TimeRef snap = frp->sheet->get_snap_list()->prev_snap_pos(frp->clip->get_track_start_location() + m_newRange);
-        TimeRef newpos = snap - frp->clip->get_track_start_location();
+        TTimeRef snap = frp->sheet->get_snap_list()->prev_snap_pos(frp->clip->get_location()->get_start() + m_newRange);
+        TTimeRef newpos = snap - frp->clip->get_location()->get_start();
         do_keyboard_move(newpos.universal_frame());
 }
 
@@ -185,8 +184,8 @@ void FadeRange::do_keyboard_move(double range)
         ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
         m_newRange = range;
 
-	TimeRef location = TimeRef(m_newRange);
-	cpointer().set_canvas_cursor_text(timeref_to_ms_3(location));
+	TTimeRef location = TTimeRef(m_newRange);
+	cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_ms_3(location));
 
         do_action();
 }
@@ -359,7 +358,7 @@ void FadeStrength::set_cursor_shape(int useX, int useY)
 
 int FadeStrength::jog()
 {
-	float dy = float(origY - cpointer().mouse_viewport_y()) / CURSOR_SPEED;
+    float dy = float(origY - cpointer().mouse_viewport_y()) / CURSOR_SPEED;
 	
 	if (m_fade->get_bend_factor() >= 0.5) {
 		m_fade->set_strength_factor(oldValue + dy );

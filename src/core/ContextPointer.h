@@ -142,9 +142,9 @@ public:
     bool keyboard_only_input() const {return m_keyboardOnlyInput;}
     bool left_mouse_click_bypasses_jog() const {return m_mouseLeftClickBypassesJog;}
 
-    QPoint get_global_mouse_pos() const;
+    QPointF get_global_mouse_pos() const;
 
-    void update_mouse_positions(const QPoint &mouse_viewport_pos, const QPoint &globalPos);
+    void update_mouse_positions(const QPoint &mouse_viewport_pos, const QPointF &globalPos);
     void request_viewport_to_detect_items_below_cursor();
 
 

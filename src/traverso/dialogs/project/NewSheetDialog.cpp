@@ -22,7 +22,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "NewSheetDialog.h"
 
-#include <libtraversocore.h>
+#include "Information.h"
+#include "Project.h"
+#include "Sheet.h"
+#include "TConfig.h"
+#include "ProjectManager.h"
+
 #include <CommandGroup.h>
 #include <QPushButton>
 

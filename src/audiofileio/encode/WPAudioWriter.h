@@ -27,17 +27,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "defines.h"
 #include "wavpack/wavpack.h"
 
-class QString;
+class TExportSpecification;
 
 class WPAudioWriter : public AbstractAudioWriter
 {
 	
 public:
-	WPAudioWriter();
+    WPAudioWriter(TExportSpecification* spec);
 	~WPAudioWriter();
 	
 	bool set_format_attribute(const QString& key, const QString& value);
-	const char* get_extension();
 	
 protected:
 	bool open_private();

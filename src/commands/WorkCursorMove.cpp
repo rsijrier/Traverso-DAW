@@ -28,12 +28,11 @@
 #include "Marker.h"
 #include "Sheet.h"
 #include "SnapList.h"
-#include "Snappable.h"
 #include "SheetView.h"
 #include "TimeLineViewPort.h"
 #include "TimeLineView.h"
 #include "MarkerView.h"
-#include "TimeLine.h"
+#include "TTimeLineRuler.h"
 #include "Cursors.h"
 
 #include <Debugger.h>
@@ -92,7 +91,7 @@ int WorkCursorMove::jog()
 		x = 0;
 	}
 
-    TimeRef newLocation(x * d->sv->timeref_scalefactor);
+    TTimeRef newLocation(x * d->sv->timeref_scalefactor);
 
 	if (newLocation == m_session->get_work_location()) {
 		return 1;
@@ -105,7 +104,7 @@ int WorkCursorMove::jog()
 
 	m_session->set_work_at(newLocation);
 
-    cpointer().set_canvas_cursor_text(timeref_to_text(newLocation, d->sv->timeref_scalefactor));
+    cpointer().set_canvas_cursor_text(TTimeRef::timeref_to_text(newLocation, d->sv->timeref_scalefactor));
 	cpointer().set_canvas_cursor_pos(QPointF(m_workCursor->scenePos().x(), m_holdCursorSceneY));
 
 	return 1;
@@ -163,7 +162,7 @@ void WorkCursorMove::prev_snap_pos()
 	do_keyboard_move(m_session->get_snap_list()->prev_snap_pos(m_session->get_work_location()));
 }
 
-void WorkCursorMove::do_keyboard_move(TimeRef newLocation)
+void WorkCursorMove::do_keyboard_move(TTimeRef newLocation)
 {
 	ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
 
@@ -265,5 +264,5 @@ void WorkCursorMove::move_to_play_cursor()
 
 void WorkCursorMove::move_to_start()
 {
-    do_keyboard_move(TimeRef());
+    do_keyboard_move(TTimeRef());
 }

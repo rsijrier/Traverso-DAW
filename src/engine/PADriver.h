@@ -30,7 +30,7 @@ class PADriver : public TAudioDriver
         Q_OBJECT
 
 public:
-	PADriver(AudioDevice* dev, int rate, nframes_t bufferSize);
+    PADriver(AudioDevice* device);
 	~PADriver();
 
 	int  process_callback (nframes_t nframes);

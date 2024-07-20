@@ -57,7 +57,7 @@ PluginPropertiesDialog::PluginPropertiesDialog(QWidget* parent, Plugin* plugin)
 	QVBoxLayout* dialogLayout = new QVBoxLayout;
 	dialogLayout->addWidget(sliderWidget);
 	dialogLayout->addWidget(optionsWidget);
-	dialogLayout->setMargin(0);
+    dialogLayout->setContentsMargins(0, 0, 0, 0);
 	setLayout(dialogLayout);
 
 
@@ -71,7 +71,7 @@ PluginPropertiesDialog::PluginPropertiesDialog(QWidget* parent, Plugin* plugin)
 		widget->setMaximumHeight(22);
 		QHBoxLayout* lay = new QHBoxLayout();
 		lay->setSpacing(12);
-		lay->setMargin(3);
+        lay->setContentsMargins(3, 3, 3, 3);
 
 		PluginSlider* slider = new PluginSlider(port);
 		slider->update_slider_position();

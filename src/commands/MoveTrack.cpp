@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 MoveTrack::MoveTrack(TrackView* view)
-    : TCommand(view->get_context(), "")
+    : TCommand(view->get_related_context_item(), "")
     , m_trackView(view)
 {
     m_sv = m_trackView->get_sheetview();
@@ -172,7 +172,7 @@ void MoveTrack::move_to_sheet()
     Sheet* destination = project->get_sheet(id);
     Sheet* orig = qobject_cast<Sheet*>(track->get_session());
 
-    if (! (destination || orig)) {
+    if (!destination || !orig) {
         return;
     }
 

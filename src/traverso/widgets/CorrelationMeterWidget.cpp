@@ -133,14 +133,14 @@ void CorrelationMeterView::paint(QPainter *painter, const QStyleOptionGraphicsIt
 
     painter->setPen(themer()->get_color("CorrelationMeter:text"));
     painter->fillRect(0, 0, m_widget->width(), fm.height() + 1, themer()->get_color("CorrelationMeter:margin"));
-    painter->drawText(cpos - fm.width("C")/2, fm.ascent() + 1, "C");
+    painter->drawText(cpos - fm.horizontalAdvance("C")/2, fm.ascent() + 1, "C");
 
     if (range == 180) {
         painter->drawText(1, fm.ascent() + 1, "L");
-        painter->drawText(m_widget->width() - fm.width("R") - 1, fm.ascent() + 1, "R");
+        painter->drawText(m_widget->width() - fm.horizontalAdvance("R") - 1, fm.ascent() + 1, "R");
     } else {
-        painter->drawText(lpos - fm.width("L")/2, fm.ascent() + 1, "L");
-        painter->drawText(rpos - fm.width("R")/2, fm.ascent() + 1, "R");
+        painter->drawText(lpos - fm.horizontalAdvance("L")/2, fm.ascent() + 1, "L");
+        painter->drawText(rpos - fm.horizontalAdvance("R")/2, fm.ascent() + 1, "R");
     }
 }
 

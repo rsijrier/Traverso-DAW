@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "WPAudioWriter.h"
 
 #include <QString>
+#include "TExportSpecification.h"
 #include "Utils.h"
 #include <cstdio>
 
@@ -30,33 +31,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 
-WPAudioWriter::WPAudioWriter()
- : AbstractAudioWriter()
+WPAudioWriter::WPAudioWriter(TExportSpecification* spec)
+    : AbstractAudioWriter(spec)
 {
 	m_wp = 0;
 	m_firstBlock = 0;
 	m_firstBlockSize = 0;
 	m_tmp_buffer = 0;
 	m_tmpBufferSize = 0;
-	m_configFlags = 0;
+    // Set some sensible default values
+    // CONFIG_HIGH_FLAG (default) ~ 1.5 times slower then FAST, ~ 20% extra compression then FAST
+    m_configFlags = 0;
+    m_configFlags |= CONFIG_HIGH_FLAG;
+    m_configFlags &= ~CONFIG_SKIP_WVX;
 }
 
 
 WPAudioWriter::~WPAudioWriter()
 {
 	if (m_wp) {
-		close_private();
+        WPAudioWriter::close_private();
 	}
 	if (m_firstBlock) {
 		delete [] m_firstBlock;
 	}
 }
-
-const char* WPAudioWriter::get_extension()
-{
-	return ".wv";
-}
-
 
 bool WPAudioWriter::set_format_attribute(const QString& key, const QString& value)
 {
@@ -115,12 +114,15 @@ bool WPAudioWriter::open_private()
 	}
 
 	memset (&m_config, 0, sizeof(m_config));
-	m_config.bytes_per_sample = (m_sampleWidth == 1) ? 4 : m_sampleWidth/8;
-	m_config.bits_per_sample = (m_sampleWidth == 1) ? 32 : m_sampleWidth;
-	if (m_sampleWidth == 1) m_config.float_norm_exp = 127; // config->float_norm_exp,  select floating-point data (127 for +/-1.0)
-	m_config.channel_mask = (m_channels == 2) ? 3 : 4; // Microsoft standard (mono = 4, stereo = 3)
-	m_config.num_channels = m_channels;
-	m_config.sample_rate = m_rate;
+    int bitDepth = m_exportSpecification->get_bit_depth();
+    m_config.bytes_per_sample = bitDepth/8;
+    m_config.bits_per_sample = bitDepth;
+    if (m_exportSpecification->get_data_format() == SF_FORMAT_FLOAT) {
+        m_config.float_norm_exp = 127; // config->float_norm_exp,  select floating-point data (127 for +/-1.0)
+    }
+    m_config.channel_mask = (m_exportSpecification->get_channel_count() == 2) ? 3 : 4; // Microsoft standard (mono = 4, stereo = 3)
+    m_config.num_channels = m_exportSpecification->get_channel_count();
+    m_config.sample_rate = m_exportSpecification->get_sample_rate();
 	m_config.flags = m_configFlags;
 	
 	WavpackSetConfiguration(m_wp, &m_config, -1);
@@ -206,17 +208,17 @@ nframes_t WPAudioWriter::write_private(void* buffer, nframes_t frameCount)
 	// Instead of this block, add an option to gdither to leave each
 	// 8bit or 16bit sample in a 0-padded, int32_t
 	// 
-	if (m_sampleWidth > 1 && m_sampleWidth < 24) { // Not float, or 32bit int, or 24bit int
+    if (m_exportSpecification->get_data_format() > 1 && m_exportSpecification->get_data_format() < 24) { // Not float, or 32bit int, or 24bit int
 		if (frameCount > m_tmpBufferSize) {
 			if (m_tmp_buffer) {
 				delete [] m_tmp_buffer;
 			}
-			m_tmp_buffer = new int32_t[frameCount * m_channels];
+            m_tmp_buffer = new int32_t[frameCount * m_exportSpecification->get_channel_count()];
 			m_tmpBufferSize = frameCount;
 		}
-		for (nframes_t s = 0; s < frameCount * m_channels; s++) {
-			switch (m_sampleWidth) {
-				case 8:
+        for (nframes_t s = 0; s < frameCount * m_exportSpecification->get_channel_count(); s++) {
+            switch (m_exportSpecification->get_data_format()) {
+                case SF_FORMAT_PCM_S8:
 					m_tmp_buffer[s] = ((int8_t*)buffer)[s];
 					break;
 				case 16:

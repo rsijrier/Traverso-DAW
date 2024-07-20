@@ -28,14 +28,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 class ResampleAudioReader;
-class AudioClip;
-struct BufferStatus;
+class AudioBus;
 class DecodeBuffer;
-class DiskIO;
+class TLocation;
 
 class ReadSource : public AudioSource
 {
 	Q_OBJECT
+
 public :
 	ReadSource(const QDomNode &node);
 	ReadSource(const QString& dir, const QString& name);
@@ -44,22 +44,21 @@ public :
 	~ReadSource();
 	
 	enum ReadSourceError {
-		COULD_NOT_OPEN_FILE = -1,
-  		INVALID_CHANNEL_COUNT = -2,
-    		ZERO_CHANNELS = -3,
-      		FILE_DOES_NOT_EXIST = -4
-	};
+        COULD_NOT_OPEN_FILE = -1,
+        INVALID_CHANNEL_COUNT = -2,
+        ZERO_CHANNELS = -3,
+        FILE_DOES_NOT_EXIST = -4
+    };
 	
 	ReadSource* deep_copy();
 	
 	int set_state( const QDomNode& node );
 	QDomNode get_state(QDomDocument doc);
 
-	int rb_read(audio_sample_t** dest, TimeRef& start, nframes_t cnt);
-	void rb_seek_to_file_position(TimeRef& position);
-	
-	int file_read(DecodeBuffer* buffer, const TimeRef& start, nframes_t cnt) const;
-	int file_read(DecodeBuffer* buffer, nframes_t start, nframes_t cnt);
+    nframes_t ringbuffer_read(AudioBus *audioBus, const TTimeRef &fileLocation, nframes_t frames, bool realTime);
+
+    int file_read(DecodeBuffer* buffer, const TTimeRef& fileLocation, nframes_t cnt) const;
+    int file_read(DecodeBuffer* buffer, nframes_t fileLocation, nframes_t cnt);
 
 	int init();
 	int get_error() const {return m_error;}
@@ -67,53 +66,46 @@ public :
 	int set_file(const QString& filename);
 	void set_active(bool active);
 	
-	void set_audio_clip(AudioClip* clip);
-	void set_diskio(DiskIO* diskio);
 	nframes_t get_nframes() const;
     uint get_file_rate() const;
-    uint get_output_rate() const {return m_outputRate;}
-	const TimeRef& get_length() const {return m_length;}
-	
-	void sync(DecodeBuffer* buffer);
-	void process_ringbuffer(DecodeBuffer* buffer, bool seeking=false);
-	void prepare_rt_buffers();
-	BufferStatus* get_buffer_status();
-	
-	void set_output_rate(int rate);
+    const TTimeRef& get_length() const {return m_length;}
+
+    BufferStatus* get_buffer_status() final;
+
+    void set_location(TLocation* location);
+
+    void set_source_start_location(const TTimeRef &sourceStartLocation);
 	
 	
 private:
-    ResampleAudioReader*	m_audioReader{};
-    AudioClip* 		m_clip{};
-    DiskIO*			m_diskio{};
-    int			m_refcount{};
-    int			m_error{};
-	bool			m_silent;
-	TimeRef			m_rbFileReadPos;
-	TimeRef			m_rbRelativeFileReadPos;
-	TimeRef			m_syncPos;
-    volatile size_t		m_rbReady{};
-    volatile size_t		m_needSync{};
-    volatile size_t		m_active{};
-    volatile size_t		m_wasActivated{};
-    volatile size_t		m_bufferUnderRunDetected{};
-    bool			m_syncInProgress{};
-	
-	mutable TimeRef		m_length;
-	QString			m_decodertype;
-    uint			m_outputRate{};
-	
-    BufferStatus*		m_bufferstatus{};
+    ResampleAudioReader*	m_resampleAudioReader;
+
+    DecodeBuffer*       m_fileDecodeBuffer;
+    int                 m_refcount;
+    int                 m_error;
+    bool                m_silent;
+    std::atomic<bool>   m_active;
+
+    TLocation*          m_location;
+    TTimeRef            m_length;
+    TTimeRef            m_sourceStartLocation;
+    TTimeRef            m_aboutOneToFourSecondsTime;
+
+    QueueBufferSlot* dequeue_from_rt_queue(bool realTime);
 	
 	int ref() { return m_refcount++;}
 	
 	void private_init();
-	void start_resync(TimeRef& position);
-	void finish_resync();
-	int rb_file_read(DecodeBuffer* buffer, nframes_t cnt);
 
 	friend class ResourcesManager;
 	friend class ProjectConverter;
+
+    // re-implemented only to be called by DiskIO
+    friend class DiskIO;
+    void process_realtime_buffers() final;
+    void rb_seek_to_transport_location(const TTimeRef &transportLocation) final;
+    void set_output_rate_and_convertor_type(int outputRate, int converterType) final;
+    void set_decode_buffers(DecodeBuffer * fileReadBuffer, DecodeBuffer *resampleDecodeBuffer);
 
 signals:
 	void stateChanged();

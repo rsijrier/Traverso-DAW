@@ -58,8 +58,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 struct TMouseData {
     QPoint  onFirstInputEventPos;
     QPoint  jogStartGlobalMousePos;   // global Mouse Screen position at jog start
-    QPoint  mousePos;
-    QPoint  globalMousePos;           // global Mouse Screen position while holding
+    QPoint  viewPortMousePos;
+    QPointF  globalMousePos;           // global Mouse Screen position while holding
     QPoint  mouseCursorPosDuringHold;  // global Mouse Screen pos while holding centered in ViewPort
     QPoint  canvasCursorPos;
 };
@@ -112,7 +112,7 @@ QList< QObject * > ContextPointer::get_context_items( )
 	for (int i=0; i < activeItems.size(); ++i) {
         item = activeItems.at(i);
         contextItems.append(item);
-        while ((nextItem = item->get_context())) {
+        while ((nextItem = item->get_related_context_item())) {
 			contextItems.append(nextItem);
 			item = nextItem;
 		}
@@ -258,17 +258,17 @@ void ContextPointer::set_canvas_cursor_pos(QPointF pos)
 }
 
 int ContextPointer::mouse_viewport_x() const {
-    return m_mouseData->mousePos.x();
+    return m_mouseData->viewPortMousePos.x();
 }
 
 int ContextPointer::mouse_viewport_y() const
 {
-    return m_mouseData->mousePos.y();
+    return m_mouseData->viewPortMousePos.y();
 }
 
 QPoint ContextPointer::mouse_viewport_pos() const
 {
-    return m_mouseData->mousePos;
+    return m_mouseData->viewPortMousePos;
 }
 
 qreal ContextPointer::scene_x() const
@@ -277,7 +277,7 @@ qreal ContextPointer::scene_x() const
         qDebug("scene_x() called, but no ViewPort was set!");
         return 0;
     }
-    return m_viewPort->map_to_scene(m_mouseData->mousePos).x();
+    return m_viewPort->map_to_scene(m_mouseData->viewPortMousePos).x();
 }
 
 qreal ContextPointer::scene_y() const
@@ -286,7 +286,7 @@ qreal ContextPointer::scene_y() const
         qDebug("scene_y() called, but no ViewPort was set!");
         return 0;
     }
-    return m_viewPort->map_to_scene(m_mouseData->mousePos).y();
+    return m_viewPort->map_to_scene(m_mouseData->viewPortMousePos).y();
 }
 
 QPointF ContextPointer::scene_pos() const
@@ -295,13 +295,13 @@ QPointF ContextPointer::scene_pos() const
         qDebug("scene_pos() called, but no ViewPort was set!");
         return QPointF(0,0);
     }
-    return m_viewPort->map_to_scene(m_mouseData->mousePos);
+    return m_viewPort->map_to_scene(m_mouseData->viewPortMousePos);
 }
 
 void ContextPointer::store_canvas_cursor_position(const QPoint& pos)
 {
     m_mouseData->canvasCursorPos = pos;
-    m_mouseData->mousePos = pos;
+    m_mouseData->viewPortMousePos = pos;
 }
 
 int ContextPointer::on_first_input_event_x() const
@@ -343,6 +343,7 @@ qreal ContextPointer::on_first_input_event_scene_y() const
 
 void ContextPointer::set_active_context_items_by_mouse_movement(const QList<ContextItem *> &items)
 {
+    // printf("list size %lld\n", items.size());
 	set_active_context_items(items);
 }
 
@@ -352,14 +353,14 @@ void ContextPointer::set_active_context_items_by_keyboard_input(const QList<Cont
     set_active_context_items(items);
 }
 
-QPoint ContextPointer::get_global_mouse_pos() const
+QPointF ContextPointer::get_global_mouse_pos() const
 {
     return m_mouseData->globalMousePos;
 }
 
-void ContextPointer::update_mouse_positions(const QPoint &pos, const QPoint &globalPos)
+void ContextPointer::update_mouse_positions(const QPoint &pos, const QPointF &globalPos)
 {
-    m_mouseData->mousePos = pos;
+    m_mouseData->viewPortMousePos = pos;
     m_mouseData->globalMousePos = globalPos;
 
     if (ied().is_holding()) {
@@ -437,7 +438,7 @@ void ContextPointer::prepare_for_shortcut_dispatch()
 //    `Q_ASSERT(m_viewPort);
 
     m_onFirstInputEventActiveContextItems = m_activeContextItems;
-    m_mouseData->onFirstInputEventPos = m_mouseData->mousePos;
+    m_mouseData->onFirstInputEventPos = m_mouseData->viewPortMousePos;
 }
 
 void ContextPointer::remove_from_active_context_list(ContextItem *item)

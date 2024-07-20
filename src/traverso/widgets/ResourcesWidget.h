@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QWidget>
 #include <QTreeWidgetItem>
+#include "TSession.h"
 #include "ui_ResourcesWidget.h"
 
 class Project;
@@ -33,7 +34,7 @@ class ReadSource;
 class SourceTreeItem;
 class QShowEvent;
 class QListView;
-class QDirModel;
+class QFileSystemModel;
 class QComboBox;
 
 class FileWidget : public QWidget
@@ -48,12 +49,11 @@ public:
 private slots:
 	void dirview_item_clicked(const QModelIndex & index);
 	void dir_up_button_clicked();
-	void refresh_button_clicked();
 	void box_actived(int i);
 
 private:
 	QListView* m_dirView;
-	QDirModel* m_dirModel;
+    QFileSystemModel* m_fileSystemModel;
 	QComboBox* m_box;
 };
 
@@ -123,7 +123,7 @@ private slots:
 	
 	void sheet_added(Sheet* sheet);
 	void sheet_removed(Sheet* sheet);
-	void set_current_sheet(Sheet* sheet);
+    void set_current_session(TSession *sheet);
 	
 	void add_clip(AudioClip* clip);
 	void remove_clip(AudioClip* clip);

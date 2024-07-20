@@ -53,7 +53,7 @@ PluginSelectorDialog::PluginSelectorDialog(QWidget* parent)
         printf("Getting the list of found lv2 plugins from the PluginManager\n");
 	const LilvPlugins* pluginList = PluginManager::instance()->get_lilv_plugins();
 
-	QMap<QString, PluginInfo> pluginsMap;
+    QMultiMap<QString, PluginInfo> pluginsMap;
 
 	printf("Number of found lv2 plugins: %d\n", lilv_plugins_size(pluginList));
 	
@@ -61,7 +61,7 @@ PluginSelectorDialog::PluginSelectorDialog(QWidget* parent)
 
 		const LilvPlugin* p = lilv_plugins_get(pluginList, i);
 		PluginInfo pinfo = LV2Plugin::get_plugin_info(p);
-		pluginsMap.insertMulti(pinfo.type, pinfo);
+        pluginsMap.insert(pinfo.type, pinfo);
 	}
 	
 	foreach(PluginInfo pinfo, pluginsMap) {
@@ -81,7 +81,7 @@ PluginSelectorDialog::PluginSelectorDialog(QWidget* parent)
 	}
 #endif
 
-	connect(pluginTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(plugin_double_clicked()));
+    connect(pluginTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(plugin_double_clicked()));
 }
 
 PluginSelectorDialog::~PluginSelectorDialog( )

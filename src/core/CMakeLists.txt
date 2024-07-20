@@ -13,8 +13,10 @@ ${CMAKE_SOURCE_DIR}/src/common/Utils.cpp
 ${CMAKE_SOURCE_DIR}/src/common/Tsar.cpp
 ${CMAKE_SOURCE_DIR}/src/common/Debugger.cpp
 ${CMAKE_SOURCE_DIR}/src/common/Mixer.cpp
-${CMAKE_SOURCE_DIR}/src/common/RingBuffer.cpp
 ${CMAKE_SOURCE_DIR}/src/common/Resampler.cpp
+${CMAKE_SOURCE_DIR}/src/common/TTimeRef.cpp
+${CMAKE_SOURCE_DIR}/src/common/TTransportControl.cpp
+
 AudioClip.cpp
 AudioClipGroup.cpp
 AudioClipManager.cpp
@@ -25,14 +27,14 @@ AudioSource.cpp
 AbstractViewPort.cpp
 TCommand.cpp
 TConfig.cpp
-TShortcutManager.cpp
+TShortCutManager.cpp
 ContextPointer.cpp
 ContextItem.cpp
 Curve.cpp
 CurveNode.cpp
-CommandPlugin.cpp
+TCommandPlugin.h
 DiskIO.cpp
-Export.cpp
+TExportThread.cpp TExportThread.h
 FadeCurve.cpp
 FileHelpers.cpp
 Information.cpp
@@ -51,8 +53,8 @@ Track.cpp
 WriteSource.cpp
 gdither.cpp
 SnapList.cpp
-Snappable.cpp
-TimeLine.cpp
+TLocation.cpp
+TTimeLineRuler.cpp
 Marker.cpp
 Themer.cpp
 ProjectConverter.cpp
@@ -79,7 +81,10 @@ ENDIF(UNIX)
 
 SET(TRAVERSO_CORE_LIBRARY "traversocore")
 
-ADD_LIBRARY(${TRAVERSO_CORE_LIBRARY} STATIC ${TRAVERSO_CORE_SOURCES} ${SSE_OBJECT_FILE})
+ADD_LIBRARY(${TRAVERSO_CORE_LIBRARY} STATIC ${TRAVERSO_CORE_SOURCES} ${SSE_OBJECT_FILE}
+	TShortCutFunction.h TShortCutFunction.cpp
+	TShortCut.h TShortCut.cpp
+	TExportSpecification.h TExportSpecification.cpp)
 
 IF(USE_PCH)
     ADD_DEPENDENCIES(traversocore precompiled_headers)

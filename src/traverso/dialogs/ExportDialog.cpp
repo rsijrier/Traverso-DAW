@@ -20,12 +20,11 @@
 */
 
 #include "ExportDialog.h"
-#include "ui_ExportDialog.h"
 
 #include <QFileDialog>
 #include <QCloseEvent>
 
-#include "Export.h"
+#include "TExportSpecification.h"
 #include "Information.h"
 #include "Project.h"
 #include "ProjectManager.h"
@@ -42,17 +41,16 @@
 
 ExportDialog::ExportDialog( QWidget * parent )
 	: QDialog(parent)
-	, m_exportSpec(nullptr)
 {
-        setupUi(this);
-        
-        QBoxLayout* lay = qobject_cast<QBoxLayout*>(layout());
-        if (lay) {
-		m_formatOptionsWidget = new ExportFormatOptionsWidget(lay->widget());
-		lay->insertWidget(1, m_formatOptionsWidget);
-	}
+    setupUi(this);
 
-	abortButton->hide();
+    QBoxLayout* lay = qobject_cast<QBoxLayout*>(layout());
+    if (lay) {
+        m_formatOptionsWidget = new ExportFormatOptionsWidget(lay->widget());
+        lay->insertWidget(1, m_formatOptionsWidget);
+    }
+
+    cancelExportButton->hide();
 	QIcon icon = QApplication::style()->standardIcon(QStyle::SP_DirClosedIcon);
 	fileSelectButton->setIcon(icon);
 	
@@ -86,58 +84,59 @@ void ExportDialog::on_startButton_clicked( )
 	}
 	
 	if (exportDirName->text().isEmpty()) {
-		info().warning(tr("No Export Direcoty was given, please supply one first!"));
+        info().warning(tr("No Export Directory was given, please supply one first!"));
 		return;
 	}
+
+    auto exportSpecification = m_project->get_export_specification();
 	
-	connect(m_project, SIGNAL(sheetExportProgressChanged(int)), this, SLOT(update_sheet_progress(int)));
-	connect(m_project, SIGNAL(overallExportProgressChanged(int)), this, SLOT(update_overall_progress(int)));
 	connect(m_project, SIGNAL(exportFinished()), this, SLOT(render_finished()));
-	connect(m_project, SIGNAL(exportStartedForSheet(Sheet*)), this, SLOT (set_exporting_sheet(Sheet*)));
-        connect(m_project, SIGNAL(exportMessage(QString)), this, SLOT(set_export_message(QString)));
+    connect(exportSpecification, &TExportSpecification::exportMessage, this, [=](const QString& exportMessage) {
+        exportMessagesLabel->setText(exportMessage);
+    });
+    connect(exportSpecification, &TExportSpecification::progressChanged, this, [=] (int progress) {
+        progressBar->setValue(progress);
+    });
+    connect(cancelExportButton, &QPushButton::clicked, this, [=]() {
+        exportSpecification->cancel_export();
+    });
 
 	// clear extraformats, it might be different now from previous runs!
-	m_exportSpec->extraFormat.clear();
+    exportSpecification->extraFormat.clear();
 	
-	m_formatOptionsWidget->get_format_options(m_exportSpec);
+    m_formatOptionsWidget->get_format_options(exportSpecification);
 	
 	if (allSheetsButton->isChecked()) {
-                m_exportSpec->allSheets = true;
+        for (auto sheet : m_project->get_sheets()) {
+            exportSpecification->add_sheet_to_export(sheet);
+        }
 	} else {
-                m_exportSpec->allSheets = false;
-	}
-	
-	m_exportSpec->exportdir = exportDirName->text();
-	if (m_exportSpec->exportdir.size() > 1 && (m_exportSpec->exportdir.at(m_exportSpec->exportdir.size()-1).decomposition() != "/")) {
-		m_exportSpec->exportdir = m_exportSpec->exportdir.append("/");
-	}
-	QString name = m_exportSpec->exportdir;
-	QFileInfo fi(m_exportSpec->name);
-	name += fi.completeBaseName() + ".toc";
-	m_exportSpec->tocFileName = name;
+        exportSpecification->add_sheet_to_export(m_project->get_active_sheet());
+    }
 
-	m_exportSpec->isRecording = false;
-	
-	if (m_project->export_project(m_exportSpec) == -1) {
-		return;
+    QString exportDir = exportDirName->text();
+    if (exportDir.size() > 1 && (exportDir.at(exportDir.size()-1).decomposition() != "/")) {
+        exportDir.append("/");
 	}
+
+    exportSpecification->set_export_dir(exportDir);
+
+    QString name = exportSpecification->get_export_dir();
+    QFileInfo fi(exportSpecification->get_export_file_name());
+	name += fi.completeBaseName() + ".toc";
+    exportSpecification->tocFileName = name;
+
+    m_project->export_project();
 	
 	startButton->hide();
 	closeButton->hide();
-	abortButton->show();
+    cancelExportButton->show();
 }
 
 
 void ExportDialog::on_closeButton_clicked()
 {
 	hide();
-}
-
-
-void ExportDialog::on_abortButton_clicked( )
-{
-	m_exportSpec->stop = true;
-	m_exportSpec->breakout = true;
 }
 
 
@@ -148,7 +147,7 @@ void ExportDialog::on_fileSelectButton_clicked( )
 		return;
 	}
 	
-	QString dirName = QFileDialog::getExistingDirectory(this, tr("Choose/create an export directory"), m_exportSpec->exportdir);
+    QString dirName = QFileDialog::getExistingDirectory(this, tr("Choose/create an export directory"), m_project->get_export_specification()->get_export_dir());
 	
 	if (!dirName.isEmpty()) {
 		exportDirName->setText(dirName);
@@ -156,63 +155,33 @@ void ExportDialog::on_fileSelectButton_clicked( )
 }
 
 
-void ExportDialog::update_sheet_progress( int progress )
-{
-}
-
-void ExportDialog::update_overall_progress( int progress )
-{
-	progressBar->setValue(progress);
-}
-
-void ExportDialog::set_export_message(QString message)
-{
-        currentProcessingSheetName->setText(message);
-}
-
 void ExportDialog::render_finished( )
 {
-	disconnect(m_project, SIGNAL(sheetExportProgressChanged(int)), this, SLOT(update_sheet_progress(int)));
-	disconnect(m_project, SIGNAL(overallExportProgressChanged(int)), this, SLOT(update_overall_progress(int)));
 	disconnect(m_project, SIGNAL(exportFinished()), this, SLOT(render_finished()));
 	disconnect(m_project, SIGNAL(exportStartedForSheet(Sheet*)), this, SLOT (set_exporting_sheet(Sheet*)));
 	
 	startButton->show();
 	closeButton->show();
-	abortButton->hide();
+    cancelExportButton->hide();
 	progressBar->setValue(0);
-}
-
-void ExportDialog::set_exporting_sheet( Sheet * sheet )
-{
-	QString name = tr("Progress of Sheet ") + 
-		QString::number(m_project->get_sheet_index(sheet->get_id())) + ": " +
-                sheet->get_name();
-	
-	currentProcessingSheetName->setText(name);
 }
 
 void ExportDialog::set_project(Project * project)
 {
-	m_project = project;
-	if (! m_project) {
+    if (! project)
+    {
 		info().information(tr("No project loaded, to export a project, load it first!"));
 		setEnabled(false);
-		if (m_exportSpec) {
-			delete m_exportSpec;
-            m_exportSpec = nullptr;
-		}
-	} else {
-		setEnabled(true);
-		if (m_exportSpec) {
-			delete m_exportSpec;
-            m_exportSpec = nullptr;
-		}
-		m_exportSpec = new ExportSpecification;
-		m_exportSpec->exportdir = m_project->get_root_dir() + "/Export/";
-		m_exportSpec->renderfinished = false;
-		exportDirName->setText(m_exportSpec->exportdir);
-	}
+
+        return;
+    }
+
+    setEnabled(true);
+
+    m_project = project;
+
+    auto exportSpecification = m_project->get_export_specification();
+    exportDirName->setText(exportSpecification->get_export_dir());
 }
 
 

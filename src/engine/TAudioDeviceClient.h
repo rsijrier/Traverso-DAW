@@ -20,18 +20,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 $Id: Client.h,v 1.7 2007/11/19 11:18:54 r_sijrier Exp $
 */
 
-#ifndef CLIENT_H
-#define CLIENT_H
+#ifndef T_AUDIO_DEVICE_CLIENT_H
+#define T_AUDIO_DEVICE_CLIENT_H
 
 #include <QString>
 #include <QObject>
-#include "APILinkedList.h"
 
-#include "defines.h"
+#include "AudioDevice.h"
 
 class AudioBus;
 
-class TAudioDeviceClient : public QObject, public APILinkedListNode
+class TAudioDeviceClient : public QObject
 {
         Q_OBJECT
 
@@ -41,27 +40,20 @@ public:
 
 	void set_process_callback(const ProcessCallback& call);
 	void set_transport_control_callback(const TransportControlCallback& call);
-	bool is_smaller_then(APILinkedListNode* ) {return false;}
-        int is_connected() const {return m_isConnected;}
-	void set_connected_to_audiodevice(int connected) {
-		m_isConnected = connected;
-		if (m_isConnected) {
-			m_disconnectFromAudioDevice = 0;
-		}
-	}
-        void disconnect_from_audiodevice() {m_disconnectFromAudioDevice = 1;}
-        int wants_to_be_disconnected_from_audiodevice() const {return m_disconnectFromAudioDevice;}
 
-	
 	ProcessCallback process;
 	TransportControlCallback transport_control;
 	
 	QString		m_name;
-        AudioBus*       masterOutBus{};
+    AudioBus*       masterOutBus{};
+
+    bool operator<(const TAudioDeviceClient& /*other*/) {
+        return false;
+    }
+
+    TAudioDeviceClient* next = nullptr;
 
 private:
-        int     m_isConnected;
-        int     m_disconnectFromAudioDevice;
 
 };
 

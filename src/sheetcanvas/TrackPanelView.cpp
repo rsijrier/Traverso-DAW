@@ -26,8 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QAction>
 #include <QStringList>
 
-#include "AudioBus.h"
-#include "AudioDevice.h"
 #include "CurveView.h"
 #include "TConfig.h"
 #include "TrackPanelView.h"
@@ -46,7 +44,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Project.h"
 #include "ProjectManager.h"
 #include "Sheet.h"
-#include "TBusTrack.h"
 #include "Track.h"
 #include "TMainWindow.h"
 #include "VUMeterView.h"
@@ -186,8 +183,14 @@ void TrackPanelView::layout_panel_items()
     m_trackNameView->setPos(3, 3);
 
     qreal height =  m_boundingRect.height();
+    bool horizontalVuMeterViewPossible = height > (VUMETER_Y_POS + std::min(m_vuMeterView->boundingRect().height(), m_vuMeterView->boundingRect().width()));
 
     Qt::Orientation orientation = Qt::Orientation(config().get_property("Themer", "VUOrientation", Qt::Vertical).toInt());
+    if (!horizontalVuMeterViewPossible) {
+        orientation = Qt::Vertical;
+    }
+    m_vuMeterView->update_orientation(orientation);
+
     if (orientation == Qt::Vertical) {
         m_vuMeterView->set_bounding_rect(QRectF(0, 0, VU_WIDTH, height - 4));
         m_vuMeterView->setPos(m_boundingRect.width() - VU_WIDTH - 5, 2);
@@ -204,18 +207,10 @@ void TrackPanelView::layout_panel_items()
 
     m_panKnob->setPos(ledViewXPos + PANEL_ITEM_SPACING - LED_SPACING, LED_Y_POS - 2);
     m_gainKnob->setPos(m_panKnob->pos().x() + m_panKnob->boundingRect().width() + LED_SPACING, LED_Y_POS - 2);
-
-
-    if ( (m_vuMeterView->pos().y() + m_vuMeterView->boundingRect().height()) >= height) {
-        m_vuMeterView->hide();
-    } else {
-        m_vuMeterView->show();
-    }
 }
 
 void TrackPanelView::theme_config_changed()
 {
-        m_vuMeterView->update_orientation();
         layout_panel_items();
 	foreach(ViewItem* ledViews, m_ledViews) {
 		ledViews->update();
@@ -228,17 +223,17 @@ AudioTrackPanelView::AudioTrackPanelView(AudioTrackView* trackView)
 {
 	PENTERCONS;
 
-        m_tv = trackView;
-	m_recLed = new TrackPanelLed(this, m_track, "R", "toggle_arm");
-        m_recLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
+    m_tv = trackView;
+    m_recLed = new TrackPanelLed(this, m_track, "R", "toggle_arm");
+    m_recLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 
     m_ledViews.insert(4, m_recLed);
 
-        if (m_tv->get_track()->armed()) {
-                m_recLed->ison_changed(true);
-        }
+    if (m_tv->get_track()->armed()) {
+        m_recLed->ison_changed(true);
+    }
 
-        connect(m_tv->get_track(), SIGNAL(armedChanged(bool)), m_recLed, SLOT(ison_changed(bool)));
+    connect(m_tv->get_track(), SIGNAL(armedChanged(bool)), m_recLed, SLOT(ison_changed(bool)));
 }
 
 AudioTrackPanelView::~AudioTrackPanelView( )
@@ -249,7 +244,7 @@ AudioTrackPanelView::~AudioTrackPanelView( )
 
 void AudioTrackPanelView::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
-        TrackPanelView::paint(painter, option, widget);
+    TrackPanelView::paint(painter, option, widget);
 }
 
 void AudioTrackPanelView::layout_panel_items()
@@ -296,7 +291,7 @@ TTrackLanePanelView::TTrackLanePanelView(TTrackLaneView* laneView)
 {
 	PENTERCONS;
 	m_laneView = laneView;
-	m_ignoreContext = true;
+    set_ignore_context(true);
 	setZValue(laneView->zValue() + 200);
 }
 
@@ -364,7 +359,7 @@ void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem *
 
         QColor color = themer()->get_color("TrackPanel:slider:background");
         if (has_active_context()) {
-                color = color.light(110);
+                color = color.lighter(110);
         }
 
 
@@ -396,7 +391,7 @@ void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem *
 
         color = QColor(cr,0,cb);
         if (has_active_context()) {
-		color = color.light(140);
+        color = color.lighter(140);
 	}
 
         painter->fillRect(31, 1, sliderdbx, height-1, m_gradient2D);
@@ -467,7 +462,7 @@ void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*
 		QColor background = themer()->get_color("TrackPanel:led:inactive");
 		QColor color = themer()->get_color("TrackPanel:" + m_name + "led");
                 if (has_active_context()) {
-			color = color.light(110);
+            color = color.lighter(110);
 		}
 		
 		painter->setPen(color);
@@ -481,7 +476,7 @@ void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*
 	} else {
 		QColor color = themer()->get_color("TrackPanel:led:inactive");
                 if (has_active_context()) {
-			color = color.light(110);
+            color = color.lighter(110);
 		}
 		
 		painter->setPen(themer()->get_color("TrackPanel:led:margin:inactive"));
@@ -521,9 +516,11 @@ void TrackPanelLed::ison_changed(bool isOn)
 
 TCommand * TrackPanelLed::toggle()
 {
-	TCommand* com;
-	QMetaObject::invokeMethod(m_object, QS_C(m_toggleslot), Qt::DirectConnection, Q_RETURN_ARG(TCommand*, com));
-	Q_ASSERT(!com);
+    TCommand* com = nullptr;
+
+    QMetaObject::invokeMethod(m_object, QS_C(m_toggleslot), Qt::DirectConnection, Q_RETURN_ARG(TCommand*, com));
+
+    Q_ASSERT(!com);
 
     return nullptr;
 }

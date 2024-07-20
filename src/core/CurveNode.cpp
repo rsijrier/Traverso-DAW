@@ -23,22 +23,21 @@ $Id: CurveNode.cpp,v 1.8 2007/11/23 14:56:36 r_sijrier Exp $
 #include "CurveNode.h"
 #include "Curve.h"
 
+#include "qassert.h"
+#include <cmath>
+
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
 
-CurveNode::CurveNode(Curve *curve, double when, double val)
+CurveNode::CurveNode(Curve *curve, double when, double value)
     : m_curve(curve)
 {
     coeff[0] = coeff[1] = coeff[2] = coeff[3] = 0.0;
 
-    this->when = when;
-    this->value = val;
-}
+    set_when_and_value(when, value);
 
-CurveNode::CurveNode()
-{
-
+    next = nullptr;
 }
 
 CurveNode::~CurveNode()
@@ -46,19 +45,32 @@ CurveNode::~CurveNode()
 
 }
 
+void CurveNode::set_when(double when) {
+    Q_ASSERT( ! std::isnan(when));
+
+    m_when = when;
+}
+
 void CurveNode::set_relative_when_and_value( double relwhen, double value )
 {
-    this->when = relwhen * m_curve->get_range();
-    this->value = value;
+    Q_ASSERT( ! std::isnan(relwhen));
+    Q_ASSERT( ! std::isnan(value));
+
+    m_when = relwhen * m_curve->get_range();
+    m_value = value;
 }
 
 void CurveNode::set_when_and_value(double when, double value)
 {
-    if (qFuzzyCompare(this->when, when) && qFuzzyCompare(this->value, value)) {
+    Q_ASSERT( ! std::isnan(when));
+    Q_ASSERT( ! std::isnan(value));
+
+    if (qFuzzyCompare(m_when, when) && qFuzzyCompare(m_value, value)) {
         return;
     }
-	this->when = when;
-	this->value = value;
+    m_when = when;
+    m_value = value;
+
 	emit m_curve->nodePositionChanged();
 }
 //eof

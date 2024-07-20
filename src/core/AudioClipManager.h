@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define AUDIOCLIPMANAGER_H
 
 #include "ContextItem.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 #include <QDomNode>
 #include <QList>
@@ -49,14 +49,14 @@ public:
 
 	QList<AudioClip* > get_clip_list() const;
 
-	TimeRef get_last_location() const;
+    TTimeRef get_last_location() const;
 
 private:
 	QList<AudioClip* >		m_clips;
 	QList<AudioClip* >		m_clipselection;
 	Sheet*				m_sheet;
 	
-	TimeRef 			m_lastLocation;
+    TTimeRef 			m_lastLocation;
 
 public slots:
 	void add_clip(AudioClip* clip);

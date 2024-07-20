@@ -25,15 +25,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "ContextItem.h"
 
 #include <QDomNode>
-#include "APILinkedList.h"
+#include <QHash>
+
+#include "TRealTimeLinkedList.h"
 #include "defines.h"
+#include "TTimeRef.h"
 
 class AudioTrack;
 class SnapList;
-class Snappable;
+class TLocation;
 class TBusTrack;
 class Track;
-class TimeLine;
+class TTimeLineRuler;
 
 class TSession : public ContextItem
 {
@@ -48,15 +51,14 @@ public:
 
 	qreal get_hzoom() const;
 	QPoint get_scrollbar_xy();
-	int get_mode() const {return m_mode;}
     bool is_transport_rolling() const;
-	TimeRef get_work_location() const;
-	virtual TimeRef get_last_location() const;
-	TimeRef get_new_transport_location() const {return m_newTransportLocation;}
-	virtual TimeRef get_transport_location() const;
+	TTimeRef get_work_location() const;
+	virtual TTimeRef get_last_location() const;
+    TTimeRef get_seek_transport_location() const {return m_seekTransportLocation;}
+	virtual TTimeRef get_transport_location() const;
 	virtual SnapList* get_snap_list() const;
 	Track* get_track(qint64 id) const;
-	TimeLine* get_timeline() const;
+	TTimeLineRuler* get_timeline() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
 	int get_track_height(qint64 trackId) const {return m_trackHeights.value(trackId, 150);}
@@ -65,12 +67,12 @@ public:
 	virtual QList<Track*> get_tracks() const;
 	QList<TBusTrack*> get_bus_tracks() const;
 	QList<TSession*> get_child_sessions() const {return m_childSessions;}
-	Snappable* get_work_snap() const;
+	TLocation* get_work_snap() const;
 	virtual bool is_snap_on() const	{return m_isSnapOn;}
 
 
 	void set_hzoom(qreal hzoom);
-    virtual void set_work_at(TimeRef location, bool isFolder=false);
+    virtual void set_work_at(TTimeRef location, bool isFolder=false);
 	void set_scrollbar_xy(int x, int y);
 	void set_scrollbar_x(int x);
 	void set_scrollbar_y(int y);
@@ -90,48 +92,42 @@ public:
 	audio_sample_t* 	mixdown{};
 	audio_sample_t*		gainbuffer{};
 
-	enum Mode {
-		EDIT = 1,
-		EFFECTS = 2
-	};
-
 protected:
 	TSession*               m_parentSession;
 	QList<TSession*>        m_childSessions;
-	APILinkedList           m_rtAudioTracks;
-	APILinkedList           m_rtBusTracks;
+    TRealTimeLinkedList<AudioTrack*>           m_rtAudioTracks;
+    TRealTimeLinkedList<TBusTrack*>           m_rtBusTracks;
 	QList<AudioTrack*>      m_audioTracks;
 	QList<TBusTrack*>       m_busTracks;
 	QHash<qint64, Track* >	m_tracks;
 	TBusTrack*              m_masterOutBusTrack{};
 	QHash<qint64, int>      m_trackHeights;
 
-	SnapList*	m_snaplist;
-	Snappable*	m_workSnap;
-	TimeLine*	m_timeline;
-	QString         m_name;
+    SnapList*           m_snaplist;
+    TLocation*       m_workSnap;
+    TTimeLineRuler*     m_timeline;
+    QString             m_name;
 
-	int		m_mode{};
-	int		m_sbx{};
-	int		m_sby{};
-	qreal		m_hzoom{};
-	bool 		m_isSnapOn{};
-	bool            m_isProjectSession{};
+    int                 m_scrollBarXValue{};
+    int                 m_scrollBarYValue{};
+    qreal               m_hzoom{};
+    bool                m_isSnapOn{};
+    bool                m_isProjectSession{};
 
-	volatile size_t		m_transport{};
-	TimeRef                 m_transportLocation;
-	TimeRef                 m_workLocation;
-	TimeRef                 m_newTransportLocation;
+    std::atomic<bool>   m_transportRolling;
+    TTimeRef            m_transportLocation;
+    TTimeRef            m_workLocation;
+    TTimeRef            m_seekTransportLocation;
 
 private:
-	friend class TimeLine;
+	friend class TTimeLineRuler;
 
 	void init();
 
 
 public slots:
 	void set_temp_follow_state(bool state);
-	virtual void set_transport_pos(TimeRef location);
+	virtual void set_transport_location(TTimeRef location);
 
 	TCommand* toggle_solo();
 	TCommand* toggle_mute();
@@ -158,7 +154,7 @@ signals:
 	void transportStarted();
 	void transportStopped();
 	void workingPosChanged();
-	void transportPosSet();
+    void transportLocationChanged();
 	void horizontalScrollBarValueChanged();
 	void verticalScrollBarValueChanged();
 	void propertyChanged();

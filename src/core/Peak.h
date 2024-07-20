@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QHash>
 #include <QPair>
 
+#include "TTimeRef.h"
 #include "defines.h"
 
 class ReadSource;
@@ -103,6 +104,7 @@ public:
 	static const int MAX_DB_VALUE = 8000;
 	static int zoomStep[ZOOM_LEVELS + 1];
 
+
 	Peak(AudioSource* source);
 	~Peak();
 
@@ -114,13 +116,13 @@ public:
 	void process(uint channel, const audio_sample_t* buffer, nframes_t frames);
     int prepare_processing(uint rate);
 	int finish_processing();
-	int calculate_peaks(int chan, float** buffer, TimeRef startlocation, int peakDataCount, qreal framesPerPeak);
+    int calculate_peaks(int chan, float** buffer, const TTimeRef &startlocation, int peakDataCount, qreal framesPerPeak);
 
 	void close();
 	
 	void start_peak_loading();
 
-	audio_sample_t get_max_amplitude(TimeRef startlocation, TimeRef endlocation);
+    audio_sample_t get_max_amplitude(const TTimeRef &startlocation, const TTimeRef &endlocation);
 	
 	static QHash<int, int>* cache_index_lut();
 	static int max_zoom_value();
@@ -143,10 +145,10 @@ private:
 		audio_sample_t		peakLowerValue;
 		audio_sample_t		normValue;
 		
-		TimeRef			stepSize;
-		TimeRef			processRange;
-		TimeRef			processLocation;
-		TimeRef			nextDataPointLocation;
+		TTimeRef			stepSize;
+		TTimeRef			processRange;
+		TTimeRef			processLocation;
+		TTimeRef			nextDataPointLocation;
 		
 		nframes_t		normProcessedFrames;
 		

@@ -21,13 +21,13 @@
 #ifndef ringbuffer_npt_h
 #define ringbuffer_npt_h
 
+#include <atomic>
 #include <stdio.h>
 
 #if ! defined (Q_OS_WIN)
 #include <sys/mman.h>
 #endif
 
-#include "defines.h"
 
 /* ringbuffer class where the element size is not required to be a power of two */
 
@@ -56,14 +56,14 @@ class RingBufferNPT
 
 	void reset () {
 		/* !!! NOT THREAD SAFE !!! */
-		t_atomic_int_set (&write_ptr, 0);
-		t_atomic_int_set (&read_ptr, 0);
+        write_ptr.store(0);
+        read_ptr.store(0);
 	}
 
 	void set (size_t r, size_t w) {
 		/* !!! NOT THREAD SAFE !!! */
-		t_atomic_int_set (&write_ptr, w);
-		t_atomic_int_set (&read_ptr, r);
+        write_ptr.store(w);
+        read_ptr.store(r);
 	}
 	
 	size_t  read  (T *dest, size_t cnt);
@@ -77,23 +77,20 @@ class RingBufferNPT
 	void get_read_vector (rw_vector *);
 	void get_write_vector (rw_vector *);
 	
-	void decrement_read_ptr (size_t cnt) {
-		t_atomic_int_set (&read_ptr, (t_atomic_int_get(&read_ptr) - cnt) % size);
-	}                
 
 	void increment_read_ptr (size_t cnt) {
-		t_atomic_int_set (&read_ptr, (t_atomic_int_get(&read_ptr) + cnt) % size);
+        read_ptr.store((read_ptr.load() + cnt) % size);
 	}                
 
 	void increment_write_ptr (size_t cnt) {
-		t_atomic_int_set (&write_ptr,  (t_atomic_int_get(&write_ptr) + cnt) % size);
+        write_ptr.store((write_ptr.load() + cnt) % size);
 	}                
 
 	size_t write_space () {
 		size_t w, r;
 		
-		w = t_atomic_int_get (&write_ptr);
-		r = t_atomic_int_get (&read_ptr);
+        w = write_ptr.load();
+        r = read_ptr.load();
 		
 		if (w > r) {
 			return ((r - w + size) % size) - 1;
@@ -107,8 +104,8 @@ class RingBufferNPT
 	size_t read_space () {
 		size_t w, r;
 		
-		w = t_atomic_int_get (&write_ptr);
-		r = t_atomic_int_get (&read_ptr);
+        w = write_ptr.load();
+        r = read_ptr.load();
 		
 		if (w > r) {
 			return w - r;
@@ -118,15 +115,13 @@ class RingBufferNPT
 	}
 
 	T *buffer () { return buf; }
-	size_t get_write_ptr () const { return t_atomic_int_get (&write_ptr); }
-	size_t get_read_ptr () const { return t_atomic_int_get (&read_ptr); }
 	size_t bufsize () const { return size; }
 
   protected:
 	T *buf;
-	size_t size;
-	mutable volatile int write_ptr;
-	mutable volatile int read_ptr;
+    size_t size;
+    std::atomic<int> write_ptr;
+    std::atomic<int> read_ptr;
 };
 
 template<class T> size_t
@@ -138,7 +133,7 @@ RingBufferNPT<T>::read (T *dest, size_t cnt)
         size_t n1, n2;
         size_t priv_read_ptr;
 
-        priv_read_ptr=t_atomic_int_get(&read_ptr);
+        priv_read_ptr=read_ptr.load();
 
         if ((free_cnt = read_space ()) == 0) {
                 return 0;
@@ -164,7 +159,7 @@ RingBufferNPT<T>::read (T *dest, size_t cnt)
                 priv_read_ptr = n2;
         }
 
-        t_atomic_int_set(&read_ptr, priv_read_ptr);
+        read_ptr.store(priv_read_ptr);
         return to_read;
 }
 
@@ -177,7 +172,7 @@ RingBufferNPT<T>::write (T *src, size_t cnt)
         size_t n1, n2;
         size_t priv_write_ptr;
 
-        priv_write_ptr=t_atomic_int_get(&write_ptr);
+        priv_write_ptr=write_ptr.load();
 
         if ((free_cnt = write_space ()) == 0) {
                 return 0;
@@ -203,7 +198,7 @@ RingBufferNPT<T>::write (T *src, size_t cnt)
                 priv_write_ptr = n2;
         }
 
-        t_atomic_int_set(&write_ptr, priv_write_ptr);
+        write_ptr.store(priv_write_ptr);
         return to_write;
 }
 
@@ -214,8 +209,8 @@ RingBufferNPT<T>::get_read_vector (RingBufferNPT<T>::rw_vector *vec)
 	size_t cnt2;
 	size_t w, r;
 	
-	w = t_atomic_int_get (&write_ptr);
-	r = t_atomic_int_get (&read_ptr);
+    w = write_ptr.load();
+    r = read_ptr.load();
 	
 	if (w > r) {
 		free_cnt = w - r;
@@ -253,8 +248,8 @@ RingBufferNPT<T>::get_write_vector (RingBufferNPT<T>::rw_vector *vec)
 	size_t cnt2;
 	size_t w, r;
 	
-	w = t_atomic_int_get (&write_ptr);
-	r = t_atomic_int_get (&read_ptr);
+    w = write_ptr.load();
+    r = read_ptr.load();
 	
 	if (w > r) {
 		free_cnt = ((r - w + size) % size) - 1;

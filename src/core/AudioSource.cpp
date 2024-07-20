@@ -25,15 +25,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <utility>
 #include "Sheet.h"
 #include "Peak.h"
-#include "Export.h"
 #include "Utils.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
-
-// QMutex mutex;
-
 
 // This constructor is called at file import or recording
 AudioSource::AudioSource(QString  dir, const QString& name)
@@ -45,6 +41,11 @@ AudioSource::AudioSource(QString  dir, const QString& name)
 	PENTERCONS;
 	m_fileName = m_dir + m_name;
 	m_id = create_id();
+
+    m_rtBufferSlotsQueue = nullptr;
+    m_freeBufferSlotsQueue = nullptr;
+    m_bufferstatus.set_sync_status(BufferStatus::SyncStatus::OUT_OF_SYNC);
+
 }
 
 
@@ -55,6 +56,10 @@ AudioSource::AudioSource()
 	, m_fileName("")
 	, m_wasRecording(false)
 {
+    m_rtBufferSlotsQueue = nullptr;
+    m_freeBufferSlotsQueue = nullptr;
+    m_bufferstatus.set_sync_status(BufferStatus::SyncStatus::OUT_OF_SYNC);
+
 }
 
 
@@ -62,6 +67,61 @@ AudioSource::~AudioSource()
 {
 	PENTERDES;
 }
+
+void AudioSource::prepare_rt_buffers(nframes_t bufferSize)
+{
+    m_bufferstatus.set_sync_status(BufferStatus::SyncStatus::OUT_OF_SYNC);
+
+    // printf("AudioSource::prepare_rt_buffers: audio device buffer size %d\n", bufferSize);
+
+    delete_rt_buffers();
+
+    QueueBufferSlot* slot = nullptr;
+
+    m_rtBufferSlotsQueue = new moodycamel::BlockingReaderWriterCircularBuffer<QueueBufferSlot*>(slotcount);
+    m_freeBufferSlotsQueue = new moodycamel::BlockingReaderWriterCircularBuffer<QueueBufferSlot*>(slotcount);
+
+
+    m_bufferSlotDuration = TTimeRef(bufferSize, m_outputRate);
+
+    for (size_t i=0; i<slotcount;++i) {
+        slot = new QueueBufferSlot(i, m_channelCount, bufferSize);
+        bool queued = m_freeBufferSlotsQueue->try_enqueue(slot);
+        Q_ASSERT(queued);
+    }
+
+    Q_ASSERT(slot);
+    // We have to assign m_lastQueuedRTBufferSlot to an existing slot
+    m_lastQueuedRTBufferSlot = slot;
+
+    // printf("AudioSource::::prepare_rt_buffers: freeBufferSlotsQueue slot count %zu\n", m_freeBufferSlotsQueue->size_approx());
+    // printf("AudioSource::::prepare_rt_buffers: rtBufferSlotsQueue slot count %zu\n", m_rtBufferSlotsQueue->size_approx());
+}
+
+void AudioSource::delete_rt_buffers()
+{
+    QueueBufferSlot* slot;
+
+    if (m_freeBufferSlotsQueue) {
+        while(m_freeBufferSlotsQueue->try_dequeue(slot)) {
+            delete slot;
+            slot = nullptr;
+        }
+        Q_ASSERT(m_freeBufferSlotsQueue->size_approx() == 0);
+        delete m_freeBufferSlotsQueue;
+    }
+
+    if (m_rtBufferSlotsQueue) {
+        while (m_rtBufferSlotsQueue->try_dequeue(slot)) {
+            delete slot;
+            slot = nullptr;
+        }
+        Q_ASSERT(m_rtBufferSlotsQueue->size_approx() == 0);
+        delete m_rtBufferSlotsQueue;
+    }
+}
+
+
 
 void AudioSource::set_name(const QString& name)
 {
@@ -82,7 +142,7 @@ void AudioSource::set_dir(const QString& dir)
 }
 
 
-uint AudioSource::get_rate( ) const
+uint AudioSource::get_sample_rate( ) const
 {
 	return m_rate;
 }

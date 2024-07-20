@@ -43,7 +43,7 @@ public:
 	QString get_conversion_description();
 
 private:
-	QHash<qint64, ReadSource*> m_readsources;
+    QMultiHash<qint64, ReadSource*> m_readsources;
 	AudioFileMerger* m_merger;
 	int m_filesToMerge;
 	int m_filesMerged;

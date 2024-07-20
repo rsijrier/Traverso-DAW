@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "PCommand.h"
 #include "ContextItem.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
         as a public slot!
 
         \n
-        Supported types are: TimeRef, double and float.
+        Supported types are: TTimeRef, double and float.
  *
  */
 
@@ -79,8 +79,8 @@ int PCommand::do_action()
 {
         PENTER;
         if (!m_doValue.isNull()) {
-                if (m_doValue.typeName() == QString("TimeRef")) {
-                        if (QMetaObject::invokeMethod(m_contextitem, m_slot, Qt::DirectConnection, Q_ARG(TimeRef, m_doValue.value<TimeRef>()))) {
+                if (m_doValue.typeName() == QString("TTimeRef")) {
+                        if (QMetaObject::invokeMethod(m_contextitem, m_slot, Qt::DirectConnection, Q_ARG(TTimeRef, m_doValue.value<TTimeRef>()))) {
                                 return 1;
                         }
                 }
@@ -109,8 +109,8 @@ int PCommand::undo_action()
 {
 	PENTER;
 	if (!m_undoValue.isNull()) {
-		if (m_undoValue.typeName() == QString("TimeRef")) {
-			if (QMetaObject::invokeMethod(m_contextitem, m_slot, Qt::DirectConnection, Q_ARG(TimeRef, m_undoValue.value<TimeRef>()))) {
+		if (m_undoValue.typeName() == QString("TTimeRef")) {
+			if (QMetaObject::invokeMethod(m_contextitem, m_slot, Qt::DirectConnection, Q_ARG(TTimeRef, m_undoValue.value<TTimeRef>()))) {
 				return 1;
 			}
 		}

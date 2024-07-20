@@ -24,6 +24,7 @@
 #define T_AUDIO_DRIVER_H
 
 #include "defines.h"
+#include "AudioDevice.h"
 #include <memops.h>
 
 
@@ -41,7 +42,7 @@ class TAudioDriver : public QObject
     Q_OBJECT
 
 public:
-        TAudioDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
+        TAudioDriver(AudioDevice* device);
         virtual ~TAudioDriver();
 
         virtual int _run_cycle();
@@ -75,17 +76,17 @@ public:
 
 
 protected:
-        AudioDevice* device;
-        QList<AudioChannel* >		m_captureChannels;
-        QList<AudioChannel* >		m_playbackChannels;
-        int             		dither{};
-        dither_state_t*			dither_state{};
-        trav_time_t 			period_usecs{};
-        trav_time_t 			last_wait_ust{};
-        nframes_t                frame_rate;
-        nframes_t                frames_per_cycle;
-        nframes_t                capture_frame_latency{};
-        nframes_t                playback_frame_latency{};
+        AudioDevice*            m_device;
+        QList<AudioChannel* >   m_captureChannels;
+        QList<AudioChannel* >   m_playbackChannels;
+        int             		m_dither{};
+        dither_state_t*			m_ditherState{};
+        trav_time_t 			m_periodUSecs{};
+        trav_time_t 			m_lastWaitUsecond{};
+        nframes_t               m_frameRate;
+        nframes_t               m_framesPerCycle;
+        nframes_t               m_captureFrameLatency{};
+        nframes_t               m_playbackFrameLatency{};
 
 signals:
         void errorMessage(const QString& message);

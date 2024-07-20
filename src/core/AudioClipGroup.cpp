@@ -28,12 +28,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "ResourcesManager.h"
 #include "Sheet.h"
 #include "AudioTrack.h"
-#include <limits.h>
 
 #include "Debugger.h"
 
+AudioClipGroup::AudioClipGroup()
+{
+    m_location = new TLocation();
+}
+
 AudioClipGroup::AudioClipGroup(QList< AudioClip * > clips)
 {
+    m_location = new TLocation();
     m_clips = clips;
     update_state();
 }
@@ -50,7 +55,7 @@ void AudioClipGroup::set_clips(QList< AudioClip * > clips)
     update_state();
 }
 
-void AudioClipGroup::move_to(int trackIndex, TimeRef location)
+void AudioClipGroup::move_to(int trackIndex, TTimeRef location)
 {
     PENTER;
     int trackIndexDelta = trackIndex - m_topTrackIndex;
@@ -59,15 +64,15 @@ void AudioClipGroup::move_to(int trackIndex, TimeRef location)
         if (trackIndexDelta != 0) {
                         AudioTrack* track = clip->get_sheet()->get_audio_track_for_index(clip->get_track()->get_sort_index() + trackIndexDelta);
             if (track) {
-                                // Remove has to be done BEFORE adding, else the APILinkedList logic
-                                // gets messed up for the Tracks AudioClipList, which is an APILinkedList :(
+                                // Remove has to be done BEFORE adding, else the TRealTimeLinkedList logic
+                                // gets messed up for the Tracks AudioClipList, which is an TRealTimeLinkedList :(
                 TCommand::process_command(clip->get_track()->remove_clip(clip, false, true));
                 TCommand::process_command(track->add_clip(clip, false, true));
             }
         }
 
-        TimeRef offset = clip->get_track_start_location() - m_trackStartLocation;
-        clip->set_track_start_location(location + offset);
+        TTimeRef offset = clip->get_location()->get_start() - m_location->get_start();
+        clip->set_location_start(location + offset);
     }
 
     update_state();
@@ -79,8 +84,8 @@ void AudioClipGroup::update_state()
         return;
     }
 
-    m_trackStartLocation = LLONG_MAX;
-    m_trackEndLocation = TimeRef();
+    m_location->set_start(TTimeRef::max_length());
+    m_location->set_end(TTimeRef());
 
     m_topTrackIndex = INT_MAX;
     m_bottomTrackIndex = 0;
@@ -93,11 +98,11 @@ void AudioClipGroup::update_state()
         if (index > m_bottomTrackIndex) {
             m_bottomTrackIndex = index;
         }
-        if (m_trackStartLocation > clip->get_track_start_location()) {
-            m_trackStartLocation = clip->get_track_start_location();
+        if (m_location->get_start() > clip->get_location()->get_start()) {
+            m_location->set_start(clip->get_location()->get_start());
         }
-        if (m_trackEndLocation < clip->get_track_end_location()) {
-            m_trackEndLocation = clip->get_track_end_location();
+        if (m_location->get_end() < clip->get_location()->get_end()) {
+            m_location->set_end(clip->get_location()->get_end());
         }
     }
 }
@@ -105,7 +110,7 @@ void AudioClipGroup::update_state()
 void AudioClipGroup::set_snappable(bool snap)
 {
     foreach(AudioClip* clip, m_clips) {
-        clip->set_snappable(snap);
+        clip->get_location()->set_snappable(snap);
     }
 }
 
@@ -124,7 +129,7 @@ QList<AudioClip*> AudioClipGroup::copy_clips()
         AudioClip* newclip = resources_manager()->get_clip(clip->get_id());
         newclip->set_sheet(clip->get_sheet());
         newclip->set_track(clip->get_track());
-        newclip->set_track_start_location(clip->get_track_start_location());
+        newclip->set_location_start(clip->get_location()->get_start());
         newclips.append(newclip);
     }
 
@@ -145,22 +150,24 @@ void AudioClipGroup::remove_all_clips_from_tracks()
     }
 }
 
-void AudioClipGroup::check_valid_track_index_delta(int & delta)
+int AudioClipGroup::check_valid_track_index_delta(int delta)
 {
         if (m_clips.isEmpty()) {
-        return;
+        return 0;
     }
 
     int allowedDeltaPlus = (m_clips.first()->get_sheet()->get_audio_track_count() - 1) - m_bottomTrackIndex;
     int allowedDeltaMin  = -m_topTrackIndex;
 
     if (delta > allowedDeltaPlus) {
-        delta = allowedDeltaPlus;
+        return allowedDeltaPlus;
     }
 
     if (delta < allowedDeltaMin) {
-        delta = allowedDeltaMin;
+        return allowedDeltaMin;
     }
+
+    return 0;
 }
 
 bool AudioClipGroup::is_locked() const

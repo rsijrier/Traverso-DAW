@@ -34,7 +34,7 @@ class TSession;
 class AudioTrack;
 class Track;
 class Project;
-class BusMonitor;
+class TAudioBusVUMonitorWidget;
 class InfoBox;
 class ViewPort;
 class ContextItem;
@@ -78,7 +78,7 @@ class ProgressToolBar;
 class WelcomeWidget;
 class TSessionTabWidget;
 class TShortcutEditorDialog;
-class TFunction;
+class TShortCutFunction;
 
 class AbstractVUMeterLevel
 {
@@ -109,7 +109,7 @@ public :
         int get_vulevel_update_frequency() const {return m_vuLevelUpdateFrequency;}
 
         QLineEdit* get_track_finder() const {return m_trackFinder;}
-	QMenu* create_context_menu(QObject* item, QList<TFunction* >* list = 0);
+	QMenu* create_context_menu(QObject* item, QList<TShortCutFunction* >* list = 0);
 	SheetWidget* getCurrentSheetWidget() const {return m_currentSheetWidget;}
 
 protected:
@@ -160,7 +160,7 @@ private:
 	bool			m_isFollowing{};
         QByteArray              m_windowState;
 
-	BusMonitor* 		busMonitor;
+    TAudioBusVUMonitorWidget* 		busMonitor;
         QToolBar*               m_mainMenuToolBar;
         QMenuBar*               m_mainMenuBar;
 	QToolBar*		m_projectToolBar;
@@ -182,7 +182,7 @@ private:
 
 	
 	void create_menus();
-    void add_function_to_menu(TFunction* function, QMenu* menu);
+    void add_function_to_menu(TShortCutFunction* function, QMenu* menu);
         void set_project_actions_enabled(bool enable);
 	void save_config_and_emit_message(const QString& message);
         void track_finder_show_initial_text();
@@ -210,10 +210,6 @@ public slots :
 	void change_recording_format_to_wav();
 	void change_recording_format_to_wav64();
 	void change_recording_format_to_wavpack();
-	void change_resample_quality_to_best();
-	void change_resample_quality_to_high();
-	void change_resample_quality_to_medium();
-	void change_resample_quality_to_fast();
 
         TCommand* full_screen();
         TCommand* show_fft_meter_only();
@@ -255,6 +251,10 @@ private slots:
 	void update_temp_follow_state(bool state);
         void track_finder_model_index_changed(const QModelIndex& index);
         void track_finder_return_pressed();
+
+    TCommand* undo();
+    TCommand* redo();
+
 };
 
 #endif

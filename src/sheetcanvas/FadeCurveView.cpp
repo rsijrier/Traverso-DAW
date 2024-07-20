@@ -42,8 +42,8 @@ static const int DOT_SIZE		= 6;
 static const QString DOT_COLOR		= "#78817B";
 
 FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * fadeCurve )
-	: ViewItem(parent, fadeCurve)
-	, m_fadeCurve(fadeCurve)
+    : ViewItem(parent, fadeCurve)
+    , m_fadeCurve(fadeCurve)
 {
 	PENTERCONS;
     m_sv = sv;
@@ -51,9 +51,10 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 	m_holdactive = false;
 	m_guicurve = new Curve(nullptr);
 	m_guicurve->set_sheet(m_sv->get_sheet());
-	
-	
-    apill_foreach(CurveNode* node, CurveNode*, m_fadeCurve->get_nodes()) {
+
+    Q_ASSERT(m_fadeCurve);
+
+    for(CurveNode* node = m_fadeCurve->get_nodes().first(); node != nullptr; node = node->next) {
 		CurveNode* guinode = new CurveNode(m_guicurve, 
 				node->get_when() / m_sv->timeref_scalefactor,
 				node->get_value());
@@ -61,10 +62,10 @@ FadeCurveView::FadeCurveView(SheetView* sv, AudioClipView* parent, FadeCurve * f
 		cmd->set_instantanious(true);
 		TCommand::process_command(cmd);
 	}
-	
-	load_theme_data();
 
-        setFlags(QGraphicsItem::ItemUsesExtendedStyleOption);
+    FadeCurveView::load_theme_data();
+
+    setFlags(QGraphicsItem::ItemUsesExtendedStyleOption);
 
 	connect(m_fadeCurve, SIGNAL(stateChanged()), this, SLOT(state_changed()));
 	connect(m_fadeCurve, SIGNAL(rangeChanged()), this, SLOT(state_changed()));
@@ -223,17 +224,14 @@ void FadeCurveView::calculate_bounding_rect()
 {
     prepareGeometryChange();
 
-	APILinkedList guinodes = m_guicurve->get_nodes();
-	APILinkedList nodes = m_fadeCurve->get_nodes();
+    TRealTimeLinkedList<CurveNode*> guinodes = m_guicurve->get_nodes();
+    TRealTimeLinkedList<CurveNode*> nodes = m_fadeCurve->get_nodes();
 	
-	APILinkedListNode* node = nodes.first();
-	APILinkedListNode* guinode = guinodes.first();
+    CurveNode* node = nodes.first();
+    CurveNode* guinode = guinodes.first();
 	
 	while (node) {
-        CurveNode* cnode = static_cast<CurveNode*>(node);
-        CurveNode* cguinode = static_cast<CurveNode*>(guinode);
-		
-		cguinode->set_when_and_value(cnode->get_when() / m_sv->timeref_scalefactor, cnode->get_value());
+        guinode->set_when_and_value(node->get_when() / m_sv->timeref_scalefactor, node->get_value());
 		
 		node = node->next;
 		guinode = guinode->next;
@@ -256,7 +254,7 @@ void FadeCurveView::calculate_bounding_rect()
 
 void FadeCurveView::state_changed( )
 {
-	PENTER;
+    PENTER;
 	prepareGeometryChange();
 	calculate_bounding_rect();
 	update();
@@ -277,7 +275,7 @@ TCommand* FadeCurveView::strength()
 
 TCommand* FadeCurveView::select_fade_shape()
 {
-	if (m_fadeCurve->get_fade_type() == FadeCurve::FadeIn) {
+    if (m_fadeCurve->get_fade_type() == FadeCurve::FadeIn) {
 		TMainWindow::instance()->select_fade_in_shape();
 	}
 	else {
@@ -295,6 +293,6 @@ void FadeCurveView::set_holding(bool hold)
 
 void FadeCurveView::load_theme_data()
 {
-	calculate_bounding_rect();
+    FadeCurveView::calculate_bounding_rect();
 }
 

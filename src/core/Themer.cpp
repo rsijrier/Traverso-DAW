@@ -134,7 +134,7 @@ void Themer::save( )
         doc.appendChild(themerNode);
 
         QDomElement properties = doc.createElement("properties");
-        QHash<QString, QVariant>::ConstIterator propertiesIt = m_properties.begin();
+        QHash<QString, QVariant>::Iterator propertiesIt = m_properties.begin();
         while (propertiesIt != m_properties.end()) {
                 QDomElement e = doc.createElement("property");
                 e.setAttribute("name", propertiesIt.key());
@@ -148,7 +148,7 @@ void Themer::save( )
         QFont basefont = QApplication::font();
 
         QDomElement fonts = doc.createElement("fonts");
-        QHash<QString, QFont>::ConstIterator fontsIt = m_fonts.begin();
+        QHash<QString, QFont>::Iterator fontsIt = m_fonts.begin();
         while (fontsIt != m_fonts.end()) {
                 QDomElement e = doc.createElement("font");
                 e.setAttribute("name", fontsIt.key());
@@ -271,9 +271,9 @@ void Themer::load( )
 		if (coloradjust != 100) {
 			int adjust = coloradjust - 100;
 			if (adjust < 0) {
-				color = color.dark(-1 * adjust + 100);
+                color = color.darker(-1 * adjust + 100);
 			} else {
-				color = color.light(adjust + 100);
+                color = color.lighter(adjust + 100);
 			}
 		}
 		m_colors.insert(name, color);
@@ -303,9 +303,9 @@ void Themer::load( )
 			if (coloradjust != 100) {
 				int adjust = coloradjust - 100;	
 				if (adjust < 0) {
-					color = color.dark(-1 * adjust + 100);
+                    color = color.darker(-1 * adjust + 100);
 				} else {
-					color = color.light(adjust + 100);
+                    color = color.lighter(adjust + 100);
 				}
 			}
 
@@ -614,8 +614,8 @@ void Themer::load_defaults()
         m_defaultColors.insert("TrackPanel:bus:font", p.color(QPalette::WindowText));
         m_defaultColors.insert("TrackPanel:bus:background", p.color(QPalette::Button));
         m_defaultColors.insert("TrackPanel:bus:margin", p.color(QPalette::Dark));
-        m_defaultColors.insert("BusTrack:background", p.color(QPalette::Background));
-        m_defaultColors.insert("BusTrackPanel:background", p.color(QPalette::Background));
+        m_defaultColors.insert("BusTrack:background", p.color(QPalette::Base));
+        m_defaultColors.insert("BusTrackPanel:background", p.color(QPalette::Base));
         m_defaultColors.insert("Workcursor:default", QColor(100, 50, 100, 180));
         m_defaultColors.insert("Marker:default", QColor(Qt::red));
         m_defaultColors.insert("Marker:blink", p.color(QPalette::Highlight));

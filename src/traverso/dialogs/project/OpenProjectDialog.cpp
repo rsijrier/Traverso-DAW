@@ -20,7 +20,6 @@
 */
 
 #include "OpenProjectDialog.h"
-#include "ui_OpenProjectDialog.h"
 
 #include <QDir>
 #include <QStringList>
@@ -31,7 +30,6 @@
 #include <QHeaderView>
 
 
-#include "TConfig.h"
 #include <Information.h>
 #include <ProjectManager.h>
 #include <Project.h>
@@ -220,8 +218,8 @@ void OpenProjectDialog::on_deleteProjectbutton_clicked( )
 	switch (QMessageBox::information(this,
 		tr("Traverso - Question"),
 		   tr("Are you sure that you want to remove the project %1 ? It's not possible to undo it !").arg(title).toLatin1().data(),
-		      "Yes", "No", QString::null, 1, -1)) {
-			      case 0:
+                    QMessageBox::Yes, QMessageBox::No)) {
+                  case QMessageBox::Yes:
 				      pm().remove_project(title);
 				      update_projects_list();
 				      break;
@@ -270,7 +268,7 @@ void OpenProjectDialog::on_projectDirSelectButton_clicked( )
 				tr("Please check permission for this directory: %1").arg(newPath) );
 		return;
 	} else {
-		QMessageBox::information( this, tr("Traverso - Information"), tr("Created new Project directory for you here: %1\n").arg(newPath), "OK", 0 );
+        QMessageBox::information( this, tr("Traverso - Information"), tr("Created new Project directory for you here: %1\n").arg(newPath), QMessageBox::Ok);
 	}
 	
 	pm().set_current_project_dir(newPath);

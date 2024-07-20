@@ -22,7 +22,6 @@ $Id: AudioBus.cpp,v 1.11 2008/01/21 16:22:15 r_sijrier Exp $
 
 #include "AudioBus.h"
 #include "AudioChannel.h"
-#include "Mixer.h"
 #include "AudioDevice.h"
 #include "Utils.h"
 
@@ -46,16 +45,15 @@ $Id: AudioBus.cpp,v 1.11 2008/01/21 16:22:15 r_sijrier Exp $
  * @param channels The number of AudioChannels to add to this AudioBus
  * @return a new AudioBus instance
  */
-AudioBus::AudioBus(const BusConfig& config)
+AudioBus::AudioBus(const TAudioBusConfiguration& config)
 {
         m_isMonitoring = true;
 
-        m_channelCount = 0;
         m_name = config.name;
         if (config.type == "input") {
-                m_type = ChannelIsInput;
+                m_type = AudioChannel::ChannelIsInput;
         } else {
-                m_type = ChannelIsOutput;
+                m_type = AudioChannel::ChannelIsOutput;
         }
 
         if (config.bustype == "hardware") {
@@ -101,7 +99,6 @@ void AudioBus::add_channel(AudioChannel* chan)
 {
 	Q_ASSERT(chan);
         m_channels.append(chan);
-        m_channelCount++;
 }
 
 void AudioBus::add_channel(const QString &channel)
@@ -111,7 +108,7 @@ void AudioBus::add_channel(const QString &channel)
 
 uint AudioBus::get_channel_count() const
 {
-        return m_channelCount;
+        return m_channels.size();
 }
 
 QStringList AudioBus::get_channel_names() const
@@ -140,7 +137,6 @@ QList<qint64> AudioBus::get_channel_ids() const
 void AudioBus::audiodevice_params_changed()
 {
         m_channels.clear();
-        m_channelCount = 0;
 
         AudioChannel* channel;
 

@@ -33,13 +33,13 @@
 
 class TCommand;
 class TMoveCommand;
-class CommandPlugin;
-class TFunction;
+class TCommandPlugin;
+class TShortCutFunction;
 class QKeyEvent;
 class QWheelEvent;
 class QMouseEvent;
 
-class TShortcut;
+class TShortCut;
 
 
 class TInputEventDispatcher : public QObject
@@ -61,7 +61,7 @@ public:
 
     TCommand* get_holding_command() const;
 
-    int dispatch_shortcut_from_contextmenu(TFunction* function);
+    int dispatch_shortcut_from_contextmenu(TShortCutFunction* function);
 
     void jog();
     void bypass_jog_until_mouse_movements_exceeded_manhattenlength(int length=50);
@@ -87,7 +87,7 @@ private:
         int             keycode;
         bool            wasExecuted;
         trav_time_t     lastTimeExecuted;
-        TShortcut*      shortcut;
+        TShortCut*      shortcut;
     };
 
     QList<int>		m_modifierKeys;
@@ -116,7 +116,7 @@ private:
     bool 			check_number_collection(int eventcode);
 
     //! call the slot that handler a given action
-    int dispatch_shortcut(TShortcut* shortCut, bool fromContextMenu=false);
+    int dispatch_shortcut(TShortCut* shortCut, bool fromContextMenu=false);
 
     void set_holding(bool holding);
     void process_press_event(int keyValue);

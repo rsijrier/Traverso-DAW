@@ -41,18 +41,18 @@ ThemeModifierDialog::ThemeModifierDialog(QWidget* parent)
                                   QColorDialog::DontUseNativeDialog);
 
         QList<QString> colors = themer()->get_colors();
-        qSort(colors.begin(), colors.end());
+        std::sort(colors.begin(), colors.end());
 
-        foreach(const QString& color, colors) {
+        for(const QString& color : colors) {
                 listWidget->addItem(color);
         }
 
         horizontalLayout->addWidget(m_colorDialog);
 
-        connect(m_colorDialog, SIGNAL(currentColorChanged(const QColor&)),
-                this, SLOT(current_color_changed(const QColor&)));
-        connect(listWidget, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),
-                this, SLOT(list_widget_item_changed(QListWidgetItem*, QListWidgetItem*)));
+        connect(m_colorDialog, SIGNAL(currentColorChanged(QColor&)),
+                this, SLOT(current_color_changed(QColor&)));
+        connect(listWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
+                this, SLOT(list_widget_item_changed(QListWidgetItem*,QListWidgetItem*)));
 }
 
 void ThemeModifierDialog::current_color_changed(const QColor& color)

@@ -59,7 +59,7 @@ LameAudioWriter::LameAudioWriter()
 LameAudioWriter::~LameAudioWriter()
 {
 	if (m_fid) {
-		close_private();
+        LameAudioWriter::close_private();
 	}
 	if (m_buffer) {
 		delete [] m_buffer;
@@ -68,7 +68,7 @@ LameAudioWriter::~LameAudioWriter()
 }
 
 
-const char* LameAudioWriter::get_extension()
+const char* LameAudioWriter::get_file_extension()
 {
 	return ".mp3";
 }

@@ -22,13 +22,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #ifndef AUDIOCLIP_EDIT_DIALOG_H
 #define AUDIOCLIP_EDIT_DIALOG_H
 
+#include "TTimeRef.h"
 #include "ui_AudioClipEditDialog.h"
 
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDialog>
 
-#include "defines.h"
 
 class AudioClip;
 
@@ -44,8 +44,8 @@ private:
 	AudioClip* m_clip;
 	QDomNode m_origState;
 
-	TimeRef qtime_to_timeref(const QTime& time);
-	QTime timeref_to_qtime(const TimeRef& ref);
+	TTimeRef qtime_to_timeref(const QTime& time);
+	QTime timeref_to_qtime(const TTimeRef& ref);
 	bool locked;
 
 private slots:

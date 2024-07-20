@@ -23,7 +23,7 @@
 #define PLAYHEAD_MOVE_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 class TSession;
 class SheetView;
@@ -53,9 +53,9 @@ private :
 	int		m_newXPos{};
 	int		m_newYPos{};
         int             m_holdCursorSceneY{};
-        TimeRef         m_newTransportLocation;
+        TTimeRef         m_newTransportLocation;
 
-        void do_keyboard_move(TimeRef newLocation, bool centerInView = false);
+        void do_keyboard_move(TTimeRef newLocation, bool centerInView = false);
 
 public slots:
         void move_left();

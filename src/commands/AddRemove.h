@@ -32,6 +32,7 @@ class TSession;
 class AddRemove : public TCommand
 {
     Q_OBJECT
+
 public :
 	AddRemove(ContextItem* parent, ContextItem* item, const QString& des);
 	AddRemove(ContextItem* parent,
@@ -59,14 +60,14 @@ public :
 	int do_action();
 	int undo_action();
 
-	void set_instantanious(bool instant);
+    void set_instantanious(bool instant);
 
 
 private :
 	ContextItem*	m_parentItem;
 	void* 		m_arg;
-    TsarEvent	m_doActionEvent{};
-    TsarEvent	m_undoActionEvent{};
+    TsarEvent	m_doActionEvent;
+    TsarEvent	m_undoActionEvent;
 	TSession*	m_sheet;
 
 	const char*	m_doActionSlot;
@@ -74,6 +75,8 @@ private :
 	const char*	m_doSignal;
 	const char*	m_undoSignal;
 	bool		m_instantanious;
+
+    int un_redo_action(TCommand::ActionType actionType);
 };
 
 #endif

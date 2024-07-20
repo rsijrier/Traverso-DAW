@@ -42,6 +42,10 @@ public :
     void cancel_action();
     int jog();
     void process_collected_number(const QString & collected);
+    // By default finish the hold command for this class at key release
+    // and let classes that derive from this one decide for themselves by
+    // re-implementing this function
+    // bool supportsEnterFinishesHold() const {return false;}
 
 protected:
     void start_shuttle(bool drag=false);

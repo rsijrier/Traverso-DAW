@@ -141,15 +141,15 @@ int ProjectConverter::start_conversion_from_version_2_to_3()
 			readsource1->ref();
 			readsource1->init();
 			
-			m_readsources.insertMulti(id, readsource0);
-			m_readsources.insertMulti(id, readsource1);
+            m_readsources.insert(id, readsource0);
+            m_readsources.insert(id, readsource1);
 			
 			m_filesToMerge++;
 			m_merger->enqueue_task(readsource0, readsource1, dir, name);
 			
 			readsourceelement.setAttribute("name", name + ".wav");
 			readsourceelement.setAttribute("length", readsource0->get_length().universal_frame());
-			readsourceelement.setAttribute("rate", readsource0->get_rate());
+			readsourceelement.setAttribute("rate", readsource0->get_sample_rate());
 			
 		} else {
 			// The version 2 of the project file didn't have the full name
@@ -177,12 +177,12 @@ int ProjectConverter::start_conversion_from_version_2_to_3()
 		ReadSource* source = m_readsources.value(readsourceid);
 		int rate = projectrate;
 		if (source) {
-			rate = source->get_rate();
+			rate = source->get_sample_rate();
 		}
 			
-		clipelement.setAttribute("trackstart", TimeRef(trackStart, rate).universal_frame());
-		clipelement.setAttribute("sourcestart", TimeRef(sourceStartFrame, rate).universal_frame());
-		clipelement.setAttribute("length", TimeRef(length, rate).universal_frame());
+		clipelement.setAttribute("trackstart", TTimeRef(trackStart, rate).universal_frame());
+		clipelement.setAttribute("sourcestart", TTimeRef(sourceStartFrame, rate).universal_frame());
+		clipelement.setAttribute("length", TTimeRef(length, rate).universal_frame());
 		
 		QDomElement fadeInNode = clipsNode.firstChildElement("FadeIn");
 		if (!fadeInNode.isNull()) {
@@ -196,7 +196,7 @@ int ProjectConverter::start_conversion_from_version_2_to_3()
 				range = rangestring.toDouble();
 			}
 			if (range > 1.0) {
-				e.setAttribute("range", TimeRef(nframes_t(range), rate).universal_frame());
+				e.setAttribute("range", TTimeRef(nframes_t(range), rate).universal_frame());
 			}
 		}
 		QDomElement fadeOutNode = clipsNode.firstChildElement("FadeOut");
@@ -211,7 +211,7 @@ int ProjectConverter::start_conversion_from_version_2_to_3()
 				range = rangestring.toDouble();
 			}
 			if (range > 1.0)
-				e.setAttribute("range", TimeRef(nframes_t(range), rate).universal_frame());
+				e.setAttribute("range", TTimeRef(nframes_t(range), rate).universal_frame());
 		}
 			
 		QDomNode pluginChainNode = clipsNode.firstChildElement("PluginChain");
@@ -235,7 +235,7 @@ int ProjectConverter::start_conversion_from_version_2_to_3()
 									QStringList whenValueList = nodesList.at(i).split(",");
 									double when = whenValueList.at(0).toDouble();
 									double value = whenValueList.at(1).toDouble();
-									newNodesList << QString::number(TimeRef(nframes_t(when), rate).universal_frame(), 'g', 24).append(",").append(QString::number(value));
+									newNodesList << QString::number(TTimeRef(nframes_t(when), rate).universal_frame(), 'g', 24).append(",").append(QString::number(value));
 									e.setAttribute("nodes",  newNodesList.join(";"));
 								}
 							}

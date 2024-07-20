@@ -25,7 +25,6 @@
 
 #include <QFrame>
 #include <QPushButton>
-#include <QTimer>
 #include "ViewItem.h"
 #include "ViewPort.h"
 
@@ -81,17 +80,10 @@ class TTimeLabel : public QPushButton
 Q_OBJECT
 
 public:
-        TTimeLabel(QWidget* parent, TSession* session);
+    TTimeLabel(QWidget* parent, TSession *session);
 
 private:
-        QTimer		m_updateTimer;
-        TSession*   m_session;
-
-
-private slots:
-        void transport_started();
-        void transport_stopped();
-        void update_label();
+    TSession*   m_session;
 };
 
 class SheetWidget : public QFrame

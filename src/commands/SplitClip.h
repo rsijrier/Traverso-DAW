@@ -23,7 +23,7 @@
 #define SPLITCLIPACTION_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 
 class AudioClip;
 class AudioTrack;
@@ -57,10 +57,10 @@ private :
         AudioClip* m_clip;
         AudioClip* leftClip;
         AudioClip* rightClip;
-	TimeRef m_splitPoint;
+	TTimeRef m_splitPoint;
 	LineView* m_splitcursor{};
 
-        void do_keyboard_move(TimeRef location);
+        void do_keyboard_move(TTimeRef location);
 
 public slots:
         void move_left();

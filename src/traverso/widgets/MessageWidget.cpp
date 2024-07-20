@@ -38,7 +38,7 @@ MessageWidget::MessageWidget( QWidget * parent )
 	: QWidget(parent)
 {
 	QHBoxLayout* lay = new QHBoxLayout;
-	lay->setMargin(1);
+    lay->setContentsMargins(1, 1, 1, 1);
 	
 	m_button = new QPushButton;
 	m_button->setIcon(style()->standardIcon(QStyle::SP_MessageBoxInformation).pixmap(14, 14));

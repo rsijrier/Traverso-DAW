@@ -23,11 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define TRAVERSO_COMMANDS_H
 
 
-#include <CommandPlugin.h>
+#include <TCommandPlugin.h>
 
-class TFunction;
+class TShortCutFunction;
 
-class TraversoCommands : public CommandPlugin
+class TraversoCommands : public TCommandPlugin
 {
 	Q_OBJECT
 
@@ -68,7 +68,7 @@ private:
 	};
 
 private:
-    void add_function(TFunction* function, TraversoCommand command);
+    void add_function(TShortCutFunction* function, TraversoCommand command);
     void create_and_add_function(const QString& object, const QString& description, const QString& commandName, TraversoCommand command);
     void create_and_add_function(const QString& object, const QString& description, const QString& commandName,
                                  TraversoCommand command, QStringList arguments, const QString& inheritedBase="", bool useX=false, bool useY=false);

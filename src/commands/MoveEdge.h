@@ -24,7 +24,7 @@
 #define MOVEEDGE_H
 
 #include "TMoveCommand.h"
-#include "defines.h"
+#include "TTimeRef.h"
 #include <QByteArray>
 
 class AudioClip;
@@ -50,9 +50,9 @@ public :
 private :
     AudioClip* 	m_clip;
     QByteArray	m_edge;
-    TimeRef		m_originalPos;
-    TimeRef		m_newPos;
-    TimeRef		m_otherEdgePos;
+    TTimeRef		m_originalPos;
+    TTimeRef		m_newPos;
+    TTimeRef		m_otherEdgePos;
 
     void do_keyboard_move();
 

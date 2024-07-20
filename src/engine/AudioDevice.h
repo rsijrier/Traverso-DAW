@@ -33,8 +33,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "RingBufferNPT.h"
-#include "APILinkedList.h"
+#include "TRealTimeLinkedList.h"
+#include "TAudioBusConfiguration.h"
+#include "TAudioDeviceSetup.h"
+#include "TTimeRef.h"
+#include "TTransportControl.h"
 #include "defines.h"
+
+#include "FastDelegate.h"
+
 
 class AudioDeviceThread;
 class TAudioDriver;
@@ -49,6 +56,11 @@ class JackDriver;
 class CoreAudioDriver;
 #endif
 
+using namespace fastdelegate;
+
+typedef FastDelegate1<nframes_t, int> ProcessCallback;
+typedef FastDelegate0<int> RunCycleCallback;
+typedef FastDelegate1<TTransportControl*, int> TransportControlCallback;
 
 class AudioDevice : public QObject
 {
@@ -65,16 +77,16 @@ public:
                 DRIVER_SETUP_WARNING
         };
 
-        void set_parameters(AudioDeviceSetup ads);
+        void set_parameters(TAudioDeviceSetup ads);
 
         void add_client(TAudioDeviceClient* client);
         void remove_client(TAudioDeviceClient* client);
 	
         void transport_start(TAudioDeviceClient* client);
-        void transport_stop(TAudioDeviceClient* client, TimeRef location);
-        int transport_seek_to(TAudioDeviceClient* client, TimeRef location);
+        void transport_stop(TAudioDeviceClient* client, const TTimeRef& location);
+        int transport_seek_to(TAudioDeviceClient* client, const TTimeRef &location);
 
-        AudioDeviceSetup get_device_setup() {return m_setup;}
+        TAudioDeviceSetup get_device_setup() {return m_setup;}
 
         AudioChannel* create_channel(const QString& name, uint channelNumber, int type);
         AudioChannel* get_playback_channel_by_name(const QString& name);
@@ -82,10 +94,7 @@ public:
 
         void delete_channel(AudioChannel* channel);
 
-        void set_master_out_bus(AudioBus* bus);
-        void send_to_master_out(AudioChannel* channel, nframes_t nframes);
-
-	QStringList get_capture_channel_names() const;
+    QStringList get_capture_channel_names() const;
 	QStringList get_playback_channel_names() const;
 	
         QList<AudioChannel*> get_channels() const;
@@ -104,7 +113,7 @@ public:
 
 	uint get_sample_rate() const;
 	uint get_bit_depth() const;
-	TimeRef get_buffer_latency();
+    TTimeRef get_buffer_latency();
 
 	/**
 	 * 
@@ -135,21 +144,21 @@ private:
 	friend class AlsaDriver;
 	friend class PADriver;
         friend class TAudioDriver;
-	friend class PulseAudioDriver;
+    friend class TPulseAudioDriver;
 	friend class AudioDeviceThread;
 #if defined (COREAUDIO_SUPPORT)
 	friend class CoreAudioDriver;
 #endif
+    TTransportControl*     m_transportControl;
 
-        AudioDeviceSetup        m_setup;
-        AudioDeviceSetup        m_fallBackSetup;
-        AudioBus*               m_masterOutBus;
+        TAudioDeviceSetup        m_setup;
+        TAudioDeviceSetup        m_fallBackSetup;
         TAudioDriver* 		m_driver;
         AudioDeviceThread* 	m_audioThread;
-        APILinkedList		m_clients;
+        TRealTimeLinkedList<TAudioDeviceClient*> m_clients;
         QList<AudioChannel* >   m_channels;
-        QList<BusConfig>        m_busConfigs;
-        QList<ChannelConfig>    m_channelConfigs;
+        QList<TAudioBusConfiguration>        m_busConfigs;
+        QList<TAudioChannelConfiguration>    m_channelConfigs;
         QStringList		m_availableDrivers;
         QTimer			m_xrunResetTimer;
 #if defined (JACK_SUPPORT)
@@ -170,29 +179,23 @@ private:
 	QString			m_ditherShape;
 	QHash<QString, QVariant> m_driverProperties;
 
-	int run_one_cycle(nframes_t nframes, float delayed_usecs);
-	int create_driver(const QString& driverType, bool capture, bool playback, const QString& cardDevice);
-	int transport_control(transport_state_t state);
+    int run_cycle(nframes_t nframes, float delayed_usecs);
+    int run_one_cycle(nframes_t nframes, float delayed_usecs);
 
-    void post_run_cycle();
-
-	// These are reserved for Driver Objects only!!
-	AudioChannel* register_capture_channel(const QByteArray& busName, const QString& audioType, int flags, uint bufferSize, uint channel );
-	AudioChannel* register_playback_channel(const QByteArray& busName, const QString& audioType, int flags, uint bufferSize, uint channel );
-	
-	int run_cycle(nframes_t nframes, float delayed_usecs);
+    int create_driver(const QString& driverType, bool capture, bool playback, const QString& cardDevice);
+    int transport_control(TTransportControl* state);
 	
 	void set_buffer_size(uint size);
 	void set_sample_rate(uint rate);
 	void set_bit_depth(uint depth);
 	void delay(float delay);
 
-	void transport_cycle_start(trav_time_t time)
+    void set_transport_cycle_start_time(trav_time_t time)
 	{
 		m_cycleStartTime = time;
 	}
 
-	void transport_cycle_end(trav_time_t time)
+    void set_transport_cycle_end_time(trav_time_t time)
 	{
 		trav_time_t runcycleTime = time - m_cycleStartTime;
 		m_cpuTime->write(&runcycleTime, 1);
@@ -200,10 +203,9 @@ private:
 
         TAudioDriver* get_driver() const {return m_driver;}
 
-	void mili_sleep(int msec);
 	void xrun();
 	
-	size_t run_audio_thread() const;
+    size_t run_audio_thread() const {return m_runAudioThread;}
 	
 	QVariant get_driver_property(const QString& property, const QVariant& defaultValue);
 
@@ -238,28 +240,27 @@ signals:
 	 *        This signal will be emited after succesfull Client removal from within the GUI Thread!
 	 * @param  The Client \a client which as been removed from the AudioDevice
 	 */
-        void clientRemoved(TAudioDeviceClient*);
+    void audioDeviceClientRemoved(TAudioDeviceClient*);
+    void audioDeviceClientAdded(TAudioDeviceClient*);
 	
 	void xrunStormDetected();
 	
 	void message(QString, int);
-        void driverSetupMessage(QString, int);
+    void driverSetupMessage(QString, int);
+    void finishedOneProcessCycle();
 
 private slots:
-        void private_add_client(TAudioDeviceClient* client);
-        void private_remove_client(TAudioDeviceClient* client);
-	void audiothread_finished();
-	void switch_to_null_driver();
-	void reset_xrun_counter() {m_xrunCount = 0;}
-	void check_jack_shutdown();
+    void private_add_client(TAudioDeviceClient* client);
+    void private_remove_client(TAudioDeviceClient* client);
+    void audiothread_finished();
+    void switch_to_null_driver();
+    void reset_xrun_counter() {m_xrunCount = 0;}
+    void check_jack_shutdown();
 };
 
 
 // use this function to get the audiodevice object
 AudioDevice& audiodevice();
-
-
-inline size_t AudioDevice::run_audio_thread( ) const {return m_runAudioThread;}
 
 
 #endif

@@ -27,7 +27,7 @@
 class Track;
 class AudioTrack;
 class VUMeterLevelView;
-class VUMonitor;
+class TVUMonitor;
 class QLabel;
 class QHBoxLayout;
 class QVBoxLayout;
@@ -66,7 +66,7 @@ public:
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
         void calculate_bounding_rect();
         void set_bounding_rect(QRectF rect);
-        void update_orientation();
+        void update_orientation(Qt::Orientation orientation);
 
         void reset();
 
@@ -114,7 +114,7 @@ class VUMeterLevelView : public ViewItem, public AbstractVUMeterLevel
         Q_OBJECT
 
 public:
-        VUMeterLevelView(ViewItem* parent, VUMonitor* monitor);
+        VUMeterLevelView(ViewItem* parent, TVUMonitor* monitor);
         ~VUMeterLevelView();
 
         void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -129,7 +129,7 @@ public:
 
 private:
         bool		m_peakHoldFalling;
-        VUMonitor*      m_monitor;
+        TVUMonitor*      m_monitor;
         // TODO: the variables below could be shared globally by
         // all the VUMeterLevelView's ?
         QBrush		m_levelClearColor,

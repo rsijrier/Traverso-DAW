@@ -29,7 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QFileSystemWatcher>
 #include <QTextStream>
 
-
 #include "Project.h"
 #include "Sheet.h"
 #include "ContextPointer.h"
@@ -44,6 +43,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
+#include "qthread.h"
 
 
 /**	\class ProjectManager
@@ -51,8 +51,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  
  
  */
-
-QUndoGroup ProjectManager::m_undogroup;
 
 ProjectManager::ProjectManager()
 	: ContextItem()
@@ -68,7 +66,7 @@ ProjectManager::ProjectManager()
 	
 	cpointer().add_contextitem(this);
 	
-	connect(m_watcher, SIGNAL(directoryChanged(const QString&)), this, SLOT(project_dir_rename_detected(const QString&)));
+    connect(m_watcher, SIGNAL(directoryChanged(QString)), this, SLOT(project_dir_rename_detected(QString)));
 }
 
 /**
@@ -123,14 +121,12 @@ void ProjectManager::set_current_project(Project* project)
 		
                 oldprojectname = m_currentProject->get_title();
 
-                m_currentProject->disconnect_from_audio_device();
-
                 // this serves as a 'project closed' signal, emiting
                 // a zero pointer as project makes the GUI to delete it's
                 // project and releated GUI objects
-                emit projectLoaded(0);
+                emit projectLoaded(nullptr);
 
-                delete m_currentProject;
+                m_currentProject->set_project_closed();
         }
 
         m_currentProject = project;
@@ -140,7 +136,7 @@ void ProjectManager::set_current_project(Project* project)
                 emit projectLoaded(m_currentProject);
         } else if (!m_exitInProgress) {
                 // free the audiodevice, but only if we don't want to quit.
-                audiodevice().set_parameters(AudioDeviceSetup());
+                audiodevice().set_parameters(TAudioDeviceSetup());
         }
 
 	if ( ! oldprojectname.isEmpty() ) {
@@ -318,33 +314,30 @@ void ProjectManager::start(const QString & basepath, const QString & projectname
 	}
 }
 
-QUndoGroup* ProjectManager::get_undogroup() const
-{
-        return &m_undogroup;
-}
-
 
 TCommand* ProjectManager::exit()
 {
 	PENTER;
-	
-        if (m_currentProject) {
-                if (m_currentProject->get_sheets().size() == 0) {
-			// No sheets to unregister from the audiodevice,
-			// just save and quit:
-			set_current_project(0);
-			QApplication::exit();
-			return 0;
-                } else if (m_currentProject->is_save_to_close()) {
-			m_exitInProgress = true;
-			set_current_project(0);
-                        QApplication::exit();
-		} else {
-			return 0;
-		}
-	} else {
-		QApplication::exit();
-	}
+
+    if (m_currentProject) {
+        if (m_currentProject->get_sheets().size() == 0) {
+            // No sheets to unregister from the audiodevice,
+            // just save and quit:
+            set_current_project(0);
+            QApplication::exit();
+            return 0;
+        }
+
+        if (m_currentProject->is_save_to_close()) {
+            m_exitInProgress = true;
+            set_current_project(0);
+            QApplication::exit();
+        } else {
+            return 0;
+        }
+    } else {
+        QApplication::exit();
+    }
 
 
 	return (TCommand*) 0;
@@ -367,19 +360,6 @@ void ProjectManager::delete_sheet( Sheet * sheet )
 	}
 		
 }
-
-TCommand* ProjectManager::undo()
-{
-        m_undogroup.undo();
-	return 0;
-}
-
-TCommand* ProjectManager::redo()
-{
-        m_undogroup.redo();
-	return 0;
-}
-
 
 int ProjectManager::rename_project_dir(const QString & olddir, const QString & newdir)
 {
@@ -479,7 +459,7 @@ void ProjectManager::start_incremental_backup(Project* project)
 	}
 	
 	QDateTime time = QDateTime::currentDateTime();
-	QString writelocation = backupdir + "/" + time.toString() + "__" + QString::number(time.toTime_t());
+    QString writelocation = backupdir + "/" + time.toString() + "__" + QString::number(time.toMSecsSinceEpoch());
 	QFile compressedWriter(writelocation);
 	
 	if (!compressedWriter.open( QIODevice::WriteOnly ) ) {

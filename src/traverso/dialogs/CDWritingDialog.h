@@ -30,7 +30,7 @@
 
 class Project;
 class Sheet;
-struct ExportSpecification;
+class TExportSpecification;
 class QProcess;
 
 class CDWritingDialog : public QDialog, protected Ui::CDWritingDialog
@@ -49,7 +49,7 @@ protected:
 private:
         Project* m_project{};
 	QProcess* m_burnprocess;
-	ExportSpecification* 	m_exportSpec;
+	TExportSpecification* 	m_exportSpec;
 	
         void show_progress_view();
 	

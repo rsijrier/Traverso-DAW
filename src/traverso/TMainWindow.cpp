@@ -21,12 +21,32 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "../config.h"
 
-#include <libtraversocore.h>
-#include "libtraversosheetcanvas.h"
-#include "commands.h"
-#include "TShortcutManager.h"
+#include "TMainWindow.h"
 
-#include "AudioChannel.h"
+
+#include "AudioClip.h"
+#include "AudioClipView.h"
+#include "Information.h"
+#include "Marker.h"
+#include "Project.h"
+#include "ReadSource.h"
+#include "ResampleAudioReader.h"
+#include "Sheet.h"
+#include "SheetView.h"
+#include "Track.h"
+#include "TVUMonitor.h"
+#include "SheetView.h"
+#include "TShortCutFunction.h"
+#include "Track.h"
+#include "TBusTrack.h"
+#include "TVUMonitor.h"
+#include "SheetView.h"
+#include "TShortCutFunction.h"
+#include "Track.h"
+#include "TVUMonitor.h"
+#include "TShortCutManager.h"
+#include "TInputEventDispatcher.h"
+
 #include <AudioDevice.h>
 
 #include <QDockWidget>
@@ -42,23 +62,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QTabBar>
 #include <QCompleter>
 #include <QStandardItemModel>
+#include <samplerate.h>
 
-#include "TMainWindow.h"
 #include "ProjectManager.h"
+#include "TrackView.h"
 #include "ViewPort.h"
 #include "FadeCurve.h"
 #include "TConfig.h"
 #include "Plugin.h"
-#include "Import.h"
-#include "TimeLine.h"
+#include "TAudioFileImportCommand.h"
+#include "TTimeLineRuler.h"
 #include "Themer.h"
 #include "AudioFileCopyConvert.h"
 
 #include "../sheetcanvas/SheetWidget.h"
 
+#include "qundogroup.h"
 #include "ui_QuickStart.h"
 
-#include "widgets/BusMonitor.h"
+#include "widgets/TAudioBusVUMonitorWidget.h"
 #include "widgets/InfoWidgets.h"
 #include "widgets/ResourcesWidget.h"
 #include "widgets/CorrelationMeterWidget.h"
@@ -206,7 +228,7 @@ TMainWindow::TMainWindow()
 	m_busMonitorDW = new QDockWidget(tr("VU Meters"), this);
 	m_busMonitorDW->setObjectName(tr("VU Meters"));
 
-	busMonitor = new BusMonitor(m_busMonitorDW);
+    busMonitor = new TAudioBusVUMonitorWidget(m_busMonitorDW);
 	m_busMonitorDW->setWidget(busMonitor);
 	addDockWidget(Qt::RightDockWidgetArea, m_busMonitorDW);
 
@@ -324,7 +346,7 @@ TMainWindow::TMainWindow()
     m_newTrackDialog = nullptr;
     m_quickStart = nullptr;
     m_restoreProjectBackupDialog = nullptr;
-	m_vuLevelUpdateFrequency = 40;
+    m_vuLevelUpdateFrequency = 40;
 
 	create_menus();
 
@@ -524,7 +546,9 @@ void TMainWindow::show_session(TSession* session)
 	m_centerAreaWidget->setCurrentWidget(m_currentSheetWidget);
 
 	if (session) {
-		pm().get_undogroup()->setActiveStack(session->get_history_stack());
+        ContextItem::get_undogroup()->setActiveStack(session->get_history_stack());
+        // Update scrollbars in order to reset the snapList's range
+        m_currentSheetWidget->get_sheetview()->update_scrollbars();
 //                setWindowTitle(m_project->get_title() + ": Sheet " + session->get_name() + " - Traverso");
 	}
 }
@@ -538,7 +562,7 @@ TCommand* TMainWindow::about_traverso()
 			"Traverso is brought to you by R. Sijrier and others,\n"
 			"including all the people from the Free Software world\n"
 			"who contributed the important technologies on which\n"
-			"Traverso is based (Gcc, Qt, Xorg, Linux, and so on)" ).arg(VERSION).arg(QT_VERSION_STR));
+            "Traverso is based (Gcc, Qt, Xorg, Linux, and so on)" ).arg(VERSION, QT_VERSION_STR));
 	QMessageBox::about ( this, tr("About Traverso"), text);
 
 	return (TCommand*) 0;
@@ -791,7 +815,7 @@ void TMainWindow::create_menus( )
 	list.append(QKeySequence("CTRL+Q"));
 	action->setShortcuts(list);
 	action->setIcon(QIcon(":/exit"));
-	connect(action, SIGNAL(triggered( bool )), &pm(), SLOT(exit()));
+    connect(action, SIGNAL(triggered(bool)), &pm(), SLOT(exit()));
 
 
 	menu = m_mainMenuBar->addMenu(tr("&Edit"));
@@ -802,14 +826,14 @@ void TMainWindow::create_menus( )
 	action->setIcon(QIcon(":/undo"));
 	action->setShortcuts(QKeySequence::Undo);
 	m_editToolBar->addAction(action);
-	connect(action, SIGNAL(triggered( bool )), &pm(), SLOT(undo()));
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(undo()));
 
 	action = menu->addAction(tr("Redo"));
 	m_projectMenuToolbarActions.append(action);
 	action->setIcon(QIcon(":/redo"));
 	action->setShortcuts(QKeySequence::Redo);
 	m_editToolBar->addAction(action);
-	connect(action, SIGNAL(triggered( bool )), &pm(), SLOT(redo()));
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(redo()));
 
 	menu->addSeparator();
 	m_editToolBar->addSeparator();
@@ -904,24 +928,46 @@ void TMainWindow::create_menus( )
 	connect(action, SIGNAL(triggered(bool)), this, SLOT(change_recording_format_to_wav()));
 	action = m_encodingMenu->addAction("WavPack");
 	action->setData("wavpack");
-	connect(action, SIGNAL(triggered( bool )), this, SLOT(change_recording_format_to_wavpack()));
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(change_recording_format_to_wavpack()));
 	action = m_encodingMenu->addAction("WAVE-64");
 	action->setData("w64");
-	connect(action, SIGNAL(triggered( bool )), this, SLOT(change_recording_format_to_wav64()));
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(change_recording_format_to_wav64()));
 
 	m_resampleQualityMenu = menu->addMenu(tr("Resample &Quality"));
-	action = m_resampleQualityMenu->addAction(tr("Best"));
-	action->setData(0);
-	connect(action, SIGNAL(triggered(bool)), this, SLOT(change_resample_quality_to_best()));
-	action = m_resampleQualityMenu->addAction(tr("High"));
-	action->setData(1);
-	connect(action, SIGNAL(triggered(bool)), this, SLOT(change_resample_quality_to_high()));
-	action = m_resampleQualityMenu->addAction(tr("Medium"));
-	action->setData(2);
-	connect(action, SIGNAL(triggered(bool)), this, SLOT(change_resample_quality_to_medium()));
-	action = m_resampleQualityMenu->addAction(tr("Fast"));
-	action->setData(3);
-	connect(action, SIGNAL(triggered(bool)), this, SLOT(change_resample_quality_to_fast()));
+    action = m_resampleQualityMenu->addAction(tr("SINC Best Quality"));
+    action->setData(SRC_SINC_BEST_QUALITY);
+    connect(action, &QAction::triggered, this, [this, action]() {
+        config().set_property("Conversion", "RTResamplingConverterType", SRC_SINC_BEST_QUALITY);
+        save_config_and_emit_message(tr("Changed resample quality to: %1").arg(action->text()));
+    });
+
+    action = m_resampleQualityMenu->addAction(tr("SINC Medium Quality"));
+    action->setData(SRC_SINC_MEDIUM_QUALITY);
+    connect(action, &QAction::triggered, this, [this, action]() {
+        config().set_property("Conversion", "RTResamplingConverterType", SRC_SINC_MEDIUM_QUALITY);
+        save_config_and_emit_message(tr("Changed resample quality to: %1").arg(action->text()));
+    });
+
+    action = m_resampleQualityMenu->addAction(tr("Sinc Fastest"));
+    action->setData(SRC_SINC_FASTEST);
+    connect(action, &QAction::triggered, this, [this, action]() {
+        config().set_property("Conversion", "RTResamplingConverterType", SRC_SINC_FASTEST);
+        save_config_and_emit_message(tr("Changed resample quality to: %1").arg(action->text()));
+    });
+
+    action = m_resampleQualityMenu->addAction(tr("Zero Order Hold"));
+    action->setData(SRC_ZERO_ORDER_HOLD);
+    connect(action, &QAction::triggered, this, [this, action]() {
+        config().set_property("Conversion", "RTResamplingConverterType", SRC_ZERO_ORDER_HOLD);
+        save_config_and_emit_message(tr("Changed resample quality to: %1").arg(action->text()));
+    });
+
+    action = m_resampleQualityMenu->addAction(tr("Linear"));
+    action->setData(SRC_LINEAR);
+    connect(action, &QAction::triggered, this, [this]() {
+        config().set_property("Conversion", "RTResamplingConverterType", SRC_LINEAR);
+        save_config_and_emit_message(tr("Changed resample quality to: %1").arg("Linear"));
+    });
 
 	// fake a config changed 'signal-slot' action, to set the encoding menu icons
 	config_changed();
@@ -932,7 +978,7 @@ void TMainWindow::create_menus( )
 	connect(action, SIGNAL(triggered()), this, SLOT(show_shortcuts_edit_dialog()));
 
 	action = menu->addAction(tr("&Preferences..."));
-	connect(action, SIGNAL(triggered( bool )), this, SLOT(show_settings_dialog()));
+    connect(action, SIGNAL(triggered(bool)), this, SLOT(show_settings_dialog()));
 
 
 	menu = m_mainMenuBar->addMenu(tr("&Help"));
@@ -965,7 +1011,7 @@ void TMainWindow::process_context_menu_action( QAction * action )
 	QMenu* menu = qobject_cast<QMenu*>(action->parent());
 	QCursor::setPos(menu->pos());
 	qApp->processEvents();
-	TFunction* function = (TFunction*) action->data().value<void*>();
+	TShortCutFunction* function = (TShortCutFunction*) action->data().value<void*>();
 	ied().dispatch_shortcut_from_contextmenu(function);
 }
 
@@ -1070,9 +1116,9 @@ TCommand * TMainWindow::show_context_menu( )
     return nullptr;
 }
 
-QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menulist)
+QMenu* TMainWindow::create_context_menu(QObject* item, QList<TShortCutFunction* >* menulist)
 {
-	QList<TFunction* > list;
+	QList<TShortCutFunction* > list;
 	if (item) {
 		list = tShortCutManager().getFunctionsFor(item->metaObject()->className());
 	} else {
@@ -1100,10 +1146,10 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 	menu->addSeparator();
 	menu->setFont(themer()->get_font("ContextMenu:fontscale:actions"));
 
-	QMap<QString, QList<TFunction*>* > submenus;
+	QMap<QString, QList<TShortCutFunction*>* > submenus;
 
 	for (int i=0; i<list.size(); ++i) {
-		TFunction* function = list.at(i);
+		TShortCutFunction* function = list.at(i);
 
 		// If this MenuData item is a submenu, add to the
 		// list of submenus, which will be processed lateron
@@ -1111,9 +1157,9 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
         if (function->submenu.isEmpty()) {
             add_function_to_menu(function, menu);
 		} else {
-            QList<TFunction*>* list;
+            QList<TShortCutFunction*>* list;
             if ( ! submenus.contains(function->submenu)) {
-                submenus.insert(function->submenu, new QList<TFunction*>());
+                submenus.insert(function->submenu, new QList<TShortCutFunction*>());
             }
             list = submenus.value(function->submenu);
             list->append(function);
@@ -1124,10 +1170,12 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 	// actions, a little code duplication here, adding action to the
 	// menu is also done ~10 lines up ...
 	QList<QString> keys = submenus.keys();
-	foreach(const QString &key, keys) {
-		QList<TFunction*>* list = submenus.value(key);
+    for(const QString &key : keys) {
+        QList<TShortCutFunction*> list = *submenus.value(key);
 
-		qSort(list->begin(), list->end(), TFunction::smaller);
+        std::sort(list.begin(), list.end(), [&](TShortCutFunction* left, TShortCutFunction* right) {
+            return left->sortorder < right->sortorder;
+        });
 
 		QMenu* subMenu = new QMenu(this);
 		subMenu->setFont(themer()->get_font("ContextMenu:fontscale:actions"));
@@ -1138,7 +1186,7 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 
         QAction* action = menu->insertMenu(nullptr, subMenu);
 		action->setText(tShortCutManager().get_translation_for(key));
-		foreach(TFunction* function, *list) {
+        for(TShortCutFunction* function : list) {
             add_function_to_menu(function, subMenu);
 		}
 	}
@@ -1146,7 +1194,7 @@ QMenu* TMainWindow::create_context_menu(QObject* item, QList<TFunction* >* menul
 	return menu;
 }
 
-void TMainWindow::add_function_to_menu(TFunction *function, QMenu *menu)
+void TMainWindow::add_function_to_menu(TShortCutFunction *function, QMenu *menu)
 {
     QAction* action = menu->addAction(function->getDescription());
     QKeySequence sequence(function->getKeySequence().remove(" "));
@@ -1154,7 +1202,7 @@ void TMainWindow::add_function_to_menu(TFunction *function, QMenu *menu)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
     action->setShortcutVisibleInContextMenu(true);
 #endif
-    QVariant v = qVariantFromValue(static_cast<void*>(function));
+    QVariant v = QVariant::fromValue(static_cast<void*>(function));
     action->setData(v);
 }
 
@@ -1249,7 +1297,7 @@ void TMainWindow::config_changed()
 		}
 	}
 
-	int quality = config().get_property("Conversion", "RTResamplingConverterType", DEFAULT_RESAMPLE_QUALITY).toInt();
+    int quality = config().get_property("Conversion", "RTResamplingConverterType", ResampleAudioReader::get_default_resample_quality()).toInt();
 	actions = m_resampleQualityMenu->actions();
 
 	bool useResampling = config().get_property("Conversion", "DynamicResampling", true).toBool();
@@ -1339,37 +1387,39 @@ void TMainWindow::import_audio()
 	}
 
 	// append the clips to the selected track
-    TimeRef position = track->get_end_location();
+    TTimeRef importLocation = track->get_end_location();
 
-	TimeLine* tl = sheet->get_timeline();
-	int n = tl->get_markers().size() + 1;
-	if (tl->has_end_marker()) {
+    TTimeLineRuler* timeLineRuler = sheet->get_timeline();
+    int n = timeLineRuler->get_markers().size() + 1;
+    if (timeLineRuler->has_end_marker()) {
 		n -= 1;
 	}
 
 	while(!files.isEmpty()) {
-		QString file = files.takeFirst();
-        Import* import = new Import(track, file);
-        import->set_position(position);
+        QString fileName = files.takeFirst();
+        TAudioFileImportCommand* import = new TAudioFileImportCommand(track);
+        import->set_track(track);
+        import->set_file_name(fileName);
+        import->set_import_location(importLocation);
 
-		QFileInfo fi(file);
-		Marker* m = new Marker(tl, position);
+        QFileInfo fi(fileName);
+        Marker* m = new Marker(timeLineRuler, importLocation);
 		m->set_description(QString(tr("%1: %2")).arg(n).arg(fi.baseName()));
 
 		if (import->create_readsource() != -1) {
-			position += import->readsource()->get_length();
+            importLocation += import->readsource()->get_length();
 			TCommand::process_command(import);
-			TCommand::process_command(tl->add_marker(m, true));
+            TCommand::process_command(timeLineRuler->add_marker(m, true));
 		}
 		++n;
 	}
 
-	if (tl->has_end_marker()) {
-		Marker* m = tl->get_end_marker();
-		m->set_when(position);
+    if (timeLineRuler->has_end_marker()) {
+        Marker* m = timeLineRuler->get_end_marker();
+        m->set_when(importLocation);
 	} else {
-		Marker* m = new Marker(tl, position, Marker::ENDMARKER);
-		TCommand::process_command(tl->add_marker(m, true));
+        Marker* m = new Marker(timeLineRuler, importLocation, Marker::ENDMARKER);
+        TCommand::process_command(timeLineRuler->add_marker(m, true));
 	}
 
 	delete importClips;
@@ -1622,30 +1672,6 @@ void TMainWindow::change_recording_format_to_wavpack()
 	save_config_and_emit_message(tr("Changed encoding for recording to %1").arg("WavPack"));
 }
 
-void TMainWindow::change_resample_quality_to_best()
-{
-	config().set_property("Conversion", "RTResamplingConverterType", 0);
-	save_config_and_emit_message(tr("Changed resample quality to: %1").arg("Best"));
-}
-
-void TMainWindow::change_resample_quality_to_high()
-{
-	config().set_property("Conversion", "RTResamplingConverterType", 1);
-	save_config_and_emit_message(tr("Changed resample quality to: %1").arg("High"));
-}
-
-void TMainWindow::change_resample_quality_to_medium()
-{
-	config().set_property("Conversion", "RTResamplingConverterType", 2);
-	save_config_and_emit_message(tr("Changed resample quality to: %1").arg("Medium"));
-}
-
-void TMainWindow::change_resample_quality_to_fast()
-{
-	config().set_property("Conversion", "RTResamplingConverterType", 3);
-	save_config_and_emit_message(tr("Changed resample quality to: %1").arg("Fast"));
-}
-
 void TMainWindow::save_config_and_emit_message(const QString & message)
 {
 	info().information(message);
@@ -1740,7 +1766,7 @@ TCommand* TMainWindow::show_track_finder()
 
 	foreach(Sheet* sheet, sheets) {
 		QList<Track*> tracks = sheet->get_tracks();
-		tracks.append(sheet->get_master_out_bus_track());
+        tracks.append(sheet->get_master_out_bus_track());
 		tracks.append(m_project->get_master_out_bus_track());
 		foreach(Track* track, tracks) {
 			QStandardItem* sItem = new QStandardItem(track->get_name());
@@ -1853,7 +1879,7 @@ void TMainWindow::update_vu_levels_peak()
 	tracks.append(m_project->get_tracks());
 	tracks.append(m_project->get_master_out_bus_track());
 	for(int i = 0; i< tracks.size(); i++) {
-		VUMonitors monitors = tracks.at(i)->get_vumonitors();
+        QList<TVUMonitor*> monitors = tracks.at(i)->get_vumonitors();
 		for (int j=0; j<monitors.size(); ++j) {
 			monitors.at(j)->set_read();
 		}
@@ -1867,3 +1893,16 @@ void TMainWindow::reset_vu_levels_peak_hold_value()
 		m_vuLevels.at(i)->reset_peak_hold_value();
 	}
 }
+
+TCommand* TMainWindow::undo()
+{
+    ContextItem::get_undogroup()->undo();
+    return 0;
+}
+
+TCommand* TMainWindow::redo()
+{
+    ContextItem::get_undogroup()->redo();
+    return 0;
+}
+

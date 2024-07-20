@@ -29,7 +29,6 @@
 class ExportFormatOptionsWidget;
 class Project;
 class Sheet;
-struct ExportSpecification;
 
 class ExportDialog : public QDialog, protected Ui::ExportDialog
 {
@@ -46,7 +45,6 @@ protected:
 
 private:
 	Project* m_project{};
-	ExportSpecification* 	m_exportSpec;
 	ExportFormatOptionsWidget* m_formatOptionsWidget;
 
 	bool is_safe_to_export();
@@ -57,15 +55,10 @@ private:
 
 private slots:
 	void set_project(Project* project);
-	void update_sheet_progress(int progress);
-	void update_overall_progress(int progress);
 	void render_finished();
-	void set_exporting_sheet(Sheet* sheet);
-        void set_export_message(QString message);
 
 	void on_fileSelectButton_clicked();
 	void on_startButton_clicked();
-	void on_abortButton_clicked();
 	void on_closeButton_clicked();
 
 	void reject();

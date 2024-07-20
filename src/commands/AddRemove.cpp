@@ -41,13 +41,13 @@ $Id: AddRemove.cpp,v 1.6 2008/11/24 10:12:19 r_sijrier Exp $
 
     One for example creates the function (slot) Command* add_track() in SheetView. and add <br />
     an entry in the keymap file to define which keyfact will be used to call this function.<br />
-    One also can create a CommandPlugin, and point the keyfact in the keymap file to the <br />
+    One also can create a TCommandPlugin, and point the keyfact in the keymap file to the <br />
     plugin name, this way you don't need to add a function (slot) to the SheetView class.
 
     When using the first approach, you create a new Track object in the GUI object SheetView<br />
     and return the Command object returned by m_sheet->add_track(track);, see example code below.
 
-    Using a CommandPlugin for this kind of action doesn't make much sense, you most likely <br />
+    Using a TCommandPlugin for this kind of action doesn't make much sense, you most likely <br />
     want to use plugins to manipulate existing objects.
 
     \code
@@ -129,8 +129,6 @@ AddRemove::AddRemove(ContextItem* parent, ContextItem* item, const QString& des)
 {
     m_parentItem = parent;
     m_arg = item;
-    m_doActionEvent.valid = false;
-    m_undoActionEvent.valid = false;
 
     if (item && item->has_active_context()) {
         cpointer().remove_from_active_context_list(item);
@@ -222,10 +220,8 @@ int AddRemove::prepare_actions()
     Q_ASSERT(m_doActionSlot != QString(""));
     Q_ASSERT(m_undoActionSlot != QString(""));
 
-    m_doActionEvent = tsar().create_event(m_parentItem, m_arg, m_doActionSlot, m_doSignal);
-
-
-    m_undoActionEvent = tsar().create_event(m_parentItem, m_arg, m_undoActionSlot, m_undoSignal);
+    tsar().prepare_event(m_doActionEvent, m_parentItem, m_arg, m_doActionSlot, m_doSignal);
+    tsar().prepare_event(m_undoActionEvent, m_parentItem, m_arg, m_undoActionSlot, m_undoSignal);
 
     return 1;
 }
@@ -233,68 +229,56 @@ int AddRemove::prepare_actions()
 int AddRemove::do_action()
 {
     PENTER3;
-    if ( ! m_doActionEvent.valid ) {
-        PWARN("No do action defined for this Command");
-        return -1;
-    }
-
-    if (m_instantanious) {
-        tsar().process_event_slot_signal(m_doActionEvent);
-        return 1;
-    }
-
-    if (m_sheet) {
-        if (m_sheet->is_transport_rolling()) {
-            PMESG("Using Thread Save add/remove");
-            tsar().add_event(m_doActionEvent);
-        } else {
-            tsar().process_event_slot_signal(m_doActionEvent);
-        }
-    } else {
-        tsar().add_event(m_doActionEvent);
-    }
-
-    // update the cursor to the context item that was below the item we are removing here
-    cpointer().request_viewport_to_detect_items_below_cursor();
-
-    return 1;
+    return un_redo_action(TCommand::ActionType::DO);
 }
 
 int AddRemove::undo_action()
 {
     PENTER3;
 
-    if ( ! m_undoActionEvent.valid ) {
-        PWARN("No undo action defined for this Command");
-        return -1;
+    return un_redo_action(TCommand::ActionType::UNDO);
+}
+
+int AddRemove::un_redo_action(ActionType actionType)
+{
+    TsarEvent event;
+    switch (actionType) {
+
+    case TCommand::UNDO:
+        event = m_undoActionEvent;
+        break;
+    case TCommand::DO:
+        event = m_doActionEvent;
+        break;
     }
 
     if (m_instantanious) {
-        tsar().process_event_slot_signal(m_undoActionEvent);
+        tsar().process_event(event);
         return 1;
     }
 
     if (m_sheet) {
         if (m_sheet->is_transport_rolling()) {
-            PMESG("Using Thread Save add/remove");
-            tsar().add_event(m_undoActionEvent);
+            PMESG("AddRemove::un_redo_action: Using Thread Save add/remove");
+            tsar().post_gui_event(event);
         } else {
-            tsar().process_event_slot_signal(m_undoActionEvent);
+            tsar().process_event(event);
         }
     } else {
         PMESG("Using direct add/remove/signaling");
-        tsar().add_event(m_undoActionEvent);
+        tsar().post_gui_event(event);
     }
 
     // update the cursor to the context item that we are adding here
     // in case the mouse cursor did not move and the position of this object
     // is below the mouse cursor position
-    cpointer().request_viewport_to_detect_items_below_cursor();
+    // cpointer().request_viewport_to_detect_items_below_cursor();
 
     return 1;
 }
 
-/**
+
+    /**
  * 	Set's the command as instantanious
  
     The do/undo actions will call the slot and emit the signal (if they exist)

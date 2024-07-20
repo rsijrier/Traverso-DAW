@@ -33,7 +33,7 @@ class JackDriver : public TAudioDriver
 {
 	Q_OBJECT
 public:
-        JackDriver(AudioDevice* dev, uint rate, nframes_t bufferSize);
+        JackDriver(AudioDevice* device);
         ~JackDriver();
 
         int  process_callback (nframes_t nframes);
@@ -76,6 +76,7 @@ private:
         jack_client_t*          m_jack_client{};
         QList<PortChannelPair*> m_inputs;
         QList<PortChannelPair*> m_outputs;
+        TTransportControl*        m_transportControl;
 
         bool                    m_isSlave{};
 

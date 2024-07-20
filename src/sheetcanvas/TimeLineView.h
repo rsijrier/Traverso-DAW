@@ -24,10 +24,8 @@
 
 #include "ViewItem.h"
 
-#include <QTimer>
-
 class SheetView;
-class TimeLine;
+class TTimeLineRuler;
 class MarkerView;
 class Marker;
 
@@ -46,18 +44,18 @@ public:
         void mouse_hover_move_event();
         QList<MarkerView*> get_marker_views() const { return m_markerViews;}
 
-        MarkerView* get_marker_view_after(TimeRef location);
-        MarkerView* get_marker_view_before(TimeRef location);
+        MarkerView* get_marker_view_after(TTimeRef location);
+        MarkerView* get_marker_view_before(TTimeRef location);
 
 private:
 	QList<MarkerView* > m_markerViews;
-	TimeLine* 	m_timeline;
+	TTimeLineRuler* 	m_timeline;
 	MarkerView* 	m_blinkingMarker;
 	QColor		m_blinkColor;
 
     QHash<qint64, QString>	m_zooms;
 
-	TCommand* add_marker_at(const TimeRef when);
+	TCommand* add_marker_at(const TTimeRef when);
         void update_softselected_marker(QPointF pos);
 	
 	

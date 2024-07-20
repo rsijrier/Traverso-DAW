@@ -96,7 +96,7 @@ private:
     bool m_bInputError;
 
     int m_channels{};
-    int m_sampleRate{};
+    uint m_sampleRate{};
 };
 
 
@@ -105,6 +105,8 @@ class MadAudioReader : public AbstractAudioReader
 public:
 	MadAudioReader(const QString& filename);
 	~MadAudioReader();
+
+        void init();
 	
 	QString decoder_type() const {return "mad";}
 	void clear_buffers();
@@ -114,7 +116,7 @@ public:
 protected:
 	bool seek_private(nframes_t start);
 	nframes_t read_private(DecodeBuffer* buffer, nframes_t frameCount);
-	
+
 	void create_buffers();
 	bool initDecoderInternal();
 	unsigned long countFrames();
@@ -124,6 +126,10 @@ protected:
 
 	class MadDecoderPrivate;
 	MadDecoderPrivate* d;
+
+private:
+        void private_cleanup();
+        void private_clear_buffers();
 };
 
 #endif

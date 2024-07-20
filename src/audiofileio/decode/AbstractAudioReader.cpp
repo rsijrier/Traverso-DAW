@@ -21,13 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "AbstractAudioReader.h"
 #include "SFAudioReader.h"
-#include "FlacAudioReader.h"
-#if defined MP3_DECODE_SUPPORT
-#include "MadAudioReader.h"
-#endif
 #include "WPAudioReader.h"
-#include "VorbisAudioReader.h"
-#include "ResampleAudioReader.h"
+
 #include "Utils.h"
 
 #include <QString>
@@ -40,9 +35,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 AbstractAudioReader::AbstractAudioReader(const QString& filename)
 {
     m_fileName = filename;
-    m_readPos = m_channels = m_nframes = 0;
-    m_rate = 0;
-    m_length = TimeRef();
+    m_readPos = m_channels = m_fileFrames = 0;
+    m_fileSampleRate = 0;
+    m_length = TTimeRef();
 }
 
 
@@ -72,13 +67,13 @@ uint AbstractAudioReader::get_num_channels()
 
 uint AbstractAudioReader::get_file_rate()
 {
-    return m_rate;
+    return m_fileSampleRate;
 }
 
 
 bool AbstractAudioReader::eof()
 {
-    return (m_readPos >= m_nframes);
+    return (m_readPos >= m_fileFrames);
 }
 
 
@@ -90,6 +85,7 @@ nframes_t AbstractAudioReader::pos()
 
 bool AbstractAudioReader::seek(nframes_t start)
 {
+    PENTER3;
     if (m_readPos != start) {
         if (!seek_private(start)) {
             return false;
@@ -103,7 +99,7 @@ bool AbstractAudioReader::seek(nframes_t start)
 
 nframes_t AbstractAudioReader::read(DecodeBuffer* buffer, nframes_t count)
 {
-    if (count && m_readPos < m_nframes) {
+    if (count && m_readPos < m_fileFrames) {
 
         // Make sure the read buffer is big enough for this read
         buffer->check_buffers_capacity(count, m_channels);
@@ -121,53 +117,19 @@ nframes_t AbstractAudioReader::read(DecodeBuffer* buffer, nframes_t count)
 
 
 // Static method used by other classes to get an AudioReader for the correct file type
-AbstractAudioReader* AbstractAudioReader::create_audio_reader(const QString& filename, const QString& decoder)
+AbstractAudioReader* AbstractAudioReader::create_audio_reader(const QString& filename)
 {
     AbstractAudioReader* newReader = nullptr;
 
-    if ( ! (decoder.isEmpty() || decoder.isNull()) ) {
-        if (decoder == "sndfile") {
-            newReader = new SFAudioReader(filename);
-        } else if (decoder == "wavpack") {
-            newReader = new WPAudioReader(filename);
-        } else if (decoder == "flac") {
-            newReader = new FlacAudioReader(filename);
-        } else if (decoder == "vorbis") {
-            newReader = new VorbisAudioReader(filename);
-        }
-#if defined MP3_DECODE_SUPPORT
-        else if (decoder == "mad") {
-            newReader = new MadAudioReader(filename);
-        }
-#endif
-
-        if (newReader && !newReader->is_valid()) {
-//            PERROR("new %s reader is invalid! (channels: %d, frames: %d)", QS_C(newReader->decoder_type()), newReader->get_num_channels(), newReader->get_nframes());
-            delete newReader;
-            newReader = nullptr;
-        }
+    if (SFAudioReader::can_decode(filename)) {
+        newReader = new SFAudioReader(filename);
+    } else if (WPAudioReader::can_decode(filename)) {
+        newReader = new WPAudioReader(filename);
+    } else {
+        // Audio Format not supported by sndfile and not a wavpack
+        PERROR(QString("File format not supported %1").arg(filename));
     }
 
-    if (!newReader) {
-
-                if (FlacAudioReader::can_decode(filename)) {
-            newReader = new FlacAudioReader(filename);
-        }
-        else if (VorbisAudioReader::can_decode(filename)) {
-            newReader = new VorbisAudioReader(filename);
-        }
-        else if (WPAudioReader::can_decode(filename)) {
-            newReader = new WPAudioReader(filename);
-        }
-                else if (SFAudioReader::can_decode(filename)) {
-                        newReader = new SFAudioReader(filename);
-                }
-#if defined MP3_DECODE_SUPPORT
-        else if (MadAudioReader::can_decode(filename)) {
-            newReader = new MadAudioReader(filename);
-        }
-#endif
-    }
 
     if (newReader && !newReader->is_valid()) {
 //        PERROR("new %s reader is invalid! (channels: %d, frames: %d)", QS_C(newReader->decoder_type()), newReader->get_num_channels(), newReader->get_nframes());
@@ -183,7 +145,6 @@ DecodeBuffer::DecodeBuffer()
     destination = nullptr;
     readBuffer = nullptr;
     m_channels = destinationBufferSize = readBufferSize = 0;
-    m_bufferSizeCheckCounter = m_totalCheckSize = m_smallerReadCounter = 0;
 }
 
 

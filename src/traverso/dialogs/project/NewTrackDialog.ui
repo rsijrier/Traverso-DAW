@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>451</width>
-    <height>622</height>
+    <height>629</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -118,7 +118,10 @@
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="isBoucneTrack">
+            <widget class="QRadioButton" name="isBounceTrack">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>Bounce</string>
              </property>

@@ -23,9 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define ProjectManager_H
 
 #include "ContextItem.h"
-#include <QUndoGroup>
 #include <QList>
-#include <QTimer>
 #include <QStringList>
 
 
@@ -34,7 +32,6 @@ class Sheet;
 class TCommand;
 class ResourcesManager;
 class QFileSystemWatcher;
-
 
 class ProjectManager : public ContextItem
 {
@@ -67,16 +64,14 @@ public:
         void start_incremental_backup(Project* project);
 
 	Project* get_project();
-	QUndoGroup* get_undogroup() const;
 
 	void start(const QString& basepath, const QString& projectname);
 
+
 public slots:
 	TCommand* save_project();
-        TCommand* close_current_project();
-        TCommand* exit();
-	TCommand* undo();
-	TCommand* redo();
+    TCommand* close_current_project();
+    TCommand* exit();
 
 
 private:

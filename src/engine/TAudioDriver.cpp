@@ -24,43 +24,45 @@ $Id: Driver.cpp,v 1.6 2007/03/19 11:18:57 r_sijrier Exp $
 #include "AudioDevice.h"
 #include "AudioChannel.h"
 
+#include <QString>
+
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
+#include "qthread.h"
 
 
-TAudioDriver::TAudioDriver(AudioDevice* dev , uint rate, nframes_t bufferSize)
+TAudioDriver::TAudioDriver(AudioDevice* device)
+    : m_device(device)
+    , m_frameRate(0)
+    , m_framesPerCycle(0)
 {
-	device = dev;
-	frame_rate = rate;
-	frames_per_cycle = bufferSize;
-
-        read = MakeDelegate(this, &TAudioDriver::_read);
-        write = MakeDelegate(this, &TAudioDriver::_write);
-        run_cycle = RunCycleCallback(this, &TAudioDriver::_run_cycle);
+    read = MakeDelegate(this, &TAudioDriver::_read);
+    write = MakeDelegate(this, &TAudioDriver::_write);
+    run_cycle = RunCycleCallback(this, &TAudioDriver::_run_cycle);
 }
 
 TAudioDriver::~ TAudioDriver( )
 {
 	PENTERDES;
         while( ! m_captureChannels.isEmpty())
-                device->delete_channel(m_captureChannels.takeFirst());
+                m_device->delete_channel(m_captureChannels.takeFirst());
 
         while( ! m_playbackChannels.isEmpty())
-                device->delete_channel(m_playbackChannels.takeFirst());
+                m_device->delete_channel(m_playbackChannels.takeFirst());
 }
 
 int TAudioDriver::_run_cycle( )
 {
 	// * 1000, we want it in millisecond
 	// / 2, 2 bytes (16 bit)
-	device->transport_cycle_end (get_microseconds());
+    m_device->set_transport_cycle_end_time (TTimeRef::get_nanoseconds_since_epoch());
 
-	device->mili_sleep(23);
+    QThread::currentThread()->sleep(std::chrono::nanoseconds (1000 * 1000 * 23));
 
-	device->transport_cycle_start (get_microseconds());
+    m_device->set_transport_cycle_start_time (TTimeRef::get_nanoseconds_since_epoch());
 
-	return device->run_cycle( frames_per_cycle, 0);
+    return m_device->run_cycle( m_framesPerCycle, 0);
 }
 
 int TAudioDriver::_read( nframes_t  )
@@ -71,7 +73,7 @@ int TAudioDriver::_read( nframes_t  )
 int TAudioDriver::_write( nframes_t nframes )
 {
         foreach(AudioChannel* chan, m_playbackChannels) {
-                chan->silence_buffer(nframes);
+                // chan->silence_buffer(nframes);
         }
 
         return 1;
@@ -84,38 +86,37 @@ int TAudioDriver::_null_cycle( nframes_t  )
 
 int TAudioDriver::attach( )
 {
-        int port_flags;
-        char buf[32];
-        AudioChannel* chan;
+    // int port_flags;
+    // port_flags = PortIsOutput|PortIsPhysical|PortIsTerminal;
 
-        device->set_buffer_size (frames_per_cycle);
-        device->set_sample_rate (frame_rate);
+    AudioChannel* chan;
 
-        port_flags = PortIsOutput|PortIsPhysical|PortIsTerminal;
+    m_frameRate = 44100;
+    m_framesPerCycle = 1024;
 
-        // Create 2 fake capture channels
-        for (uint chn=0; chn<2; chn++) {
-                snprintf (buf, sizeof(buf) - 1, "capture_%d", chn+1);
+    m_device->set_buffer_size (m_framesPerCycle);
+    m_device->set_sample_rate (m_frameRate);
 
-                chan = add_capture_channel(buf);
-                chan->set_latency( frames_per_cycle + capture_frame_latency );
-        }
 
-        // Create 2 fake playback channels
-        for (uint chn=0; chn<2; chn++) {
-                snprintf (buf, sizeof(buf) - 1, "playback_%d", chn+1);
+    // Create 2 capture channels
+    for (uint chn=0; chn<2; chn++) {
+        chan = add_capture_channel(QString("capture_%1").arg(chn+1));
+        chan->set_latency( m_framesPerCycle + m_captureFrameLatency );
+    }
 
-                chan = add_playback_channel(buf);
-                chan->set_latency( frames_per_cycle + capture_frame_latency );
-        }
+    // Create 2 playback channels
+    for (uint chn=0; chn<2; chn++) {
+        chan = add_playback_channel(QString("playback_%1").arg(chn+1));
+        chan->set_latency( m_framesPerCycle + m_captureFrameLatency );
+    }
 
-        return 1;
+    return 1;
 }
 
 AudioChannel* TAudioDriver::add_capture_channel(const QString& chanName)
 {
         PENTER;
-        AudioChannel* chan = audiodevice().create_channel(chanName, m_captureChannels.size(), ChannelIsInput);
+    AudioChannel* chan = audiodevice().create_channel(chanName, m_captureChannels.size(), AudioChannel::ChannelIsInput);
         m_captureChannels.append(chan);
         return chan;
 }
@@ -123,7 +124,7 @@ AudioChannel* TAudioDriver::add_capture_channel(const QString& chanName)
 AudioChannel* TAudioDriver::add_playback_channel(const QString& chanName)
 {
         PENTER;
-        AudioChannel* chan = audiodevice().create_channel(chanName, m_playbackChannels.size(), ChannelIsOutput);
+        AudioChannel* chan = audiodevice().create_channel(chanName, m_playbackChannels.size(), AudioChannel::ChannelIsOutput);
         m_playbackChannels.append(chan);
         return chan;
 }

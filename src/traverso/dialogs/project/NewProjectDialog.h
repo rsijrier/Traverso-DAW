@@ -28,7 +28,7 @@
 class AudioFileCopyConvert;
 class ExportFormatOptionsWidget;
 class QButtonGroup;
-struct ExportSpecification;
+class TExportSpecification;
 
 
 class NewProjectDialog : public QDialog, protected Ui::NewProjectDialog
@@ -43,7 +43,7 @@ public:
 
 private:
 	AudioFileCopyConvert* m_converter;
-	ExportSpecification* m_exportSpec;
+	TExportSpecification* m_exportSpec;
 	ExportFormatOptionsWidget* m_formatOptionsWidget{};
 	QButtonGroup* m_buttonGroup;
 
@@ -56,7 +56,7 @@ private slots:
 	void update_template_combobox();
 	void add_files();
 	void remove_files();
-	void load_file(QString, int, QString);
+    void load_file(const QString& fileName, int, QString);
 	void move_up();
 	void move_down();
         void on_changeProjectsDirButton_clicked();

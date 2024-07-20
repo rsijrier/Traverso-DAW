@@ -21,19 +21,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TTrackLaneView.h"
 
-#include "Track.h"
-#include "CurveView.h"
-#include "SheetView.h"
 #include "Themer.h"
 
 #include "Debugger.h"
 
 TTrackLaneView::TTrackLaneView(ViewItem* parent)
-	: ViewItem(parent, nullptr)
+    : ViewItem(parent, nullptr)
 {
 	m_sv = parent->get_sheetview();
 	m_height = 150;
-	m_ignoreContext = true;
+    set_ignore_context(true);
 	m_panel = nullptr;
 	m_childView = nullptr;
 	setZValue(parent->zValue() + 1);

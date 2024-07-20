@@ -22,15 +22,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Gain.h"
 
 #include "ContextItem.h"
-#include "ContextPointer.h"
 #include "Sheet.h"
 #include "TBusTrack.h"
-#include "Utils.h"
 #include "Mixer.h"
 
 // Always put me below _all_ includes, this is needed
 // in case we run with memory leak detection enabled!
 #include "Debugger.h"
+#include "qobjectdefs.h"
 
 /**
  *	\class Gain
@@ -91,6 +90,7 @@ int Gain::do_action()
 
     // so this will only be reached after an undo/redo sequence
     QMetaObject::invokeMethod(m_gainObject, "set_gain_animated", Q_ARG(float, m_newGain));
+
 
     return 1;
 }
