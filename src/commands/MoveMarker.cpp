@@ -139,7 +139,7 @@ int MoveMarker::jog()
 
     if (d->doSnap) {
 		TSnapList* slist = m_marker->get_timeline()->get_sheet()->get_snap_list();
-        newpos = slist->get_snap_value(newpos, didSnap);
+        // newpos = slist->get_snap_value(newpos, didSnap);
 	}
 
 	if (newpos < TTimeRef()) {

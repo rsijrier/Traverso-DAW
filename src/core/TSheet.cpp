@@ -603,6 +603,23 @@ TAudioClipManager * TSheet::get_audioclip_manager( ) const
     return m_audioClipManager;
 }
 
+QList<TTimeLineEntity *> TSheet::get_all_active_timeline_entities() const
+{
+    QList<TTimeLineEntity*> locations;
+    for (auto& clip : m_audioClipManager->get_clip_list()) {
+        locations.append(clip);
+    }
+    for (auto& marker : m_timeLineRuler->get_markers()) {
+        locations.append(marker);
+    }
+
+    // locations.append(m_workSnap);
+
+    // How to append TrackStart or Time 0 ?
+
+    return locations;
+}
+
 QString TSheet::get_audio_sources_dir() const
 {
     if (m_audioSourcesDir.isEmpty() || m_audioSourcesDir.isNull()) {

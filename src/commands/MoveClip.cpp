@@ -326,9 +326,9 @@ int MoveClip::jog()
     }
 
     // substract the snap distance, if snap is turned on.
-    if ((m_session->is_snap_on() || d->doSnap) && !m_d->verticalOnly) {
-        newTrackStartLocation -= m_session->get_snap_list()->calculate_snap_diff(newTrackStartLocation, newTrackStartLocation + m_group.get_location()->get_length());
-    }
+    // if ((m_session->is_snap_on() || d->doSnap) && !m_d->verticalOnly) {
+    //     newTrackStartLocation -= m_session->get_snap_list()->calculate_snap_diff(newTrackStartLocation, newTrackStartLocation + m_group.get_location()->get_length());
+    // }
 
     // Now that the new track start location is known, the position diff can be calculated
     m_posDiff = newTrackStartLocation - m_trackStartLocation;
@@ -365,7 +365,7 @@ void MoveClip::do_prev_next_snap(const TTimeRef &trackStartLocation, const TTime
 {
     if (m_d->verticalOnly) return;
     ied().bypass_jog_until_mouse_movements_exceeded_manhattenlength();
-    m_posDiff = trackStartLocation - m_trackStartLocation - m_session->get_snap_list()->calculate_snap_diff(trackStartLocation, trackEndLocation);
+    // m_posDiff = trackStartLocation - m_trackStartLocation - m_session->get_snap_list()->calculate_snap_diff(trackStartLocation, trackEndLocation);
     do_move();
 }
 

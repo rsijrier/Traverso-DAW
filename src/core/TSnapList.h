@@ -19,49 +19,58 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 */
 
-#ifndef T_SNAPLIST_H
-#define T_SNAPLIST_H
-#include <QList>
+#pragma once
 
+#include <QList>
+#include <QMultiHash>
+#include <QFlags>
+#include <QPointer>
 #include "TTimeRef.h"
 
 class TSession;
 
+struct TRichSnapResult {
+    TTimeRef        snappedLocation;
+    bool            didSnap{false};
+    QList<QObject*> snappedToTargets;
+};
+
 class TSnapList
 {
-
 public:
-    TSnapList(TSession* session);
-    ~TSnapList() {}
+    enum SnapType {
+        NoSnap      = 0x00,
+        AudioClips  = 0x01,
+        Markers     = 0x02,
+        WorkCursor  = 0x04,
+        SnapAll     = 0xFF
+    };
+    Q_DECLARE_FLAGS(SnapFilters, SnapType)
+
+    explicit TSnapList(TSession* session);
+    ~TSnapList() = default;
+
+    TRichSnapResult get_snap_context(const TTimeRef& mouseLocation, qint64 scaleFactor, SnapFilters activeFilters);
 
     TTimeRef get_snap_value(const TTimeRef& location);
-    TTimeRef get_snap_value(const TTimeRef& location, bool& didSnap);
-    TTimeRef get_snap_diff(const TTimeRef& location);
     TTimeRef next_snap_pos(const TTimeRef& location);
     TTimeRef prev_snap_pos(const TTimeRef& location);
 
-    TTimeRef calculate_snap_diff(const TTimeRef &leftlocation, const TTimeRef &rightlocation);
-
-    void set_range(const TTimeRef& start, const TTimeRef& end, qint64 scalefactor);
     void mark_dirty();
     bool was_dirty();
 
-private:
-    TSession*           m_session;
-    QList<TTimeRef> 	m_xposList;
-    QList<TTimeRef> 	m_xposLut;
-    QList<bool>         m_xposBool;
-    bool                m_isDirty;
-    bool                m_wasDirty;
-    TTimeRef            m_rangeStart;
-    TTimeRef            m_rangeEnd;
-    qint64              m_scalefactor;
+    void set_range(const TTimeRef& start, const TTimeRef& end, qint64 scalefactor) {
+        Q_UNUSED(start); Q_UNUSED(end); Q_UNUSED(scalefactor);
+    }
 
-    void update_snaplist();
-    bool is_snap_value(const TTimeRef& location);
-    int closest_xposlist_index_for_location(TTimeRef location);
+private:
+    TSession*                             m_session{nullptr};
+    QList<TTimeRef>                       m_uniqueSnapPositions;
+    QMultiHash<qint64, QPointer<QObject>> m_locationRegistry;
+    bool                                  m_isDirty{true};
+    bool                                  m_wasDirty{false};
+
+    void update_snaplist_algorithm();
 };
 
-#endif
-
-/* EOF */
+Q_DECLARE_OPERATORS_FOR_FLAGS(TSnapList::SnapFilters)

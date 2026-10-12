@@ -42,6 +42,7 @@ class TBusTrack;
 class TTrack;
 class TTransportControl;
 class TSelectionService;
+class TTimeLineEntity;
 
 class TSheet : public TSession
 {
@@ -76,6 +77,7 @@ public:
 
     TAudioClipManager* get_audioclip_manager() const;
     TSelectionService* get_selection_service() const { return m_selectionService; }
+    QList<TTimeLineEntity*> get_all_active_timeline_entities() const;
     AudioBus* get_render_bus() const {return m_renderBus;}
 
 
