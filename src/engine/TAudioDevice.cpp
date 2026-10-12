@@ -276,9 +276,9 @@ int TAudioDevice::run_cycle( nframes_t nframes, float delayed_usecs )
     }
 
     tsmp().process_posted_gui_events();
-    tsmp().post_rt_event(TAudioThreadMessageQueueEvent{
-        .rtMethodExecutor = nullptr,
-        .guiSignalExecutor = [this]() { emit finishedOneProcessCycle(); }
+    tsmp().post_to_gui_thread(TAudioThreadMessageQueueEvent{
+        .rtTask = nullptr,
+        .guiCallback = [this]() { emit finishedOneProcessCycle(); }
     });
 
     return 1;
@@ -905,16 +905,16 @@ void TAudioDevice::audiothread_finished()
 
 void TAudioDevice::xrun( )
 {
-    tsmp().post_rt_event(TAudioThreadMessageQueueEvent{
-        .rtMethodExecutor = nullptr,
-        .guiSignalExecutor = [this]() { emit bufferUnderRun(); }
+    tsmp().post_to_gui_thread(TAudioThreadMessageQueueEvent{
+        .rtTask = nullptr,
+        .guiCallback = [this]() { emit bufferUnderRun(); }
     });
 
     m_xrunCount++;
     if (m_xrunCount > 30) {
-        tsmp().post_rt_event(TAudioThreadMessageQueueEvent{
-            .rtMethodExecutor = nullptr,
-            .guiSignalExecutor = [this]() { emit xrunStormDetected(); }
+        tsmp().post_to_gui_thread(TAudioThreadMessageQueueEvent{
+            .rtTask = nullptr,
+            .guiCallback = [this]() { emit xrunStormDetected(); }
         });
         m_driver->stop();
         m_runAudioThread.store(false);

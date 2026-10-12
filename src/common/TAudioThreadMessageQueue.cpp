@@ -127,7 +127,7 @@ void TAudioThreadMessageQueue::post_gui_event(TAudioThreadMessageQueueEvent &&ev
  * @brief Enqueues feedback indicators or execution callbacks originating from the RT audio context.
  *        Guarantees strict non-blocking behavior to prevent priority inversion glitches.
  */
-void TAudioThreadMessageQueue::post_rt_event(TAudioThreadMessageQueueEvent &&event)
+void TAudioThreadMessageQueue::post_to_gui_thread(TAudioThreadMessageQueueEvent &&event)
 {
     Q_ASSERT_X(this->thread() != QThread::currentThread(), "TSMP::post_rt_event", "Adding event from NON-RT Thread!!");
 
@@ -147,13 +147,13 @@ void TAudioThreadMessageQueue::process_posted_gui_events()
     TAudioThreadMessageQueueEvent event;
 
     while (m_postedFromGuiThreadQueue->try_dequeue(event)) {
-        if (event.rtMethodExecutor) {
-            event.rtMethodExecutor();
+        if (event.rtTask) {
+            event.rtTask();
             // Real-time Safety: Erase closures immediately to clean up stack space inside the cycle loop
-            event.rtMethodExecutor = nullptr;
+            event.rtTask = nullptr;
         }
 
-        if (event.guiSignalExecutor) {
+        if (event.guiCallback) {
             // Real-time Safety: Utilize strict non-blocking try-semantics. Dropping an overflowing
             // callback event prevents kernel locks from disrupting the audio streaming deadline.
             if (!m_processedByRTThreadQueue->try_enqueue(std::move(event))) {
@@ -179,15 +179,15 @@ void TAudioThreadMessageQueue::process_processed_events_by_rt_thread_queue()
 
     // 1. Process asynchronous processing signals finalized by the RT engine
     while (m_processedByRTThreadQueue->try_dequeue(event)) {
-        if (event.guiSignalExecutor) {
-            event.guiSignalExecutor();
+        if (event.guiCallback) {
+            event.guiCallback();
         }
     }
 
     // 2. Clear out immediate state feedback metrics
     while (m_postedFromRTThreadQueue->try_dequeue(event)) {
-        if (event.guiSignalExecutor) {
-            event.guiSignalExecutor();
+        if (event.guiCallback) {
+            event.guiCallback();
         }
     }
 
@@ -201,8 +201,8 @@ void TAudioThreadMessageQueue::process_processed_events_by_rt_thread_queue()
     }
 
     // Execute callback patterns strictly when operating active run states
-    if (m_running && event.guiSignalExecutor) {
-        event.guiSignalExecutor();
+    if (m_running && event.guiCallback) {
+        event.guiCallback();
     }
 
     --m_eventCounter;

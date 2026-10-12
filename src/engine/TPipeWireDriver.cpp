@@ -330,9 +330,9 @@ int TPipeWireDriver::process_callback()
         m_playbackFrameLatency = newPlaybackLatency;
         m_captureFrameLatency = newCaptureLatency;
 
-        tsmp().post_rt_event(TAudioThreadMessageQueueEvent{
-            .rtMethodExecutor = nullptr,
-            .guiSignalExecutor = [this]() { emit latencyChanged(); }
+        tsmp().post_to_gui_thread(TAudioThreadMessageQueueEvent{
+            .rtTask = nullptr,
+            .guiCallback = [this]() { emit latencyChanged(); }
         });
     }
 

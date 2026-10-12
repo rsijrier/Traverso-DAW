@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "cameron/readerwritercircularbuffer.h"
 
 struct TAudioThreadMessageQueueEvent {
-    std::move_only_function<void()> rtMethodExecutor{nullptr};
-    std::move_only_function<void()> guiSignalExecutor{nullptr};
+    std::move_only_function<void()> rtTask{nullptr};
+    std::move_only_function<void()> guiCallback{nullptr};
 };
 
 class TAudioThreadMessageQueueThread : public QThread
@@ -72,25 +72,26 @@ public:
         }
 
         TAudioThreadMessageQueueEvent event{};
-        event.rtMethodExecutor = std::forward<RTTask>(rtTask);
-        event.guiSignalExecutor = std::forward<GuiSignal>(guiSignal);
+        event.rtTask = std::forward<RTTask>(rtTask);
+        event.guiCallback = std::forward<GuiSignal>(guiSignal);
         post_gui_event(std::move(event));
     }
 
     void post_gui_event(TAudioThreadMessageQueueEvent &&event);
-    void post_rt_event(TAudioThreadMessageQueueEvent &&event);
-    void process_posted_gui_events();
-    void process_processed_events_by_rt_thread_queue();
+    void post_to_gui_thread(TAudioThreadMessageQueueEvent &&event);
 
 private:
     TAudioThreadMessageQueue();
     ~TAudioThreadMessageQueue() override;
     TAudioThreadMessageQueue(const TAudioThreadMessageQueue&) = delete;
 
-
     friend TAudioThreadMessageQueue& tsmp();
+
     friend class TAudioDevice;
     friend class TAudioThreadMessageQueueThread;
+
+    void process_posted_gui_events();
+    void process_processed_events_by_rt_thread_queue();
 
     std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<TAudioThreadMessageQueueEvent>> m_postedFromGuiThreadQueue;
     std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<TAudioThreadMessageQueueEvent>> m_postedFromRTThreadQueue;
@@ -99,8 +100,8 @@ private:
     TAudioThreadMessageQueueThread* m_TAudioThreadMessageQueueThread;
     int             m_eventCounter;
     int             m_retryCount;
-    std::atomic<bool> m_running{true};
     std::atomic<int>  m_droppedRtEvents{0};
+    std::atomic<bool> m_running{true};
 
 public slots:
     void trigger_batch_start() { emit batchTransactionStarted(); }
