@@ -51,7 +51,6 @@ TSession::TSession(TSession *parentSession)
         m_timeLineRuler = new TTimeLineRuler(this);
 		m_snaplist = new TSnapList(this);
         m_workSnap = new TLocation(this);
-		m_workSnap->set_snap_list(m_snaplist);
 	} else {
 		set_parent_session(parentSession);
 	}

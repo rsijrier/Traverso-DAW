@@ -21,21 +21,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TTimeLineMarker.h"
 #include "TSheet.h"
-#include "TLocation.h"
 #include "TTimeLineRuler.h"
-#include "Utils.h"
 
 TTimeLineMarker::TTimeLineMarker(TTimeLineRuler* tl, const TTimeRef when, MarkerType type)
-	: TContextItem(tl)
+    : TContextItem(tl)
+    , TTimeLineEntity()
     , m_timeline(tl)
-    , m_location(new TLocation(this))
-	, m_type(type)
+    , m_type(type)
 {
     QObject::tr("TTimeLineMarker");
     set_history_stack(m_timeline->get_history_stack());
 
-    m_location->set_snap_list(m_timeline->get_sheet()->get_snap_list());
-    m_location->set_location(this, when, when);
+    m_location->set_location(when, when);
 
     m_description = "";
     m_performer = "";
@@ -49,13 +46,17 @@ TTimeLineMarker::TTimeLineMarker(TTimeLineRuler* tl, const TTimeRef when, Marker
 }
 
 TTimeLineMarker::TTimeLineMarker(TTimeLineRuler * tl, const QDomNode& node)
-	: TContextItem(tl)
+    : TContextItem(tl)
+    , TTimeLineEntity()
     , m_timeline(tl)
-    , m_location(new TLocation(this))
 {
-    m_location->set_snap_list(m_timeline->get_sheet()->get_snap_list());
     set_history_stack(m_timeline->get_history_stack());
-	set_state(node);
+    set_state(node);
+}
+
+void TTimeLineMarker::move_to_location(const TTimeRef& newStartLocation)
+{
+    m_location->set_location(newStartLocation, newStartLocation);
 }
 
 QDomNode TTimeLineMarker::get_state(QDomDocument doc)
@@ -95,7 +96,8 @@ int TTimeLineMarker::set_state(const QDomNode & node)
     m_description = e.attribute("description", "");
     QString tp = e.attribute("type", "CDTRACK");
     TTimeRef location = TTimeRef(e.attribute("position", "0").toLongLong());
-    m_location->set_location(this, location, location);
+
+    m_location->set_location(location, location);
     set_id(e.attribute("id", "0").toLongLong());
     m_performer = e.attribute("performer", "");
     m_composer = e.attribute("composer", "");
@@ -114,7 +116,7 @@ int TTimeLineMarker::set_state(const QDomNode & node)
 
 void TTimeLineMarker::set_when(const TTimeRef& when)
 {
-    m_location->set_location(this, when, when);
+    m_location->set_location(when, when);
 }
 
 void TTimeLineMarker::set_description(const QString &s)

@@ -21,65 +21,47 @@ $Id: TLocation.cpp,v 1.2 2008/02/21 20:00:48 r_sijrier Exp $
 */
 
 #include "TLocation.h"
-#include "TSnapList.h"
 #include <Debugger.h>
 
-
-TLocation::TLocation(QObject *owner)
-    : QObject(owner)
-    , m_owner(owner)
+TLocation::TLocation(QObject *parent)
+    : QObject(parent)
 {
-	m_isSnappable = true;
-	snapList = 0;
 }
+
 void TLocation::set_snappable(bool snap)
 {
-	if (snapList) {
-		snapList->mark_dirty();
-	}
-	m_isSnappable = snap;
+    if (m_isSnappable == snap) return;
+    m_isSnappable = snap;
+    emit locationChanged();
 }
 
-void TLocation::set_snap_list(TSnapList *sList)
+void TLocation::set_location(const TTimeRef &start, const TTimeRef &end)
 {
-	snapList = sList;
-}
-
-void TLocation::set_location(QObject* owner, const TTimeRef &start, TTimeRef end)
-{
-    Q_ASSERT(m_owner != nullptr);
-    Q_ASSERT(owner == m_owner);
-
+    if (m_start == start && m_end == end) return;
     m_start = start;
     m_end = end;
-
     emit locationChanged();
 }
 
-
-void TLocation::set_start(QObject* owner, const TTimeRef &start)
+void TLocation::set_start(const TTimeRef &start)
 {
-    Q_ASSERT(m_owner != nullptr);
-    Q_ASSERT(owner == m_owner);
-
+    if (m_start == start) return;
     m_start = start;
-
     emit locationChanged();
 }
 
-void TLocation::set_end(QObject* owner, const TTimeRef &end)
+void TLocation::set_end(const TTimeRef &end)
 {
-    Q_ASSERT(m_owner != nullptr);
-    Q_ASSERT(owner == m_owner);
-
+    if (m_end == end) return;
     m_end = end;
-
     emit locationChanged();
 }
 
-bool TLocation::is_snappable() const
+void TLocation::set_moving(bool moving)
 {
-	return m_isSnappable;
+    if (m_isMoving == moving) return;
+    m_isMoving = moving;
+    emit locationChanged();
 }
 
 /* EOF */

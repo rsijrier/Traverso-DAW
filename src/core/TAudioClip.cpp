@@ -53,6 +53,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 TAudioClip::TAudioClip(const QString& name)
+    : TTimeLineEntity()
+    , TAudioProcessingNode()
 {
     PENTERCONS;
     m_name = name;
@@ -73,9 +75,7 @@ TAudioClip::TAudioClip(const QString& name)
     m_fadeIn = nullptr;
     m_fadeOut = nullptr;
     m_fader->automate_port(0, true);
-    m_location = new TLocation(this);
 
-    // read in the configuration from the global configuration settings.
     update_global_configuration();
     connect(&config(), &TConfig::configChanged, this, &TAudioClip::update_global_configuration);
 }
@@ -85,8 +85,6 @@ TAudioClip::TAudioClip(const QDomNode& node)
 {
     PENTERCONS;
 
-    // It makes sense to set these values at this time allready
-    // they are for example used by the ResourcesManager!
     QDomElement e = node.toElement();
     set_id(e.attribute("id", "").toLongLong());
     m_readSourceId = e.attribute("source", "").toLongLong();
@@ -99,15 +97,14 @@ TAudioClip::TAudioClip(const QDomNode& node)
     m_sourceEndLocation = m_sourceStartLocation + m_length;
     TTimeRef location(e.attribute( "trackstart", "" ).toLongLong());
     m_domNode = node.cloneNode();
-    //	init();
-    // first init to set variables that are referenced in:
-    set_location_start(location);
+    move_to_location(location);
 }
 
 TAudioClip::~TAudioClip()
 {
     PENTERDES;
     if (m_readSource) {
+        Q_ASSERT(m_sheet);
         m_sheet->remove_audio_source_from_diskio(m_readSource);
     }
 
@@ -151,7 +148,7 @@ int TAudioClip::set_state(const QDomNode& node)
     if (!fadeInNode.isNull()) {
         if (!m_fadeIn) {
             m_fadeIn = new TFadeCurve(this, TFadeCurve::FadeIn);
-            m_fadeIn->set_parent_location(m_location);
+            m_fadeIn->set_parent_timeline_entity(this);
 
             private_add_fade(m_fadeIn);
         }
@@ -162,7 +159,7 @@ int TAudioClip::set_state(const QDomNode& node)
     if (!fadeOutNode.isNull()) {
         if (!m_fadeOut) {
             m_fadeOut = new TFadeCurve(this, TFadeCurve::FadeOut);
-            m_fadeOut->set_parent_location(m_location);
+            m_fadeOut->set_parent_timeline_entity(this);
             private_add_fade(m_fadeOut);
         }
         m_fadeOut->set_state( fadeOutNode );
@@ -177,7 +174,7 @@ int TAudioClip::set_state(const QDomNode& node)
     // after curves (those created in plugins too!) are inited and having
     // their state set.
     TTimeRef location(e.attribute( "trackstart", "" ).toLongLong(&ok));
-    set_location_start(location);
+    move_to_location(location);
 
     return 1;
 }
@@ -185,7 +182,7 @@ int TAudioClip::set_state(const QDomNode& node)
 QDomNode TAudioClip::get_state( QDomDocument doc )
 {
     QDomElement node = doc.createElement("Clip");
-    node.setAttribute("trackstart", m_location->get_start().universal_frame());
+    node.setAttribute("trackstart", get_location_start().universal_frame());
     node.setAttribute("sourcestart", m_sourceStartLocation.universal_frame());
     node.setAttribute("length", m_length.universal_frame());
     node.setAttribute("mute", m_isMuted);
@@ -281,7 +278,7 @@ void TAudioClip::set_left_edge(const TTimeRef &location)
         }
 
         set_source_start_location( m_sourceStartLocation - movingToLeft );
-        set_location_start(get_location_start() - movingToLeft);
+        move_to_location(get_location_start() - movingToLeft);
     } else if (newLeftLocation > get_location_start()) {
 
         TTimeRef availableTimeRight = m_length;
@@ -293,7 +290,7 @@ void TAudioClip::set_left_edge(const TTimeRef &location)
         }
 
         set_source_start_location( m_sourceStartLocation + movingToRight );
-        set_location_start(get_location_start() + movingToRight);
+        move_to_location(get_location_start() + movingToRight);
     }
     emit edgeMoved(true);
 }
@@ -317,20 +314,20 @@ void TAudioClip::set_right_edge(const TTimeRef &location)
         }
 
         set_source_end_location( m_sourceEndLocation + movingToRight );
-        set_track_end_location( m_location->get_end() + movingToRight );
+        set_track_end_location( get_location_end() + movingToRight );
 
     } else if (newRightLocation < m_location->get_end()) {
 
         TTimeRef availableTimeLeft = m_length;
 
-        TTimeRef movingToLeft = m_location->get_end() - newRightLocation;
+        TTimeRef movingToLeft = get_location_end() - newRightLocation;
 
         if (movingToLeft > availableTimeLeft - TTimeRef(nframes_t(4), get_rate())) {
             movingToLeft = availableTimeLeft - TTimeRef(nframes_t(4), get_rate());
         }
 
         set_source_end_location( m_sourceEndLocation - movingToLeft);
-        set_track_end_location( m_location->get_end() - movingToLeft );
+        set_track_end_location( get_location_end() - movingToLeft );
     }
     emit edgeMoved(false);
 }
@@ -360,11 +357,11 @@ void TAudioClip::set_source_end_location(const TTimeRef& location)
     m_length = m_sourceEndLocation - m_sourceStartLocation;
 }
 
-void TAudioClip::set_location_start(const TTimeRef& location)
+void TAudioClip::move_to_location(const TTimeRef& location)
 {
     PENTER2;
 
-    m_location->set_start(this, location);
+    m_location->set_start(location);
 
     m_fader->get_curve()->set_start_offset(m_location->get_start());
 
@@ -378,7 +375,7 @@ void TAudioClip::set_location_start(const TTimeRef& location)
 
 void TAudioClip::set_track_end_location(const TTimeRef& location)
 {
-    m_location->set_end(this, location);
+    m_location->set_end(location);
 
     if ( (!is_moving()) && m_sheet) {
         m_sheet->get_snap_list()->mark_dirty();
@@ -652,11 +649,12 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
         m_isReadSourceValid = true;
     }
 
-    m_readSource = rs;
-    m_readSource->set_location(m_location);
+    m_readSource = rs;    
     m_readSource->set_source_start_location(get_source_start_location());
     m_readSourceId = rs->get_id();
     m_sourceLength = rs->get_length();
+    sync_location_to_stream();
+    connect(m_location.get(), &TLocation::locationChanged, this, &TAudioClip::sync_location_to_stream);
 
     // If m_length isn't set yet, it means we are importing stuff instead of reloading from project file.
     // it's a bit weak this way, hopefull I'll get up something better in the future.
@@ -680,6 +678,13 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
 
     // This will also emit locationChanged() which is more or less what we want.
     set_track_end_location(m_location->get_start() + m_sourceLength - m_sourceStartLocation);
+}
+
+void TAudioClip::sync_location_to_stream()
+{
+    Q_ASSERT(m_readSource);
+
+    m_readSource->set_stream_location_window(get_location_start(), get_location_end());
 }
 
 void TAudioClip::finish_write_source()
@@ -757,7 +762,6 @@ void TAudioClip::set_sheet( TSheet * sheet )
     
     set_history_stack(m_sheet->get_history_stack());
     m_pluginChain->set_session(m_sheet);
-    m_location->set_snap_list(m_sheet->get_snap_list());
 }
 
 
@@ -908,7 +912,7 @@ void TAudioClip::create_fade(int fadeType)
 
     fadeCurve->set_shape("Fast");
     fadeCurve->set_history_stack(get_history_stack());
-    fadeCurve->set_parent_location(m_location);
+    fadeCurve->set_parent_timeline_entity(this);
 
     tsmp().post_rt_task(
         [this, fadeCurve]() { private_add_fade(fadeCurve); }, // 1. Real-time audio loop processing task
@@ -927,16 +931,6 @@ bool TAudioClip::has_sheet() const
     return m_sheet != nullptr;
 }
 
-TTimeRef TAudioClip::get_location_start() const
-{
-    return m_location->get_start();
-}
-
-TTimeRef TAudioClip::get_location_end() const
-{
-    return m_location->get_end();
-}
-
 void TAudioClip::set_as_moving(bool moving)
 {
     m_isMoving = moving;
@@ -947,8 +941,8 @@ void TAudioClip::set_as_moving(bool moving)
     // this is the point where we have to emit locationChanged() to notify
     // AudioTrack and GUI of the changed clip position
     if (!moving) {
-        emit m_location->locationChanged();
         if (m_track) {
+            m_location->set_moving(false);
             m_track->clip_position_changed(this);
         }
     }

@@ -33,13 +33,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TLocation.h"
 
 TAudioClipGroup::TAudioClipGroup()
+    : TTimeLineEntity()
 {
-    m_location = new TLocation(this);
 }
 
-TAudioClipGroup::TAudioClipGroup(QList< TAudioClip * > clips)
+TAudioClipGroup::TAudioClipGroup(const QList<TAudioClip *> &clips)
+    : TTimeLineEntity()
 {
-    m_location = new TLocation(this);
     m_clips = clips;
     update_state();
 }
@@ -61,7 +61,7 @@ void TAudioClipGroup::move_to(int trackIndex, const TTimeRef &location)
     PENTER;
     int trackIndexDelta = trackIndex - m_topTrackIndex;
 
-    for(TAudioClip* clip : m_clips) {
+    for(auto& clip : m_clips) {
         if (trackIndexDelta != 0) {
             TAudioTrack* track = clip->get_sheet()->get_audio_track_for_index(clip->get_track()->get_sort_index() + trackIndexDelta);
             if (track) {
@@ -77,7 +77,7 @@ void TAudioClipGroup::move_to(int trackIndex, const TTimeRef &location)
         }
 
         TTimeRef offset = clip->get_location_start() - m_location->get_start();
-        clip->set_location_start(location + offset);
+        clip->move_to_location(location + offset);
     }
 
     update_state();
@@ -89,13 +89,13 @@ void TAudioClipGroup::update_state()
         return;
     }
 
-    m_location->set_start(this, TTimeRef::max_length());
-    m_location->set_end(this, TTimeRef());
+    m_location->set_start(TTimeRef::max_length());
+    m_location->set_end(TTimeRef());
 
     m_topTrackIndex = INT_MAX;
     m_bottomTrackIndex = 0;
 
-    foreach(TAudioClip* clip, m_clips) {
+    for(auto& clip : m_clips) {
         int index = clip->get_track()->get_sort_index();
         if (index < m_topTrackIndex) {
             m_topTrackIndex = index;
@@ -103,11 +103,11 @@ void TAudioClipGroup::update_state()
         if (index > m_bottomTrackIndex) {
             m_bottomTrackIndex = index;
         }
-        if (m_location->get_start() > clip->get_location_start()) {
-            m_location->set_start(this, clip->get_location_start());
+        if (get_location_start() > clip->get_location_start()) {
+            m_location->set_start(clip->get_location_start());
         }
-        if (m_location->get_end() < clip->get_location_end()) {
-            m_location->set_end(this, clip->get_location_end());
+        if (get_location_end() < clip->get_location_end()) {
+            m_location->set_end(clip->get_location_end());
         }
     }
 }
@@ -130,11 +130,11 @@ QList<TAudioClip*> TAudioClipGroup::copy_clips()
 {
     QList<TAudioClip*> newclips;
 
-    foreach(TAudioClip* clip, m_clips) {
+    for(auto& clip : m_clips) {
         TAudioClip* newclip = resources_manager()->get_clip(clip->get_id());
         newclip->set_sheet(clip->get_sheet());
         newclip->set_track(clip->get_track());
-        newclip->set_location_start(clip->get_location_start());
+        newclip->move_to_location(clip->get_location_start());
         newclips.append(newclip);
     }
 
@@ -144,7 +144,7 @@ QList<TAudioClip*> TAudioClipGroup::copy_clips()
 void TAudioClipGroup::add_all_clips_to_tracks()
 {
 
-    for(TAudioClip* clip : m_clips) {
+    for(auto& clip : m_clips) {
         TAudioClipAddRemoveSpec spec;
         spec.set_clip(clip);
         spec.set_is_historable(false);
@@ -155,7 +155,7 @@ void TAudioClipGroup::add_all_clips_to_tracks()
 
 void TAudioClipGroup::remove_all_clips_from_tracks()
 {
-    for(TAudioClip* clip : m_clips) {
+    for(auto& clip : m_clips) {
         TAudioClipAddRemoveSpec spec;
         spec.set_clip(clip);
         spec.set_is_historable(false);
@@ -193,4 +193,6 @@ bool TAudioClipGroup::is_locked() const
     }
     return false;
 }
+
+void TAudioClipGroup::move_to_location(const TTimeRef &location) {}
 

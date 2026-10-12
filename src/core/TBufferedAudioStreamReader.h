@@ -72,20 +72,24 @@ public :
 
     TBufferedAudioStreamStatus& get_buffer_status() final;
 
-    void set_location(TLocation* location);
+    void set_stream_location_window(const TTimeRef& start, const TTimeRef& end) {
+        m_streamStart = start;
+        m_streamEnd = end;
+    }
 
     void set_source_start_location(const TTimeRef &sourceStartLocation);
 	
 	
 private:
     TResampleAudioReader*        m_resampleAudioReader;
-    TLocation*                  m_location;
 
     int                 m_refcount;
     int                 m_error;
     bool                m_silent;
     std::atomic<bool>   m_active;
 
+    TTimeRef            m_streamStart;
+    TTimeRef            m_streamEnd;
     TTimeRef            m_length;
     TTimeRef            m_sourceStartLocation;
     TTimeRef            m_aboutOneToFourSecondsTime;

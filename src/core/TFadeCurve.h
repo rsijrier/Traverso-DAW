@@ -32,7 +32,7 @@ $Id: FadeCurve.h,v 1.19 2008/01/21 16:22:14 r_sijrier Exp $
 #include <QPointF>
 
 class AudioBus;
-class TLocation;
+class TTimeLineEntity;
 
 class TFadeCurve : public TCurve
 {
@@ -47,25 +47,24 @@ public:
     };
 
     TFadeCurve(TContextItem* parent, FadeType fadeType);
-    ~TFadeCurve();
-	
-	
-	QDomNode get_state(QDomDocument doc);
-	int set_state( const QDomNode & node );
+    ~TFadeCurve() override = default;
+
+    QDomNode get_state(QDomDocument doc);
+    int set_state( const QDomNode & node ) final;
 
     void process(const TAudioBuffer &curveBuffer, AudioBus* bus, const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes);
-	
-	float get_bend_factor() {return m_bendFactor;}
-	float get_strength_factor() {return m_strenghtFactor;}
-	int get_mode() const {return m_mode;}
-	int get_raster() const {return m_raster;}
-	
-	void set_shape(const QString &shapeName);
-	void set_bend_factor(float factor);
-	void set_strength_factor(float factor);
 
-    void set_parent_location(TLocation* location) {
-        m_parentLocation = location;
+    float get_bend_factor() {return m_bendFactor;}
+    float get_strength_factor() {return m_strenghtFactor;}
+    int get_mode() const {return m_mode;}
+    int get_raster() const {return m_raster;}
+
+    void set_shape(const QString &shapeName);
+    void set_bend_factor(float factor);
+    void set_strength_factor(float factor);
+
+    void set_parent_timeline_entity(TTimeLineEntity* entity) {
+        m_parentTimeLineEntity = entity;
     }
 
     FadeType get_fade_type() const {return m_type;}
@@ -81,24 +80,24 @@ public:
         return false;
     }
 
-    TFadeCurve* next;
+    TFadeCurve* next{nullptr};
 
 private:
-    TLocation*  m_parentLocation;
-	float 		m_bendFactor;
-	float 		m_strenghtFactor;
-	bool		m_bypass;
-	int 		m_mode;
-    int         m_raster;
-	FadeType	m_type;
-	QList<QPointF> 	m_controlPoints;
-	
-	QPointF get_curve_point(float f);
-	void init();
-	
+    TTimeLineEntity* m_parentTimeLineEntity{nullptr};
+    float 		     m_bendFactor{0.0f};
+    float 		     m_strenghtFactor{0.5f};
+    bool		     m_bypass{false};
+    int 		     m_mode{2};
+    int              m_raster{0};
+    FadeType	     m_type;
+    QList<QPointF> 	 m_controlPoints;
+
+    QPointF get_curve_point(float f);
+    void init();
+
 public slots:
-	void solve_node_positions();
-    void set_range(double range);
+    void solve_node_positions();
+    void set_range(double range) final;
 
     DISPATCH_RULE_IS_ALWAYS TCommand* toggle_bypass();
     DISPATCH_RULE_IS_ALWAYS TCommand* set_mode();
@@ -113,6 +112,3 @@ signals:
 };
 
 #endif
-
-//eof
-

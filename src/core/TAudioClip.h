@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioProcessingNode.h"
 #include "TProcessCallBackData.h"
 #include "TRealTimeLinkedList.h"
+#include "TTimeLineEntity.h"
 #include "TTimeRef.h"
 
 class TSheet;
@@ -38,17 +39,15 @@ class TPeak;
 class AudioBus;
 class TAudioPluginChain;
 class TFadeCurve;
-class TLocation;
 
-class TAudioClip : public TAudioProcessingNode
+class TAudioClip : public TAudioProcessingNode, public TTimeLineEntity
 {
     Q_OBJECT
 
 public:
-
     TAudioClip(const QString& name);
     TAudioClip(const QDomNode& node);
-    ~TAudioClip();
+    ~TAudioClip() override;
 
     enum RecordingStatus {
         NO_RECORDING,
@@ -60,7 +59,10 @@ public:
     int init_recording();
     int process(TProcessCallBackData &processData);
 
-    void set_location_start(const TTimeRef& location);
+    void move_to_location(const TTimeRef& location) final;
+    unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeAudioClip; }
+
+
     void set_fade_in_range(double range);
     void set_fade_out_range(double range);
     void set_track(TAudioTrack* track);
@@ -95,10 +97,6 @@ public:
     inline qint64 get_readsource_id( ) const {return m_readSourceId;}
     qint64 get_sheet_id() const {return m_sheetId;}
     TBufferedAudioStreamReader* get_readsource() const {return m_readSource;};
-    inline TLocation* get_location() const {return m_location;}
-
-    TTimeRef get_location_start() const;
-    TTimeRef get_location_end() const;
 
     QDomNode get_dom_node() const;
 
@@ -107,6 +105,7 @@ public:
     bool is_locked() const {return m_isLocked;}
     bool has_sheet() const;
     bool is_readsource_invalid() const {return !m_isReadSourceValid;}
+
     bool operator<(const TAudioClip &other){
         return this->get_location_start() < other.get_location_start();
     }
@@ -121,28 +120,26 @@ public:
 
     TAudioClip* next = nullptr;
 
-
 private:
-    TLocation*      m_location;
-    TRealTimeLinkedList<TFadeCurve*>	m_fades;
-    TSheet*          m_sheet;
-    TAudioTrack* 	m_track;
-    TBufferedAudioStreamReader*		m_readSource;
-    TBufferedAudioStreamWriter*	m_writer;
-    TPeak* 			m_peak;
-    TFadeCurve*		m_fadeIn;
-    TFadeCurve*		m_fadeOut;
-    QDomNode		m_domNode;
+    TRealTimeLinkedList<TFadeCurve*> m_fades;
+    TSheet*                         m_sheet;
+    TAudioTrack*                    m_track;
+    TBufferedAudioStreamReader*     m_readSource;
+    TBufferedAudioStreamWriter*     m_writer;
+    TPeak*                          m_peak;
+    TFadeCurve*                     m_fadeIn;
+    TFadeCurve*                     m_fadeOut;
+    QDomNode                        m_domNode;
 
-    TTimeRef 		m_sourceEndLocation;
-    TTimeRef 		m_sourceStartLocation;
-    TTimeRef        m_sourceLength;
-    TTimeRef 		m_length;
+    TTimeRef m_sourceEndLocation;
+    TTimeRef m_sourceStartLocation;
+    TTimeRef m_sourceLength;
+    TTimeRef m_length;
 
-    bool 			m_isTake;
-    bool			m_isLocked;
-    bool			m_isReadSourceValid;
-    bool			m_isMoving;
+    bool            m_isTake;
+    bool            m_isLocked;
+    bool            m_isReadSourceValid;
+    bool            m_isMoving;
     bool            m_syncDuringDrag;
     RecordingStatus m_recordingStatus;
 
@@ -174,13 +171,14 @@ public slots:
     void track_audible_state_changed();
     void toggle_mute();
     void toggle_lock();
+
     TCommand* lock();
 
 private slots:
     void private_add_fade(TFadeCurve* fade);
     void private_remove_fade(TFadeCurve* fade);
     void update_global_configuration();
+    void sync_location_to_stream();
 };
-
 
 #endif

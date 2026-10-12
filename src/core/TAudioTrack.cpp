@@ -202,7 +202,7 @@ TAudioClip* TAudioTrack::init_recording()
     TAudioClip* clip = resources_manager()->new_audio_clip(name);
     clip->set_sheet(m_sheet);
     clip->set_track(this);
-    clip->set_location_start(m_sheet->get_transport_location());
+    clip->move_to_location(m_sheet->get_transport_location());
 
     if (clip->init_recording() < 0) {
         PERROR("Could not create AudioClip to record to!");

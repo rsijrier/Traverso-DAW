@@ -149,7 +149,7 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 			if (!hadSheet) {
 				clip->set_state(clip->get_dom_node());
 			}
-            clip->set_location_start(startpos);
+            clip->move_to_location(startpos);
             startpos = clip->get_location_end();
             TAudioClipAddRemoveSpec spec;
             spec.set_clip(clip);
@@ -164,7 +164,7 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
             resources_manager()->set_source_for_clip(clip, source);
 			clip->set_sheet(m_importTrack->get_sheet());
 			clip->set_track(m_importTrack);
-			clip->set_location_start(startpos);
+			clip->move_to_location(startpos);
             startpos = clip->get_location_end();
             TAudioClipAddRemoveSpec spec;
             spec.set_clip(clip);

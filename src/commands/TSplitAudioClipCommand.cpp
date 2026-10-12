@@ -66,13 +66,13 @@ int TSplitAudioClipCommand::prepare_actions()
     rightClip = resources_manager()->get_clip(m_clip->get_id());
 
     leftClip->set_sheet(m_clip->get_sheet());
-    leftClip->set_location_start(m_clip->get_location_start());
+    leftClip->move_to_location(m_clip->get_location_start());
     leftClip->set_right_edge(m_splitLocation);
     leftClip->reset_fade_out();
 
     rightClip->set_sheet(m_clip->get_sheet());
     rightClip->set_left_edge(m_splitLocation);
-    rightClip->set_location_start(m_splitLocation);
+    rightClip->move_to_location(m_splitLocation);
     rightClip->reset_fade_in();
 
     return 1;

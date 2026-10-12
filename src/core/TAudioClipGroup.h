@@ -19,23 +19,22 @@
  
 */
 
-#ifndef TAUDIO_CLIP_GROUP_H
-#define TAUDIO_CLIP_GROUP_H
+#pragma once
 
+#include "TTimeLineEntity.h"
 #include "TTimeRef.h"
 
 #include <QObject>
 
 class TAudioClip;
-class TLocation;
 
-class TAudioClipGroup : QObject
+class TAudioClipGroup : public QObject, public TTimeLineEntity
 {
     Q_OBJECT
 
 public:
     TAudioClipGroup();
-    TAudioClipGroup(QList<TAudioClip*> clips);
+    TAudioClipGroup(const QList<TAudioClip*> &clips);
 	
 	void add_clip(TAudioClip* clip);
 	void set_clips(QList<TAudioClip*> clips);
@@ -51,18 +50,18 @@ public:
 	
 	int get_size() const {return m_clips.size();}
 	int get_track_index() const {return m_topTrackIndex;}
-    TLocation* get_location() const {return m_location;}
 	
 	bool is_locked() const;
-		
+
+    void move_to_location(const TTimeRef& location) final;
+
+    unsigned int get_timeline_entity_type() const override { return TTimeLineEntity::TypeAudioClip; }
+
 private:
 	QList<TAudioClip*> m_clips;
-    TLocation*        m_location;
 
 	int	m_topTrackIndex;
 	int	m_bottomTrackIndex;
 	
 	void update_state();
 };
-
-#endif

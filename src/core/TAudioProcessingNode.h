@@ -8,7 +8,6 @@
 
 #include "TCommand.h"
 #include "TContextItem.h"
-#include "defines.h"
 
 #include <QPointer>
 #include <QPropertyAnimation>

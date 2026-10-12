@@ -114,7 +114,7 @@ void TAudioFileImportCommand::create_audioclip()
         startLocation = m_importLocation;
 	}
 
-    m_clip->set_location_start(startLocation);
+    m_clip->move_to_location(startLocation);
 	
 	if (m_initialLength > qint64(0)) {
 		m_clip->set_right_edge(m_initialLength + startLocation);

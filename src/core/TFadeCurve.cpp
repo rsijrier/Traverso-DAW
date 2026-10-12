@@ -32,28 +32,20 @@ $Id: TFadeCurve.cpp,v 1.36 2008/11/07 10:43:08 r_sijrier Exp $
 #include "TAudioDevice.h"
 #include "AudioBus.h"
 #include "TLocation.h"
+#include "TTimeLineEntity.h"
 #include "Debugger.h"
 #include "TSession.h"
 
-
 QStringList TFadeCurve::defaultShapes = QStringList() << "Fastest" << "Fast" << "Linear"  << "Slow" << "Slowest";
+
 TFadeCurve::TFadeCurve(TContextItem *parent, FadeType fadeType )
     : TCurve(parent)
-    , m_parentLocation(nullptr)
     , m_type(fadeType)
 {
     m_controlPoints.append(QPointF(0.0, 0.0));
     m_controlPoints.append(QPointF(0.25, 0.25));
     m_controlPoints.append(QPointF(0.75, 0.75));
     m_controlPoints.append(QPointF(1.0, 1.0));
-
-    m_bendFactor = 0.0;
-    m_strenghtFactor = 0.5;
-    m_mode = 2;
-    m_raster = 0;
-    m_bypass = false;
-
-    next = nullptr;
 
     connect(this, &TFadeCurve::stateChanged, this, &TFadeCurve::solve_node_positions);
     connect(this, &TFadeCurve::bendValueChanged, this, &TFadeCurve::stateChanged);
@@ -63,29 +55,19 @@ TFadeCurve::TFadeCurve(TContextItem *parent, FadeType fadeType )
     init();
 }
 
-TFadeCurve::~ TFadeCurve( )
-{
-    PENTERDES;
-}
-
 void TFadeCurve::init()
 {
     QObject::tr("TFadeCurve");
 
-    // Populate the curve with 12 CurveNodes
-    float f = 0.0;
     int nodecount = 11;
     for (int i = 0; i <= nodecount; ++i) {
+        float f = static_cast<float>(i) / nodecount;
         QPointF p = get_curve_point(f);
 
         TCurveNode* node = new TCurveNode(this, p.x(), p.y());
         TAddRemoveCommand* cmd = (TAddRemoveCommand*) add_node(node, false);
         cmd->set_instantanious(true);
         TCommand::process_command(cmd);
-
-        // 		printf("adding node with x=%f, y=%f\n", p.x(), p.y());
-
-        f += 1.0 / nodecount;
     }
 
     set_range(1.0);
@@ -158,25 +140,27 @@ int TFadeCurve::set_state( const QDomNode & node )
 void TFadeCurve::process(const TAudioBuffer &curveBuffer, AudioBus *bus, const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes)
 {
     Q_ASSERT(bus->get_channel_count() == 2);
-    Q_ASSERT(m_parentLocation);
+    Q_ASSERT(m_parentTimeLineEntity != nullptr);
+    Q_ASSERT(m_parentTimeLineEntity->get_location() != nullptr);
+
     if (is_bypassed()) {
         return;
     }
+
+    TLocation* parentLocation = m_parentTimeLineEntity->get_location();
     uint outputRate = audiodevice().get_sample_rate();
     uint framesToProcess = nframes;
     uint channelCount = bus->get_channel_count();
 
     TTimeRef fadeStartLocation, fadeEndLocation, fadeLocation;
     TTimeRef fadeRange = TTimeRef(get_range());
-
     TTimeRef upperRange = startLocation + TTimeRef(nframes, outputRate);
 
-
     if (m_type == FadeIn) {
-        fadeStartLocation = m_parentLocation->get_start();
+        fadeStartLocation = parentLocation->get_start();
     } else {
-        fadeStartLocation = m_parentLocation->get_end() - fadeRange;
-    }    
+        fadeStartLocation = parentLocation->get_end() - fadeRange;
+    }
 
     fadeEndLocation = fadeStartLocation + fadeRange;
 
@@ -200,16 +184,15 @@ void TFadeCurve::process(const TAudioBuffer &curveBuffer, AudioBus *bus, const T
     }
 
     if (framesToProcess == 0) {
-        // After recording a new clip, and playing it back, an assert in set_data_start_offset was
-        // triggering when framesToProcess was 0, which happened when playing the very end of the clip.
         return;
     }
+
     upperRange = fadeLocation + TTimeRef(framesToProcess, outputRate);
 
     get_vector(fadeLocation.universal_frame(), upperRange.universal_frame(), curveBuffer, framesToProcess);
 
-    for (uint chan=0; chan<channelCount; ++chan) {
-        TAudioBuffer &buf = bus->get_buffer(chan); //, framesToProcess, offset);
+    for (uint chan = 0; chan < channelCount; ++chan) {
+        TAudioBuffer &buf = bus->get_buffer(chan);
         buf.set_data_start_offset(offset);
         for (nframes_t frame = 0; frame < framesToProcess; ++frame) {
             buf[frame] *= curveBuffer.at(frame);
@@ -217,7 +200,6 @@ void TFadeCurve::process(const TAudioBuffer &curveBuffer, AudioBus *bus, const T
         buf.set_data_start_offset(0);
     }
 }
-
 
 void TFadeCurve::set_shape(const QString& shapeName)
 {

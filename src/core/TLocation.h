@@ -19,52 +19,44 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 */
 
-#ifndef T_LOCATION_H
-#define T_LOCATION_H
+#pragma once
 
 #include "TTimeRef.h"
-#include "qobject.h"
+#include <QObject>
 
-class TSnapList;
-
+enum SnapType {
+    SnapAudioClips = 0x01,
+    SnapMarkers    = 0x02,
+    SnapWorkCursor = 0x04
+};
 
 class TLocation : public QObject
 {
     Q_OBJECT
 
 public:
-    TLocation(QObject* owner = nullptr);
-    ~TLocation() {}
+    explicit TLocation(QObject* parent = nullptr);
+    virtual ~TLocation() = default;
 
-	void set_snappable(bool snap);
+    void set_snappable(bool snap);
+    bool is_snappable() const { return m_isSnappable; }
+    bool is_moving() const { return m_isMoving; }
 
-	bool is_snappable() const;
+    inline TTimeRef get_start() const { return m_start; }
+    inline TTimeRef get_end() const { return m_end; }
+    TTimeRef get_length() const { return m_end - m_start; }
 
-	void set_snap_list(TSnapList *sList);
-
-    inline TTimeRef get_start() const {return m_start;}
-    inline TTimeRef get_end() const {return m_end;}
-    TTimeRef get_length() const {return m_end - m_start;}
-
-
-    void set_location(QObject *owner, const TTimeRef& start, TTimeRef end = TTimeRef());
-    void set_start(QObject *owner, const TTimeRef& start);
-    void set_end(QObject *owner, const TTimeRef& end);
-
-protected:
-    TTimeRef     m_start;
-    TTimeRef     m_end;
+    void set_location(const TTimeRef& start, const TTimeRef& end = TTimeRef());
+    void set_start(const TTimeRef& start);
+    void set_end(const TTimeRef& end);
+    void set_moving(bool moving);
 
 private:
-    QObject*    m_owner;
-	bool		m_isSnappable;
-	TSnapList	*snapList;
+    TTimeRef m_start;
+    TTimeRef m_end;
+    bool     m_isSnappable{true};
+    bool     m_isMoving{false};
 
 signals:
     void locationChanged();
 };
-
-
-#endif
-
-/* EOF */

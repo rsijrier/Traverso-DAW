@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QHash>
 
 #include "TAudioBuffer.h"
+#include "TLocation.h"
 #include "TRealTimeLinkedList.h"
 #include "defines.h"
 #include "TTimeRef.h"
@@ -35,7 +36,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class TAudioTrack;
 class TBounceTrack;
 class TSnapList;
-class TLocation;
+class TWorkCursorLocation;
 class TBusTrack;
 class TTrack;
 class TTimeLineRuler;
@@ -110,7 +111,7 @@ protected:
     QHash<qint64, int>      m_trackHeights;
 
     TSnapList*           m_snaplist;
-    TLocation*          m_workSnap;
+    TLocation*          m_workSnap{nullptr};
     TTimeLineRuler*     m_timeLineRuler;
     QString             m_name;
 

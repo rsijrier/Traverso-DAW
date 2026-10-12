@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProject.h"
 #include "AudioBus.h"
 #include "TFileIOBuffer.h"
-#include "TLocation.h"
 #include "TQueueBufferSlot.h"
 #include "Utils.h"
 #include "TAudioDevice.h"
@@ -115,7 +114,6 @@ TBufferedAudioStreamReader::TBufferedAudioStreamReader()
 
 void TBufferedAudioStreamReader::private_init()
 {
-    m_location = nullptr;
     m_sourceStartLocation = TTimeRef();
 
     m_refcount = 0;
@@ -273,12 +271,6 @@ void TBufferedAudioStreamReader::set_output_rate_and_convertor_type(int outputRa
     m_length = m_resampleAudioReader->get_length();
 }
 
-void TBufferedAudioStreamReader::set_location(TLocation* location)
-{
-    Q_ASSERT(location);
-    m_location = location;
-}
-
 void TBufferedAudioStreamReader::set_source_start_location(const TTimeRef &sourceStartLocation)
 {
     // printf("ReadSource::set_source_start_location: %s\n", QS_C(TTimeRef::timeref_to_ms_3(sourceStartLocation)));
@@ -344,14 +336,12 @@ int TBufferedAudioStreamReader::set_file(const QString & filename)
 
 void TBufferedAudioStreamReader::rb_seek_to_transport_location(TFileIOBuffer &fileDecodeBuffer, const TTimeRef& transportLocation)
 {
-    Q_ASSERT(m_location);
-
     m_bufferstatus.set_sync_status(TBufferedAudioStreamStatus::QUEUE_SEEKING_TO_NEW_LOCATION);
 
     // If the transport location lies (much) in front of our start location
     // or after our end location no need to fill the buffers
-    if ((transportLocation + m_aboutOneToFourSecondsTime) < m_location->get_start() ||
-        transportLocation > m_location->get_end()) {
+    if ((transportLocation + m_aboutOneToFourSecondsTime) < m_streamStart ||
+        transportLocation > m_streamEnd) {
         m_bufferstatus.set_sync_status(TBufferedAudioStreamStatus::SyncStatus::OUT_OF_SYNC);
         return;
     }
@@ -360,8 +350,8 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TFileIOBuffer &fi
     // the buffers in advance the transport location can still be in front of our start location
     // In which case we set the seek transport location to our start location
     TTimeRef seekTransportLocation = transportLocation;
-    if (seekTransportLocation < m_location->get_start()) {
-        seekTransportLocation = m_location->get_start();
+    if (seekTransportLocation < m_streamStart) {
+        seekTransportLocation = m_streamStart;
 
         // printf("transport location before clip start position, adjusting to clip start position %s\n",
         //        QS_C(TTimeRef::timeref_to_ms_3(seekTransportLocation)));
@@ -381,7 +371,7 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TFileIOBuffer &fi
 
     // Since we can represent a 'view' of a complete audiofile, always add the source start
     // location to the seek transport location to file location calculation.
-    TTimeRef fileLocation = seekTransportLocation - m_location->get_start() + m_sourceStartLocation;
+    TTimeRef fileLocation = seekTransportLocation - m_streamStart + m_sourceStartLocation;
     // printf("ReadSource::rb_seek_to_transport_location: seeking to location transport: %s, file: %s\n",
     //        QS_C(TTimeRef::timeref_to_ms_3(transportLocation)),
     //        QS_C(TTimeRef::timeref_to_ms_3(fileLocation)));

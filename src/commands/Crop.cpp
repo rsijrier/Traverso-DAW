@@ -90,13 +90,13 @@ int CropClip::prepare_actions()
 	rightClip = resources_manager()->get_clip(m_clip->get_id());
 
 	leftClip->set_sheet(m_clip->get_sheet());
-    leftClip->set_location_start(m_clip->get_location_start());
+    leftClip->move_to_location(m_clip->get_location_start());
     leftClip->set_right_edge(TTimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location_start());
     leftClip->reset_fade_out();
 
 	rightClip->set_sheet(m_clip->get_sheet());
     rightClip->set_left_edge(TTimeRef(x2 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location_start());
-    rightClip->set_location_start(leftClip->get_location_end());
+    rightClip->move_to_location(leftClip->get_location_end());
     rightClip->reset_fade_in();
 
 	return 1;
