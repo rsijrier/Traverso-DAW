@@ -20,28 +20,19 @@
     $Id: TrackPanelViewPort.h,v 1.1 2008/01/21 16:17:30 r_sijrier Exp $
 */
 
-#ifndef TTRACK_PANEL_VIEW_PORT_H
-#define TTRACK_PANEL_VIEW_PORT_H
+#pragma once
 
-#include "TClipsViewPort.h"
+#include <QGraphicsScene>
+#include "TViewPort.h"
 
 class TSheetWidget;
-		
+
 class TTrackPanelViewPort : public TViewPort
 {
 public:
     TTrackPanelViewPort(QGraphicsScene* scene, TSheetWidget* sw);
-    ~TTrackPanelViewPort() {};
+    ~TTrackPanelViewPort() override = default;
 
 private:
     TSheetWidget* m_sw;
 };
-
-#endif
-
-//eof
-
- 
- 
- 
- 

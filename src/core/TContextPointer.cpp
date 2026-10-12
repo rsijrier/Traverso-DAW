@@ -273,6 +273,15 @@ void TContextPointer::set_canvas_cursor_data(const QVariant& data)
     }
 }
 
+void TContextPointer::set_canvas_cursor_location(const TTimeRef &location, qreal sceneY)
+{
+    if (!m_viewPort) {
+        return;
+    }
+
+    m_viewPort->set_canvas_cursor_location(location, sceneY);
+}
+
 int TContextPointer::mouse_viewport_x() const {
     return m_mouseData->viewPortMousePos.x();
 }

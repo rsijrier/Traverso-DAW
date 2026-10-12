@@ -20,9 +20,9 @@
     $Id: TimeLineViewPort.h,v 1.2 2009/01/19 21:07:19 r_sijrier Exp $
 */
 
-#ifndef T_TIME_LINE_RULER_VIEW_PORT_H
-#define T_TIME_LINE_RULER_VIEW_PORT_H
+#pragma once
 
+#include <QGraphicsScene>
 #include "TViewPort.h"
 
 class TSheetWidget;
@@ -35,16 +35,12 @@ class TTimeLineRulerViewPort : public TViewPort
 {
 public:
     TTimeLineRulerViewPort(QGraphicsScene* scene, TSheetWidget* sw);
-    ~TTimeLineRulerViewPort();
-	
-	void set_sheetview(TSheetView* view) override;
-	void scale_factor_changed();
-	TTimeLineRulerView* get_timeline_view() const {return m_timeLineView;}
-	
+    ~TTimeLineRulerViewPort() override;
+
+    void set_sheetview(TSheetView* view) override;
+    void scale_factor_changed();
+    TTimeLineRulerView* get_timeline_view() const { return m_timeLineView; }
+
 private:
-	TTimeLineRulerView* 	m_timeLineView;
+    TTimeLineRulerView* m_timeLineView{nullptr};
 };
-
-#endif
-
-//eof

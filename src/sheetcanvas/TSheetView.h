@@ -130,7 +130,7 @@ public :
     void browse_to_curve_node_view(TCurveNodeView* nodeView);
     void browse_to_marker_view(TTimeLineMarkerView* markerView);
     void center_in_view(TViewItem* item, enum Qt::AlignmentFlag = Qt::AlignHCenter);
-    void keyboard_move_canvas_cursor_to_location(const TTimeRef &location, qreal sceneY);
+    void set_canvas_cursor_location(const TTimeRef &location, qreal sceneY);
 
     qint64		timeref_scalefactor;
 

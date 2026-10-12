@@ -143,6 +143,7 @@ public:
     void set_canvas_cursor_text(const QString& text, int mseconds=-1);
     void set_canvas_cursor_pos(QPointF mouse_viewport_pos);
     void set_canvas_cursor_data(const QVariant& data);
+    void set_canvas_cursor_location(const TTimeRef &location, qreal sceneY);
 
 
     QList<QObject* > get_context_items();

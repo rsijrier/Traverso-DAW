@@ -19,21 +19,14 @@
 
 */
 
-#ifndef TVIEWPORT_H
-#define TVIEWPORT_H
+#pragma once
 
 #include <QGraphicsView>
-#include <QGraphicsItem>
 #include <QTimer>
 #include "TViewPortInterface.h"
+#include "TInteractionCursors.h"
 
-class TViewItem;
 class TSheetView;
-class TContextItem;
-class TAudioFileImportCommand;
-class TAudioTrack;
-class HoldCursor;
-class QGraphicsTextItem;
 
 class TViewPort : public QGraphicsView, public TViewPortInterface
 {
@@ -43,46 +36,43 @@ public:
     TViewPort(QGraphicsScene* scene, QWidget* parent);
     virtual ~TViewPort();
 
-    // Set functions
-    void set_canvas_cursor_text(const QString& text, int mseconds=-1) override;
-    void set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason) override;
-    void set_canvas_cursor_type(TContextPointer::CursorType) override;
-    void set_canvas_cursor_data(const QVariant& data) override;
+    void set_canvas_cursor_text(const QString& text, int mseconds = -1) final;
+    void set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason) final;
+    void set_canvas_cursor_type(TContextPointer::CursorType) final;
+    void set_canvas_cursor_controller_type(TraversoDAW::CursorType cursorType) final;
+    void set_canvas_cursor_data(const QVariant& data) final;
+    void set_canvas_cursor_location(const TTimeRef &location, qreal sceneY) final;
+    virtual void set_sheetview(TSheetView* view) { m_sv = view; }
 
-    virtual void set_sheetview(TSheetView* view) {m_sv = view;}
+    QPointF map_to_scene(const QPoint& pos) const final { return mapToScene(pos); }
+    QPoint map_to_global(const QPoint& point) const final { return mapToGlobal(point); }
 
-    inline QPointF map_to_scene(const QPoint& pos) const override {
-        return mapToScene(pos);
-    }
+    void grab_mouse() final;
+    void release_mouse() final;
+    void detect_items_below_cursor() final;
 
-    inline QPoint map_to_global(const QPoint& point) const override {
-        return mapToGlobal(point);
-    }
-
-    void grab_mouse() override;
-    void release_mouse() override;
-
-    void detect_items_below_cursor() override;
-
-
+    void scroll_horizontal(int pixels) final;
+    void scroll_vertical(int pixels) final;
+    int viewport_width() const final;
+    int viewport_height() const final;
+    void refresh() final;
 
 protected:
-    virtual void enterEvent (QEnterEvent * ) override;
-    virtual void leaveEvent ( QEvent * ) override;
-    virtual void paintEvent( QPaintEvent* e) override;
-    virtual void mouseMoveEvent(QMouseEvent* e) override;
-    virtual void mousePressEvent ( QMouseEvent * e ) override;
-    virtual void mouseReleaseEvent ( QMouseEvent * e ) override;
-    virtual void mouseDoubleClickEvent ( QMouseEvent * e ) override;
-    virtual void keyPressEvent ( QKeyEvent* e) override;
-    virtual void keyReleaseEvent ( QKeyEvent* e) override;
-    virtual void dragEnterEvent(QDragEnterEvent *event) override;
-    virtual void dragMoveEvent(QDragMoveEvent *event) override;
+    void enterEvent(QEnterEvent*) override;
+    void leaveEvent(QEvent*) override;
+    void paintEvent(QPaintEvent* e) override;
+    void mouseMoveEvent(QMouseEvent* e) override;
+    void mousePressEvent(QMouseEvent* e) override;
+    void mouseReleaseEvent(QMouseEvent* e) override;
+    void mouseDoubleClickEvent(QMouseEvent* e) override;
+    void keyPressEvent(QKeyEvent* e) override;
+    void keyReleaseEvent(QKeyEvent* e) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
 
-
-    bool event(QEvent *event) override;
-	void wheelEvent (QWheelEvent *event) override;
-    void tabletEvent ( QTabletEvent * event ) override;
+    bool event(QEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void tabletEvent(QTabletEvent* event) override;
 
     TSheetView* m_sv;
 
@@ -91,7 +81,3 @@ private:
     QTimer      m_grabMouseGuardTimer;
     int         m_mouseGrabCheckTime;
 };
-
-#endif
-
-//eof

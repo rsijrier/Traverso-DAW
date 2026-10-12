@@ -19,26 +19,23 @@
  
 */
 
-#ifndef T_CLIPS_VIEW_PORT_H
-#define T_CLIPS_VIEW_PORT_H
+#pragma once
 
 #include <QGraphicsScene>
-#include <QGraphicsItem>
-#include <QStyleOptionGraphicsItem>
-
+#include <QList>
 #include "TViewPort.h"
 
 class TSheetWidget;
 class TAudioFileImportCommand;
-		
+class TAudioTrack;
+
 class TClipsViewPort : public TViewPort
 {
     Q_OBJECT
 
 public:
     TClipsViewPort(QGraphicsScene* scene, TSheetWidget* sw);
-        ~TClipsViewPort() {}
-	
+    ~TClipsViewPort() override = default;
 
 protected:
     void resizeEvent(QResizeEvent* e) override;
@@ -48,13 +45,8 @@ protected:
     void dragMoveEvent(QDragMoveEvent* event) override;
 
 private:
-    TSheetWidget*	m_sw;
-	QList<TAudioFileImportCommand*>	m_imports;
-	QList<qint64 >	m_resourcesImport;
-	TAudioTrack*     m_importTrack{};
+    TSheetWidget*                   m_sw;
+    QList<TAudioFileImportCommand*> m_imports;
+    QList<qint64>                   m_resourcesImport;
+    TAudioTrack*                    m_importTrack{nullptr};
 };
-
-
-#endif
-
-//eof

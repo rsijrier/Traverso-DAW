@@ -860,7 +860,7 @@ void TSheetView::browse_to_track(TTrack *track)
 
             m_contextPointer->set_active_context_items_by_keyboard_input(list);
 
-            keyboard_move_canvas_cursor_to_location(m_session->get_work_location(), view->scenePos().y() + view->boundingRect().height() / 2);
+            set_canvas_cursor_location(m_session->get_work_location(), view->scenePos().y() + view->boundingRect().height() / 2);
 
 			return;
 		}
@@ -876,9 +876,9 @@ void TSheetView::browse_to_audio_clip_view(TAudioClipView* acv)
 	activeList.append(this);
 
     if (m_canvasCursor->get_pos().x() > acv->scenePos().x() && (m_canvasCursor->get_pos().x() < (acv->scenePos().x() + acv->boundingRect().width()))) {
-        keyboard_move_canvas_cursor_to_location(TTimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        set_canvas_cursor_location(TTimeRef(m_canvasCursor->get_pos().x() * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     } else {
-        keyboard_move_canvas_cursor_to_location(TTimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
+        set_canvas_cursor_location(TTimeRef((acv->scenePos().x() + acv->boundingRect().width() / 2) * timeref_scalefactor), acv->scenePos().y() + acv->boundingRect().height() / 2);
     }
 
 
@@ -912,7 +912,7 @@ void TSheetView::browse_to_marker_view(TTimeLineMarkerView *markerView)
 		}
 	}
 
-    keyboard_move_canvas_cursor_to_location(TTimeRef(markerView->get_marker()->get_location()->get_start()), m_contextPointer->scene_y());
+    set_canvas_cursor_location(TTimeRef(markerView->get_marker()->get_location()->get_start()), m_contextPointer->scene_y());
 
 	contexts.prepend(markerView);
     m_contextPointer->set_active_context_items_by_keyboard_input(contexts);
@@ -930,7 +930,7 @@ void TSheetView::browse_to_curve_node_view(TCurveNodeView *nodeView)
 	activeList.append(acv->get_audio_track_view());
 	activeList.append(this);
 
-    keyboard_move_canvas_cursor_to_location(TTimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
+    set_canvas_cursor_location(TTimeRef(nodeView->get_curve_node()->get_when()) + curveView->get_curve()->get_start_offset(),
 			   nodeView->scenePos().y() + nodeView->boundingRect().height() / 2);
 
     m_contextPointer->set_active_context_items_by_keyboard_input(activeList);
@@ -1245,7 +1245,7 @@ void TSheetView::center_in_view(TViewItem *item, enum Qt::AlignmentFlag flag)
 	}
 }
 
-void TSheetView::keyboard_move_canvas_cursor_to_location(const TTimeRef &location, qreal sceneY)
+void TSheetView::set_canvas_cursor_location(const TTimeRef &location, qreal sceneY)
 {
     m_session->set_work_at(location);
 
@@ -1273,7 +1273,6 @@ void TSheetView::keyboard_move_canvas_cursor_to_location(const TTimeRef &locatio
 	QPoint pos = m_clipsViewPort->mapFromScene(location / timeref_scalefactor, sceneY);
     m_contextPointer->store_canvas_cursor_position(pos);
 
-    m_canvasCursor->set_text(TTimeRef::timeref_to_text(location, timeref_scalefactor));
     do_keyboard_canvas_cursor_move(QPointF(location / timeref_scalefactor, sceneY));
 }
 

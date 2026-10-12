@@ -71,6 +71,7 @@ add_library(traversocore STATIC
     TAudioResampler.cpp
     TCommandPlugin.h
     TUndoCommand.h
+    TViewPortScroller.h TViewPortScroller.cpp
     TTimeLineEntity.h TTimeLineEntity.cpp
     TSelectionService.h TSelectionService.cpp
     ${CORE_ASM_SOURCE}
