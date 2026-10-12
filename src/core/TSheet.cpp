@@ -46,6 +46,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TBufferedAudioStreamWriter.h"
 #include "TAudioClipManager.h"
 #include "TAudioThreadMessageQueue.h"
+#include "TSelectionService.h"
 #include "TSnapList.h"
 #include "TBusTrack.h"
 #include "TConfig.h"
@@ -136,6 +137,7 @@ void TSheet::init()
 
     m_audioClipManager = new TAudioClipManager(this);
     set_related_context_item( m_audioClipManager );
+    m_selectionService = new TSelectionService(this);
     create_history_stack();
     m_timeLineRuler->set_history_stack(get_history_stack());
 

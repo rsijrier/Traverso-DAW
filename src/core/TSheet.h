@@ -31,7 +31,6 @@ class TProject;
 class TAudioTrack;
 class TBufferedAudioStreamReader;
 class TBufferedAudioStreamWriter;
-class TAudioTrack;
 class TAudioClip;
 class TDiskIOThread;
 class TAudioClipManager;
@@ -42,18 +41,19 @@ class TTimeLineRuler;
 class TBusTrack;
 class TTrack;
 class TTransportControl;
+class TSelectionService;
+
 class TSheet : public TSession
 {
     Q_OBJECT
-public:
 
+public:
     TSheet(TProject* project, int numtracks=0);
     TSheet(TProject* project, const QDomNode &node);
     ~TSheet();
 
     // Get functions
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
-
     QString get_artists() const {return m_artists;}
 
     QList<TAudioTrack*> get_audio_tracks() const;
@@ -68,12 +68,14 @@ public:
     void remove_audio_source_from_diskio(TBufferedAudioStreamReader *source) const;
     void add_audio_source_to_diskio(TBufferedAudioStreamWriter *source) const;
     void remove_audio_source_from_diskio(TBufferedAudioStreamWriter *source) const;
+
     int get_read_diskio_buffers_fill_status();
     int get_write_diskio_buffers_fill_status();
     bool get_read_diskio_cpu_time(float &time);
     bool get_write_diskio_cpu_time(float &time);
-    TAudioClipManager* get_audioclip_manager() const;
 
+    TAudioClipManager* get_audioclip_manager() const;
+    TSelectionService* get_selection_service() const { return m_selectionService; }
     AudioBus* get_render_bus() const {return m_renderBus;}
 
 
@@ -123,6 +125,7 @@ private:
     TDiskIOThread*             m_readDiskIO;
     TDiskIOThread*             m_writeDiskIO;
     TAudioClipManager*	m_audioClipManager{};
+    TSelectionService*  m_selectionService{nullptr};
     QString             m_audioSourcesDir;
 
     std::atomic<bool>   m_isSeeking;
@@ -165,12 +168,12 @@ private:
     void resize_buffers(nframes_t size);
 
     friend class TAudioClipManager;
+
 public slots :
     void seek_finished();
     void audiodevice_params_changed();
     void set_gain(float gain);
     void set_transport_location(TTimeRef location);
-
 
     TCommand* start_transport();
     TCommand* set_recordable();
@@ -190,6 +193,4 @@ private slots:
     void config_changed();
 };
 
-#endif
-
-//eof
+#endif // SONG_H

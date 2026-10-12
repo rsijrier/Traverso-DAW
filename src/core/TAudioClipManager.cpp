@@ -22,6 +22,7 @@
 #include "TAudioClipManager.h"
 
 #include "ClipSelection.h"
+#include "TSelectionService.h"
 #include "TSheet.h"
 #include "TAudioClip.h"
 #include "TResourcesManager.h"
@@ -141,21 +142,33 @@ void TAudioClipManager::get_selected_clips( QList< TAudioClip * > & list )
 	}
 }
 
-void TAudioClipManager::remove_from_selection( TAudioClip * clip )
-{
-	if (m_clipselection.contains(clip)) {
-		m_clipselection.removeAll(clip);
-		clip->set_selected( false );
-	}
-}
-
 void TAudioClipManager::add_to_selection( TAudioClip * clip )
 {
-	if ( ! m_clipselection.contains( clip ) ) {
-		m_clipselection.append( clip );
-		clip->set_selected( true );
-	}
+    if ( ! m_clipselection.contains( clip ) ) {
+        m_clipselection.append( clip );
+        clip->set_selected( true );
+
+        if (m_sheet && m_sheet->get_selection_service()) {
+            m_sheet->get_selection_service()->select_with_context(
+                clip,
+                TSelectionService::ContextTrackLane
+                );
+        }
+    }
 }
+
+void TAudioClipManager::remove_from_selection( TAudioClip * clip )
+{
+    if (m_clipselection.contains(clip)) {
+        m_clipselection.removeAll(clip);
+        clip->set_selected( false );
+
+        if (m_sheet && m_sheet->get_selection_service()) {
+            m_sheet->get_selection_service()->deselect(clip);
+        }
+    }
+}
+
 
 void TAudioClipManager::toggle_selected( TAudioClip * clip )
 {
@@ -169,7 +182,6 @@ void TAudioClipManager::toggle_selected( TAudioClip * clip )
 }
 
 void TAudioClipManager::select_clip(TAudioClip* clip)
-
 {
 	PENTER;
 	

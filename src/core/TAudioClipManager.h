@@ -42,12 +42,12 @@ public:
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
     int set_state( const QDomNode & node );
 
-	
-	bool is_clip_in_selection(TAudioClip* clip);
-	
-	void get_selected_clips(QList<TAudioClip*> & list);
 
-	QList<TAudioClip* > get_clip_list() const;
+    [[deprecated("Move Function to TSelectionService")]] bool is_clip_in_selection(TAudioClip* clip);
+
+    [[deprecated("Move Function to TSelectionService")]] void get_selected_clips(QList<TAudioClip*> & list);
+
+    QList<TAudioClip* > get_clip_list() const;
 
     TTimeRef get_last_location() const;
 
@@ -59,17 +59,17 @@ private:
     TTimeRef 			m_lastLocation;
 
 public slots:
-	void add_clip(TAudioClip* clip);
-	void remove_clip(TAudioClip* clip);
-	void select_clip(TAudioClip* clip);
-	void toggle_selected(TAudioClip* clip);
-	
-	void remove_from_selection(TAudioClip* clip);
-	void add_to_selection(TAudioClip* clip);
-	void update_last_frame();
+    void add_clip(TAudioClip* clip);
+    void remove_clip(TAudioClip* clip);
+    [[deprecated("Move Function to TSelectionService")]] void select_clip(TAudioClip* clip);
+    [[deprecated("Move Function to TSelectionService")]] void toggle_selected(TAudioClip* clip);
 
-	TCommand* select_all_clips();
-	TCommand* invert_clip_selection();
+    [[deprecated("Move Function to TSelectionService")]] void remove_from_selection(TAudioClip* clip);
+    [[deprecated("Move Function to TSelectionService")]] void add_to_selection(TAudioClip* clip);
+    void update_last_frame();
+
+    [[deprecated("Move Function to TSelectionService")]] TCommand* select_all_clips();
+    [[deprecated("Move Function to TSelectionService")]] TCommand* invert_clip_selection();
 };
 
 #endif
