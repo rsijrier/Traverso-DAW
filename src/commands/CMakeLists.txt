@@ -26,6 +26,7 @@ add_library(traversocommands STATIC
     PlayHeadMove.cpp
     WorkCursorMove.cpp
     TMoveCommand.cpp
+    TRemoveClipController.h TRemoveClipController.cpp
     TSplitEntityController.h TSplitEntityController.cpp
 )
 

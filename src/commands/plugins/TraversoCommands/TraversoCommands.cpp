@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TContextPointer.h"
 #include "TPositionIndicator.h"
+#include "TRemoveClipController.h"
 #include "TSheetWidget.h"
 #include "TAudioClipManager.h"
 #include "TAudioClip.h"
@@ -558,30 +559,6 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         return sheet->add_track(new TAudioTrack(sheet, "Unnamed", TAudioTrack::INITIAL_HEIGHT));
     }
 
-    case RemoveClipCommand:
-    {
-        TAudioClip* audioClip = qobject_cast<TAudioClip*>(obj);
-        CommandGroup* group = new CommandGroup(audioClip->get_sheet(), tr("Remove Clip"));
-        Q_ASSERT(audioClip);
-        QList<TAudioClip*> selectedClips;
-        if (audioClip->is_selected()) {
-             audioClip->get_sheet()->get_audioclip_manager()->get_selected_clips(selectedClips);
-            group->setText(tr("Remove Selected Clips"));
-        } else {
-            selectedClips.append(audioClip);
-        }
-
-        for(TAudioClip* clip : std::as_const(selectedClips)) {
-            TAudioClipAddRemoveSpec spec;
-            spec.set_clip(clip);
-            spec.set_is_historable(false);
-            spec.set_is_move(false);
-            group->add_command(clip->get_track()->remove_clip(spec));
-        }
-
-        return group;
-    }
-
     case RemoveTrackCommand:
     {
         TTrack* track = qobject_cast<TTrack*>(obj);
@@ -869,6 +846,15 @@ TCommandController *TraversoCommands::create_controller(QObject *obj, const QStr
         audioClipView->connect_interaction_controller(splitController);
 
         return splitController;
+    }
+
+
+    case RemoveClipCommand:
+    {
+        TAudioClip* audioClip = qobject_cast<TAudioClip*>(obj);
+        Q_ASSERT(audioClip);
+
+        return new TRemoveClipController(audioClip);
     }
 
     }
