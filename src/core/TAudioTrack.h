@@ -88,7 +88,7 @@ public :
 protected:
     void add_input_bus(AudioBus* bus);
 
-private :
+private:
     TSheet*          m_sheet;
 
     // only to be accessed/modified by AudioThread

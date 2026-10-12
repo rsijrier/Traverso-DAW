@@ -30,7 +30,7 @@ class TSheetView;
 class TTimeLineRulerView;
 
 #define TIMELINE_HEIGHT 46
-		
+
 class TTimeLineRulerViewPort : public TViewPort
 {
 public:

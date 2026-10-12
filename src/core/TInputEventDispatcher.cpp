@@ -281,7 +281,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                     process_press_event(shortCut->get_key_value());
                     m_holdKeyRepeatTimer.start(10);
                 }
-
                 bool showCursorShortCutHelp = config().get_property("ShortCuts", "ShowCursorHelp", false).toBool();
                 if (showCursorShortCutHelp && (fromContextMenu || m_enterFinishesHold)) {
                     int key = shortCut->get_key_value();
@@ -300,7 +299,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                 // set following stuff to zero to make finish_hold do nothing
                 delete command;
                 command = nullptr;
-                set_holding( false );
+                set_holding(false);
                 return 0;
             }
         }
@@ -308,14 +307,12 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
             TCommand::process_command(command);
             return 1;
         }
-
         // never reached
         PERROR("ShortCut processing fallthrough detected, shortcut dispatching programming error");
     }
 
     return 1;
 }
-
 TShortCutFunction *TInputEventDispatcher::find_shortcut_function_for_metaobject(const QMetaObject *metaObject, TShortCut *shortCut)
 {
     // traverse upwards till no more superclasses are found
@@ -360,6 +357,7 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
     if (plug->implements(commandName)) {
         PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), shortCutFunction->get_command_name());
         return plug->create(contextItem, commandName, shortCutFunction->get_arguments());
+
     } else {
         tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, commandName));
     }
@@ -543,6 +541,7 @@ void TInputEventDispatcher::process_press_event(int keyValue)
     {
         // another digit was collected.
         return;
+
     }
 
     if (is_modifier_keyfact(keyValue))
@@ -776,7 +775,6 @@ bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>
     {
         return false;
     }
-
     foreach(int key, first)
     {
         if (!second.contains(key))
@@ -784,6 +782,6 @@ bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>
             return false;
         }
     }
-
     return true;
 }
+

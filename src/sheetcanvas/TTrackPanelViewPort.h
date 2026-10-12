@@ -24,7 +24,7 @@
 #define TTRACK_PANEL_VIEW_PORT_H
 
 #include "TClipsViewPort.h"
-		
+
 class TSheetWidget;
 		
 class TTrackPanelViewPort : public TViewPort
@@ -34,7 +34,7 @@ public:
     ~TTrackPanelViewPort() {};
 
 private:
-    TSheetWidget*	m_sw;
+    TSheetWidget* m_sw;
 };
 
 #endif

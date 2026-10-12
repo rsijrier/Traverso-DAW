@@ -33,7 +33,7 @@ class TAudioFileImportCommand;
 		
 class TClipsViewPort : public TViewPort
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
     TClipsViewPort(QGraphicsScene* scene, TSheetWidget* sw);
@@ -42,10 +42,10 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent* e) override;
-	void paintEvent( QPaintEvent* e) override;
-	void dragEnterEvent(QDragEnterEvent *event) override;
-	void dropEvent(QDropEvent *event) override;
-    void dragMoveEvent(QDragMoveEvent *event) override;
+    void paintEvent(QPaintEvent* e) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+    void dragMoveEvent(QDragMoveEvent* event) override;
 
 private:
     TSheetWidget*	m_sw;

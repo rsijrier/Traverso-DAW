@@ -40,7 +40,7 @@ class TCommand : public QObject, public QUndoCommand
 {
     Q_OBJECT
 
-public :
+public:
     TCommand(TContextItem* item, const QString& des = "No description set!");
     TCommand(const QString& des = "No description set!");
     virtual ~TCommand();
@@ -53,9 +53,9 @@ public :
     static bool matches_dispatch_rule_always(const QString& rule) {
         return rule == "DISPATCH_RULE_IS_ALWAYS";
     }
-
     virtual int begin_hold();
     virtual int finish_hold();
+
     virtual int prepare_actions();
     virtual int do_action();
     virtual int undo_action();

@@ -22,7 +22,6 @@ $Id: TLocation.cpp,v 1.2 2008/02/21 20:00:48 r_sijrier Exp $
 
 #include "TLocation.h"
 #include "TSnapList.h"
-
 #include <Debugger.h>
 
 
@@ -33,14 +32,12 @@ TLocation::TLocation(QObject *owner)
 	m_isSnappable = true;
 	snapList = 0;
 }
-
 void TLocation::set_snappable(bool snap)
 {
 	if (snapList) {
 		snapList->mark_dirty();
 	}
 	m_isSnappable = snap;
-
 }
 
 void TLocation::set_snap_list(TSnapList *sList)

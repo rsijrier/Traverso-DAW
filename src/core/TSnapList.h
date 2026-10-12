@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #ifndef T_SNAPLIST_H
 #define T_SNAPLIST_H
-
 #include <QList>
 
 #include "TTimeRef.h"

@@ -43,7 +43,7 @@ class TPeak;
 
 class TAudioClipView : public TViewItem
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
     TAudioClipView(TSheetView* view, TAudioTrackView* parent, TAudioClip* clip);
@@ -118,28 +118,28 @@ private:
 	friend class TFadeCurveView;
 
 public slots:
-        void add_new_fade_curve_view(TFadeCurve* fade);
-        void remove_fade_curve_view(TFadeCurve* fade);
-	void update_start_pos();
-	void position_changed();
-	void invalidate_clip_tiles();
-	void invalidate_fade_tiles();
-	void invalidate_edge_tiles(bool isLeftEdge);
-	void invalidate_tiles_range(int startx, int endx);
+    void add_new_fade_curve_view(TFadeCurve* fade);
+    void remove_fade_curve_view(TFadeCurve* fade);
+    void update_start_pos();
+    void position_changed();
+    void invalidate_clip_tiles();
+    void invalidate_fade_tiles();
+    void invalidate_edge_tiles(bool isLeftEdge);
+    void invalidate_tiles_range(int startx, int endx);
 
-	TCommand* select_fade_in_shape();
-	TCommand* select_fade_out_shape();
-	TCommand* set_audio_file();
-	TCommand* edit_properties();
-	
+    TCommand* select_fade_in_shape();
+    TCommand* select_fade_out_shape();
+    TCommand* set_audio_file();
+    TCommand* edit_properties();
+
 private slots:
-	void update_progress_info(int progress);
-	void peak_creation_finished();
-	void start_recording();
-	void finish_recording();
-	void update_recording();
+    void update_progress_info(int progress);
+    void peak_creation_finished();
+    void start_recording();
+    void finish_recording();
+    void update_recording();
     void active_context_changed();
-	void clip_state_changed();
+    void clip_state_changed();
 };
 
 #endif

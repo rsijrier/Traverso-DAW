@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
-
 */
 
 #ifndef T_AUDIOCLIP_H
@@ -30,7 +29,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProcessCallBackData.h"
 #include "TRealTimeLinkedList.h"
 #include "TTimeRef.h"
-
 
 class TSheet;
 class TBufferedAudioStreamReader;
@@ -109,7 +107,6 @@ public:
     bool is_locked() const {return m_isLocked;}
     bool has_sheet() const;
     bool is_readsource_invalid() const {return !m_isReadSourceValid;}
-
     bool operator<(const TAudioClip &other){
         return this->get_location_start() < other.get_location_start();
     }
@@ -149,8 +146,8 @@ private:
     bool            m_syncDuringDrag;
     RecordingStatus m_recordingStatus;
 
-    qint64			m_readSourceId;
-    qint64			m_sheetId;
+    qint64 m_readSourceId;
+    qint64 m_sheetId;
 
     void create_fade(int fadeType);
     void init();
@@ -167,8 +164,8 @@ signals:
     void fadeAdded(TFadeCurve*);
     void fadeRemoved(TFadeCurve*);
     void recordingFinished(TAudioClip*);
-	void edgeMoved(bool);
-    
+    void edgeMoved(bool);
+
 public slots:
     void finish_recording();
     void finish_write_source();
@@ -177,7 +174,6 @@ public slots:
     void track_audible_state_changed();
     void toggle_mute();
     void toggle_lock();
-
     TCommand* lock();
 
 private slots:

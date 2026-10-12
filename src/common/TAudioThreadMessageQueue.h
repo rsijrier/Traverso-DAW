@@ -87,6 +87,7 @@ private:
     ~TAudioThreadMessageQueue() override;
     TAudioThreadMessageQueue(const TAudioThreadMessageQueue&) = delete;
 
+
     friend TAudioThreadMessageQueue& tsmp();
     friend class TAudioDevice;
     friend class TAudioThreadMessageQueueThread;

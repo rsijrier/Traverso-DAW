@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2005-2008 Remon Sijrier 
+Copyright (C) 2005-2008 Remon Sijrier
 
 This file is part of Traverso
 
@@ -33,14 +33,14 @@ class TSheet;
 
 class TAudioClipManager : public TContextItem
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
     TAudioClipManager(TSheet* sheet);
     ~TAudioClipManager();
 
-	QDomNode get_state(QDomDocument doc, bool istemplate=false);
-	int set_state( const QDomNode & node );
+    QDomNode get_state(QDomDocument doc, bool istemplate=false);
+    int set_state( const QDomNode & node );
 
 	
 	bool is_clip_in_selection(TAudioClip* clip);
@@ -52,10 +52,10 @@ public:
     TTimeRef get_last_location() const;
 
 private:
-	QList<TAudioClip* >		m_clips;
-	QList<TAudioClip* >		m_clipselection;
-	TSheet*				m_sheet;
-	
+    QList<TAudioClip* >		m_clips;
+    QList<TAudioClip* >		m_clipselection;
+    TSheet*				m_sheet;
+
     TTimeRef 			m_lastLocation;
 
 public slots:

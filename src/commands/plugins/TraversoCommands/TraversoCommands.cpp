@@ -368,14 +368,14 @@ void TraversoCommands::load(TShortCutManager* m)
 
 
 TShortCutFunction* TraversoCommands::add_function(const QMetaObject *metaObject,
-                                    const QMetaObject *basedMetaObject,
-                                    const QString &description,
-                                    const char *commandName,
-                                    TraversoCommand command,
-                                    const char *slotSignature,
-                                    bool useX,
-                                    bool useY,
-                                    const QVariantList &args)
+                                                  const QMetaObject *basedMetaObject,
+                                                  const QString &description,
+                                                  const char *commandName,
+                                                  TraversoCommand command,
+                                                  const char *slotSignature,
+                                                  bool useX,
+                                                  bool useY,
+                                                  const QVariantList &args)
 {
     auto function = m_manager->add_function(metaObject, description, commandName, slotSignature);
 

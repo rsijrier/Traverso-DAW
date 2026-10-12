@@ -36,10 +36,10 @@ class TLocation;
 
 class TFadeCurve : public TCurve
 {
-	Q_OBJECT	
-	
+    Q_OBJECT
+
 public:
-	static QStringList defaultShapes;
+    static QStringList defaultShapes;
 
     enum FadeType {
         FadeIn = 0,
@@ -67,13 +67,13 @@ public:
     void set_parent_location(TLocation* location) {
         m_parentLocation = location;
     }
-	
-	FadeType get_fade_type() const {return m_type;}
+
+    FadeType get_fade_type() const {return m_type;}
     QList<QPointF> get_control_points() const;
-	
-	bool is_bypassed() const {return m_bypass;}
-	
-	void set_mode(int m);
+
+    bool is_bypassed() const {return m_bypass;}
+
+    void set_mode(int m);
 
     QString fade_type_to_string() const;
 
@@ -105,11 +105,11 @@ public slots:
     DISPATCH_RULE_IS_ALWAYS TCommand* toggle_raster();
 
 signals:
-	void modeChanged();
-	void bendValueChanged();
-	void strengthValueChanged();
-	void rasterChanged();
-	void rangeChanged();
+    void modeChanged();
+    void bendValueChanged();
+    void strengthValueChanged();
+    void rasterChanged();
+    void rangeChanged();
 };
 
 #endif

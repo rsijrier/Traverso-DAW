@@ -2,7 +2,6 @@
 Copyright (C) 2007 - 2024 Remon Sijrier
 
 This file is part of Traverso
-
 Traverso is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -32,14 +31,14 @@ class TLocation;
 
 class TTimeLineMarker : public TContextItem
 {
-	Q_OBJECT
-	
+    Q_OBJECT
+
 public:
     enum MarkerType {
-		CDTRACK,
+        CDTRACK,
         ENDMARKER,
         PLAYHEADMARKER
-	};
+    };
 
     TTimeLineMarker(TTimeLineRuler* tl, const TTimeRef when, MarkerType type = CDTRACK);
     TTimeLineMarker(TTimeLineRuler* tl, const QDomNode& node);
@@ -92,10 +91,10 @@ private:
     bool	m_copyprotect{};
     MarkerType	m_type;
     int     m_index{};
-	
+
 signals:
-	void descriptionChanged();
-	void indexChanged();
+    void descriptionChanged();
+    void indexChanged();
 };
 
 #endif

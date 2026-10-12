@@ -37,15 +37,15 @@ TTimeLineMarker::TTimeLineMarker(TTimeLineRuler* tl, const TTimeRef when, Marker
     m_location->set_snap_list(m_timeline->get_sheet()->get_snap_list());
     m_location->set_location(this, when, when);
 
-	m_description = "";
-	m_performer = "";
-	m_composer = "";
-	m_arranger = "";
-	m_message = "";
-	m_isrc = "";
-	m_preemph = false;
-	m_copyprotect = false;
-	m_index = -1;
+    m_description = "";
+    m_performer = "";
+    m_composer = "";
+    m_arranger = "";
+    m_message = "";
+    m_isrc = "";
+    m_preemph = false;
+    m_copyprotect = false;
+    m_index = -1;
 }
 
 TTimeLineMarker::TTimeLineMarker(TTimeLineRuler * tl, const QDomNode& node)
@@ -60,56 +60,56 @@ TTimeLineMarker::TTimeLineMarker(TTimeLineRuler * tl, const QDomNode& node)
 
 QDomNode TTimeLineMarker::get_state(QDomDocument doc)
 {
-	QDomElement domNode = doc.createElement("Marker");
-	
+    QDomElement domNode = doc.createElement("Marker");
+
     domNode.setAttribute("position",  m_location->get_start().universal_frame());
-	domNode.setAttribute("description",  m_description);
+    domNode.setAttribute("description",  m_description);
     domNode.setAttribute("id",  get_id());
-	domNode.setAttribute("performer", m_performer);
-	domNode.setAttribute("composer", m_composer);
-	domNode.setAttribute("songwriter", m_songwriter);
-	domNode.setAttribute("arranger", m_arranger);
-	domNode.setAttribute("message", m_message);
-	domNode.setAttribute("isrc", m_isrc);
-	domNode.setAttribute("preemphasis", m_preemph);
-	domNode.setAttribute("copyprotection", m_copyprotect);
+    domNode.setAttribute("performer", m_performer);
+    domNode.setAttribute("composer", m_composer);
+    domNode.setAttribute("songwriter", m_songwriter);
+    domNode.setAttribute("arranger", m_arranger);
+    domNode.setAttribute("message", m_message);
+    domNode.setAttribute("isrc", m_isrc);
+    domNode.setAttribute("preemphasis", m_preemph);
+    domNode.setAttribute("copyprotection", m_copyprotect);
 
-	switch (m_type) {
-		case CDTRACK:
-			domNode.setAttribute("type",  "CDTRACK");
-			break;
-		case ENDMARKER:
-			domNode.setAttribute("type",  "ENDMARKER");
-            break;
-        case PLAYHEADMARKER:
-            break;
-        }
+    switch (m_type) {
+    case CDTRACK:
+        domNode.setAttribute("type",  "CDTRACK");
+        break;
+    case ENDMARKER:
+        domNode.setAttribute("type",  "ENDMARKER");
+        break;
+    case PLAYHEADMARKER:
+        break;
+    }
 
-        return domNode;
+    return domNode;
 }
 
 int TTimeLineMarker::set_state(const QDomNode & node)
 {
-	QDomElement e = node.toElement();
+    QDomElement e = node.toElement();
 
-	m_description = e.attribute("description", "");
-	QString tp = e.attribute("type", "CDTRACK");
+    m_description = e.attribute("description", "");
+    QString tp = e.attribute("type", "CDTRACK");
     TTimeRef location = TTimeRef(e.attribute("position", "0").toLongLong());
     m_location->set_location(this, location, location);
     set_id(e.attribute("id", "0").toLongLong());
-	m_performer = e.attribute("performer", "");
-	m_composer = e.attribute("composer", "");
-	m_songwriter = e.attribute("songwriter", "");
-	m_arranger = e.attribute("arranger", "");
-	m_message = e.attribute("message", "");
-	m_isrc = e.attribute("isrc", "");
-	m_preemph = e.attribute("preemphasis", "0").toInt();
-	m_copyprotect = e.attribute("copyprotection", "0").toInt();
+    m_performer = e.attribute("performer", "");
+    m_composer = e.attribute("composer", "");
+    m_songwriter = e.attribute("songwriter", "");
+    m_arranger = e.attribute("arranger", "");
+    m_message = e.attribute("message", "");
+    m_isrc = e.attribute("isrc", "");
+    m_preemph = e.attribute("preemphasis", "0").toInt();
+    m_copyprotect = e.attribute("copyprotection", "0").toInt();
 
-	if (tp == "CDTRACK") m_type = CDTRACK;
-	if (tp == "ENDMARKER") m_type = ENDMARKER;
+    if (tp == "CDTRACK") m_type = CDTRACK;
+    if (tp == "ENDMARKER") m_type = ENDMARKER;
 
-	return 1;
+    return 1;
 }
 
 void TTimeLineMarker::set_when(const TTimeRef& when)

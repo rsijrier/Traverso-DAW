@@ -169,6 +169,7 @@ void TAudioClipManager::toggle_selected( TAudioClip * clip )
 }
 
 void TAudioClipManager::select_clip(TAudioClip* clip)
+
 {
 	PENTER;
 	

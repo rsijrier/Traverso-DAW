@@ -2,12 +2,10 @@
 Copyright (C) 2005-2006 Remon Sijrier 
 
 This file is part of Traverso
-
 Traverso is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
-
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -63,7 +61,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
  *	\sa ContextPointer, TInputEventDispatcher
  */
-
 TViewPort::TViewPort(QGraphicsScene* scene, QWidget* parent)
     : QGraphicsView(scene, parent)
     , m_sv(nullptr)
@@ -101,20 +98,18 @@ TViewPort::TViewPort(QGraphicsScene* scene, QWidget* parent)
         }
     });
 }
-
 TViewPort::~TViewPort()
 {
-	PENTERDES;
-
+    PENTERDES;
     if (cpointer().get_viewport() == this) {
         cpointer().set_current_viewport(nullptr);
+
     }
 }
-
 void TViewPort::grab_mouse()
 {
     m_grabMouseGuardTimer.start(m_mouseGrabCheckTime);
-   viewport()->grabMouse();
+    viewport()->grabMouse();
 }
 
 void TViewPort::release_mouse()
@@ -184,11 +179,9 @@ void TViewPort::detect_items_below_cursor()
             if (TViewItem::is_viewitem(item))
             {
                 TViewItem* viewItem = static_cast<TViewItem*>(item);
-                if (!viewItem->item_ignores_context())
-                {
+                if (!viewItem->item_ignores_context()) {
                     activeContextItems.append(viewItem);
-                    if (viewItem->has_mouse_tracking())
-                    {
+                    if (viewItem->has_mouse_tracking()) {
                         mouseTrackingItems.append(viewItem);
                     }
                 }
@@ -273,15 +266,15 @@ void TViewPort::leaveEvent(QEvent* e)
     e->accept();
 }
 
-void TViewPort::keyPressEvent( QKeyEvent * e)
+void TViewPort::keyPressEvent(QKeyEvent * e)
 {
-	ied().catch_key_press(e);
-	e->accept();
+    ied().catch_key_press(e);
+    e->accept();
 }
 
-void TViewPort::keyReleaseEvent( QKeyEvent * e)
+void TViewPort::keyReleaseEvent(QKeyEvent * e)
 {
-	ied().catch_key_release(e);
+    ied().catch_key_release(e);
     e->accept();
 }
 
@@ -295,25 +288,25 @@ void TViewPort::dragMoveEvent(QDragMoveEvent *event)
     event->ignore();
 }
 
-void TViewPort::mousePressEvent( QMouseEvent * e )
+void TViewPort::mousePressEvent(QMouseEvent * e)
 {
-	ied().catch_mousebutton_press(e);
-	e->accept();
+    ied().catch_mousebutton_press(e);
+    e->accept();
 }
 
-void TViewPort::mouseReleaseEvent( QMouseEvent * e )
+void TViewPort::mouseReleaseEvent(QMouseEvent * e)
 {
-	ied().catch_mousebutton_release(e);
-	e->accept();
+    ied().catch_mousebutton_release(e);
+    e->accept();
 }
 
-void TViewPort::mouseDoubleClickEvent( QMouseEvent * e )
+void TViewPort::mouseDoubleClickEvent(QMouseEvent * e)
 {
-	ied().catch_mousebutton_press(e);
-	e->accept();
+    ied().catch_mousebutton_press(e);
+    e->accept();
 }
 
-void TViewPort::paintEvent( QPaintEvent* e )
+void TViewPort::paintEvent(QPaintEvent* e)
 {
 // 	PWARN("ViewPort::paintEvent()");
 	QGraphicsView::paintEvent(e);
@@ -343,8 +336,7 @@ void TViewPort::set_canvas_cursor_text( const QString & text, int mseconds)
         PERROR(QString("ViewPort::set_canvas_cursor_text: no sheetview set to set text %1").arg(text));
         return;
     }
-
-	m_sv->set_edit_cursor_text(text, mseconds);
+    m_sv->set_edit_cursor_text(text, mseconds);
 }
 
 void TViewPort::set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason)
@@ -352,30 +344,30 @@ void TViewPort::set_canvas_cursor_pos(QPointF pos, CursorMoveReason reason)
     m_sv->set_canvas_cursor_pos(pos, reason);
 }
 
-void TViewPort::wheelEvent (QWheelEvent *event)
+void TViewPort::wheelEvent(QWheelEvent *event)
 {
     bool handled = false;
 
-  	if (event->angleDelta().x() > 0) {
-  		m_sv->scroll_left_by(event->angleDelta().x());
-    	handled = true;
-  	} else if (event->angleDelta().x() < 0) {
-  		m_sv->scroll_right_by(-event->angleDelta().x());
-    	handled = true;
-  	}
+    if (event->angleDelta().x() > 0) {
+        m_sv->scroll_left_by(event->angleDelta().x());
+        handled = true;
+    } else if (event->angleDelta().x() < 0) {
+        m_sv->scroll_right_by(-event->angleDelta().x());
+        handled = true;
+    }
     if (event->angleDelta().y() > 0) {
-  		m_sv->scroll_up_by(event->angleDelta().y());
-    	handled = true;
-  	} else if (event->angleDelta().y() < 0) {
-  		m_sv->scroll_down_by(-event->angleDelta().y());
-    	handled = true;
-  	}
+        m_sv->scroll_up_by(event->angleDelta().y());
+        handled = true;
+    } else if (event->angleDelta().y() < 0) {
+        m_sv->scroll_down_by(-event->angleDelta().y());
+        handled = true;
+    }
 
     if (!handled) {
         // if not handled by the sheetview, let the input event dispatcher handle it
         ied().catch_scroll(event);
     }
-	event->accept();
+    event->accept();
 }
 
 // Catch native trackpad gestures
@@ -404,13 +396,13 @@ bool TViewPort::event(QEvent *event)
     else if (event->type() == QEvent::NativeGesture) {
         QNativeGestureEvent *gestureEvent = static_cast<QNativeGestureEvent*>(event);
         if (gestureEvent->gestureType() == Qt::ZoomNativeGesture) {
-            qreal zoomFactor = 2*gestureEvent->value(); 
+            qreal zoomFactor = 2 * gestureEvent->value();
 
             if (ied().is_holding_modifier_key(Qt::Key_Shift)) {
-                m_sv->vzoom(1+zoomFactor);
+                m_sv->vzoom(1 + zoomFactor);
             }
             else {
-                m_sv->hzoom(1-zoomFactor);
+                m_sv->hzoom(1 - zoomFactor);
             }
             
             return true; // Event handled

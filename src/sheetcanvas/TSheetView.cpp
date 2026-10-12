@@ -222,78 +222,78 @@ TTrackView* TSheetView::get_trackview_at_scene_pos( QPointF point )
 
 void TSheetView::move_trackview_up(TTrackView *trackView)
 {
-	int index = trackView->get_track()->get_sort_index();
-	if (index == 0 || trackView->get_track() == m_session->get_master_out_bus_track()) {
-		// can't move any further up
-		return;
-	}
+    int index = trackView->get_track()->get_sort_index();
+    if (index == 0 || trackView->get_track() == m_session->get_master_out_bus_track()) {
+        // can't move any further up
+        return;
+    }
 
     TAudioTrackView* atv = qobject_cast<TAudioTrackView*>(trackView);
-	TBusTrackView* btv = qobject_cast<TBusTrackView*>(trackView);
+    TBusTrackView* btv = qobject_cast<TBusTrackView*>(trackView);
 
-	int newindex = index - 1;
+    int newindex = index - 1;
 
-	if (atv) {
-		for(int i=0; i<m_audioTrackViews.size(); i++) {
+    if (atv) {
+        for(int i=0; i<m_audioTrackViews.size(); i++) {
             if (i==newindex) {
                 m_audioTrackViews.at(i)->get_track()->set_sort_index(i+1);
-			}
-		}
-	}
+            }
+        }
+    }
 
-	if (btv) {
-		for(int i=0; i<m_busTrackViews.size(); i++) {
-			if (i==newindex) {
-				m_busTrackViews.at(i)->get_track()->set_sort_index(i+1);
-			}
-		}
-	}
+    if (btv) {
+        for(int i=0; i<m_busTrackViews.size(); i++) {
+            if (i==newindex) {
+                m_busTrackViews.at(i)->get_track()->set_sort_index(i+1);
+            }
+        }
+    }
 
 
-	trackView->get_track()->set_sort_index(newindex);
+    trackView->get_track()->set_sort_index(newindex);
 
-	layout_tracks();
+    layout_tracks();
 }
 
 void TSheetView::move_trackview_down(TTrackView *trackView)
 {
-	int index = trackView->get_track()->get_sort_index();
-	if (index >= m_audioTrackViews.size() || trackView->get_track() == m_session->get_master_out_bus_track()) {
-		// can't move any further down
-		return;
-	}
+    int index = trackView->get_track()->get_sort_index();
+    if (index >= m_audioTrackViews.size() || trackView->get_track() == m_session->get_master_out_bus_track()) {
+        // can't move any further down
+        return;
+    }
 
     TAudioTrackView* atv = qobject_cast<TAudioTrackView*>(trackView);
-	TBusTrackView* btv = qobject_cast<TBusTrackView*>(trackView);
+    TBusTrackView* btv = qobject_cast<TBusTrackView*>(trackView);
 
-	int newindex = index + 1;
+    int newindex = index + 1;
 
-	if (atv) {
-		for(int i=0; i<m_audioTrackViews.size(); i++) {
-			if (i==newindex) {
-				m_audioTrackViews.at(i)->get_track()->set_sort_index(i-1);
-			}
-		}
-		if (newindex >= m_audioTrackViews.size()) {
-			newindex = m_audioTrackViews.size() - 1;
-		}
-	}
+    if (atv) {
+        for(int i=0; i<m_audioTrackViews.size(); i++) {
+            if (i==newindex) {
+                m_audioTrackViews.at(i)->get_track()->set_sort_index(i-1);
+            }
+        }
+        if (newindex >= m_audioTrackViews.size()) {
+            newindex = m_audioTrackViews.size() - 1;
+        }
+    }
 
-	if (btv) {
-		for(int i=0; i<m_busTrackViews.size(); i++) {
-			if (i==newindex) {
-				m_busTrackViews.at(i)->get_track()->set_sort_index(i-1);
-			}
-		}
-		if (newindex >= m_busTrackViews.size()) {
-			newindex = m_busTrackViews.size() - 1;
-		}
-	}
+    if (btv) {
+        for(int i=0; i<m_busTrackViews.size(); i++) {
+            if (i==newindex) {
+                m_busTrackViews.at(i)->get_track()->set_sort_index(i-1);
+            }
+        }
+        if (newindex >= m_busTrackViews.size()) {
+            newindex = m_busTrackViews.size() - 1;
+        }
+    }
 
 
-	trackView->get_track()->set_sort_index(newindex);
+    trackView->get_track()->set_sort_index(newindex);
 
-	layout_tracks();
+    layout_tracks();
 
 }
 

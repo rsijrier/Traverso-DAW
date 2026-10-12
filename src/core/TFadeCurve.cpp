@@ -24,7 +24,6 @@ $Id: TFadeCurve.cpp,v 1.36 2008/11/07 10:43:08 r_sijrier Exp $
 
 #include <QFile>
 #include <cmath>
-
 #include "TCurveNode.h"
 #include "Fade.h"
 #include "TCommand.h"
@@ -38,7 +37,6 @@ $Id: TFadeCurve.cpp,v 1.36 2008/11/07 10:43:08 r_sijrier Exp $
 
 
 QStringList TFadeCurve::defaultShapes = QStringList() << "Fastest" << "Fast" << "Linear"  << "Slow" << "Slowest";
-
 TFadeCurve::TFadeCurve(TContextItem *parent, FadeType fadeType )
     : TCurve(parent)
     , m_parentLocation(nullptr)
@@ -161,11 +159,9 @@ void TFadeCurve::process(const TAudioBuffer &curveBuffer, AudioBus *bus, const T
 {
     Q_ASSERT(bus->get_channel_count() == 2);
     Q_ASSERT(m_parentLocation);
-
     if (is_bypassed()) {
         return;
     }
-
     uint outputRate = audiodevice().get_sample_rate();
     uint framesToProcess = nframes;
     uint channelCount = bus->get_channel_count();
@@ -208,7 +204,6 @@ void TFadeCurve::process(const TAudioBuffer &curveBuffer, AudioBus *bus, const T
         // triggering when framesToProcess was 0, which happened when playing the very end of the clip.
         return;
     }
-
     upperRange = fadeLocation + TTimeRef(framesToProcess, outputRate);
 
     get_vector(fadeLocation.universal_frame(), upperRange.universal_frame(), curveBuffer, framesToProcess);
@@ -316,9 +311,9 @@ void TFadeCurve::solve_node_positions( )
 QPointF TFadeCurve::get_curve_point( float f)
 {
     float x = m_controlPoints.at(0).x() * pow((1.0 - f), 3.0)
-              + 3 * m_controlPoints.at(1).x() * f * pow((1.0 - f), 2.0)
-              + 3 * m_controlPoints.at(2).x() * pow(f, 2.0) * (1.0 - f)
-              + m_controlPoints.at(3).x() * pow(f, 3.0);
+    + 3 * m_controlPoints.at(1).x() * f * pow((1.0 - f), 2.0)
+        + 3 * m_controlPoints.at(2).x() * pow(f, 2.0) * (1.0 - f)
+        + m_controlPoints.at(3).x() * pow(f, 3.0);
 
     float y = m_controlPoints.at(0).y() * pow((1.0 - f), 3.0)
               + 3 * m_controlPoints.at(1).y() * f * pow((1.0 - f), 2.0)

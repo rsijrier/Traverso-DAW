@@ -77,10 +77,8 @@ TAudioClip::TAudioClip(const QString& name)
 
     // read in the configuration from the global configuration settings.
     update_global_configuration();
-
     connect(&config(), &TConfig::configChanged, this, &TAudioClip::update_global_configuration);
 }
-
 
 TAudioClip::TAudioClip(const QDomNode& node)
     : TAudioClip("")

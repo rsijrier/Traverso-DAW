@@ -22,8 +22,6 @@
 #ifndef TINPUT_EVENT_DISPATCHER_H
 #define TINPUT_EVENT_DISPATCHER_H
 
-
-
 #include <QObject>
 #include <QTimer>
 #include <QHash>
@@ -58,7 +56,7 @@ public:
     bool has_collected_number();
     bool is_holding();
     bool is_holding_modifier_key(int keycode);
-    
+
     TCommand* get_holding_command() const;
     QString get_collected_number() const {return m_sCollectedNumber;}
 

@@ -39,7 +39,7 @@ class TViewPort : public QGraphicsView, public TViewPortInterface
 {
     Q_OBJECT
 
-public :
+public:
     TViewPort(QGraphicsScene* scene, QWidget* parent);
     virtual ~TViewPort();
 

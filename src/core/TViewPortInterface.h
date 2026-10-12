@@ -66,7 +66,6 @@ public:
     qint64 get_timeref_scale_factor() const {
         return m_timeRefScaleFactor;
     }
-
 private:
     qint64      m_timeRefScaleFactor{TTimeRef::UNIVERSAL_SAMPLE_RATE};
 

@@ -42,11 +42,9 @@ class TTimeLineRuler;
 class TBusTrack;
 class TTrack;
 class TTransportControl;
-
 class TSheet : public TSession
 {
     Q_OBJECT
-
 public:
 
     TSheet(TProject* project, int numtracks=0);
@@ -70,12 +68,10 @@ public:
     void remove_audio_source_from_diskio(TBufferedAudioStreamReader *source) const;
     void add_audio_source_to_diskio(TBufferedAudioStreamWriter *source) const;
     void remove_audio_source_from_diskio(TBufferedAudioStreamWriter *source) const;
-
     int get_read_diskio_buffers_fill_status();
     int get_write_diskio_buffers_fill_status();
     bool get_read_diskio_cpu_time(float &time);
     bool get_write_diskio_cpu_time(float &time);
-
     TAudioClipManager* get_audioclip_manager() const;
 
     AudioBus* get_render_bus() const {return m_renderBus;}
@@ -169,7 +165,6 @@ private:
     void resize_buffers(nframes_t size);
 
     friend class TAudioClipManager;
-
 public slots :
     void seek_finished();
     void audiodevice_params_changed();
