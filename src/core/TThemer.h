@@ -73,6 +73,7 @@ private:
     QString			m_currentTheme;
 
     QColor get_default_color(const QString& name);
+    QColor set_color_alpha(QColor color, int alpha);
 
     static TThemer* m_instance;
 

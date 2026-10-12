@@ -429,6 +429,12 @@ QColor TThemer::get_default_color(const QString & name)
     return m_defaultColors.value(name);
 }
 
+QColor TThemer::set_color_alpha(QColor color, int alpha)
+{
+    color.setAlpha(alpha);
+    return color;
+}
+
 void TThemer::load_defaults()
 {
     QPalette p = QApplication::style()->standardPalette();
@@ -457,9 +463,9 @@ void TThemer::load_defaults()
     m_defaultColors.insert("AudioClip:background:muted", p.color(QPalette::Base));
     m_defaultColors.insert("AudioClip:background:recording", p.color(QPalette::Base));
     m_defaultColors.insert("AudioClip:background:muted:mousehover", p.color(QPalette::Base));
-    m_defaultColors.insert("AudioClip:background:selected", p.color(QPalette::Highlight));
-    m_defaultColors.insert("AudioClip:background:selected:mousehover", p.color(QPalette::Highlight));
-    m_defaultColors.insert("AudioClip:background", p.color(QPalette::Base));
+    m_defaultColors.insert("AudioClip:background:selected", set_color_alpha(p.color(QPalette::Highlight), 100));
+    m_defaultColors.insert("AudioClip:background:selected:mousehover", set_color_alpha(p.color(QPalette::Highlight), 150));
+    m_defaultColors.insert("AudioClip:background", set_color_alpha(p.color(QPalette::Base), 100));
     m_defaultColors.insert("AudioClip:background:mousehover", p.color(QPalette::Button));
     m_defaultColors.insert("AudioClip:channelseperator", p.color(QPalette::WindowText));
     m_defaultColors.insert("AudioClip:channelseperator:selected", p.color(QPalette::WindowText));
@@ -531,7 +537,7 @@ void TThemer::load_defaults()
     m_defaultColors.insert("Track:cliptopoffset", p.color(QPalette::Dark));
     m_defaultColors.insert("Track:clipbottomoffset", p.color(QPalette::Dark));
     m_defaultColors.insert("Track:background", p.color(QPalette::Base));
-    m_defaultColors.insert("Track:mousehover", p.color((QPalette::Button)));
+    m_defaultColors.insert("Track:mousehover", set_color_alpha(p.color((QPalette::Base)), 50));
     m_defaultColors.insert("Track:laneseperator", p.color((QPalette::Dark)));
     m_defaultColors.insert("TrackPanel:header:background", p.color(QPalette::Base));
     m_defaultColors.insert("TrackPanel:background", p.color(QPalette::Window));
