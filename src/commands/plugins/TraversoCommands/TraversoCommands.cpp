@@ -294,14 +294,24 @@ void TraversoCommands::load(TShortCutManager* m)
 
     m->add_function(&MoveClip::staticMetaObject, &TToggleVerticalBase::staticMetaObject, "MoveClipToggleVerticalOnly", "toggle_vertical_only()");
 
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Right"),      "MoveCommandRight",             "move_right()");
+    // m->add_function(&TMoveCommand::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");
+    // m->add_function(&TMoveCommand::staticMetaObject, tr("Move Right"),      "MoveCommandRight",             "move_right()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Move Up"),         "MoveCommandUp",                "move_up()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Move Down"),       "MoveCommandDown",              "move_down()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Move Faster"),     "MoveCommandFaster",            "move_faster()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Move Slower"),     "MoveCommandSlower",            "move_slower()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Moving Speed"),    "MoveCommandSpeed",             "numerical_input()");
     m->add_function(&TMoveCommand::staticMetaObject, tr("Snap On/Off"),     "MoveCommandToggleSnap",        "toggle_snap_on_off()");
+
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Right"),      "MoveCommandRight",             "move_right()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Up"),         "MoveCommandUp",                "move_up()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Down"),       "MoveCommandDown",              "move_down()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Faster"),     "MoveCommandFaster",            "move_faster()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Move Slower"),     "MoveCommandSlower",            "move_slower()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Moving Speed"),    "MoveCommandSpeed",             "numerical_input()");
+    // m->add_function(&TCommandController::staticMetaObject, tr("Snap On/Off"),     "MoveCommandToggleSnap",        "toggle_snap_on_off()");
+
 
     m->add_function(&MoveCurveNode::staticMetaObject, &TToggleVerticalBase::staticMetaObject, "MoveCurveNodeToggleVerticalOnly", "toggle_vertical_only()");
 
@@ -843,6 +853,18 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
     }
 
     return ied().did_not_implement();
+}
+
+TCommandController *TraversoCommands::create_controller(QObject *obj, const QString &commandName, QVariantList arguments)
+{
+    TraversoCommand command = static_cast<TraversoCommand>(m_dict.value(commandName, NoCommand));
+
+    switch (command) {
+
+    }
+
+    return nullptr;
+
 }
 
 // eof

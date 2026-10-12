@@ -43,7 +43,7 @@ class TCommand : public QObject, public QUndoCommand
 public:
     TCommand(TContextItem* item, const QString& des = "No description set!");
     TCommand(const QString& des = "No description set!");
-    virtual ~TCommand();
+    virtual ~TCommand() override;
 
     enum ActionType {
         UNDO,
@@ -53,9 +53,9 @@ public:
     static bool matches_dispatch_rule_always(const QString& rule) {
         return rule == "DISPATCH_RULE_IS_ALWAYS";
     }
+
     virtual int begin_hold();
     virtual int finish_hold();
-
     virtual int prepare_actions();
     virtual int do_action();
     virtual int undo_action();
@@ -63,42 +63,35 @@ public:
     virtual void set_cursor_shape(int useX, int useY);
     virtual void cancel_action();
     virtual void process_collected_number(const QString& collected);
-    virtual void set_jog_bypassed(bool /*bypassed*/) {}
-    virtual bool is_hold_command() const {return true;}
-    virtual bool supportsEnterFinishesHold() const {return true;}
-    virtual bool wants_cursor_position_to_be_restored() const {return false;}
+    virtual void set_jog_bypassed(bool bypassed) { Q_UNUSED(bypassed); }
 
-    /**
-     * @brief Core overrides required by Qt's QUndoCommand framework.
-     *        Enforces strict compile-time virtual table binding for LTO release builds.
-     */
+    virtual bool is_hold_command() const { return true; }
+    virtual bool supportsEnterFinishesHold() const { return true; }
+    virtual bool wants_cursor_position_to_be_restored() const { return false; }
+
     void undo() override { undo_action(); }
     void redo() override { do_action(); }
 
     void set_valid(bool valid);
-
     void set_do_not_push_to_historystack();
+
     void set_context_pointer(TContextPointer* contextPointer) {
         m_contextPointer = contextPointer;
     }
-    bool canvas_cursor_follows_mouse_cursor() const {return m_canvasCursorFollowsMouseCursor;}
+
+    bool canvas_cursor_follows_mouse_cursor() const { return m_canvasCursorFollowsMouseCursor; }
 
     static void process_command(TCommand* cmd);
 
-
 protected:
-    TContextPointer*    m_contextPointer{nullptr};
-    bool 		m_isValid{false};
-    bool        m_canvasCursorFollowsMouseCursor{true};
+    QUndoStack*      m_historyStack{nullptr};
+    TContextPointer* m_contextPointer{nullptr};
+    bool             m_isValid{false};
+    bool             m_canvasCursorFollowsMouseCursor{true};
 
 private:
-    QUndoStack* m_historyStack{nullptr};
-
     friend class TInputEventDispatcher;
     int push_to_history_stack();
 };
 
-
-#endif
-
-
+#endif // TCOMMAND_H

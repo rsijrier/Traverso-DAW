@@ -27,9 +27,12 @@
 #include <QHash>
 #include <QPoint>
 
+#include "TViewPortScroller.h"
+
 #include "defines.h"
 
 class TCommand;
+class TCommandController;
 class TContextItem;
 class TContextPointer;
 class TMoveCommand;
@@ -46,7 +49,7 @@ class TInputEventDispatcher : public QObject
 {
     Q_OBJECT
 public:
-
+    // ... [Bestaande publieke functies blijven 100% ongewijzigd] ...
     void catch_key_press(QKeyEvent *);
     void catch_key_release(QKeyEvent *);
     void catch_mousebutton_press( QMouseEvent * e );
@@ -104,12 +107,15 @@ private:
     QHash<QString, int>	m_modes;
     TShortCutManager*   m_shortCutManager = nullptr;
     TContextPointer*    m_contextPointer{nullptr};
+    TViewportScroller   m_viewportScroller{};
+    TCommandController* m_holdingController{nullptr};
     TCommand*           m_holdingCommand{nullptr};
     TMoveCommand*       m_moveCommand{nullptr};
     QString             m_sCollectedNumber;
     QPoint              m_jogBypassPos;
     QTimer              m_holdKeyRepeatTimer;
 
+    QTimer              m_shuttleTimer;
 
     bool 			m_isHolding{false};
     bool			m_enterFinishesHold{false};
@@ -145,6 +151,8 @@ private:
 private slots:
     void process_hold_modifier_keys();
 
+    void execute_shuttle_heartbeat();
+
 signals:
     void collectedNumberChanged();
     void holdStarted();
@@ -154,7 +162,4 @@ signals:
 // use this function to get the InputEngine object
 TInputEventDispatcher& ied();
 
-
-#endif
-
-//eof
+#endif // TINPUT_EVENT_DISPATCHER_H

@@ -69,6 +69,19 @@ void TContextItem::create_history_stack()
     m_historyStack = new QUndoStack(TContextItem::get_undogroup());
 }
 
+QUndoStack* TContextItem::resolve_undo_stack() const
+{
+    if (m_historyStack) {
+        return m_historyStack;
+    }
+
+    if (m_relatedContextItem) {
+        return m_relatedContextItem->get_history_stack();
+    }
+
+    return nullptr;
+}
+
 QUndoGroup* TContextItem::get_undogroup()
 {
     static QUndoGroup group;

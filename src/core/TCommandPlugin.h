@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 class TShortCutManager;
 class TCommand;
+class TCommandController;
 
 class TCommandPlugin : public QObject
 {
@@ -49,7 +50,8 @@ public:
 	 * @param arguments List of arguments which can be parsed by the to be created Command object.
 	 * @return On success a Command object, the caller takes authorship, or 0 on failure.
  */
-	virtual TCommand* create(QObject* obj, const QString& command, QVariantList arguments) = 0;
+    virtual TCommand* create(QObject* obj, const QString& command, QVariantList arguments) = 0;
+    virtual TCommandController* create_controller(QObject* obj, const QString& command, QVariantList arguments) = 0;
     virtual void load(TShortCutManager* manager) = 0;
 
 	virtual QStringList commands() const {

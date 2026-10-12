@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 class TShortCutFunction;
 class TShortCutManager;
+class TCommandController;
 
 class TraversoCommands : public TCommandPlugin
 {
@@ -37,6 +38,7 @@ public:
 
     void load(TShortCutManager* m);
     TCommand* create(QObject* obj, const QString& commandName, QVariantList arguments);
+    TCommandController* create_controller(QObject* obj, const QString& commandName, QVariantList arguments);
 
 private:
 

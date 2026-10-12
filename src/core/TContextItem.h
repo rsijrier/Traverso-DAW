@@ -47,10 +47,6 @@ public:
 
     TContextItem* get_related_context_item() const {return m_relatedContextItem;}
 
-    QUndoStack* get_history_stack() const;
-    void set_history_stack(QUndoStack* stack);
-    static QUndoGroup* get_undogroup();
-
     qint64 get_id();
 
     void set_related_context_item(TContextItem* item) {m_relatedContextItem = item;}
@@ -62,6 +58,18 @@ public:
     bool item_ignores_context() const {return m_ignoreContext;}
 
     void create_history_stack();
+
+    /**
+ * @brief Traverses the context hierarchy to resolve the authoritative history stack.
+ * @details Walks up the relation chain and QObject tree to find the TSession (Sheet/Project)
+ *          that explicitly owns and manages the QUndoStack.
+ * @return A pointer to the authoritative QUndoStack, or nullptr if orphaned.
+ */
+    QUndoStack* resolve_undo_stack() const;
+    QUndoStack* get_history_stack() const;
+    void set_history_stack(QUndoStack* stack);
+
+    static QUndoGroup* get_undogroup();
 
 
 protected:

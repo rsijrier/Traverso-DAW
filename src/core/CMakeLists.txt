@@ -35,6 +35,7 @@ add_library(traversocore STATIC
     TCommand.cpp
     TConfig.cpp
     TShortCutManager.cpp
+    TCommandController.h TCommandController.cpp
     TContextPointer.cpp
     TContextItem.cpp
     TCurve.cpp

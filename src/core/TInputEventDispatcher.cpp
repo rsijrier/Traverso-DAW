@@ -21,13 +21,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TInputEventDispatcher.h"
 
+#include "TCommandController.h"
 #include "TContextPointer.h"
+#include "THoldInteraction.h"
 #include "TInformUser.h"
 #include "TCommand.h"
 #include "TMoveCommand.h"
 #include "TCommandPlugin.h"
 #include "TShortCut.h"
 #include "TShortCutFunction.h"
+#include "TShuttleableController.h"
+#include "TTransactional.h"
 #include "Utils.h"
 #include "TShortCutManager.h"
 #include "TConfig.h"
@@ -90,6 +94,7 @@ TInputEventDispatcher::TInputEventDispatcher()
     m_modifierKeys << Qt::Key_Shift << Qt::Key_Control << Qt::Key_Alt << Qt::Key_Meta;
 
     connect(&m_holdKeyRepeatTimer, &QTimer::timeout, this, &TInputEventDispatcher::process_hold_modifier_keys);
+    connect(&m_shuttleTimer, &QTimer::timeout, this, &TInputEventDispatcher::execute_shuttle_heartbeat);
 }
 
 TInputEventDispatcher::~ TInputEventDispatcher( )
@@ -199,8 +204,49 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
             return 1;
         } else {
             if (shortCutFunction->plugin_based()) {
-                command = create_command_from_plugin(contextItem, shortCutFunction);
-            } else  {
+                const QString &pluginname = shortCutFunction->get_plugin_name();
+                TCommandPlugin* plug = m_shortCutManager->get_command_plugin(pluginname);
+                if (!plug) {
+                    tInformUser().critical(tr("Command Plugin %1 not found!").arg(pluginname));
+                    return 0;
+                }
+
+                TCommandController* commandController = plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
+
+                if (commandController) {
+                    m_holdingController = commandController;
+                    m_holdingCommand = nullptr;
+
+                    if (auto* shuttleable = dynamic_cast<TShuttleableController*>(m_holdingController)) {
+                        TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
+                        if (mode != TViewPortInterface::None) {
+                            m_viewportScroller.set_scroll_modes(mode);
+                            qreal intensityX = 0.0, intensityY = 0.0;
+                            if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
+                                if (!m_shuttleTimer.isActive()) m_shuttleTimer.start();
+                            }
+                        }
+                    }
+
+                    if (auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController)) {
+                        if (hold->begin_hold() != -1) {
+                            m_holdEventKeyValue = shortCut->get_key_value();
+                            set_holding(true);
+                            TViewPortInterface* viewport = m_contextPointer->get_viewport();
+                            if (viewport) {
+                                viewport->set_canvas_cursor_controller_type(hold->get_cursor_type());
+                            }
+                            hold->jog();
+                            return 1;
+                        }
+                    }
+                    return 0;
+                }
+
+                if (!m_holdingController) {
+                    command = plug->create(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
+                }
+            } else {
                 command = shortCutFunction->dispatch_with_command_return(contextItem);
             }
         }
@@ -240,7 +286,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
 
         if (command->is_hold_command()) {
             if (command->begin_hold() != -1) {
-
                 command->set_valid(true);
                 command->set_cursor_shape(shortCutFunction->uses_x(), shortCutFunction->uses_y());
 
@@ -250,14 +295,20 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                 }
 
                 m_holdingCommand = command;
-                m_moveCommand = qobject_cast<TMoveCommand*>(m_holdingCommand);
 
-                if (m_moveCommand) {
-                    m_moveCommand->TMoveCommand::begin_hold();
+                if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor() && m_moveCommand) {
+                    m_moveCommand->TMoveCommand::jog();
+                    m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
+                }
+                else {
+                    m_shuttleTimer.stop();
+                    m_moveCommand = qobject_cast<TMoveCommand*>(m_holdingCommand);
+                    if (m_moveCommand) {
+                        m_moveCommand->TMoveCommand::begin_hold();
+                    }
                 }
 
                 m_holdEventKeyValue = shortCut->get_key_value();
-
                 set_holding(true);
 
                 m_enterFinishesHold = config().get_property("InputEventDispatcher", "EnterFinishesHold", false).toBool();
@@ -267,7 +318,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                 if (fromContextMenu && command->supportsEnterFinishesHold()) {
                     m_enterFinishesHold = true;
                 }
-
                 if (!command->supportsEnterFinishesHold()) {
                     m_enterFinishesHold = false;
                 }
@@ -277,26 +327,11 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                 // Use case: arrow key starts navigation hold command, while holding that key it starts
                 // to use auto repeat to call the holds command slot to navigate to the next item etc.
                 if (shortCutFunction->auto_repeats_on_itself()) {
-                    PMESG("Function uses autorepeat");
                     process_press_event(shortCut->get_key_value());
                     m_holdKeyRepeatTimer.start(10);
                 }
-                bool showCursorShortCutHelp = config().get_property("ShortCuts", "ShowCursorHelp", false).toBool();
-                if (showCursorShortCutHelp && (fromContextMenu || m_enterFinishesHold)) {
-                    int key = shortCut->get_key_value();
-                    QString keyString;
-                    if (key == Qt::LeftButton) {
-                        keyString = tr("Mouse Button Left");
-                    } else {
-                        keyString = QKeySequence(shortCut->get_key_value()).toString();
-                    }
-                }
-
                 return 1;
             } else {
-                PWARN("hold action begin_hold() returned -1");
-                // OOPSSS, something went wrong when making the Command
-                // set following stuff to zero to make finish_hold do nothing
                 delete command;
                 command = nullptr;
                 set_holding(false);
@@ -304,15 +339,38 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
             }
         }
         else {
-            TCommand::process_command(command);
+            if (auto* tx = dynamic_cast<TTransactional*>(command)) {
+                if (tx->prepare_actions() != -1) {
+                    QUndoCommand* historyObj = tx->get_undo_command();
+
+                    if (historyObj) {
+                        auto* controller = qobject_cast<TCommandController*>(command);
+                        QUndoStack* undoStack = controller ? controller->get_context_item_undo_stack() : nullptr;
+
+                        if (undoStack) {
+                            undoStack->push(historyObj);
+                        } else {
+                            historyObj->redo();
+                            delete historyObj;
+                        }
+                    }
+                }
+                delete command;
+            }
+            else {
+                TCommand::process_command(command);
+            }
             return 1;
         }
+
+
         // never reached
         PERROR("ShortCut processing fallthrough detected, shortcut dispatching programming error");
     }
 
     return 1;
 }
+
 TShortCutFunction *TInputEventDispatcher::find_shortcut_function_for_metaobject(const QMetaObject *metaObject, TShortCut *shortCut)
 {
     // traverse upwards till no more superclasses are found
@@ -357,7 +415,6 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
     if (plug->implements(commandName)) {
         PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), shortCutFunction->get_command_name());
         return plug->create(contextItem, commandName, shortCutFunction->get_arguments());
-
     } else {
         tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, commandName));
     }
@@ -386,32 +443,110 @@ void TInputEventDispatcher::jog()
 {
     PENTER3;
 
-    if (!m_isHolding) {
-        PERROR("jog() called but not holding, invalid call to jog()");
-        return;
-    }
+    if (!m_isHolding) return;
 
-    if (!m_holdingCommand) {
-        PERROR("jog() called but no holdingCommand but m_isHolding was set to true, internal state error, this is a bug!");
-        return;
-    }
+    if (m_holdingController) {
+        auto* shuttleable = qobject_cast<TShuttleableController*>(m_holdingController);
 
-    if (m_bypassJog) {
-        QPoint diff = m_jogBypassPos - m_contextPointer->mouse_viewport_pos();
-        if (diff.manhattanLength() > m_unbypassJogDistance) {
-            m_bypassJog = false;
-            m_holdingCommand->set_jog_bypassed(m_bypassJog);
-        } else {
-            return;
+        if (shuttleable) {
+            TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
+            if (mode != TViewPortInterface::None) {
+                m_viewportScroller.set_scroll_modes(mode);
+                qreal intensityX = 0.0;
+                qreal intensityY = 0.0;
+
+                if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
+                    TViewPortInterface* viewport = m_contextPointer->get_viewport();
+                    if (viewport) {
+                        int scrollStepPixelsX = qRound(intensityX * 3.0);
+                        int scrollStepPixelsY = qRound(intensityY * 3.0);
+
+                        if (scrollStepPixelsX != 0) viewport->scroll_horizontal(scrollStepPixelsX);
+                        if (scrollStepPixelsY != 0) viewport->scroll_vertical(scrollStepPixelsY);
+                    }
+                    if (!m_shuttleTimer.isActive()) {
+                        m_shuttleTimer.start();
+                    }
+                } else {
+                    m_shuttleTimer.stop();
+                }
+            }
         }
-        m_jogBypassPos = m_contextPointer->mouse_viewport_pos();
+
+        auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
+        if (hold) {
+            if (hold->jog() == 1 && hold->canvas_cursor_follows_mouse_cursor()) {
+                m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
+            }
+        }
+        return;
     }
 
-    if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor() && m_moveCommand) {
-        m_moveCommand->TMoveCommand::jog();
-        m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
+    if (m_holdingCommand) {
+        if (m_bypassJog && !m_contextPointer->keyboard_only_input()) {
+            QPoint diff = m_jogBypassPos - m_contextPointer->mouse_viewport_pos();
+            if (diff.manhattanLength() > m_unbypassJogDistance) {
+                m_bypassJog = false;
+                m_holdingCommand->set_jog_bypassed(m_bypassJog);
+            } else {
+                return;
+            }
+            m_jogBypassPos = m_contextPointer->mouse_viewport_pos();
+        }
+
+        if (m_holdingCommand->jog() == 1 && m_holdingCommand->canvas_cursor_follows_mouse_cursor() && m_moveCommand) {
+            m_moveCommand->TMoveCommand::jog();
+            m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
+        }
     }
 }
+
+void TInputEventDispatcher::execute_shuttle_heartbeat()
+{
+    PENTER3;
+
+    if (!m_holdingController) {
+        m_shuttleTimer.stop();
+        return;
+    }
+
+    auto* shuttleable = qobject_cast<TShuttleableController*>(m_holdingController);
+    auto* hold        = qobject_cast<THoldInteraction*>(m_holdingController);
+
+    if (!shuttleable || !hold) {
+        m_shuttleTimer.stop();
+        return;
+    }
+
+    qreal intensityX = 0.0;
+    qreal intensityY = 0.0;
+
+    bool isCurrentlyShuttling = m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY);
+
+    if (isCurrentlyShuttling && (intensityX != 0.0 || intensityY != 0.0)) {
+        TViewPortInterface* viewport = m_contextPointer->get_viewport();
+        if (!viewport) return;
+
+        int scrollStepPixelsX = qRound(intensityX * 3.0);
+        int scrollStepPixelsY = qRound(intensityY * 3.0);
+
+        if (scrollStepPixelsX != 0) {
+            viewport->scroll_horizontal(scrollStepPixelsX);
+        }
+        if (scrollStepPixelsY != 0) {
+            viewport->scroll_vertical(scrollStepPixelsY);
+        }
+
+        if (hold->jog() == 1 && hold->canvas_cursor_follows_mouse_cursor()) {
+            m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
+        }
+
+        viewport->refresh();
+    } else {
+        m_shuttleTimer.stop();
+    }
+}
+
 
 void TInputEventDispatcher::bypass_jog_until_mouse_movements_exceeded_manhattenlength(int length)
 {
@@ -454,6 +589,8 @@ void TInputEventDispatcher::reset()
     m_enterFinishesHold = false;
 
     set_numerical_input("");
+
+    m_shuttleTimer.stop();
 }
 
 void TInputEventDispatcher::reject_current_hold_actions()
@@ -541,7 +678,6 @@ void TInputEventDispatcher::process_press_event(int keyValue)
     {
         // another digit was collected.
         return;
-
     }
 
     if (is_modifier_keyfact(keyValue))
@@ -643,64 +779,88 @@ bool TInputEventDispatcher::is_modifier_keyfact(int keyValue)
 void TInputEventDispatcher::finish_hold()
 {
     PENTER;
-    PMESG("Finishing hold action %s", m_holdingCommand->metaObject()->className());
 
     m_holdEventKeyValue = NO_HOLD_EVENT;
-
     clear_hold_modifier_keys();
 
-    if (m_holdingCommand->wants_cursor_position_to_be_restored())
-    {
-        m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
+    if (m_holdingController) {
+        PMESG("Finishing modern hold controller: %s", m_holdingController->metaObject()->className());
+
+        auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
+        auto* tx = dynamic_cast<TTransactional*>(m_holdingController);
+        Q_ASSERT(hold && tx);
+
+        // 1. Cursor herstellen indien gewenst door de interactie-as
+        // if (hold->wants_cursor_position_to_be_restored()) {
+        //     m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
+        // }
+
+        if (m_cancelHold) {
+            PMESG("Canceling modern hold controller");
+            hold->cancel_action();
+        } else {
+            if (hold->finish_hold() > 0) {
+                if (tx->prepare_actions() != -1) {
+                    QUndoCommand* undoCommand = tx->get_undo_command();
+                    QUndoStack* undoStack = m_holdingController->get_context_item_undo_stack();
+
+                    if (undoCommand) {
+                        if (undoStack) {
+                            undoStack->push(undoCommand);
+                        } else {
+                            undoCommand->redo();
+                            delete undoCommand;
+                        }
+                    }
+                }
+            }
+        }
+
+        delete m_holdingController;
+        m_holdingController = nullptr;
+        reset();
+        m_contextPointer->request_viewport_to_detect_items_below_cursor();
+        return;
     }
 
-    if (m_cancelHold) {
-        PMESG("Canceling this hold command");
-        if (m_holdingCommand) {
+    // =======================================================================
+    // 🚀 PAD 2: EXACTE LEGACY FALLBACK VOOR OUDE TCOMMAND OBJECTEN
+    // =======================================================================
+    if (m_holdingCommand) {
+        PMESG("Finishing legacy hold command: %s", m_holdingCommand->metaObject()->className());
+
+        if (m_holdingCommand->wants_cursor_position_to_be_restored()) {
+            m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
+        }
+
+        if (m_cancelHold) {
+            PMESG("Canceling legacy hold command");
             m_holdingCommand->cancel_action();
             if (m_moveCommand) {
                 m_moveCommand->TMoveCommand::cancel_action();
             }
-            delete m_holdingCommand;
-            m_holdingCommand = nullptr;
-            m_moveCommand = nullptr;
-        }
-    } else if (m_holdingCommand) {
-
-        int holdFinish = m_holdingCommand->finish_hold();
-        if (m_moveCommand) {
-            m_moveCommand->TMoveCommand::finish_hold();
-        }
-        int holdprepare = -1;
-
-        if (holdFinish > 0) {
-            holdprepare = m_holdingCommand->prepare_actions();
-            if (holdprepare > 0) {
-                PMESG("holdingCommand->prepare_actions() returned succes!");
-                m_holdingCommand->set_valid(true);
-            } else {
-                PMESG("holdingCommand->prepare_actions() returned <= 0, so either it failed, or nothing happened!");
-                m_holdingCommand->set_valid( false );
-            }
         } else {
-            PMESG("holdingCommand->finish_hold() returned <= 0, so either it failed, or nothing happened!");
-            m_holdingCommand->set_valid( false );
-        }
-
-        if (m_holdingCommand->push_to_history_stack() < 0) {
-            if (holdprepare == 1) {
-                m_holdingCommand->do_action();
+            int holdFinish = m_holdingCommand->finish_hold();
+            if (m_moveCommand) {
+                m_moveCommand->TMoveCommand::finish_hold();
             }
-            delete m_holdingCommand;
+
+            if (holdFinish > 0 && m_holdingCommand->prepare_actions() != -1) {
+                m_holdingCommand->set_valid(true);
+                if (m_holdingCommand->push_to_history_stack() < 0) {
+                    m_holdingCommand->do_action();
+                }
+            }
         }
 
         m_holdingCommand = nullptr;
+        m_moveCommand = nullptr;
     }
 
     reset();
-
     m_contextPointer->request_viewport_to_detect_items_below_cursor();
 }
+
 
 void TInputEventDispatcher::clear_hold_modifier_keys()
 {
@@ -775,6 +935,7 @@ bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>
     {
         return false;
     }
+
     foreach(int key, first)
     {
         if (!second.contains(key))
@@ -782,6 +943,6 @@ bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>
             return false;
         }
     }
+
     return true;
 }
-
