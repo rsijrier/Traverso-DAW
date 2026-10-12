@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioProcessingNode.h"
 #include "TProcessCallBackData.h"
 #include "TRealTimeLinkedList.h"
-#include "TTimeLineEntity.h"
+#include "TSplitableTimeLineEntity.h"
 #include "TTimeRef.h"
 
 class TSheet;
@@ -40,7 +40,7 @@ class AudioBus;
 class TAudioPluginChain;
 class TFadeCurve;
 
-class TAudioClip : public TAudioProcessingNode, public TTimeLineEntity
+class TAudioClip : public TAudioProcessingNode, public TSplitableTimeLineEntity
 {
     Q_OBJECT
 
@@ -61,6 +61,9 @@ public:
 
     void move_to_location(const TTimeRef& location) final;
     unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeAudioClip; }
+
+    bool validate_split_boundary(const TTimeRef& splitLocation) const final;
+    TSplitMutationResult calculate_split_mutation(const TTimeRef& splitLocation) final;
 
 
     void set_fade_in_range(double range);

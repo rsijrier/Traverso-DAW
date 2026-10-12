@@ -19,7 +19,6 @@ add_library(traversocommands STATIC
     MovePlugin.cpp
     MoveTrack.cpp
     PCommand.cpp
-    TSplitAudioClipCommand.cpp
     TAudioClipDualTrimCommand.cpp
     TrackPan.cpp
     TZoomCommand.cpp
@@ -27,6 +26,7 @@ add_library(traversocommands STATIC
     PlayHeadMove.cpp
     WorkCursorMove.cpp
     TMoveCommand.cpp
+    TSplitEntityController.h TSplitEntityController.cpp
 )
 
 # Inherit unified build parameters and standard configurations

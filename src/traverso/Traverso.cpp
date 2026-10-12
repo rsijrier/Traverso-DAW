@@ -39,6 +39,7 @@ Traverso::Traverso(int &argc, char **argv )
 
     qRegisterMetaType<TInformUserData>("InfoStruct");
     qRegisterMetaType<TTimeRef>("TTimeRef");
+    qRegisterMetaType<QList<QObject*>>("QList<QObject*>");
 
     tsmp();
     config().check_and_load_configuration();

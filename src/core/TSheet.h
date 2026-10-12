@@ -43,6 +43,7 @@ class TTrack;
 class TTransportControl;
 class QUndoCommand;
 class TTimeLineEntity;
+class TSplitableTimeLineEntity;
 class TSelectionService;
 
 class TSheet : public TSession
@@ -120,6 +121,8 @@ public:
     QUndoCommand* create_command_mutate_clips(const QList<TAudioClip*>& clipsToAdd,
                                               const QList<TAudioClip*>& clipsToRemove,
                                               const QString& description);
+
+    QUndoCommand* create_command_split_entities(const QList<TSplitableTimeLineEntity*>& entities, const TTimeRef& splitLocation, const QString& description);
 
 private:
     QList<TAudioClip*>	m_recordingClips;

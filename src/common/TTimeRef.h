@@ -18,6 +18,7 @@ public:
     static const long long INVALID = LLONG_MIN;
 
     TTimeRef();
+    explicit TTimeRef(int position) : TTimeRef(qint64(position)) {}
     explicit TTimeRef(qint64 position);
     explicit TTimeRef(double position);
     explicit TTimeRef(nframes_t frame, uint rate);

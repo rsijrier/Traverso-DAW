@@ -208,6 +208,54 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     return node;
 }
 
+bool TAudioClip::validate_split_boundary(const TTimeRef& splitLocation) const
+{
+    TTimeRef start = get_location_start();
+    TTimeRef end = get_location_end();
+
+    return (splitLocation > (start + TTimeRef(1)) && splitLocation < (end - TTimeRef(1)));
+}
+
+TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitLocation)
+{
+    Q_ASSERT(validate_split_boundary(splitLocation));
+    TSplitMutationResult result;
+
+    // Has to be done by TResourcesManager!
+    TAudioClip* leftClip = resources_manager()->get_clip(get_id());
+    TAudioClip* rightClip = resources_manager()->get_clip(get_id());
+    Q_ASSERT(leftClip && rightClip);
+
+    for (TAudioClip* c : {leftClip, rightClip}) {
+        c->set_sheet(m_sheet);
+        c->set_track(m_track);
+        c->set_audio_source(m_readSource);
+        c->set_gain(get_gain());
+        if (is_locked()) c->toggle_lock();
+    }
+
+    TTimeRef distanceToSplit = splitLocation - get_location_start();
+
+    leftClip->m_sourceStartLocation = m_sourceStartLocation;
+    leftClip->m_length = distanceToSplit;
+    leftClip->m_sourceEndLocation = m_sourceStartLocation + distanceToSplit;
+    leftClip->move_to_location(get_location_start());
+    leftClip->reset_fade_out();
+
+    rightClip->m_sourceStartLocation = m_sourceStartLocation + distanceToSplit;
+    rightClip->m_length = m_length - distanceToSplit;
+    rightClip->m_sourceEndLocation = m_sourceEndLocation;
+    rightClip->move_to_location(splitLocation);
+    rightClip->reset_fade_in();
+
+    result.toRemove.append(this);
+    result.toAdd.append(leftClip);
+    result.toAdd.append(rightClip);
+
+    return result;
+}
+
+
 void TAudioClip::toggle_mute()
 {
     PENTER;

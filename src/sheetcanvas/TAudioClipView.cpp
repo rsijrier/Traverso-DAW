@@ -24,10 +24,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QGraphicsSimpleTextItem>
 
 #include "TAudioClipView.h"
+#include "TLineView.h"
 #include "TSheetView.h"
 #include "TAudioTrackView.h"
 #include "TFadeCurveView.h"
 #include "TCurveView.h"
+#include "TSplitEntityController.h"
 #include "TTrackLaneView.h"
 
 #include "TAudioClip.h"
@@ -104,6 +106,11 @@ TAudioClipView::TAudioClipView(TSheetView* sv, TAudioTrackView* parent, TAudioCl
         start_recording();
         connect(m_clip, &TAudioClip::recordingFinished, this, &TAudioClipView::finish_recording);
     }
+
+    m_splitCursorTransitionLine = new TLineView(this);
+    m_splitCursorTransitionLine->set_color(themer()->get_color("AudioClip:contour"));
+    m_splitCursorTransitionLine->setVisible(false); // Default state is hidden
+
 }
 
 TAudioClipView::~ TAudioClipView()
@@ -891,3 +898,32 @@ void TAudioClipView::clip_state_changed()
     invalidate_clip_tiles();
     update();
 }
+
+void TAudioClipView::connect_interaction_controller(TSplitEntityController* controller)
+{
+    Q_ASSERT(controller);
+
+    m_splitCursorTransitionLine->setVisible(controller->is_holding());
+
+    connect(controller, &TSplitEntityController::isHoldingChanged, this, [this, controller]() {
+        m_splitCursorTransitionLine->setVisible(controller->is_holding());
+        update();
+    });
+
+    connect(controller, &TSplitEntityController::splitLocationChanged, this, [this, controller]() {
+        if (m_splitCursorTransitionLine->isVisible()) {
+            TTimeRef splitLocation = controller->get_split_location();
+
+            qreal localPixelX = (splitLocation - this->get_clip()->get_location_start()) / m_sv->timeref_scalefactor;
+            m_splitCursorTransitionLine->setPos(QPointF(localPixelX, 0));
+            update();
+        }
+    });
+
+    connect(controller, &QObject::destroyed, this, [this]() {
+        m_splitCursorTransitionLine->setVisible(false);
+        update();
+    });
+}
+
+

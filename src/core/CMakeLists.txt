@@ -23,7 +23,7 @@ add_library(traversocore STATIC
     ${CMAKE_SOURCE_DIR}/src/common/TAudioThreadMessageQueue.cpp
     ${CMAKE_SOURCE_DIR}/src/common/Debugger.cpp
     ${CMAKE_SOURCE_DIR}/src/common/Mixer.cpp
-    ${CMAKE_SOURCE_DIR}/src/common/TTimeRef.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/TTimeRef.h ${CMAKE_SOURCE_DIR}/src/common/TTimeRef.cpp
     ${CMAKE_SOURCE_DIR}/src/common/TTransportControl.cpp
     TAudioClip.cpp
     TAudioClipGroup.cpp

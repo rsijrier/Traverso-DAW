@@ -1138,4 +1138,36 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
     return new TUndoCommand(description, std::move(doAction), std::move(undoAction));
 }
 
+QUndoCommand* TSheet::create_command_split_entities(const QList<TSplitableTimeLineEntity*>& entities, const TTimeRef& splitLocation, const QString& description)
+{
+    QList<TAudioClip*> totalClipsToAdd;
+    QList<TAudioClip*> totalClipsToRemove;
+
+    for (TSplitableTimeLineEntity* entity : entities) {
+        if (!entity) continue;
+
+        if (!entity->validate_split_boundary(splitLocation)) {
+            continue;
+        }
+
+        TSplitMutationResult entityResult = entity->calculate_split_mutation(splitLocation);
+
+        if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeAudioClip) {
+            for (TTimeLineEntity* e : entityResult.toRemove) {
+                totalClipsToRemove.append(dynamic_cast<TAudioClip*>(e));
+            }
+            for (TTimeLineEntity* e : entityResult.toAdd) {
+                totalClipsToAdd.append(dynamic_cast<TAudioClip*>(e));
+            }
+        }
+        // else if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeVideoClip) { ... }
+    }
+
+    if (totalClipsToAdd.isEmpty()) {
+        return nullptr;
+    }
+
+    return create_command_mutate_clips(totalClipsToAdd, totalClipsToRemove, description);
+}
+
 //eof

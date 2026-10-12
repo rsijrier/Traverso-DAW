@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TInputEventDispatcher.h"
 #include "TShortCutFunction.h"
 #include "TShortCutManager.h"
-#include "TSplitAudioClipCommand.h"
+#include "TSplitEntityController.h"
 #include "TTimeLineRuler.h"
 #include "TVUMeterView.h"
 #include "libtraversosheetcanvas.h"
@@ -115,7 +115,7 @@ void TraversoCommands::load(TShortCutManager* m)
     m->add_meta_object(&TFadeRangeCommand::staticMetaObject,    tr("Fade Length"));
     m->add_meta_object(&FadeBend::staticMetaObject,             tr("Bend Factor"));
     m->add_meta_object(&FadeStrength::staticMetaObject,         tr("Strength Factor"));
-    m->add_meta_object(&TSplitAudioClipCommand::staticMetaObject,tr("Split Clip"));
+    m->add_meta_object(&TSplitEntityController::staticMetaObject,tr("Split Clip"));
     m->add_meta_object(&TAudioClipDualTrimCommand::staticMetaObject, tr("Audio Clip Dual Trim"));
     m->add_meta_object(&TPanKnobView::staticMetaObject,         tr("Pan Knob"));
     m->add_meta_object(&TTransport::staticMetaObject,           tr("Transport"));
@@ -701,13 +701,6 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         return new TAudioClipDualTrimCommand(audioClipView->get_sheetview(), audioClipView->get_clip()->get_track());
     }
 
-    case SplitAudioClipCommand:
-    {
-        TAudioClipView* audioClipView = qobject_cast<TAudioClipView*>(obj);
-        Q_ASSERT(audioClipView);
-        return new TSplitAudioClipCommand(audioClipView);
-    }
-
     case CropClipCommand:
     {
         TAudioClipView* audioClipView = qobject_cast<TAudioClipView*>(obj);
@@ -860,6 +853,23 @@ TCommandController *TraversoCommands::create_controller(QObject *obj, const QStr
     TraversoCommand command = static_cast<TraversoCommand>(m_dict.value(commandName, NoCommand));
 
     switch (command) {
+    case SplitAudioClipCommand:
+    {
+        TAudioClipView* audioClipView = qobject_cast<TAudioClipView*>(obj);
+        Q_ASSERT(audioClipView);
+
+        TAudioClip* clip = audioClipView->get_clip();
+        Q_ASSERT(clip);
+
+        TSheet* sheet = clip->get_sheet();
+        Q_ASSERT(sheet);
+
+        auto* splitController = new TSplitEntityController(clip, sheet);
+
+        audioClipView->connect_interaction_controller(splitController);
+
+        return splitController;
+    }
 
     }
 

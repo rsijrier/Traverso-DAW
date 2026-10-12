@@ -1,4 +1,4 @@
-#include "TSplitAudioClipCommand.h"
+#include "TSplitEntityController.h"
 #include "MoveClip.h"
 #include "MoveCurveNode.h"
 #include "MoveMarker.h"

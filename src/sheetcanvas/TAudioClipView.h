@@ -39,7 +39,8 @@ class TSheetView;
 class TAudioTrackView;
 class TFadeCurveView;
 class TPeak;
-
+class TLineView;
+class TSplitEntityController;
 
 class TAudioClipView : public TViewItem
 {
@@ -50,72 +51,76 @@ public:
     ~TAudioClipView();
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-	
-	
-	TAudioClip* get_clip() const {return m_clip;}
-        TAudioTrackView* get_audio_track_view() const {return m_tv;}
-        TCurveView* get_gain_curve_view() const {return m_gainCurveView;}
-	int get_height() const {return m_height;}
-	
-	void calculate_bounding_rect();
-	void load_theme_data();
-	
+
+
+    TAudioClip* get_clip() const {return m_clip;}
+    TAudioTrackView* get_audio_track_view() const {return m_tv;}
+    TCurveView* get_gain_curve_view() const {return m_gainCurveView;}
+    int get_height() const {return m_height;}
+
+    void calculate_bounding_rect();
+    void load_theme_data();
+
+public:
+    void connect_interaction_controller(TSplitEntityController* controller);
+
 private:
-	TAudioTrackView* 	m_tv;
-        QList<TFadeCurveView*> m_fadeCurveViews;
-	TAudioClip* 	m_clip;
-	TSheet*		m_sheet;
-        TCurveView* 	m_gainCurveView;
-	QPolygonF 	m_polygon;
-	QPixmap 	m_clipInfo;
-	QTimer 		m_recordingTimer;
+    TAudioTrackView* 	m_tv;
+    TLineView*          m_splitCursorTransitionLine{nullptr};
+    QList<TFadeCurveView*> m_fadeCurveViews;
+    TAudioClip* 	m_clip;
+    TSheet*		m_sheet;
+    TCurveView* 	m_gainCurveView;
+    QPolygonF 	m_polygon;
+    QPixmap 	m_clipInfo;
+    QTimer 		m_recordingTimer;
 
-	float m_progress;
-	int m_peakloadingcount{};
+    float m_progress;
+    int m_peakloadingcount{};
 
-	bool m_waitingForPeaks;
-	bool m_mergedView{};
-	bool m_classicView{};
-	bool m_paintWithOutline{};
-	bool m_drawDbGrid{};
-	int m_height{};
-	int m_infoAreaHeight{};
-	int m_mimimumheightforinfoarea{};
-	int m_lineOffset{};
-	int m_lineVOffset{};
-	TTimeRef m_oldRecordingPos;
-	
-	// theme data
-	int m_drawbackground{};
-	int m_fillwave{};
-	QColor m_backgroundColorTop;
-	QColor m_backgroundColorBottom;
-	QColor m_backgroundColorMouseHoverTop;
-	QColor m_backgroundColorMouseHoverBottom;
-	QColor minINFLineColor;
-	QBrush m_waveBrush;
-	QBrush m_brushBgRecording;
-	QBrush m_brushBgMuted;
-	QBrush m_brushBgMutedHover;
-	QBrush m_brushBgSelected;
-	QBrush m_brushBgSelectedHover;
-	QBrush m_brushBg;
-	QBrush m_brushBgHover;
-	QBrush m_brushFg;
-	QBrush m_brushFgHover;
-	QBrush m_brushFgMuted;
-	QBrush m_brushFgEdit;
-	QBrush m_brushFgEditHover;
+    bool m_waitingForPeaks;
+    bool m_mergedView{};
+    bool m_classicView{};
+    bool m_paintWithOutline{};
+    bool m_drawDbGrid{};
+    int m_height{};
+    int m_infoAreaHeight{};
+    int m_mimimumheightforinfoarea{};
+    int m_lineOffset{};
+    int m_lineVOffset{};
+    TTimeRef m_oldRecordingPos;
 
-	void create_clipinfo_string();
+    // theme data
+    int m_drawbackground{};
+    int m_fillwave{};
+    QColor m_backgroundColorTop;
+    QColor m_backgroundColorBottom;
+    QColor m_backgroundColorMouseHoverTop;
+    QColor m_backgroundColorMouseHoverBottom;
+    QColor minINFLineColor;
+    QBrush m_waveBrush;
+    QBrush m_brushBgRecording;
+    QBrush m_brushBgMuted;
+    QBrush m_brushBgMutedHover;
+    QBrush m_brushBgSelected;
+    QBrush m_brushBgSelectedHover;
+    QBrush m_brushBg;
+    QBrush m_brushBgHover;
+    QBrush m_brushFg;
+    QBrush m_brushFgHover;
+    QBrush m_brushFgMuted;
+    QBrush m_brushFgEdit;
+    QBrush m_brushFgEditHover;
 
-	void draw_clipinfo_area(QPainter* painter, double xstart);
-	void draw_db_lines(QPainter* painter, qreal xstart, int pixelcount);
-	void draw_peaks(QPainter* painter, qreal xstart, int pixelcount);
-	void draw_tile(QPainter* painter, qreal xstart, int pixelcount);
-	void create_brushes();
+    void create_clipinfo_string();
 
-	friend class TFadeCurveView;
+    void draw_clipinfo_area(QPainter* painter, double xstart);
+    void draw_db_lines(QPainter* painter, qreal xstart, int pixelcount);
+    void draw_peaks(QPainter* painter, qreal xstart, int pixelcount);
+    void draw_tile(QPainter* painter, qreal xstart, int pixelcount);
+    void create_brushes();
+
+    friend class TFadeCurveView;
 
 public slots:
     void add_new_fade_curve_view(TFadeCurve* fade);
