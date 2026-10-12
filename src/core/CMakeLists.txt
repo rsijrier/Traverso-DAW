@@ -70,6 +70,7 @@ add_library(traversocore STATIC
     TExportSpecification.cpp
     TAudioResampler.cpp
     TCommandPlugin.h
+    TUndoCommand.h
     TTimeLineEntity.h TTimeLineEntity.cpp
     TSelectionService.h TSelectionService.cpp
     ${CORE_ASM_SOURCE}

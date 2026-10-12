@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioClipAddRemoveSpec.h"
 #include "TContextItem.h"
 #include "TProcessCallBackData.h"
-#include "TRealTimeLinkedList.h"
 #include "TTimeRef.h"
 #include "TTrack.h"
 
@@ -49,8 +48,13 @@ public :
     ~TAudioTrack();
 
     TAudioClip* init_recording();
-    TCommand* add_clip(const TAudioClipAddRemoveSpec &spec);
-    TCommand* remove_clip(const TAudioClipAddRemoveSpec &spec);
+    [[deprecated]] TCommand* add_clip(const TAudioClipAddRemoveSpec &spec);
+    [[deprecated]] TCommand* remove_clip(const TAudioClipAddRemoveSpec &spec);
+    void apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove);
+
+    QUndoCommand* create_command_mutate_clips(const QList<TAudioClip*>& clipsToAdd,
+                                          const QList<TAudioClip*>& clipsToRemove,
+                                          const QString& description);
 
     TAudioClip* get_clip_after(const TTimeRef& pos) const;
     TAudioClip* get_audio_clip_after(TAudioClip* audioClip) const;
@@ -85,14 +89,16 @@ public :
 
     TAudioTrack* next = nullptr;
 
+    void clip_position_changed(TAudioClip* clip);
+
+
 protected:
     void add_input_bus(AudioBus* bus);
 
 private:
     TSheet*          m_sheet;
 
-    // only to be accessed/modified by AudioThread
-    TRealTimeLinkedList<TAudioClip*> m_rtAudioClips;
+    std::vector<TAudioClip*>* m_rtAudioClips{nullptr};
 
     // only to be accessed from GUI thread
     QList<TAudioClip*>   m_guiAudioClips;
@@ -104,26 +110,14 @@ private:
     void set_armed(bool armed);
     void init();
 
+    void push_rt_state();
+
 public slots:
-    void clip_position_changed(TAudioClip* clip);
-
     DISPATCH_RULE_IS_ALWAYS TCommand* toggle_arm();
-
-private slots:
-    void private_add_clip(TAudioClip* clip);
-    void private_remove_clip(TAudioClip* clip);
-    void private_audioclip_added(TAudioClip* clip);
-    void private_audioclip_removed(TAudioClip* clip);
-
-    void private_clip_position_changed(TAudioClip* clip);
-
 
 signals:
     void audioClipAdded(TAudioClip* clip);
     void audioClipRemoved(TAudioClip* clip);
-
-    void privateAudioClipAdded(TAudioClip* clip);
-    void privateAudioClipRemoved(TAudioClip* clip);
 
     void armedChanged(bool isArmed);
 };

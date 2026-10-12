@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProjectManager.h"
 #include "TResourcesManager.h"
 #include "TLocation.h"
+#include "TUndoCommand.h"
 #include "Utils.h"
 #include "TAddRemoveCommand.h"
 #include "Debugger.h"
@@ -68,6 +69,8 @@ TAudioTrack::TAudioTrack( TSheet * sheet, const QDomNode node)
 TAudioTrack::~TAudioTrack()
 {
     PENTERDES;
+
+    delete m_rtAudioClips;
 }
 
 void TAudioTrack::init()
@@ -78,8 +81,7 @@ void TAudioTrack::init()
     m_isArmed = false;
     m_processBus = m_sheet->get_render_bus();
 
-    connect(this, &TAudioTrack::privateAudioClipAdded, this, &TAudioTrack::private_audioclip_added);
-    connect(this, &TAudioTrack::privateAudioClipRemoved, this, &TAudioTrack::private_audioclip_removed);
+    m_rtAudioClips = new std::vector<TAudioClip*>();
 }
 
 QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
@@ -132,6 +134,7 @@ int TAudioTrack::set_state( const QDomNode & node )
     m_showClipVolumeAutomation = e.attribute("showclipvolumeautomation", nullptr).toInt();
 
     QDomElement ClipsNode = node.firstChildElement("Clips");
+    QList<TAudioClip*> clipsToAdd;
     if (!ClipsNode.isNull()) {
         QDomNode clipNode = ClipsNode.firstChild();
         while (!clipNode.isNull()) {
@@ -150,12 +153,13 @@ int TAudioTrack::set_state( const QDomNode & node )
             clip->set_state(clip->get_dom_node());
             m_sheet->get_audioclip_manager()->add_clip(clip);
 
-            private_add_clip(clip);
-            private_audioclip_added(clip);
+            clipsToAdd.append(clip);
 
             clipNode = clipNode.nextSibling();
         }
     }
+
+    apply_clip_mutation(clipsToAdd, {});
 
     return 1;
 }
@@ -274,7 +278,7 @@ int TAudioTrack::process(TProcessCallBackData &processData)
 
 
     // Read in clip data into process bus.
-    for(TAudioClip* clip = m_rtAudioClips.first(); clip != nullptr; clip = clip->next)
+    for(auto clip : *m_rtAudioClips)
     {
         if (m_isArmed && clip->recording_state() == TAudioClip::NO_RECORDING) {
             if (m_isMuted || m_mutedBySolo) {
@@ -431,38 +435,6 @@ TAudioClip *TAudioTrack::get_clip_at_location(const TTimeRef &location) const
     return nullptr;
 }
 
-/**
- * @brief Safely removes an audio clip from the track processing configuration.
- *        Binds the real-time processing slots and GUI signaling paths at compile-time.
- */
-TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
-{
-    PENTER;
-    if (!spec.is_move()) {
-        m_sheet->get_audioclip_manager()->remove_clip(spec.get_clip());
-    }
-
-    spec.get_clip()->removed_from_track();
-
-    TAudioClip* clip = spec.get_clip();
-
-    return new TAddRemoveCommand(
-        this,                                                 // 1. parent (TContextItem*)
-        clip,                                                 // 2. item (TContextItem* via TAudioClip)
-        spec.is_historabel(),                                 // 3. bool historable
-        m_sheet,                                              // 4. TSession* sheet context
-        [this, clip]() { private_remove_clip(clip); },       // 5. doMethod closure
-        [this, clip]() { emit audioClipRemoved(clip); },      // 6. doSignal closure
-        [this, clip]() { private_add_clip(clip); },          // 7. undoMethod closure
-        [this, clip]() { emit audioClipAdded(clip); },        // 8. undoSignal closure
-        tr("Remove Clip")                                     // 9. description string at the very end
-        );
-}
-
-/**
- * @brief Safely appends an audio clip to the track processing configuration.
- *        Constructed using type-erase closures to bypass template signature limitations.
- */
 TCommand* TAudioTrack::add_clip(const TAudioClipAddRemoveSpec &spec)
 {
     PENTER;
@@ -478,66 +450,111 @@ TCommand* TAudioTrack::add_clip(const TAudioClipAddRemoveSpec &spec)
         clip,
         spec.is_historabel(),
         m_sheet,
-        [this, clip]() { private_add_clip(clip); },
-        [this, clip]() { emit audioClipAdded(clip); },
-        [this, clip]() { private_remove_clip(clip); },
-        [this, clip]() { emit audioClipRemoved(clip); },
+        [this, clip]() { apply_clip_mutation({clip}, {}); },
+        nullptr,
+        [this, clip]() { apply_clip_mutation({}, {clip}); },
+        nullptr,
         tr("Add Clip")
         );
 }
 
-
-void TAudioTrack::private_add_clip(TAudioClip* clip)
+TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
 {
-    m_rtAudioClips.add_and_sort(clip);
-}
-
-void TAudioTrack::private_remove_clip(TAudioClip* clip)
-{
-    m_rtAudioClips.remove(clip);
-}
-
-void TAudioTrack::private_audioclip_added(TAudioClip *clip)
-{
-    m_guiAudioClips.append(clip);
-    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [&](TAudioClip* left, TAudioClip* right) {
-        return left->get_location_start() < right->get_location_start();
-    });
-    emit audioClipAdded(clip);
-}
-
-void TAudioTrack::private_audioclip_removed(TAudioClip* clip)
-{
-    m_guiAudioClips.removeAll(clip);
-    emit audioClipRemoved(clip);
-}
-
-/**
- * @brief GUI event captured when a clip is dragged, dispatching a safe re-sort task downstream.
- *        Utilises stateless lambda template compilation to guarantee zero heap allocations.
- */
-void TAudioTrack::clip_position_changed(TAudioClip * clip)
-{
-    // 1. Sort the visual representation context array immediately inside the GUI thread
-    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [&](TAudioClip* left, TAudioClip* right) {
-        return left->get_location_start() < right->get_location_start();
-    });
-
-    // 2. Stream the event safely downstream to the real-time audio processing thread
-    if (m_sheet && m_sheet->is_transport_rolling()) {
-        tsmp().post_rt_task([this, clip]() { private_clip_position_changed(clip); });
-
-    } else {
-        // If the audio transport is stopped, bypass the thread queue and re-sort local configurations
-        private_clip_position_changed(clip);
+    PENTER;
+    if (!spec.is_move()) {
+        m_sheet->get_audioclip_manager()->remove_clip(spec.get_clip());
     }
+
+    spec.get_clip()->removed_from_track();
+    TAudioClip* clip = spec.get_clip();
+
+    auto doAction = [this, clip]() {
+        apply_clip_mutation({}, {clip});
+    };
+
+    auto undoAction = [this, clip]() {
+        // Herstel de binaire randvoorwaarden binnen de Undo executie-context!
+        clip->set_track(this);
+        apply_clip_mutation({clip}, {});
+    };
+
+    return new TAddRemoveCommand(
+        this,
+        clip,
+        spec.is_historabel(),
+        m_sheet,
+        std::move(doAction),
+        nullptr,
+        std::move(undoAction),
+        nullptr,
+        tr("Remove Clip")
+        );
+}
+
+void TAudioTrack::clip_position_changed(TAudioClip* /*clip*/)
+{
+    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [](TAudioClip* left, TAudioClip* right) {
+        return left->get_location_start() < right->get_location_start();
+    });
+
+    push_rt_state();
+}
+
+QUndoCommand* TAudioTrack::create_command_mutate_clips(
+    const QList<TAudioClip*>& clipsToAdd,
+    const QList<TAudioClip*>& clipsToRemove,
+    const QString& description)
+{
+    auto doAction = [this, clipsToAdd, clipsToRemove]() {
+        apply_clip_mutation(clipsToAdd, clipsToRemove);
+    };
+
+    auto undoAction = [this, clipsToAdd, clipsToRemove]() {
+        apply_clip_mutation(clipsToRemove, clipsToAdd);
+    };
+
+    return new TUndoCommand(description, std::move(doAction), std::move(undoAction));
 }
 
 
-void TAudioTrack::private_clip_position_changed(TAudioClip *clip)
+void TAudioTrack::apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove)
 {
-    // FIXME: called twice for the same event
-    m_rtAudioClips.sort(clip);
+    for (auto* clip : clipsToRemove) {
+        m_guiAudioClips.removeAll(clip);
+        clip->removed_from_track();
+        emit audioClipRemoved(clip);
+    }
+
+    for (auto* clip : clipsToAdd) {
+        m_guiAudioClips.append(clip);
+        clip->set_track(this);
+        emit audioClipAdded(clip);
+    }
+
+    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [](TAudioClip* a, TAudioClip* b) {
+        return a->get_location_start() < b->get_location_start();
+    });
+
+    push_rt_state();
+}
+
+void TAudioTrack::push_rt_state()
+{
+    auto futureRTAudioClipsVector = new std::vector<TAudioClip*>(m_guiAudioClips.begin(), m_guiAudioClips.end());
+
+    auto realtimeSwapTask = [this, futureRTAudioClipsVector]() mutable {
+
+        std::swap(this->m_rtAudioClips, futureRTAudioClipsVector);
+
+        TAudioThreadMessageQueueEvent event{};
+        event.guiCallback = [oldClips = futureRTAudioClipsVector]() {
+            delete oldClips;
+        };
+
+        tsmp().post_to_gui_thread(std::move(event));
+    };
+
+    tsmp().post_rt_task(std::move(realtimeSwapTask), nullptr);
 }
 
 void TAudioTrack::toggle_show_clip_volume_automation()

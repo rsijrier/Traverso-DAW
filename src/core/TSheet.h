@@ -41,8 +41,9 @@ class TTimeLineRuler;
 class TBusTrack;
 class TTrack;
 class TTransportControl;
-class TSelectionService;
+class QUndoCommand;
 class TTimeLineEntity;
+class TSelectionService;
 
 class TSheet : public TSession
 {
@@ -80,9 +81,7 @@ public:
     QList<TTimeLineEntity*> get_all_active_timeline_entities() const;
     AudioBus* get_render_bus() const {return m_renderBus;}
 
-
     QString get_audio_sources_dir() const;
-
     TTimeRef get_last_location() const;
 
     TCommand* add_track(TTrack* track, bool historable=true);
@@ -117,6 +116,10 @@ public:
     }
 
     TSheet* next = nullptr;
+
+    QUndoCommand* create_command_mutate_clips(const QList<TAudioClip*>& clipsToAdd,
+                                              const QList<TAudioClip*>& clipsToRemove,
+                                              const QString& description);
 
 private:
     QList<TAudioClip*>	m_recordingClips;

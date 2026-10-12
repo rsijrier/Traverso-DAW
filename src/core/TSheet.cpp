@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSnapList.h"
 #include "TBusTrack.h"
 #include "TConfig.h"
+#include "TUndoCommand.h"
 #include "Utils.h"
 #include "TTimeLineRuler.h"
 #include "TTimeLineMarker.h"
@@ -1073,5 +1074,68 @@ QList<TAudioTrack *> TSheet::get_armed_tracks() const
     return armedTracks;
 }
 
+QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clipsToAdd,
+                                                  const QList<TAudioClip*>& clipsToRemove,
+                                                  const QString& description)
+{
+    TAudioClipManager* clipManager = get_audioclip_manager();
+    Q_ASSERT(clipManager != nullptr);
+
+    struct TrackMutation {
+        QList<TAudioClip*> toAdd;
+        QList<TAudioClip*> toRemove;
+    };
+    QMap<TAudioTrack*, TrackMutation> mutationsPerTrack;
+
+    for (TAudioClip* clip : clipsToRemove) {
+        if (clip && clip->get_track()) {
+            mutationsPerTrack[clip->get_track()].toRemove.append(clip);
+        }
+    }
+
+    for (TAudioClip* clip : clipsToAdd) {
+        if (clip && clip->get_track()) {
+            mutationsPerTrack[clip->get_track()].toAdd.append(clip);
+        }
+    }
+
+    auto doAction = [mutationsPerTrack, clipManager]() {
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            for (TAudioClip* oldClip : it.value().toRemove) {
+                clipManager->remove_clip(oldClip);
+            }
+        }
+
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            it.key()->apply_clip_mutation(it.value().toAdd, it.value().toRemove);
+        }
+
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            for (TAudioClip* newClip : it.value().toAdd) {
+                clipManager->add_clip(newClip);
+            }
+        }
+    };
+
+    auto undoAction = [mutationsPerTrack, clipManager]() {
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            for (TAudioClip* newClip : it.value().toAdd) {
+                clipManager->remove_clip(newClip);
+            }
+        }
+
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            it.key()->apply_clip_mutation(it.value().toRemove, it.value().toAdd);
+        }
+
+        for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
+            for (TAudioClip* oldClip : it.value().toRemove) {
+                clipManager->add_clip(oldClip);
+            }
+        }
+    };
+
+    return new TUndoCommand(description, std::move(doAction), std::move(undoAction));
+}
 
 //eof
