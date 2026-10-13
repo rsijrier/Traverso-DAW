@@ -10,6 +10,10 @@
 #include <QString>
 #include <QtGlobal>
 
+#include "TRtTransaction.h"
+
+// Runs redo and undo in a TRtTransaction, so all real-time changes of one
+// undo step reach the audio thread as a single event.
 class TUndoCommand : public QUndoCommand
 {
 public:
@@ -33,11 +37,13 @@ public:
 
     void redo() final
     {
+        TRtTransaction transaction;
         m_redoAction();
     }
 
     void undo() final
     {
+        TRtTransaction transaction;
         m_undoAction();
     }
 
