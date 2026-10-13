@@ -5,6 +5,7 @@
 
 #include "CommandGroup.h"
 #include "TAudioThreadMessageQueue.h"
+#include "TRtTransaction.h"
 #include "Debugger.h"
 
 CommandGroup::~CommandGroup()
@@ -33,48 +34,33 @@ int CommandGroup::prepare_actions()
 
 int CommandGroup::do_action()
 {
-    // 1. Audio thread triggers the real-time batch transaction start boundaries.
-    // 2. GUI thread receives the asynchronous started notification return signal.
-    tsmp().post_rt_task(
-        []() { tsmp().trigger_batch_start(); },
-        []() { emit tsmp().batchTransactionStarted(); }
-        );
+    // All real-time changes of the child commands reach the audio thread as one event
+    TRtTransaction transaction;
 
-    // Cascade execution down to all registered child commands locally inside this context block
+    // Lets views suspend updates while the child commands run
+    tsmp().trigger_batch_start();
+
     for (TCommand* cmd : m_commands) {
         cmd->do_action();
     }
 
-    // 1. Audio thread triggers the real-time batch transaction finish boundaries.
-    // 2. GUI thread receives the asynchronous finished notification return signal.
-    tsmp().post_rt_task(
-        []() { tsmp().trigger_batch_finish(); },
-        []() { emit tsmp().batchTransactionFinished(); }
-        );
+    tsmp().trigger_batch_finish();
 
     return 1;
 }
 
-/**
- * @brief Executes the symmetric backward historical undo macro batch transaction pipeline.
- */
 int CommandGroup::undo_action()
 {
-    // MODERN CLOSURE DISPATCH: Symmetric boundary routing for historical undo operations
-    tsmp().post_rt_task(
-        []() { tsmp().trigger_batch_start(); },
-        []() { emit tsmp().batchTransactionStarted(); }
-        );
+    TRtTransaction transaction;
 
-    // Roll back states in strict reverse chronological order across child components
+    tsmp().trigger_batch_start();
+
+    // Undo in reverse order
     for (auto it = m_commands.rbegin(); it != m_commands.rend(); ++it) {
         (*it)->undo_action();
     }
 
-    tsmp().post_rt_task(
-        []() { tsmp().trigger_batch_finish(); },
-        []() { emit tsmp().batchTransactionFinished(); }
-        );
+    tsmp().trigger_batch_finish();
 
     return 1;
 }
