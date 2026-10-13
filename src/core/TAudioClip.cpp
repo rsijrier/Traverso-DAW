@@ -221,30 +221,28 @@ TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitL
     Q_ASSERT(validate_split_boundary(splitLocation));
     TSplitMutationResult result;
 
-    // Has to be done by TResourcesManager!
+    // get_clip() returns copies of this clip, including gain and lock state, each
+    // with its own read source. Clips must not share a read source: it holds the
+    // clip's source start and location window.
     TAudioClip* leftClip = resources_manager()->get_clip(get_id());
     TAudioClip* rightClip = resources_manager()->get_clip(get_id());
     Q_ASSERT(leftClip && rightClip);
 
     for (TAudioClip* c : {leftClip, rightClip}) {
+        // The copy got its read source after its sheet was set, set the sheet again
+        // so the read source is added to the sheet's disk io.
         c->set_sheet(m_sheet);
         c->set_track(m_track);
-        c->set_audio_source(m_readSource);
-        c->set_gain(get_gain());
-        if (is_locked()) c->toggle_lock();
     }
 
     TTimeRef distanceToSplit = splitLocation - get_location_start();
 
-    leftClip->m_sourceStartLocation = m_sourceStartLocation;
-    leftClip->m_length = distanceToSplit;
-    leftClip->m_sourceEndLocation = m_sourceStartLocation + distanceToSplit;
+    // Use the setters, they keep the length and the read source in sync
+    leftClip->set_source_end_location(m_sourceStartLocation + distanceToSplit);
     leftClip->move_to_location(get_location_start());
     leftClip->reset_fade_out();
 
-    rightClip->m_sourceStartLocation = m_sourceStartLocation + distanceToSplit;
-    rightClip->m_length = m_length - distanceToSplit;
-    rightClip->m_sourceEndLocation = m_sourceEndLocation;
+    rightClip->set_source_start_location(m_sourceStartLocation + distanceToSplit);
     rightClip->move_to_location(splitLocation);
     rightClip->reset_fade_in();
 
