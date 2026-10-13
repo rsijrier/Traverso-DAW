@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TShortCutFunction.h"
 #include "TShuttleableController.h"
 #include "TTransactional.h"
+#include "TRtTransaction.h"
 #include "Utils.h"
 #include "TShortCutManager.h"
 #include "TConfig.h"
@@ -779,6 +780,11 @@ bool TInputEventDispatcher::is_modifier_keyfact(int keyValue)
 void TInputEventDispatcher::finish_hold()
 {
     PENTER;
+
+    // Finishing or cancelling a hold can change real-time state before the
+    // command or controller produces its undo step (e.g. clips that stop
+    // moving), publish all of it as one event.
+    TRtTransaction transaction;
 
     m_holdEventKeyValue = NO_HOLD_EVENT;
     clear_hold_modifier_keys();

@@ -26,6 +26,8 @@
 #include <QObject>
 #include <QUndoCommand>
 
+#include "TRtTransaction.h"
+
 #ifndef Q_MOC_RUN
 // Used to tell the Input Event Dispatchter this function is to allowed
 // even if an hold action is active
@@ -69,8 +71,10 @@ public:
     virtual bool supportsEnterFinishesHold() const { return true; }
     virtual bool wants_cursor_position_to_be_restored() const { return false; }
 
-    void undo() override { undo_action(); }
-    void redo() override { do_action(); }
+    // Run in a TRtTransaction, so all real-time changes of one command are
+    // published to the audio thread as a single event.
+    void undo() override { TRtTransaction transaction; undo_action(); }
+    void redo() override { TRtTransaction transaction; do_action(); }
 
     void set_valid(bool valid);
     void set_do_not_push_to_historystack();
