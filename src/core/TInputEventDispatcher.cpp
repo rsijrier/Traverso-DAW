@@ -790,7 +790,9 @@ void TInputEventDispatcher::finish_hold()
         auto* tx = dynamic_cast<TTransactional*>(m_holdingController);
         Q_ASSERT(hold && tx);
 
-        // 1. Cursor herstellen indien gewenst door de interactie-as
+        // TODO: restore the hardware cursor position for controllers that use relative
+        // pointer input (e.g. gain). THoldInteraction has no equivalent of
+        // TCommand::wants_cursor_position_to_be_restored() yet.
         // if (hold->wants_cursor_position_to_be_restored()) {
         //     m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
         // }
@@ -823,9 +825,7 @@ void TInputEventDispatcher::finish_hold()
         return;
     }
 
-    // =======================================================================
-    // 🚀 PAD 2: EXACTE LEGACY FALLBACK VOOR OUDE TCOMMAND OBJECTEN
-    // =======================================================================
+    // Legacy TCommand hold path, used until all commands are ported to controllers
     if (m_holdingCommand) {
         PMESG("Finishing legacy hold command: %s", m_holdingCommand->metaObject()->className());
 

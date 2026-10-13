@@ -49,7 +49,6 @@ class TInputEventDispatcher : public QObject
 {
     Q_OBJECT
 public:
-    // ... [Bestaande publieke functies blijven 100% ongewijzigd] ...
     void catch_key_press(QKeyEvent *);
     void catch_key_release(QKeyEvent *);
     void catch_mousebutton_press( QMouseEvent * e );

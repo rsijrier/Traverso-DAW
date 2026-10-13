@@ -473,7 +473,7 @@ TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
     };
 
     auto undoAction = [this, clip]() {
-        // Herstel de binaire randvoorwaarden binnen de Undo executie-context!
+        // removed_from_track() deactivated the clip's read source, set_track() activates it again
         clip->set_track(this);
         apply_clip_mutation({clip}, {});
     };
