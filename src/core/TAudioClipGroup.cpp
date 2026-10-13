@@ -194,5 +194,9 @@ bool TAudioClipGroup::is_locked() const
     return false;
 }
 
-void TAudioClipGroup::move_to_location(const TTimeRef &location) {}
+void TAudioClipGroup::move_to_location(const TTimeRef &location)
+{
+    // Move in time only: passing the current top track index means no track change
+    move_to(m_topTrackIndex, location);
+}
 
