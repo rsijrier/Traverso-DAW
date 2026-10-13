@@ -851,17 +851,28 @@ void TInputEventDispatcher::finish_hold()
             if (m_moveCommand) {
                 m_moveCommand->TMoveCommand::cancel_action();
             }
+            delete m_holdingCommand;
         } else {
             int holdFinish = m_holdingCommand->finish_hold();
             if (m_moveCommand) {
                 m_moveCommand->TMoveCommand::finish_hold();
             }
 
-            if (holdFinish > 0 && m_holdingCommand->prepare_actions() != -1) {
-                m_holdingCommand->set_valid(true);
-                if (m_holdingCommand->push_to_history_stack() < 0) {
+            int holdprepare = -1;
+            if (holdFinish > 0) {
+                holdprepare = m_holdingCommand->prepare_actions();
+            }
+
+            // Only a command that prepared successfully is valid for the history stack
+            m_holdingCommand->set_valid(holdprepare > 0);
+
+            if (m_holdingCommand->push_to_history_stack() < 0) {
+                // Not pushed (invalid, not historable or no history stack): run it
+                // only if it prepared successfully, the command is not needed anymore
+                if (holdprepare == 1) {
                     m_holdingCommand->do_action();
                 }
+                delete m_holdingCommand;
             }
         }
 
