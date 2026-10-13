@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioClipAddRemoveSpec.h"
 #include "TContextItem.h"
 #include "TProcessCallBackData.h"
+#include "TRtList.h"
 #include "TTimeRef.h"
 #include "TTrack.h"
 
@@ -52,10 +53,6 @@ public :
     [[deprecated]] TCommand* remove_clip(const TAudioClipAddRemoveSpec &spec);
     void apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove);
 
-    QUndoCommand* create_command_mutate_clips(const QList<TAudioClip*>& clipsToAdd,
-                                          const QList<TAudioClip*>& clipsToRemove,
-                                          const QString& description);
-
     TAudioClip* get_clip_after(const TTimeRef& pos) const;
     TAudioClip* get_audio_clip_after(TAudioClip* audioClip) const;
     TAudioClip* get_clip_before(const TTimeRef& pos) const;
@@ -64,7 +61,7 @@ public :
 
     TSheet* get_sheet() const {return m_sheet;}
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
-    QList<TAudioClip*> get_audioclips() const {return  m_guiAudioClips;}
+    QList<TAudioClip*> get_audioclips() const {return m_clips.items();}
 
     // Return the rightmost AudioClip track end location
     TTimeRef get_end_location() const;
@@ -98,10 +95,9 @@ protected:
 private:
     TSheet*          m_sheet;
 
-    std::vector<TAudioClip*>* m_rtAudioClips{nullptr};
-
-    // only to be accessed from GUI thread
-    QList<TAudioClip*>   m_guiAudioClips;
+    // Sorted by start location. The GUI thread owns the list,
+    // process() reads its snapshot in the audio thread.
+    TRtList<TAudioClip>  m_clips;
 
     int             m_numtakes{};
     bool            m_isArmed{};
@@ -109,8 +105,6 @@ private:
 
     void set_armed(bool armed);
     void init();
-
-    void push_rt_state();
 
 public slots:
     DISPATCH_RULE_IS_ALWAYS TCommand* toggle_arm();

@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomElement>
 #include <QDomNode>
 
-#include "TAudioThreadMessageQueue.h"
 #include "TSheet.h"
 #include "TAudioClip.h"
 #include "TAudioClipManager.h"
@@ -35,7 +34,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProjectManager.h"
 #include "TResourcesManager.h"
 #include "TLocation.h"
-#include "TUndoCommand.h"
 #include "Utils.h"
 #include "TAddRemoveCommand.h"
 #include "Debugger.h"
@@ -69,8 +67,6 @@ TAudioTrack::TAudioTrack( TSheet * sheet, const QDomNode node)
 TAudioTrack::~TAudioTrack()
 {
     PENTERDES;
-
-    delete m_rtAudioClips;
 }
 
 void TAudioTrack::init()
@@ -81,7 +77,9 @@ void TAudioTrack::init()
     m_isArmed = false;
     m_processBus = m_sheet->get_render_bus();
 
-    m_rtAudioClips = new std::vector<TAudioClip*>();
+    m_clips.set_sort_function([](const TAudioClip* left, const TAudioClip* right) {
+        return left->get_location_start() < right->get_location_start();
+    });
 }
 
 QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
@@ -97,7 +95,7 @@ QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
     if (! istemplate ) {
         QDomNode clips = doc.createElement("Clips");
 
-        for(TAudioClip* clip: m_guiAudioClips) {
+        for(TAudioClip* clip: m_clips.items()) {
             if (clip->get_length() == qint64(0)) {
                 PERROR("Clip length is 0! This shouldn't happen!!!!");
                 continue;
@@ -117,8 +115,8 @@ QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
 TTimeRef TAudioTrack::get_end_location() const
 {
     TTimeRef endLocation{};
-    if (!m_guiAudioClips.isEmpty()) {
-        endLocation = m_guiAudioClips.last()->get_location_end();
+    if (!m_clips.items().isEmpty()) {
+        endLocation = m_clips.items().last()->get_location_end();
     }
     return endLocation;
 }
@@ -159,6 +157,8 @@ int TAudioTrack::set_state( const QDomNode & node )
         }
     }
 
+    // Loading a project, publish all clips of this track as one event
+    TRtTransaction transaction;
     apply_clip_mutation(clipsToAdd, {});
 
     return 1;
@@ -278,7 +278,7 @@ int TAudioTrack::process(TProcessCallBackData &processData)
 
 
     // Read in clip data into process bus.
-    for(auto clip : *m_rtAudioClips)
+    for(auto clip : m_clips.rt_items())
     {
         if (m_isArmed && clip->recording_state() == TAudioClip::NO_RECORDING) {
             if (m_isMuted || m_mutedBySolo) {
@@ -353,14 +353,14 @@ TCommand* TAudioTrack::toggle_arm()
 
 bool TAudioTrack::get_export_range(TTimeRef& trackExportStartLocation, TTimeRef& trackExportEndLocation )
 {
-    if(m_guiAudioClips.isEmpty()) {
+    if(m_clips.items().isEmpty()) {
         return false;
     }
 
     trackExportStartLocation = TTimeRef::max_length();
     trackExportEndLocation = TTimeRef();
 
-    for(TAudioClip* clip : m_guiAudioClips) {
+    for(TAudioClip* clip : m_clips.items()) {
         if (! clip->is_muted() ) {
             if (clip->get_location_end() > trackExportEndLocation) {
                 trackExportEndLocation = clip->get_location_end();
@@ -377,7 +377,7 @@ bool TAudioTrack::get_export_range(TTimeRef& trackExportStartLocation, TTimeRef&
 
 TAudioClip* TAudioTrack::get_clip_after(const TTimeRef& pos) const
 {
-    for(TAudioClip* clip : m_guiAudioClips) {
+    for(TAudioClip* clip : m_clips.items()) {
         if (clip->get_location_start() > pos) {
             return clip;
         }
@@ -387,9 +387,9 @@ TAudioClip* TAudioTrack::get_clip_after(const TTimeRef& pos) const
 
 TAudioClip *TAudioTrack::get_audio_clip_after(TAudioClip *audioClip) const
 {
-    auto index = m_guiAudioClips.indexOf(audioClip);
-    if (index >= 0 && (index + 1) < m_guiAudioClips.size()) {
-        return m_guiAudioClips.at(index + 1);
+    auto index = m_clips.items().indexOf(audioClip);
+    if (index >= 0 && (index + 1) < m_clips.items().size()) {
+        return m_clips.items().at(index + 1);
     }
 
     return nullptr;
@@ -397,9 +397,9 @@ TAudioClip *TAudioTrack::get_audio_clip_after(TAudioClip *audioClip) const
 
 TAudioClip *TAudioTrack::get_audio_clip_before(TAudioClip *audioClip) const
 {
-    auto index = m_guiAudioClips.indexOf(audioClip);
+    auto index = m_clips.items().indexOf(audioClip);
     if ((index - 1) >= 0) {
-        return m_guiAudioClips.at(index - 1);
+        return m_clips.items().at(index - 1);
     }
 
     return nullptr;
@@ -411,7 +411,7 @@ TAudioClip* TAudioTrack::get_clip_before(const TTimeRef& pos) const
     TTimeRef shortestDistance = TTimeRef::max_length();
     TAudioClip* nearest = nullptr;
 
-    for(TAudioClip* clip : m_guiAudioClips) {
+    for(TAudioClip* clip : m_clips.items()) {
         if (clip->get_location_start() < pos) {
             TTimeRef diff = pos - clip->get_location_start();
             if (diff < shortestDistance) {
@@ -427,7 +427,7 @@ TAudioClip* TAudioTrack::get_clip_before(const TTimeRef& pos) const
 
 TAudioClip *TAudioTrack::get_clip_at_location(const TTimeRef &location) const
 {
-    for(TAudioClip* clip : m_guiAudioClips) {
+    for(TAudioClip* clip : m_clips.items()) {
         if (clip->get_location_start() < location && clip->get_location_end() > location) {
             return clip;
         }
@@ -491,70 +491,28 @@ TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
         );
 }
 
-void TAudioTrack::clip_position_changed(TAudioClip* /*clip*/)
+void TAudioTrack::clip_position_changed(TAudioClip* clip)
 {
-    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [](TAudioClip* left, TAudioClip* right) {
-        return left->get_location_start() < right->get_location_start();
-    });
-
-    push_rt_state();
+    // Clips that are not (yet) on this track, e.g. while a split prepares its
+    // new clips, don't affect the order of this track's clips.
+    if (m_clips.items().contains(clip)) {
+        m_clips.resort();
+    }
 }
-
-QUndoCommand* TAudioTrack::create_command_mutate_clips(
-    const QList<TAudioClip*>& clipsToAdd,
-    const QList<TAudioClip*>& clipsToRemove,
-    const QString& description)
-{
-    auto doAction = [this, clipsToAdd, clipsToRemove]() {
-        apply_clip_mutation(clipsToAdd, clipsToRemove);
-    };
-
-    auto undoAction = [this, clipsToAdd, clipsToRemove]() {
-        apply_clip_mutation(clipsToRemove, clipsToAdd);
-    };
-
-    return new TUndoCommand(description, std::move(doAction), std::move(undoAction));
-}
-
 
 void TAudioTrack::apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove)
 {
     for (auto* clip : clipsToRemove) {
-        m_guiAudioClips.removeAll(clip);
+        m_clips.remove(clip);
         clip->removed_from_track();
         emit audioClipRemoved(clip);
     }
 
     for (auto* clip : clipsToAdd) {
-        m_guiAudioClips.append(clip);
+        m_clips.add(clip);
         clip->set_track(this);
         emit audioClipAdded(clip);
     }
-
-    std::sort(m_guiAudioClips.begin(), m_guiAudioClips.end(), [](TAudioClip* a, TAudioClip* b) {
-        return a->get_location_start() < b->get_location_start();
-    });
-
-    push_rt_state();
-}
-
-void TAudioTrack::push_rt_state()
-{
-    auto futureRTAudioClipsVector = new std::vector<TAudioClip*>(m_guiAudioClips.begin(), m_guiAudioClips.end());
-
-    auto realtimeSwapTask = [this, futureRTAudioClipsVector]() mutable {
-
-        std::swap(this->m_rtAudioClips, futureRTAudioClipsVector);
-
-        TAudioThreadMessageQueueEvent event{};
-        event.guiCallback = [oldClips = futureRTAudioClipsVector]() {
-            delete oldClips;
-        };
-
-        tsmp().post_to_gui_thread(std::move(event));
-    };
-
-    tsmp().post_rt_task(std::move(realtimeSwapTask), nullptr);
 }
 
 void TAudioTrack::toggle_show_clip_volume_automation()
