@@ -110,6 +110,8 @@ void TAudioClipManager::remove_clip( TAudioClip * clip )
 	
 	remove_from_selection(clip);
 	
+	disconnect(clip->get_location(), &TLocation::locationChanged, this, &TAudioClipManager::update_last_frame);
+	
 	m_sheet->get_snap_list()->mark_dirty();
 	update_last_frame();
 	resources_manager()->mark_clip_removed(clip);
