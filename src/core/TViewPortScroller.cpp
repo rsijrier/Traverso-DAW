@@ -8,10 +8,13 @@
 #include "TShuttleableController.h"
 #include "TSelectionTimeBounds.h"
 
+#include <algorithm>
+
 TViewportScroller::TViewportScroller(TViewPortInterface::ScrollModes modes)
     : m_scrollModes(modes)
 {
-    m_shuttleCurve.setType(QEasingCurve::InQuad);
+    // Same curve as the legacy TMoveCommand shuttle
+    m_shuttleCurve.setType(QEasingCurve::InOutQuad);
 }
 
 bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shuttleable,
@@ -28,17 +31,12 @@ bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shut
         return false;
     }
 
-    bool hasActiveShuttle = false;
-
     if (m_scrollModes.testFlag(TViewPortInterface::Horizontal)) {
         calculatedHorizontalShuttleVelocity = determine_shuttle_vector(
             pointer.mouse_viewport_x(),
             viewport->viewport_width(),
             shuttleable->shuttle_range_x()
             );
-        if (!qFuzzyIsNull(calculatedHorizontalShuttleVelocity)) {
-            hasActiveShuttle = true;
-        }
     }
 
     if (m_scrollModes.testFlag(TViewPortInterface::Vertical)) {
@@ -47,20 +45,15 @@ bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shut
             viewport->viewport_height(),
             shuttleable->shuttle_range_y()
             );
-        if (!qFuzzyIsNull(calculatedVerticalShuttleVelocity)) {
-            hasActiveShuttle = true;
-        }
     }
 
-    if (hasActiveShuttle && !qFuzzyIsNull(calculatedHorizontalShuttleVelocity)) {
-        qint64 scaleFactorFramesPerPixel = viewport->get_timeref_scale_factor();
-
-        if (!enforce_horizontal_domain_bounds(shuttleable, calculatedHorizontalShuttleVelocity, scaleFactorFramesPerPixel)) {
-            hasActiveShuttle = false;
-        }
+    // No horizontal shuttling once the controller's time range reached its limit
+    if (!qFuzzyIsNull(calculatedHorizontalShuttleVelocity)
+        && calculate_scroll_step(shuttleable, calculatedHorizontalShuttleVelocity, 0.0).x() == 0) {
+        calculatedHorizontalShuttleVelocity = 0.0;
     }
 
-    return hasActiveShuttle;
+    return !qFuzzyIsNull(calculatedHorizontalShuttleVelocity) || !qFuzzyIsNull(calculatedVerticalShuttleVelocity);
 }
 
 qreal TViewportScroller::determine_shuttle_vector(int mouseViewportPosition, int viewportDimension, qreal triggerZoneWidth)
@@ -85,50 +78,65 @@ qreal TViewportScroller::determine_shuttle_vector(int mouseViewportPosition, int
     }
 
     if (movementDirection != 0) {
-        return m_shuttleCurve.valueForProgress(accelerationProgress) * movementDirection;
+        qreal velocity = m_shuttleCurve.valueForProgress(qMin(accelerationProgress, 1.0));
+        // Like the legacy TMoveCommand shuttle: faster when the mouse is beyond the viewport edge
+        if (accelerationProgress > 1.0) {
+            velocity *= 1.5;
+        }
+        return velocity * movementDirection;
     }
 
     return 0.0;
 }
 
-bool TViewportScroller::enforce_horizontal_domain_bounds(TShuttleableController* shuttleable, qreal horizontalVelocity, qint64 scaleFactor)
+QPoint TViewportScroller::calculate_scroll_step(TShuttleableController* shuttleable,
+                                               qreal horizontalShuttleVelocity,
+                                               qreal verticalShuttleVelocity) const
 {
-    if (!shuttleable) {
-        return true;
+    TViewPortInterface* viewport = cpointer().get_viewport();
+    if (!viewport) {
+        return {};
+    }
+
+    int stepX = qRound(horizontalShuttleVelocity * viewport->viewport_width() * MAX_STEP_FRACTION);
+    int stepY = qRound(verticalShuttleVelocity * viewport->viewport_height() * MAX_STEP_FRACTION);
+
+    return QPoint(clamp_horizontal_step(shuttleable, stepX), stepY);
+}
+
+int TViewportScroller::clamp_horizontal_step(TShuttleableController* shuttleable, int stepPixels) const
+{
+    if (!shuttleable || stepPixels == 0) {
+        return stepPixels;
     }
 
     TSelectionTimeBounds bounds = shuttleable->get_time_line_entity_constraints();
     if (!bounds.isValid()) {
-        return true;
+        return stepPixels;
     }
 
     TContextPointer& pointer = cpointer();
-    int viewWidthPixels = pointer.get_viewport()->viewport_width();
+    TViewPortInterface* viewport = pointer.get_viewport();
+    qint64 scaleFactor = viewport->get_timeref_scale_factor();
+    int viewportWidth = viewport->viewport_width();
+    int viewportLeft = pointer.scene_x() - pointer.mouse_viewport_x();
 
-    int scrollStepPixels = qRound(horizontalVelocity * SCROLL_VELOCITY_SCALER);
-    int currentViewportLeftPixel = pointer.scene_x() - pointer.mouse_viewport_x();
-    int nextViewportLeftPixel = currentViewportLeftPixel + scrollStepPixels;
+    // The controller's time range stays at least this far inside the viewport,
+    // so its boundary never moves into the shuttle zone
+    int margin = static_cast<int>(viewportWidth * shuttleable->shuttle_range_x());
 
-    int deactivationZoneMarginPixels = static_cast<int>(viewWidthPixels * shuttleable->shuttle_range_x());
-
-    if (horizontalVelocity < 0.0) {
-        int domainStartBoundaryPixel = static_cast<int>(bounds.start.universal_frame() / scaleFactor);
-        int leftDeactivationLineTargetPixel = nextViewportLeftPixel + deactivationZoneMarginPixels;
-
-        if (domainStartBoundaryPixel >= leftDeactivationLineTargetPixel) {
-            return false;
-        }
+    // Clamp the step instead of refusing it: otherwise a smaller step (mouse less
+    // deep in the shuttle zone) could still pass once a larger one was refused,
+    // and the view would creep past the boundary
+    if (stepPixels < 0) {
+        int startPixel = static_cast<int>(bounds.start.universal_frame() / scaleFactor);
+        int minimumViewportLeft = startPixel - margin;
+        int room = minimumViewportLeft - viewportLeft;   // <= 0: room to scroll left
+        return room >= 0 ? 0 : std::max(stepPixels, room);
     }
 
-    if (horizontalVelocity > 0.0) {
-        int domainEndBoundaryPixel = static_cast<int>(bounds.end.universal_frame() / scaleFactor);
-        int nextViewportRightPixel = nextViewportLeftPixel + viewWidthPixels;
-        int rightDeactivationLineTargetPixel = nextViewportRightPixel - deactivationZoneMarginPixels;
-
-        if (domainEndBoundaryPixel <= rightDeactivationLineTargetPixel) {
-            return false;
-        }
-    }
-
-    return true;
+    int endPixel = static_cast<int>(bounds.end.universal_frame() / scaleFactor);
+    int maximumViewportLeft = endPixel + margin - viewportWidth;
+    int room = maximumViewportLeft - viewportLeft;       // >= 0: room to scroll right
+    return room <= 0 ? 0 : std::min(stepPixels, room);
 }

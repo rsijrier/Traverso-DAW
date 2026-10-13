@@ -95,6 +95,7 @@ TInputEventDispatcher::TInputEventDispatcher()
     m_modifierKeys << Qt::Key_Shift << Qt::Key_Control << Qt::Key_Alt << Qt::Key_Meta;
 
     connect(&m_holdKeyRepeatTimer, &QTimer::timeout, this, &TInputEventDispatcher::process_hold_modifier_keys);
+    m_shuttleTimer.setInterval(TViewportScroller::SHUTTLE_INTERVAL_MS);
     connect(&m_shuttleTimer, &QTimer::timeout, this, &TInputEventDispatcher::execute_shuttle_heartbeat);
 }
 
@@ -473,15 +474,8 @@ void TInputEventDispatcher::jog()
                 qreal intensityX = 0.0;
                 qreal intensityY = 0.0;
 
+                // Only start or stop shuttling here, execute_shuttle_heartbeat() scrolls
                 if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
-                    TViewPortInterface* viewport = m_contextPointer->get_viewport();
-                    if (viewport) {
-                        int scrollStepPixelsX = qRound(intensityX * 3.0);
-                        int scrollStepPixelsY = qRound(intensityY * 3.0);
-
-                        if (scrollStepPixelsX != 0) viewport->scroll_horizontal(scrollStepPixelsX);
-                        if (scrollStepPixelsY != 0) viewport->scroll_vertical(scrollStepPixelsY);
-                    }
                     if (!m_shuttleTimer.isActive()) {
                         m_shuttleTimer.start();
                     }
@@ -545,14 +539,13 @@ void TInputEventDispatcher::execute_shuttle_heartbeat()
         TViewPortInterface* viewport = m_contextPointer->get_viewport();
         if (!viewport) return;
 
-        int scrollStepPixelsX = qRound(intensityX * 3.0);
-        int scrollStepPixelsY = qRound(intensityY * 3.0);
+        QPoint step = m_viewportScroller.calculate_scroll_step(shuttleable, intensityX, intensityY);
 
-        if (scrollStepPixelsX != 0) {
-            viewport->scroll_horizontal(scrollStepPixelsX);
+        if (step.x() != 0) {
+            viewport->scroll_horizontal(step.x());
         }
-        if (scrollStepPixelsY != 0) {
-            viewport->scroll_vertical(scrollStepPixelsY);
+        if (step.y() != 0) {
+            viewport->scroll_vertical(step.y());
         }
 
         if (hold->jog() == 1 && hold->canvas_cursor_follows_mouse_cursor()) {
