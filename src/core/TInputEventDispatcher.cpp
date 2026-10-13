@@ -205,48 +205,12 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
             return 1;
         } else {
             if (shortCutFunction->plugin_based()) {
-                const QString &pluginname = shortCutFunction->get_plugin_name();
-                TCommandPlugin* plug = m_shortCutManager->get_command_plugin(pluginname);
-                if (!plug) {
-                    tInformUser().critical(tr("Command Plugin %1 not found!").arg(pluginname));
-                    return 0;
+                // Commands that are ported to a controller are created as one,
+                // all others are still created as a TCommand
+                if (TCommandController* controller = create_controller_from_plugin(contextItem, shortCutFunction)) {
+                    return start_controller(controller, shortCut);
                 }
-
-                TCommandController* commandController = plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
-
-                if (commandController) {
-                    m_holdingController = commandController;
-                    m_holdingCommand = nullptr;
-
-                    if (auto* shuttleable = dynamic_cast<TShuttleableController*>(m_holdingController)) {
-                        TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
-                        if (mode != TViewPortInterface::None) {
-                            m_viewportScroller.set_scroll_modes(mode);
-                            qreal intensityX = 0.0, intensityY = 0.0;
-                            if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
-                                if (!m_shuttleTimer.isActive()) m_shuttleTimer.start();
-                            }
-                        }
-                    }
-
-                    if (auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController)) {
-                        if (hold->begin_hold() != -1) {
-                            m_holdEventKeyValue = shortCut->get_key_value();
-                            set_holding(true);
-                            TViewPortInterface* viewport = m_contextPointer->get_viewport();
-                            if (viewport) {
-                                viewport->set_canvas_cursor_controller_type(hold->get_cursor_type());
-                            }
-                            hold->jog();
-                            return 1;
-                        }
-                    }
-                    return 0;
-                }
-
-                if (!m_holdingController) {
-                    command = plug->create(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
-                }
+                command = create_command_from_plugin(contextItem, shortCutFunction);
             } else {
                 command = shortCutFunction->dispatch_with_command_return(contextItem);
             }
@@ -340,27 +304,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
             }
         }
         else {
-            if (auto* tx = dynamic_cast<TTransactional*>(command)) {
-                if (tx->prepare_actions() != -1) {
-                    QUndoCommand* historyObj = tx->get_undo_command();
-
-                    if (historyObj) {
-                        auto* controller = qobject_cast<TCommandController*>(command);
-                        QUndoStack* undoStack = controller ? controller->get_context_item_undo_stack() : nullptr;
-
-                        if (undoStack) {
-                            undoStack->push(historyObj);
-                        } else {
-                            historyObj->redo();
-                            delete historyObj;
-                        }
-                    }
-                }
-                delete command;
-            }
-            else {
-                TCommand::process_command(command);
-            }
+            TCommand::process_command(command);
             return 1;
         }
 
@@ -420,6 +364,79 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
         tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, commandName));
     }
     return nullptr;
+}
+
+TCommandController* TInputEventDispatcher::create_controller_from_plugin(QObject* contextItem, TShortCutFunction* shortCutFunction)
+{
+    // A missing plugin is reported by create_command_from_plugin()
+    TCommandPlugin* plug = m_shortCutManager->get_command_plugin(shortCutFunction->get_plugin_name());
+    if (!plug) {
+        return nullptr;
+    }
+
+    return plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
+}
+
+int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut)
+{
+    auto* hold = dynamic_cast<THoldInteraction*>(controller);
+
+    if (!hold) {
+        // Instant controller: run its transaction now
+        commit_controller_transaction(controller);
+        delete controller;
+        return 1;
+    }
+
+    if (hold->begin_hold() == -1) {
+        delete controller;
+        return 0;
+    }
+
+    m_holdingController = controller;
+    m_holdingCommand = nullptr;
+    m_holdEventKeyValue = shortCut->get_key_value();
+    set_holding(true);
+
+    if (TViewPortInterface* viewport = m_contextPointer->get_viewport()) {
+        viewport->set_canvas_cursor_controller_type(hold->get_cursor_type());
+    }
+
+    if (auto* shuttleable = dynamic_cast<TShuttleableController*>(controller)) {
+        TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
+        if (mode != TViewPortInterface::None) {
+            m_viewportScroller.set_scroll_modes(mode);
+            qreal intensityX = 0.0, intensityY = 0.0;
+            if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
+                if (!m_shuttleTimer.isActive()) m_shuttleTimer.start();
+            }
+        }
+    }
+
+    hold->jog();
+    return 1;
+}
+
+void TInputEventDispatcher::commit_controller_transaction(TCommandController* controller)
+{
+    // A controller does not have to be transactional, e.g. one that only
+    // navigates or zooms
+    auto* tx = dynamic_cast<TTransactional*>(controller);
+    if (!tx || tx->prepare_actions() == -1) {
+        return;
+    }
+
+    QUndoCommand* undoCommand = tx->get_undo_command();
+    if (!undoCommand) {
+        return;
+    }
+
+    if (QUndoStack* undoStack = controller->get_context_item_undo_stack()) {
+        undoStack->push(undoCommand);
+    } else {
+        undoCommand->redo();
+        delete undoCommand;
+    }
 }
 
 TCommand* TInputEventDispatcher::succes()
@@ -792,11 +809,9 @@ void TInputEventDispatcher::finish_hold()
     if (m_holdingController) {
         PMESG("Finishing modern hold controller: %s", m_holdingController->metaObject()->className());
 
-        // A hold controller does not have to be transactional, e.g. one that only
-        // navigates or zooms, so tx may be null. hold can only be null if a non-hold
-        // controller ended up in m_holdingController, which is a dispatcher bug.
+        // hold can only be null if a non-hold controller ended up in
+        // m_holdingController, which is a dispatcher bug.
         auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
-        auto* tx = dynamic_cast<TTransactional*>(m_holdingController);
         Q_ASSERT(hold);
 
         // TODO: restore the hardware cursor position for controllers that use relative
@@ -811,22 +826,8 @@ void TInputEventDispatcher::finish_hold()
         } else if (m_cancelHold) {
             PMESG("Canceling modern hold controller");
             hold->cancel_action();
-        } else {
-            if (hold->finish_hold() > 0 && tx) {
-                if (tx->prepare_actions() != -1) {
-                    QUndoCommand* undoCommand = tx->get_undo_command();
-                    QUndoStack* undoStack = m_holdingController->get_context_item_undo_stack();
-
-                    if (undoCommand) {
-                        if (undoStack) {
-                            undoStack->push(undoCommand);
-                        } else {
-                            undoCommand->redo();
-                            delete undoCommand;
-                        }
-                    }
-                }
-            }
+        } else if (hold->finish_hold() > 0) {
+            commit_controller_transaction(m_holdingController);
         }
 
         delete m_holdingController;
