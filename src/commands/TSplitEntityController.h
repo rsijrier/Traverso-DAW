@@ -50,7 +50,6 @@ public:
 
     // TShuttleableController contract
     TViewPortInterface::ScrollModes scrolling_mode() const final { return TViewPortInterface::Horizontal; }
-    qreal shuttle_range_x() const final { return 0.3; }
     const TSelectionTimeBounds get_time_line_entity_constraints() final;
 
     // TSnapableTimeController contract
