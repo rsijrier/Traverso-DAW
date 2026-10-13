@@ -129,7 +129,7 @@ void TAudioThreadMessageQueue::post_gui_event(TAudioThreadMessageQueueEvent &&ev
  */
 void TAudioThreadMessageQueue::post_to_gui_thread(TAudioThreadMessageQueueEvent &&event)
 {
-    Q_ASSERT_X(this->thread() != QThread::currentThread(), "TSMP::post_rt_event", "Adding event from NON-RT Thread!!");
+    Q_ASSERT_X(this->thread() != QThread::currentThread(), "TSMP::post_to_gui_thread", "Adding event from NON-RT Thread!!");
 
     // Real-time Safety: Never fall back to wait_enqueue. If the queue is entirely full,
     // drop the execution signal to maintain audio integrity and record the failure via an atomic counter.
