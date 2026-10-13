@@ -144,7 +144,8 @@ void TViewPort::mouseMoveEvent(QMouseEvent* event)
     m_previousMousePos = event->pos();
 
     if (ied().is_holding()) {
-        ied().jog();
+        // cpointer().update_mouse_positions() will instruct ied() to update holdcommand
+        // of new mouse position, so nothing to be done here
         event->accept();
         return;
     }
