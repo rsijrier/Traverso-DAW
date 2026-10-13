@@ -4,6 +4,8 @@
 */
 
 #include "TAddRemoveCommand.h"
+#include "TAudioThreadMessageQueue.h"
+#include "TSession.h"
 
 TAddRemoveCommand::TAddRemoveCommand(
     TContextItem* parent,
@@ -31,13 +33,13 @@ TAddRemoveCommand::TAddRemoveCommand(
     std::function<void()> undoMethod, std::function<void()> undoSignal,
     const QString& des)
     : TCommand(parent, des)
+    , m_sheet(sheet)
     , m_doMethod(std::move(doMethod))
     , m_undoMethod(std::move(undoMethod))
     , m_doSignal(std::move(doSignal))
     , m_undoSignal(std::move(undoSignal))
 {
     Q_UNUSED(arg);
-    Q_UNUSED(sheet);
     if (!historable) {
         set_do_not_push_to_historystack();
     }
@@ -53,12 +55,12 @@ TAddRemoveCommand::TAddRemoveCommand(
     const QString& des)
     : TCommand(parent, des)
     , m_parentItem(item)
+    , m_sheet(sheet)
     , m_doMethod(std::move(doMethod))
     , m_undoMethod(std::move(undoMethod))
     , m_doSignal(std::move(doSignal))
     , m_undoSignal(std::move(undoSignal))
 {
-    Q_UNUSED(sheet);
     if (!historable) {
         set_do_not_push_to_historystack();
     }
@@ -95,7 +97,33 @@ void TAddRemoveCommand::set_instantanious(bool instant)
 
 int TAddRemoveCommand::un_redo_action(const std::function<void()>& method, const std::function<void()>& signal)
 {
-    if (method) method();
-    if (signal) signal();
+    // The methods change lists that the audio thread iterates. While the transport
+    // is rolling they must run in the audio thread, unless the caller asked for
+    // instant execution.
+    bool executeSynchrone = m_instantanious;
+
+    if (m_sheet && !m_sheet->is_transport_rolling()) {
+        executeSynchrone = true;
+    }
+
+    if (executeSynchrone) {
+        if (method) method();
+        if (signal) signal();
+        return 1;
+    }
+
+    // Non historable commands are deleted right after do_action(), possibly before
+    // the audio thread runs the task, so the task gets its own copy of the methods.
+    // The copy is deleted in the GUI thread, after the signal method ran.
+    struct Job {
+        std::function<void()> method;
+        std::function<void()> signal;
+    };
+    auto* job = new Job{method, signal};
+
+    tsmp().post_rt_task(
+        [job]() { if (job->method) job->method(); },
+        [job]() { if (job->signal) job->signal(); delete job; });
+
     return 1;
 }

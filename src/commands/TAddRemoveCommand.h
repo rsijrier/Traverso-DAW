@@ -52,6 +52,7 @@ private:
     int un_redo_action(const std::function<void()>& method, const std::function<void()>& signal);
 
     TContextItem*         m_parentItem{nullptr};
+    TSession*             m_sheet{nullptr};
     std::function<void()> m_doMethod;
     std::function<void()> m_undoMethod;
     std::function<void()> m_doSignal;
