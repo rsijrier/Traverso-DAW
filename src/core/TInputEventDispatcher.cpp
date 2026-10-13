@@ -786,9 +786,12 @@ void TInputEventDispatcher::finish_hold()
     if (m_holdingController) {
         PMESG("Finishing modern hold controller: %s", m_holdingController->metaObject()->className());
 
+        // A hold controller does not have to be transactional, e.g. one that only
+        // navigates or zooms, so tx may be null. hold can only be null if a non-hold
+        // controller ended up in m_holdingController, which is a dispatcher bug.
         auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
         auto* tx = dynamic_cast<TTransactional*>(m_holdingController);
-        Q_ASSERT(hold && tx);
+        Q_ASSERT(hold);
 
         // TODO: restore the hardware cursor position for controllers that use relative
         // pointer input (e.g. gain). THoldInteraction has no equivalent of
@@ -797,11 +800,13 @@ void TInputEventDispatcher::finish_hold()
         //     m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
         // }
 
-        if (m_cancelHold) {
+        if (!hold) {
+            PERROR(QString("Holding controller %1 does not implement THoldInteraction").arg(m_holdingController->metaObject()->className()));
+        } else if (m_cancelHold) {
             PMESG("Canceling modern hold controller");
             hold->cancel_action();
         } else {
-            if (hold->finish_hold() > 0) {
+            if (hold->finish_hold() > 0 && tx) {
                 if (tx->prepare_actions() != -1) {
                     QUndoCommand* undoCommand = tx->get_undo_command();
                     QUndoStack* undoStack = m_holdingController->get_context_item_undo_stack();
