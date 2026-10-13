@@ -27,6 +27,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <type_traits>
 #include "cameron/readerwritercircularbuffer.h"
 
+/**
+ * @brief An event passed between the GUI thread, the audio thread and the
+ *        message queue worker thread (TAudioThreadMessageQueueThread).
+ *
+ * rtTask runs in the audio thread. guiCallback, despite its name, does NOT run
+ * in the GUI thread: it runs in the message queue worker thread, after the
+ * audio thread processed rtTask (or directly, for events posted by the audio
+ * thread via post_to_gui_thread()).
+ *
+ * guiCallback may therefore only:
+ * - free plain memory that nobody else references any more (this keeps freeing
+ *   out of both the audio thread and the GUI thread)
+ * - emit signals; Qt delivers them queued to receivers living in the GUI thread
+ *
+ * It must not call GUI or model functions directly, and must not delete
+ * QObjects that live in the GUI thread. Such objects have to be deleted in the
+ * GUI thread, e.g. by calling deleteLater() on them.
+ */
 struct TAudioThreadMessageQueueEvent {
     std::move_only_function<void()> rtTask{nullptr};
     std::move_only_function<void()> guiCallback{nullptr};
@@ -47,6 +65,10 @@ public:
      * @brief Pure C++23 Task Dispatcher.
      *        Statically vefifies that lambda captures fit within real-time limits (64 bytes)
      *        and are trivially copyable to prevent heap allocation inside the audio thread.
+     *
+     *        rtTask runs in the audio thread, guiSignal runs afterwards in the message
+     *        queue worker thread, not in the GUI thread. See TAudioThreadMessageQueueEvent
+     *        for what guiSignal may and may not do.
      */
     template<typename RTTask, typename GuiSignal = std::nullptr_t>
     void post_rt_task(RTTask&& rtTask, GuiSignal&& guiSignal = nullptr)
@@ -78,6 +100,8 @@ public:
     }
 
     void post_gui_event(TAudioThreadMessageQueueEvent &&event);
+    // Called from the audio thread. Despite the name, event.guiCallback runs in the
+    // message queue worker thread, see TAudioThreadMessageQueueEvent.
     void post_to_gui_thread(TAudioThreadMessageQueueEvent &&event);
 
 private:

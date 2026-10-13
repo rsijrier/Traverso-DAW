@@ -114,7 +114,9 @@ int TAddRemoveCommand::un_redo_action(const std::function<void()>& method, const
 
     // Non historable commands are deleted right after do_action(), possibly before
     // the audio thread runs the task, so the task gets its own copy of the methods.
-    // The copy is deleted in the GUI thread, after the signal method ran.
+    // The signal method and the deletion of the copy run in the message queue worker
+    // thread, not in the GUI thread. The signal methods only emit signals, which is
+    // allowed there, see TAudioThreadMessageQueueEvent.
     struct Job {
         std::function<void()> method;
         std::function<void()> signal;
