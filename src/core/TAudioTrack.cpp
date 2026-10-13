@@ -438,21 +438,34 @@ TAudioClip *TAudioTrack::get_clip_at_location(const TTimeRef &location) const
 TCommand* TAudioTrack::add_clip(const TAudioClipAddRemoveSpec &spec)
 {
     PENTER;
-    spec.get_clip()->set_track(this);
-    if (!spec.is_move()) {
-        m_sheet->get_audioclip_manager()->add_clip(spec.get_clip());
-    }
-
     TAudioClip* clip = spec.get_clip();
+    const bool isMove = spec.is_move();
+
+    clip->set_track(this);
+
+    // A move only changes the clip's track, the clip manager keeps knowing it.
+    auto doAction = [this, clip, isMove]() {
+        apply_clip_mutation({clip}, {});
+        if (!isMove) {
+            m_sheet->get_audioclip_manager()->add_clip(clip);
+        }
+    };
+
+    auto undoAction = [this, clip, isMove]() {
+        if (!isMove) {
+            m_sheet->get_audioclip_manager()->remove_clip(clip);
+        }
+        apply_clip_mutation({}, {clip});
+    };
 
     return new TAddRemoveCommand(
         this,
         clip,
         spec.is_historabel(),
         m_sheet,
-        [this, clip]() { apply_clip_mutation({clip}, {}); },
+        std::move(doAction),
         nullptr,
-        [this, clip]() { apply_clip_mutation({}, {clip}); },
+        std::move(undoAction),
         nullptr,
         tr("Add Clip")
         );
@@ -461,21 +474,24 @@ TCommand* TAudioTrack::add_clip(const TAudioClipAddRemoveSpec &spec)
 TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
 {
     PENTER;
-    if (!spec.is_move()) {
-        m_sheet->get_audioclip_manager()->remove_clip(spec.get_clip());
-    }
-
-    spec.get_clip()->removed_from_track();
     TAudioClip* clip = spec.get_clip();
+    const bool isMove = spec.is_move();
 
-    auto doAction = [this, clip]() {
+    // apply_clip_mutation() deactivates the clip's read source on removal
+    // and activates it again (via set_track()) when undo adds it back.
+    // A move only changes the clip's track, the clip manager keeps knowing it.
+    auto doAction = [this, clip, isMove]() {
+        if (!isMove) {
+            m_sheet->get_audioclip_manager()->remove_clip(clip);
+        }
         apply_clip_mutation({}, {clip});
     };
 
-    auto undoAction = [this, clip]() {
-        // removed_from_track() deactivated the clip's read source, set_track() activates it again
-        clip->set_track(this);
+    auto undoAction = [this, clip, isMove]() {
         apply_clip_mutation({clip}, {});
+        if (!isMove) {
+            m_sheet->get_audioclip_manager()->add_clip(clip);
+        }
     };
 
     return new TAddRemoveCommand(
