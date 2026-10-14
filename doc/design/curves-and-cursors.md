@@ -89,5 +89,14 @@ TSheetView::context_changed (no hold) → type Default + letter                 
 ## 6. Open questions (UX, for the user)
 1. Do the smart cursors help in practice? Is the context letter useful, and should it
    become an icon or short name instead of one ambiguous letter?
+   **Answer (2026-10-14):** for the user, yes; this may change when more users use
+   it. Keep them, make the context identity explicit (proposal 8).
 2. During a hold the system cursor is hidden and the canvas cursor is drawn: does that
    feel right with the mouse, and with the keyboard?
+   **Answer (2026-10-14):** the hardware cursor is shown only during development, to
+   see how the canvas cursor follows mouse input. In a distribution the canvas (or
+   QML) cursor is always the only cursor over the canvases, and the hardware cursor
+   is hidden, not only during holds. Today the code only hides it during a hold
+   (`TContextPointer::hold_start`, `QGuiApplication::setOverrideCursor(Qt::BlankCursor)`).
+   Proposal 10: hide the hardware cursor over the canvases at all times, with a
+   developer setting to show it.
