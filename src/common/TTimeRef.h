@@ -48,6 +48,8 @@ public:
     static TTimeRef cd_to_timeref_including_hours(QString str);
 
     static TTimeRef qtime_to_timeref(const QTime& time);
+    // Rounds to the nearest universal frame. Out of range values are clamped.
+    static TTimeRef seconds_to_timeref(double seconds);
     static QTime timeref_to_qtime(const TTimeRef& ref);
 
 

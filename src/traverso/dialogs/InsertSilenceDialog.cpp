@@ -84,7 +84,7 @@ void InsertSilenceDialog::accept()
         }
 
         // Appended to the end of the track
-        TTimeRef length = TTimeRef(lengthSpinBox->value() * TTimeRef::UNIVERSAL_SAMPLE_RATE);
+        TTimeRef length = TTimeRef::seconds_to_timeref(lengthSpinBox->value());
         TAudioClip* clip = TAudioClipFactory::create_silent(m_track, m_track->get_end_location(), length);
 
         QUndoCommand* command = sheet->create_command_mutate_clips({clip}, {}, tr("Insert Silence"));

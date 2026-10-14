@@ -4,6 +4,7 @@
 #include <QRegularExpression>
 
 #include <limits.h>
+#include <cmath>
 
 TTimeRef::TTimeRef() {
     m_universalFrame = 0;
@@ -184,6 +185,26 @@ TTimeRef TTimeRef::qtime_to_timeref(const QTime & time)
 {
     TTimeRef ref(time.hour() * TTimeRef::ONE_HOUR_UNIVERSAL_SAMPLE_RATE + time.minute() * TTimeRef::ONE_MINUTE_UNIVERSAL_SAMPLE_RATE + time.second() * TTimeRef::UNIVERSAL_SAMPLE_RATE + (time.msec() * TTimeRef::UNIVERSAL_SAMPLE_RATE) / 1000);
     return ref;
+}
+
+TTimeRef TTimeRef::seconds_to_timeref(double seconds)
+{
+    Q_ASSERT(std::isfinite(seconds));
+    if (!std::isfinite(seconds)) {
+        return TTimeRef();
+    }
+
+    // double(LLONG_MAX) is exactly 2^63, every smaller double fits in a qint64.
+    // LLONG_MIN is reserved for INVALID.
+    const double universalFrame = seconds * UNIVERSAL_SAMPLE_RATE;
+    if (universalFrame >= double(LLONG_MAX)) {
+        return TTimeRef(qint64(LLONG_MAX));
+    }
+    if (universalFrame <= -double(LLONG_MAX)) {
+        return TTimeRef(qint64(-LLONG_MAX));
+    }
+
+    return TTimeRef(qint64(std::llround(universalFrame)));
 }
 
 QTime TTimeRef::timeref_to_qtime(const TTimeRef& ref)
