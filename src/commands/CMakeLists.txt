@@ -10,7 +10,6 @@ add_library(traversocommands STATIC
     Fade.cpp
     TFaderCommand.cpp
     TFaderGroupCommand.cpp
-    TAudioFileImportCommand.cpp
     TFadeRangeCommand.cpp
     MoveClip.cpp
     MoveCurveNode.cpp
