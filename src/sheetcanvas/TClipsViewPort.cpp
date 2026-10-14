@@ -124,7 +124,6 @@ void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 void TClipsViewPort::dropEvent(QDropEvent* event )
 {
 	PENTER;
-	Q_UNUSED(event)
 	
 	if (!m_importTrack) {
 		return;
@@ -132,7 +131,10 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 
 	QList<TAudioClip*> clips;
 
-	TTimeRef startpos = TTimeRef(mapFromGlobal(QCursor::pos()).x() * m_sw->get_sheetview()->timeref_scalefactor);
+	// The drop position from the event, QCursor::pos() isn't reliable during D&D
+	// (e.g. on Wayland). Map it to the scene to take scrolling into account.
+	QPoint dropPos = event->position().toPoint();
+	TTimeRef startpos = TTimeRef(qRound(mapToScene(dropPos).x()) * m_sw->get_sheetview()->timeref_scalefactor);
 	
 	foreach(qint64 id, m_resourcesImport) {
 		TAudioClip* clip = resources_manager()->get_clip(id);
@@ -214,11 +216,9 @@ void TClipsViewPort::dragMoveEvent( QDragMoveEvent * event )
 	
 	m_importTrack = nullptr;
 	
-	// hmmm, code below is candidate for improvements...?
-	
-	// no mouse move events during D&D move events...
-	// So we need to calculate the scene pos ourselves.
-    QList<QGraphicsItem *> itemlist = items(mapFromGlobal(QCursor::pos()));
+	// Use the drag position from the event, there are no mouse move
+	// events during D&D and QCursor::pos() isn't reliable then
+    QList<QGraphicsItem *> itemlist = items(event->position().toPoint());
 	foreach(QGraphicsItem* obj, itemlist) {
 		TAudioTrackView* tv = dynamic_cast<TAudioTrackView*>(obj);
 		if (tv) {
