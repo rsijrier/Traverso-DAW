@@ -78,6 +78,7 @@ MoveTrack	class=TTrackView	base=MoveBase	usesbase=0	plugin=TraversoCommands	alwa
 MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackUp	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
 Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -208,7 +209,7 @@ MoveTrack	MINUS		MoveCommandSlower
 MoveTrack	S		MoveCommandToggleSnap
 MoveTrack	HOME		MoveTrackToTop
 MoveTrack	END		MoveTrackToBottom
-MoveTrack	UPARROW		MoveCommandUp
+MoveTrack	UPARROW		MoveTrackUp
 MoveTrack	DOWNARROW		MoveTrackDown
 MoveTrack	PAGEUP		MoveCommandFaster
 MoveTrack	PAGEDOWN		MoveCommandSlower
@@ -427,7 +428,6 @@ command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry AcceptHoldCommand is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
-keymap entry MoveTrackUp is not a known function
 keymap entry RejectHoldCommand is not a known function
 ## KEYMAP advanced
 # FUNCTIONS
@@ -509,6 +509,7 @@ MoveTrack	class=TTrackView	base=MoveBase	usesbase=1	plugin=TraversoCommands	alwa
 MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackUp	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
 Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -639,7 +640,7 @@ MoveTrack	MINUS		MoveCommandSlower
 MoveTrack	S		MoveCommandToggleSnap
 MoveTrack	HOME		MoveTrackToTop
 MoveTrack	END		MoveTrackToBottom
-MoveTrack	UPARROW		MoveCommandUp
+MoveTrack	UPARROW		MoveTrackUp
 MoveTrack	DOWNARROW		MoveTrackDown
 MoveTrack	PAGEUP		MoveCommandFaster
 MoveTrack	PAGEDOWN		MoveCommandSlower
@@ -857,5 +858,4 @@ command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry AcceptHoldCommand is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
-keymap entry MoveTrackUp is not a known function
 keymap entry RejectHoldCommand is not a known function

@@ -103,6 +103,7 @@ enum class TActionId : int {
     MoveCommandSpeed,
     MoveCommandToggleSnap,
     MoveCurveNodeToggleVerticalOnly,
+    MoveTrackUp,
     MoveTrackDown,
     MoveTrackToTop,
     MoveTrackToBottom,
@@ -265,6 +266,7 @@ struct TActions
     static constexpr TAction MoveCommandSpeed                      {TActionId::MoveCommandSpeed, "MoveCommandSpeed", QT_TRANSLATE_NOOP("TraversoCommands", "Moving Speed")};
     static constexpr TAction MoveCommandToggleSnap                 {TActionId::MoveCommandToggleSnap, "MoveCommandToggleSnap", QT_TRANSLATE_NOOP("TraversoCommands", "Snap On/Off")};
     static constexpr TAction MoveCurveNodeToggleVerticalOnly       {TActionId::MoveCurveNodeToggleVerticalOnly, "MoveCurveNodeToggleVerticalOnly", ""};
+    static constexpr TAction MoveTrackUp                           {TActionId::MoveTrackUp, "MoveTrackUp", QT_TRANSLATE_NOOP("TraversoCommands", "Move Up")};
     static constexpr TAction MoveTrackDown                         {TActionId::MoveTrackDown, "MoveTrackDown", QT_TRANSLATE_NOOP("TraversoCommands", "Move Down")};
     static constexpr TAction MoveTrackToTop                        {TActionId::MoveTrackToTop, "MoveTrackToTop", QT_TRANSLATE_NOOP("TraversoCommands", "To Top")};
     static constexpr TAction MoveTrackToBottom                     {TActionId::MoveTrackToBottom, "MoveTrackToBottom", QT_TRANSLATE_NOOP("TraversoCommands", "To Bottom")};
@@ -407,6 +409,7 @@ struct TActions
         MoveCommandSpeed,
         MoveCommandToggleSnap,
         MoveCurveNodeToggleVerticalOnly,
+        MoveTrackUp,
         MoveTrackDown,
         MoveTrackToTop,
         MoveTrackToBottom,

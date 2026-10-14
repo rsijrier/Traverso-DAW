@@ -324,6 +324,7 @@ void TraversoCommands::load(TShortCutManager* m)
 
     m->add_function<MoveCurveNode>(TActions::MoveCurveNodeToggleVerticalOnly, TActionGroups::ToggleVerticalBase, &MoveCurveNode::toggle_vertical_only);
 
+    m->add_function<MoveTrack>(TActions::MoveTrackUp, &MoveTrack::move_up);
     m->add_function<MoveTrack>(TActions::MoveTrackDown, &MoveTrack::move_down);
     m->add_function<MoveTrack>(TActions::MoveTrackToTop, &MoveTrack::to_top);
     m->add_function<MoveTrack>(TActions::MoveTrackToBottom, &MoveTrack::to_bottom);
