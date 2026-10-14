@@ -100,6 +100,13 @@ TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
     return function;
 }
 
+TShortCutFunction* TShortCutManager::add_dispatcher_function(const QMetaObject *metaObject, const TAction &action)
+{
+    TShortCutFunction* function = add_function(metaObject, action);
+    function->set_handled_by_dispatcher();
+    return function;
+}
+
 TShortCutFunction* TShortCutManager::get_shortcut_function_for_group(TActionGroupId group) const
 {
     auto function = m_groupShortCutFunctions.value(group);

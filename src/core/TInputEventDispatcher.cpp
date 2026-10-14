@@ -106,6 +106,19 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TShortCutFunction*
 
     m_contextPointer->restore_global_mouse_pos_after_context_menu_dispatch();
 
+    // Accept and reject work from the menu whatever their keys are
+    if (const TAction* action = function->get_action(); action && is_holding()) {
+        if (action->id == TActionId::RejectHoldCommand) {
+            m_cancelHold = true;
+            finish_hold();
+            return 1;
+        }
+        if (action->id == TActionId::AcceptHoldCommand) {
+            finish_hold();
+            return 1;
+        }
+    }
+
     QStringList keys = function->get_keys();
     if (!keys.size()) {
         return -1;
@@ -119,16 +132,6 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TShortCutFunction*
     }
 
     m_activeModifierKeys.append(function->get_modifier_keys());
-
-    if (function->get_command_name() == QString("RejectHoldCommand")) {
-        process_press_event(Qt::Key_Escape);
-        return 1;
-    }
-
-    if (function->get_command_name() == QString("AcceptHoldCommand")) {
-        process_press_event(Qt::Key_Enter);
-        return 1;
-    }
 
     dispatch_shortcut(shortCut, true);
 

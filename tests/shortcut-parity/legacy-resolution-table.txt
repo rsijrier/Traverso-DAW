@@ -1,5 +1,6 @@
 ## KEYMAP simplified
 # FUNCTIONS
+AcceptHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ENTER;RETURN	modifiers=	ownkeys=ENTER;RETURN	ownmodifiers=	description=Accept	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
@@ -92,6 +93,7 @@ PlayHeadMoveToStart	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	key
 PlayHeadMoveToWorkCursor	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=W	modifiers=16777248	ownkeys=W	ownmodifiers=16777248	description=To Work Cursor	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 PluginToggleBypass	class=TAudioPlugin	base=ToggleBypassBase	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ProjectSave	class=TProjectManager	base=	usesbase=0	plugin=	alwayssafe=1	keys=S	modifiers=16777249	ownkeys=S	ownmodifiers=16777249	description=Save Project	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RejectHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ESC	modifiers=	ownkeys=ESC	ownmodifiers=	description=Reject	submenu=	sortorder=21	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemoveClip	class=TAudioClip	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=BKSPACE;DELETE	ownmodifiers=	description=Remove AudioClip	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemoveCurveNode	class=TCurveView	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=BKSPACE;DELETE	ownmodifiers=	description=Remove Node(s)	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemovePlugin	class=TAudioPluginView	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Remove Plugin	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -156,11 +158,17 @@ ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssaf
 ArmTracks	PLUS		MoveCommandFaster
 ArmTracks	MINUS		MoveCommandSlower
 ArmTracks	S		MoveCommandToggleSnap
+ArmTracks	ESC		RejectHoldCommand
+ArmTracks	RETURN		AcceptHoldCommand
+ArmTracks	ENTER		AcceptHoldCommand
 ArmTracks	UPARROW		MoveCommandUp
 ArmTracks	DOWNARROW		MoveCommandDown
 ArmTracks	PAGEUP		MoveCommandFaster
 ArmTracks	PAGEDOWN		MoveCommandSlower
 ArmTracks	NUMERICAL		MoveCommandSpeed
+ArrowKeyBrowser	ESC		RejectHoldCommand
+ArrowKeyBrowser	RETURN		AcceptHoldCommand
+ArrowKeyBrowser	ENTER		AcceptHoldCommand
 ArrowKeyBrowser	LEFTARROW		ArrowKeyBrowserLeft
 ArrowKeyBrowser	UPARROW		ArrowKeyBrowserUp
 ArrowKeyBrowser	RIGHTARROW		ArrowKeyBrowserRight
@@ -168,12 +176,24 @@ ArrowKeyBrowser	DOWNARROW		ArrowKeyBrowserDown
 CorrelationMeterView	M		CorrelationMeterToggleDisplayRange
 CropClip	MOUSESCROLLVERTICALDOWN		CropClipAdjustLeft
 CropClip	MOUSESCROLLVERTICALUP		CropClipAdjustRight
+CropClip	ESC		RejectHoldCommand
+CropClip	RETURN		AcceptHoldCommand
+CropClip	ENTER		AcceptHoldCommand
 CropClip	LEFTARROW		CropClipAdjustLeft
 CropClip	RIGHTARROW		CropClipAdjustRight
+FadeBend	ESC		RejectHoldCommand
+FadeBend	RETURN		AcceptHoldCommand
+FadeBend	ENTER		AcceptHoldCommand
+FadeStrength	ESC		RejectHoldCommand
+FadeStrength	RETURN		AcceptHoldCommand
+FadeStrength	ENTER		AcceptHoldCommand
 MoveClip	PLUS		MoveCommandFaster
 MoveClip	MINUS		MoveCommandSlower
 MoveClip	L		MoveClipToggleVerticalOnly
 MoveClip	S		MoveCommandToggleSnap
+MoveClip	ESC		RejectHoldCommand
+MoveClip	RETURN		AcceptHoldCommand
+MoveClip	ENTER		AcceptHoldCommand
 MoveClip	UPARROW		MoveCommandUp
 MoveClip	DOWNARROW		MoveCommandDown
 MoveClip	PAGEUP		MoveCommandFaster
@@ -183,6 +203,9 @@ MoveCurveNode	PLUS		MoveCommandFaster
 MoveCurveNode	MINUS		MoveCommandSlower
 MoveCurveNode	L		MoveCurveNodeToggleVerticalOnly
 MoveCurveNode	S		MoveCommandToggleSnap
+MoveCurveNode	ESC		RejectHoldCommand
+MoveCurveNode	RETURN		AcceptHoldCommand
+MoveCurveNode	ENTER		AcceptHoldCommand
 MoveCurveNode	UPARROW		MoveCommandUp
 MoveCurveNode	DOWNARROW		MoveCommandDown
 MoveCurveNode	PAGEUP		MoveCommandFaster
@@ -191,6 +214,9 @@ MoveCurveNode	NUMERICAL		MoveCommandSpeed
 MoveEdge	PLUS		MoveCommandFaster
 MoveEdge	MINUS		MoveCommandSlower
 MoveEdge	S		MoveCommandToggleSnap
+MoveEdge	ESC		RejectHoldCommand
+MoveEdge	RETURN		AcceptHoldCommand
+MoveEdge	ENTER		AcceptHoldCommand
 MoveEdge	UPARROW		MoveCommandUp
 MoveEdge	DOWNARROW		MoveCommandDown
 MoveEdge	PAGEUP		MoveCommandFaster
@@ -199,14 +225,23 @@ MoveEdge	NUMERICAL		MoveCommandSpeed
 MoveMarker	PLUS		MoveCommandFaster
 MoveMarker	MINUS		MoveCommandSlower
 MoveMarker	S		MoveCommandToggleSnap
+MoveMarker	ESC		RejectHoldCommand
+MoveMarker	RETURN		AcceptHoldCommand
+MoveMarker	ENTER		AcceptHoldCommand
 MoveMarker	UPARROW		MoveCommandUp
 MoveMarker	DOWNARROW		MoveCommandDown
 MoveMarker	PAGEUP		MoveCommandFaster
 MoveMarker	PAGEDOWN		MoveCommandSlower
 MoveMarker	NUMERICAL		MoveCommandSpeed
+MovePlugin	ESC		RejectHoldCommand
+MovePlugin	RETURN		AcceptHoldCommand
+MovePlugin	ENTER		AcceptHoldCommand
 MoveTrack	PLUS		MoveCommandFaster
 MoveTrack	MINUS		MoveCommandSlower
 MoveTrack	S		MoveCommandToggleSnap
+MoveTrack	ESC		RejectHoldCommand
+MoveTrack	RETURN		AcceptHoldCommand
+MoveTrack	ENTER		AcceptHoldCommand
 MoveTrack	HOME		MoveTrackToTop
 MoveTrack	END		MoveTrackToBottom
 MoveTrack	UPARROW		MoveTrackUp
@@ -218,6 +253,9 @@ PlayHeadMove	PLUS		MoveCommandFaster
 PlayHeadMove	MINUS		MoveCommandSlower
 PlayHeadMove	S		MoveCommandToggleSnap
 PlayHeadMove	W	16777248	PlayHeadMoveToWorkCursor
+PlayHeadMove	ESC		RejectHoldCommand
+PlayHeadMove	RETURN		AcceptHoldCommand
+PlayHeadMove	ENTER		AcceptHoldCommand
 PlayHeadMove	HOME		PlayHeadMoveToStart
 PlayHeadMove	UPARROW		MoveCommandUp
 PlayHeadMove	DOWNARROW		MoveCommandDown
@@ -280,6 +318,9 @@ TBusTrack	DELETE		RemoveTrack
 TBusTrackView	D		MoveTrack
 TBusTrackView	E	16777249	EditTrackProperties
 TBusTrackView	F5		TrackAddPlugin
+TCommand	ESC		RejectHoldCommand
+TCommand	RETURN		AcceptHoldCommand
+TCommand	ENTER		AcceptHoldCommand
 TCurveView	MOUSEBUTTONLEFT		MoveCurveNodes
 TCurveView	A	16777249	CurveSelectAllNodes
 TCurveView	D		MoveCurveNodes
@@ -301,6 +342,9 @@ TFadeRangeCommand	PLUS		MoveCommandFaster
 TFadeRangeCommand	MINUS		MoveCommandSlower
 TFadeRangeCommand	R		FadeResetLength
 TFadeRangeCommand	S		MoveCommandToggleSnap
+TFadeRangeCommand	ESC		RejectHoldCommand
+TFadeRangeCommand	RETURN		AcceptHoldCommand
+TFadeRangeCommand	ENTER		AcceptHoldCommand
 TFadeRangeCommand	UPARROW		MoveCommandUp
 TFadeRangeCommand	DOWNARROW		MoveCommandDown
 TFadeRangeCommand	PAGEUP		MoveCommandFaster
@@ -310,6 +354,9 @@ TFaderGroupCommand	MOUSESCROLLVERTICALDOWN		GainDecrease
 TFaderGroupCommand	MOUSESCROLLVERTICALUP		GainIncrease
 TFaderGroupCommand	R		GainReset
 TFaderGroupCommand	S		GainToggleSelection
+TFaderGroupCommand	ESC		RejectHoldCommand
+TFaderGroupCommand	RETURN		AcceptHoldCommand
+TFaderGroupCommand	ENTER		AcceptHoldCommand
 TFaderGroupCommand	UPARROW		GainIncrease
 TFaderGroupCommand	DOWNARROW		GainDecrease
 TFaderGroupCommand	NUMERICAL		GainNumericalInput
@@ -330,6 +377,9 @@ TMoveBase	D		MoveBase
 TMoveCommand	PLUS		MoveCommandFaster
 TMoveCommand	MINUS		MoveCommandSlower
 TMoveCommand	S		MoveCommandToggleSnap
+TMoveCommand	ESC		RejectHoldCommand
+TMoveCommand	RETURN		AcceptHoldCommand
+TMoveCommand	ENTER		AcceptHoldCommand
 TMoveCommand	UPARROW		MoveCommandUp
 TMoveCommand	DOWNARROW		MoveCommandDown
 TMoveCommand	PAGEUP		MoveCommandFaster
@@ -399,6 +449,9 @@ TZoomCommand	MOUSESCROLLVERTICALDOWN		ZoomTrackVerticalIn
 TZoomCommand	MOUSESCROLLVERTICALUP		ZoomTrackVerticalOut
 TZoomCommand	E		ZoomToggleExpandAllTracks
 TZoomCommand	L		ZoomToggleVerticalHorizontal
+TZoomCommand	ESC		RejectHoldCommand
+TZoomCommand	RETURN		AcceptHoldCommand
+TZoomCommand	ENTER		AcceptHoldCommand
 TZoomCommand	LEFTARROW		ZoomOut
 TZoomCommand	UPARROW		ZoomTrackVerticalOut
 TZoomCommand	RIGHTARROW		ZoomIn
@@ -407,6 +460,9 @@ TZoomCommand	NUMERICAL		ZoomNumericalInput
 TrackPan	MOUSESCROLLVERTICALDOWN		TrackPanLeft
 TrackPan	MOUSESCROLLVERTICALUP		TrackPanRight
 TrackPan	R		TrackPanReset
+TrackPan	ESC		RejectHoldCommand
+TrackPan	RETURN		AcceptHoldCommand
+TrackPan	ENTER		AcceptHoldCommand
 TrackPan	LEFTARROW		TrackPanLeft
 TrackPan	RIGHTARROW		TrackPanRight
 TrackPanelGain	MOUSESCROLLVERTICALDOWN		TrackPanelGainIncrement
@@ -416,6 +472,9 @@ WorkCursorMove	SPACE	16777248	WorkCursorMoveToPlayhead
 WorkCursorMove	PLUS		MoveCommandFaster
 WorkCursorMove	MINUS		MoveCommandSlower
 WorkCursorMove	S		MoveCommandToggleSnap
+WorkCursorMove	ESC		RejectHoldCommand
+WorkCursorMove	RETURN		AcceptHoldCommand
+WorkCursorMove	ENTER		AcceptHoldCommand
 WorkCursorMove	HOME	16777251	WorkCursorMoveToStart
 WorkCursorMove	UPARROW		MoveCommandUp
 WorkCursorMove	DOWNARROW		MoveCommandDown
@@ -425,12 +484,11 @@ WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
 command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
-keymap entry AcceptHoldCommand is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
-keymap entry RejectHoldCommand is not a known function
 ## KEYMAP advanced
 # FUNCTIONS
+AcceptHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ENTER;RETURN	modifiers=	ownkeys=ENTER;RETURN	ownmodifiers=	description=Accept	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
@@ -523,6 +581,7 @@ PlayHeadMoveToStart	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	key
 PlayHeadMoveToWorkCursor	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=W	modifiers=	ownkeys=W	ownmodifiers=	description=To Work Cursor	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 PluginToggleBypass	class=TAudioPlugin	base=ToggleBypassBase	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ProjectSave	class=TProjectManager	base=	usesbase=0	plugin=	alwayssafe=1	keys=S	modifiers=16777249	ownkeys=S	ownmodifiers=16777249	description=Save Project	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RejectHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ESC	modifiers=	ownkeys=ESC	ownmodifiers=	description=Reject	submenu=	sortorder=21	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemoveClip	class=TAudioClip	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Remove AudioClip	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemoveCurveNode	class=TCurveView	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Remove Node(s)	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 RemovePlugin	class=TAudioPluginView	base=DeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Remove Plugin	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -587,11 +646,17 @@ ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssaf
 ArmTracks	PLUS		MoveCommandFaster
 ArmTracks	MINUS		MoveCommandSlower
 ArmTracks	S		MoveCommandToggleSnap
+ArmTracks	ESC		RejectHoldCommand
+ArmTracks	RETURN		AcceptHoldCommand
+ArmTracks	ENTER		AcceptHoldCommand
 ArmTracks	UPARROW		MoveCommandUp
 ArmTracks	DOWNARROW		MoveCommandDown
 ArmTracks	PAGEUP		MoveCommandFaster
 ArmTracks	PAGEDOWN		MoveCommandSlower
 ArmTracks	NUMERICAL		MoveCommandSpeed
+ArrowKeyBrowser	ESC		RejectHoldCommand
+ArrowKeyBrowser	RETURN		AcceptHoldCommand
+ArrowKeyBrowser	ENTER		AcceptHoldCommand
 ArrowKeyBrowser	LEFTARROW		ArrowKeyBrowserLeft
 ArrowKeyBrowser	UPARROW		ArrowKeyBrowserUp
 ArrowKeyBrowser	RIGHTARROW		ArrowKeyBrowserRight
@@ -599,12 +664,24 @@ ArrowKeyBrowser	DOWNARROW		ArrowKeyBrowserDown
 CorrelationMeterView	M		CorrelationMeterToggleDisplayRange
 CropClip	MOUSESCROLLVERTICALDOWN		CropClipAdjustLeft
 CropClip	MOUSESCROLLVERTICALUP		CropClipAdjustRight
+CropClip	ESC		RejectHoldCommand
+CropClip	RETURN		AcceptHoldCommand
+CropClip	ENTER		AcceptHoldCommand
 CropClip	LEFTARROW		CropClipAdjustLeft
 CropClip	RIGHTARROW		CropClipAdjustRight
+FadeBend	ESC		RejectHoldCommand
+FadeBend	RETURN		AcceptHoldCommand
+FadeBend	ENTER		AcceptHoldCommand
+FadeStrength	ESC		RejectHoldCommand
+FadeStrength	RETURN		AcceptHoldCommand
+FadeStrength	ENTER		AcceptHoldCommand
 MoveClip	PLUS		MoveCommandFaster
 MoveClip	MINUS		MoveCommandSlower
 MoveClip	S		MoveCommandToggleSnap
 MoveClip	V		MoveClipToggleVerticalOnly
+MoveClip	ESC		RejectHoldCommand
+MoveClip	RETURN		AcceptHoldCommand
+MoveClip	ENTER		AcceptHoldCommand
 MoveClip	UPARROW		MoveCommandUp
 MoveClip	DOWNARROW		MoveCommandDown
 MoveClip	PAGEUP		MoveCommandFaster
@@ -614,6 +691,9 @@ MoveCurveNode	PLUS		MoveCommandFaster
 MoveCurveNode	MINUS		MoveCommandSlower
 MoveCurveNode	S		MoveCommandToggleSnap
 MoveCurveNode	V		MoveCurveNodeToggleVerticalOnly
+MoveCurveNode	ESC		RejectHoldCommand
+MoveCurveNode	RETURN		AcceptHoldCommand
+MoveCurveNode	ENTER		AcceptHoldCommand
 MoveCurveNode	UPARROW		MoveCommandUp
 MoveCurveNode	DOWNARROW		MoveCommandDown
 MoveCurveNode	PAGEUP		MoveCommandFaster
@@ -622,6 +702,9 @@ MoveCurveNode	NUMERICAL		MoveCommandSpeed
 MoveEdge	PLUS		MoveCommandFaster
 MoveEdge	MINUS		MoveCommandSlower
 MoveEdge	S		MoveCommandToggleSnap
+MoveEdge	ESC		RejectHoldCommand
+MoveEdge	RETURN		AcceptHoldCommand
+MoveEdge	ENTER		AcceptHoldCommand
 MoveEdge	UPARROW		MoveCommandUp
 MoveEdge	DOWNARROW		MoveCommandDown
 MoveEdge	PAGEUP		MoveCommandFaster
@@ -630,14 +713,23 @@ MoveEdge	NUMERICAL		MoveCommandSpeed
 MoveMarker	PLUS		MoveCommandFaster
 MoveMarker	MINUS		MoveCommandSlower
 MoveMarker	S		MoveCommandToggleSnap
+MoveMarker	ESC		RejectHoldCommand
+MoveMarker	RETURN		AcceptHoldCommand
+MoveMarker	ENTER		AcceptHoldCommand
 MoveMarker	UPARROW		MoveCommandUp
 MoveMarker	DOWNARROW		MoveCommandDown
 MoveMarker	PAGEUP		MoveCommandFaster
 MoveMarker	PAGEDOWN		MoveCommandSlower
 MoveMarker	NUMERICAL		MoveCommandSpeed
+MovePlugin	ESC		RejectHoldCommand
+MovePlugin	RETURN		AcceptHoldCommand
+MovePlugin	ENTER		AcceptHoldCommand
 MoveTrack	PLUS		MoveCommandFaster
 MoveTrack	MINUS		MoveCommandSlower
 MoveTrack	S		MoveCommandToggleSnap
+MoveTrack	ESC		RejectHoldCommand
+MoveTrack	RETURN		AcceptHoldCommand
+MoveTrack	ENTER		AcceptHoldCommand
 MoveTrack	HOME		MoveTrackToTop
 MoveTrack	END		MoveTrackToBottom
 MoveTrack	UPARROW		MoveTrackUp
@@ -649,6 +741,9 @@ PlayHeadMove	PLUS		MoveCommandFaster
 PlayHeadMove	MINUS		MoveCommandSlower
 PlayHeadMove	S		MoveCommandToggleSnap
 PlayHeadMove	W		PlayHeadMoveToWorkCursor
+PlayHeadMove	ESC		RejectHoldCommand
+PlayHeadMove	RETURN		AcceptHoldCommand
+PlayHeadMove	ENTER		AcceptHoldCommand
 PlayHeadMove	HOME		PlayHeadMoveToStart
 PlayHeadMove	UPARROW		MoveCommandUp
 PlayHeadMove	DOWNARROW		MoveCommandDown
@@ -710,6 +805,9 @@ TBusTrackView	MOUSEBUTTONLEFT		MoveTrack
 TBusTrackView	D		MoveTrack
 TBusTrackView	E	16777249	EditTrackProperties
 TBusTrackView	F5		TrackAddPlugin
+TCommand	ESC		RejectHoldCommand
+TCommand	RETURN		AcceptHoldCommand
+TCommand	ENTER		AcceptHoldCommand
 TCurveView	MOUSEBUTTONLEFT		MoveCurveNodes
 TCurveView	A	16777249	CurveSelectAllNodes
 TCurveView	D		MoveCurveNodes
@@ -729,6 +827,9 @@ TFadeRangeCommand	PLUS		MoveCommandFaster
 TFadeRangeCommand	MINUS		MoveCommandSlower
 TFadeRangeCommand	R		FadeResetLength
 TFadeRangeCommand	S		MoveCommandToggleSnap
+TFadeRangeCommand	ESC		RejectHoldCommand
+TFadeRangeCommand	RETURN		AcceptHoldCommand
+TFadeRangeCommand	ENTER		AcceptHoldCommand
 TFadeRangeCommand	UPARROW		MoveCommandUp
 TFadeRangeCommand	DOWNARROW		MoveCommandDown
 TFadeRangeCommand	PAGEUP		MoveCommandFaster
@@ -738,6 +839,9 @@ TFaderGroupCommand	MOUSESCROLLVERTICALDOWN		GainDecrease
 TFaderGroupCommand	MOUSESCROLLVERTICALUP		GainIncrease
 TFaderGroupCommand	R		GainReset
 TFaderGroupCommand	S		GainToggleSelection
+TFaderGroupCommand	ESC		RejectHoldCommand
+TFaderGroupCommand	RETURN		AcceptHoldCommand
+TFaderGroupCommand	ENTER		AcceptHoldCommand
 TFaderGroupCommand	UPARROW		GainIncrease
 TFaderGroupCommand	DOWNARROW		GainDecrease
 TFaderGroupCommand	NUMERICAL		GainNumericalInput
@@ -757,6 +861,9 @@ TMoveBase	D		MoveBase
 TMoveCommand	PLUS		MoveCommandFaster
 TMoveCommand	MINUS		MoveCommandSlower
 TMoveCommand	S		MoveCommandToggleSnap
+TMoveCommand	ESC		RejectHoldCommand
+TMoveCommand	RETURN		AcceptHoldCommand
+TMoveCommand	ENTER		AcceptHoldCommand
 TMoveCommand	UPARROW		MoveCommandUp
 TMoveCommand	DOWNARROW		MoveCommandDown
 TMoveCommand	PAGEUP		MoveCommandFaster
@@ -829,6 +936,9 @@ TZoomCommand	MOUSESCROLLVERTICALDOWN		ZoomTrackVerticalIn
 TZoomCommand	MOUSESCROLLVERTICALUP		ZoomTrackVerticalOut
 TZoomCommand	E		ZoomToggleExpandAllTracks
 TZoomCommand	V		ZoomToggleVerticalHorizontal
+TZoomCommand	ESC		RejectHoldCommand
+TZoomCommand	RETURN		AcceptHoldCommand
+TZoomCommand	ENTER		AcceptHoldCommand
 TZoomCommand	LEFTARROW		ZoomOut
 TZoomCommand	UPARROW		ZoomTrackVerticalOut
 TZoomCommand	RIGHTARROW		ZoomIn
@@ -837,6 +947,9 @@ TZoomCommand	NUMERICAL		ZoomNumericalInput
 TrackPan	MOUSESCROLLVERTICALDOWN		TrackPanLeft
 TrackPan	MOUSESCROLLVERTICALUP		TrackPanRight
 TrackPan	R		TrackPanReset
+TrackPan	ESC		RejectHoldCommand
+TrackPan	RETURN		AcceptHoldCommand
+TrackPan	ENTER		AcceptHoldCommand
 TrackPan	LEFTARROW		TrackPanLeft
 TrackPan	RIGHTARROW		TrackPanRight
 TrackPanelGain	MOUSESCROLLVERTICALDOWN		TrackPanelGainIncrement
@@ -846,6 +959,9 @@ WorkCursorMove	PLUS		MoveCommandFaster
 WorkCursorMove	MINUS		MoveCommandSlower
 WorkCursorMove	S		MoveCommandToggleSnap
 WorkCursorMove	V		WorkCursorMoveToPlayhead
+WorkCursorMove	ESC		RejectHoldCommand
+WorkCursorMove	RETURN		AcceptHoldCommand
+WorkCursorMove	ENTER		AcceptHoldCommand
 WorkCursorMove	HOME		WorkCursorMoveToStart
 WorkCursorMove	UPARROW		MoveCommandUp
 WorkCursorMove	DOWNARROW		MoveCommandDown
@@ -855,7 +971,5 @@ WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
 command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
-keymap entry AcceptHoldCommand is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
-keymap entry RejectHoldCommand is not a known function

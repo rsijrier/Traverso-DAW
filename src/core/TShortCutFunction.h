@@ -74,6 +74,9 @@ public:
     bool uses_y() const {return m_useY;}
     bool always_safe_to_dispatch() const {return m_alwaysSafeToDispatch;}
     bool plugin_based() const {return !m_pluginname.isEmpty();}
+    // Handled by the input event dispatcher itself, e.g. accepting a hold
+    bool handled_by_dispatcher() const {return m_handledByDispatcher;}
+    void set_handled_by_dispatcher() {m_handledByDispatcher = true;}
 
     void set_group(const TActionGroup* group)
     {
@@ -118,8 +121,8 @@ public:
     }
     bool dispatch(QObject* object) {
         PENTER;
-        Q_ASSERT(m_invoker);
         if (!m_invoker) {
+            Q_ASSERT(m_handledByDispatcher);
             return false;
         }
         m_invoker(object);
@@ -150,6 +153,7 @@ private:
     bool                m_autoRepeatsOnItself{false};
     bool                m_usesBaseFunction{false};
     bool                m_alwaysSafeToDispatch{false};
+    bool                m_handledByDispatcher{false};
 
     int                 m_sortorder{0};
     int                 m_autorepeatInterval{-1};

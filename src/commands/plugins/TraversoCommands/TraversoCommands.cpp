@@ -301,6 +301,10 @@ void TraversoCommands::load(TShortCutManager* m)
     m->add_function<TMainWindow>(TActions::MainWindowShowProjectManagementDialog, &TMainWindow::show_project_manager_dialog);
     m->add_function<TMainWindow>(TActions::ShowHelp, &TMainWindow::quick_start);
 
+    // Shown in the context menu of every hold command
+    m->add_dispatcher_function(&TCommand::staticMetaObject, TActions::AcceptHoldCommand);
+    m->add_dispatcher_function(&TCommand::staticMetaObject, TActions::RejectHoldCommand);
+
     m->add_function<MoveClip>(TActions::MoveClipToggleVerticalOnly, TActionGroups::ToggleVerticalBase, &MoveClip::toggle_vertical_only);
 
     // m->add_function(&TMoveCommand::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");

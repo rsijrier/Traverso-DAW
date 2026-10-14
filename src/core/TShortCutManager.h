@@ -59,6 +59,9 @@ public:
     // group is shown as in the shortcut editor and help.
     TShortCutFunction* add_group(const TActionGroup &group, const QMetaObject *itemMetaObject);
     TShortCutFunction* add_function(const QMetaObject *metaObject, const TAction &action);
+    // A function the input event dispatcher handles itself, shown in the
+    // menus and help of class metaObject, e.g. accepting a hold
+    TShortCutFunction* add_dispatcher_function(const QMetaObject *metaObject, const TAction &action);
     TShortCutFunction* get_shortcut_function_for_group(TActionGroupId group) const;
 
     // Registers method of class T as a shortcut function. A method that does

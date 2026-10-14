@@ -152,6 +152,8 @@ enum class TActionId : int {
     ZoomToggleVerticalHorizontal,
     FadeLength,
     ZoomVertical,
+    AcceptHoldCommand,
+    RejectHoldCommand,
     Count
 };
 
@@ -315,6 +317,8 @@ struct TActions
     static constexpr TAction ZoomToggleVerticalHorizontal          {TActionId::ZoomToggleVerticalHorizontal, "ZoomToggleVerticalHorizontal", ""};
     static constexpr TAction FadeLength                            {TActionId::FadeLength, "FadeLength", QT_TRANSLATE_NOOP("TraversoCommands", "Length")};
     static constexpr TAction ZoomVertical                          {TActionId::ZoomVertical, "ZoomVertical", QT_TRANSLATE_NOOP("TraversoCommands", "Zoom Vertical")};
+    static constexpr TAction AcceptHoldCommand                     {TActionId::AcceptHoldCommand, "AcceptHoldCommand", QT_TRANSLATE_NOOP("TraversoCommands", "Accept")};
+    static constexpr TAction RejectHoldCommand                     {TActionId::RejectHoldCommand, "RejectHoldCommand", QT_TRANSLATE_NOOP("TraversoCommands", "Reject")};
 
     static constexpr std::array All{
         ArrowKeyBrowserStartUp,
@@ -458,6 +462,8 @@ struct TActions
         ZoomToggleVerticalHorizontal,
         FadeLength,
         ZoomVertical,
+        AcceptHoldCommand,
+        RejectHoldCommand,
     };
 };
 
