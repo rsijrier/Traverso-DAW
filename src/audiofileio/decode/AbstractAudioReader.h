@@ -50,8 +50,23 @@ public:
 	virtual void clear_buffers() {}
 	
     static std::unique_ptr<AbstractAudioReader> create_audio_reader(const QString& filename);
+
+    // True if one of the readers can decode filename. The file is only probed,
+    // no reader or other resources are kept, and nothing is logged.
+    static bool can_decode(const QString& filename);
 	
 protected:
+	enum class Decoder {
+		None,
+		SndFile,
+		WavPack,
+		Faad,
+		Mad
+	};
+
+	// The reader that can decode filename, tried in order of preference
+	static Decoder find_decoder(const QString& filename);
+
 	virtual bool seek_private(nframes_t start) = 0;
     virtual nframes_t read_private(TFileIOBuffer &buffer, nframes_t frameCount) = 0;
 	

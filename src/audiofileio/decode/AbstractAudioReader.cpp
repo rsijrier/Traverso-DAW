@@ -124,24 +124,54 @@ nframes_t AbstractAudioReader::read(TFileIOBuffer &buffer, nframes_t count)
 }
 
 
+AbstractAudioReader::Decoder AbstractAudioReader::find_decoder(const QString& filename)
+{
+    if (SFAudioReader::can_decode(filename)) {
+        return Decoder::SndFile;
+    }
+    if (WPAudioReader::can_decode(filename)) {
+        return Decoder::WavPack;
+    }
+#if defined M4A_DECODE_SUPPORT
+    if (FaadAudioReader::can_decode(filename)) {
+        return Decoder::Faad;
+    }
+#endif
+    if (MadAudioReader::can_decode(filename)) {
+        return Decoder::Mad;
+    }
+    return Decoder::None;
+}
+
+bool AbstractAudioReader::can_decode(const QString& filename)
+{
+    return find_decoder(filename) != Decoder::None;
+}
+
 // Static method used by other classes to get an AudioReader for the correct file type
 std::unique_ptr<AbstractAudioReader> AbstractAudioReader::create_audio_reader(const QString& filename)
 {
     std::unique_ptr<AbstractAudioReader> newReader;
 
-    if (SFAudioReader::can_decode(filename)) {
+    switch (find_decoder(filename)) {
+    case Decoder::SndFile:
         newReader = std::unique_ptr<AbstractAudioReader>(new SFAudioReader(filename));
-    } else if (WPAudioReader::can_decode(filename)) {
+        break;
+    case Decoder::WavPack:
         newReader = std::unique_ptr<AbstractAudioReader>(new WPAudioReader(filename));
+        break;
+    case Decoder::Faad:
 #if defined M4A_DECODE_SUPPORT
-    } else if (FaadAudioReader::can_decode(filename)) {
         newReader = std::unique_ptr<AbstractAudioReader>(new FaadAudioReader(filename));
 #endif
-    } else if (MadAudioReader::can_decode(filename)) {
+        break;
+    case Decoder::Mad:
         newReader = std::unique_ptr<AbstractAudioReader>(new MadAudioReader(filename));
-    } else {
+        break;
+    case Decoder::None:
         // Audio Format not supported by sndfile and not a wavpack
         PERROR(QString("File format not supported %1").arg(filename));
+        break;
     }
 
 
