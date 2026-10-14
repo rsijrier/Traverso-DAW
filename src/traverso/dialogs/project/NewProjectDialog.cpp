@@ -52,7 +52,7 @@
 #include <TAudioTrack.h>
 #include <Utils.h>
 #include <CommandGroup.h>
-#include "TAudioFileImportCommand.h"
+#include "TAudioClipFactory.h"
 #include "TAudioFileCopyConvert.h"
 #include "TBufferedAudioStreamReader.h"
 
@@ -348,15 +348,21 @@ void NewProjectDialog::load_file(const QString &fileName, int i, QString trackna
                 return;
         }
 
-    TAudioFileImportCommand* import = new TAudioFileImportCommand(track);
-    import->set_file_name(fileName);
     printf("renaming track to %s\n", trackname.toLatin1().data());
     track->set_name(trackname);
-	import->set_track(track);
-    import->set_import_location(TTimeRef());
-	if (import->create_readsource() != -1) {
-		TCommand::process_command(import);
-	}
+
+    TAudioClip* clip = TAudioClipFactory::create_from_file(track, fileName, TTimeRef());
+    if (!clip) {
+        return;
+    }
+
+    QUndoCommand* command = sheet->create_command_mutate_clips({clip}, {}, tr("Import Audio File"));
+    if (QUndoStack* undoStack = sheet->get_history_stack()) {
+        undoStack->push(command);
+    } else {
+        command->redo();
+        delete command;
+    }
 }
 
 void NewProjectDialog::move_up()
