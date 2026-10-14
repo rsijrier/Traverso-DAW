@@ -917,12 +917,11 @@ void TSheet::prepare_recording()
         return;
     }
 
-    CommandGroup* commandGroup = new CommandGroup(this, "");
     QList<TAudioTrack*> armedTracks;
+    QList<TAudioClip*> newClips;
 
     if (m_bounceTrack->armed()) {
         armedTracks.append(m_bounceTrack);
-        commandGroup->setText(tr("Bouncing"));
     } else {
         armedTracks = get_armed_tracks();
     }
@@ -940,25 +939,28 @@ void TSheet::prepare_recording()
         // session is finished, at which time an autosave makes sense.
         connect(clip, &TAudioClip::recordingFinished, this, &TSheet::clip_finished_recording);
         m_recordingClips.append(clip);
-
-        TAudioClipAddRemoveSpec spec;
-        spec.set_clip(clip);
-        spec.set_is_historable(true);
-        spec.set_is_move(false);
-        commandGroup->add_command(clip->get_track()->add_clip(spec));
+        newClips.append(clip);
     }
 
     if (m_recordingClips.size() == 0) {
         tInformUser().warning(tr("Failed to create Bounce recording source"));
-        commandGroup->deleteLater();
         return;
     }
 
-    if (!m_bounceTrack->armed()) {
-        commandGroup->setText(tr("Recording to %n Clip(s)", "", m_recordingClips.size()));
-    }
+    if (!newClips.isEmpty()) {
+        QString description = m_bounceTrack->armed() ? tr("Bouncing")
+                                                     : tr("Recording to %n Clip(s)", "", m_recordingClips.size());
 
-    TCommand::process_command(commandGroup);
+        // All new clips, on all armed tracks, in one undo step
+        QUndoCommand* command = create_command_mutate_clips(newClips, {}, description);
+
+        if (QUndoStack* undoStack = get_history_stack()) {
+            undoStack->push(command);
+        } else {
+            command->redo();
+            delete command;
+        }
+    }
 
     m_readyToRecord = true;
 }
