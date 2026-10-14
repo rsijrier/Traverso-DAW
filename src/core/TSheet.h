@@ -64,7 +64,7 @@ public:
     QList<TAudioTrack*> get_armed_tracks() const;
 
     TAudioTrack* get_audio_track_for_index(int index);
-    int get_audio_track_count() const {return m_audioTracks.size();}
+    int get_audio_track_count() const {return m_audioTracks.items().size();}
 
     TProject* get_project() const {return m_project;}
     void add_audio_source_to_diskio(TBufferedAudioStreamReader *source) const;

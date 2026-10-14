@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "TSession.h"
+#include "TRealTimeLinkedList.h"
 #include "TProcessCallBackData.h"
 
 class AudioBus;

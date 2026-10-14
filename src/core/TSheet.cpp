@@ -83,12 +83,13 @@ TSheet::TSheet(TProject* project, int numtracks)
 
     init();
 
+    TRtTransaction transaction;
+
     for (int i=1; i <= numtracks; i++) {
         int height = TAudioTrack::INITIAL_HEIGHT;
         QString trackname = QString("Audio Track %1").arg(i);
         TAudioTrack* track = new TAudioTrack(this, trackname, height);
         private_add_track(track);
-        private_track_added(track);
     }
 
     resize_buffers(audiodevice().get_buffer_size());
@@ -182,6 +183,9 @@ int TSheet::set_state( const QDomNode & node )
 {
     PENTER;
 
+    // All tracks and clips of the sheet reach the audio thread as one change
+    TRtTransaction transaction;
+
     QDomNode propertiesNode = node.firstChildElement("Properties");
     QDomElement e = propertiesNode.toElement();
 
@@ -219,7 +223,6 @@ int TSheet::set_state( const QDomNode & node )
         TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
         busTrack->set_state(busTrackNode);
         private_add_track(busTrack);
-        private_track_added(busTrack);
 
         busTrackNode = busTrackNode.nextSibling();
     }
@@ -229,9 +232,8 @@ int TSheet::set_state( const QDomNode & node )
 
     while(!trackNode.isNull()) {
         TAudioTrack* track = new TAudioTrack(this, trackNode);
-        private_add_track(track);
         track->set_state(trackNode);
-        private_track_added(track);
+        private_add_track(track);
 
         trackNode = trackNode.nextSibling();
     }
@@ -284,7 +286,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
 
     QDomNode tracksNode = doc.createElement("Tracks");
 
-    foreach(TAudioTrack* track, m_audioTracks) {
+    foreach(TAudioTrack* track, m_audioTracks.items()) {
         tracksNode.appendChild(track->get_state(doc, istemplate));
     }
 
@@ -292,7 +294,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
 
 
     QDomNode busTracksNode = doc.createElement("BusTracks");
-    foreach(TBusTrack* busTrack, m_busTracks) {
+    foreach(TBusTrack* busTrack, m_busTracks.items()) {
         busTracksNode.appendChild(busTrack->get_state(doc, istemplate));
     }
 
@@ -355,7 +357,7 @@ bool TSheet::get_export_range(TTimeRef &exportStartLocation, TTimeRef &exportEnd
     if (soloTracks.size() > 0) {
         tracksToExport = soloTracks;
     } else {
-        tracksToExport = m_audioTracks;
+        tracksToExport = m_audioTracks.items();
     }
 
     TTimeRef trackExportStartlocation;
@@ -532,7 +534,7 @@ int TSheet::process(TProcessCallBackData &processData)
     processData.set_ringbuffer_read_bus(m_clipRenderBus);
 
     // Process all Tracks.
-    for(TAudioTrack* track = m_rtAudioTracks.first(); track != nullptr; track = track->next) {
+    for(TAudioTrack* track : m_audioTracks.rt_items()) {
         processResult |= track->process(processData);
     }
 
@@ -549,7 +551,7 @@ int TSheet::process(TProcessCallBackData &processData)
         return 0;
     }
 
-    for(TBusTrack* busTrack = m_rtBusTracks.first(); busTrack != nullptr; busTrack = busTrack->next) {
+    for(TBusTrack* busTrack : m_busTracks.rt_items()) {
         busTrack->process(processData);
     }
 
@@ -1004,12 +1006,12 @@ void TSheet::config_changed()
 
 QList< TAudioTrack * > TSheet::get_audio_tracks() const
 {
-    return m_audioTracks;
+    return m_audioTracks.items();
 }
 
 TAudioTrack * TSheet::get_audio_track_for_index(int index)
 {
-    for(TAudioTrack* track : m_audioTracks) {
+    for(TAudioTrack* track : m_audioTracks.items()) {
         if (track->get_sort_index() == index) {
             return track;
         }
@@ -1057,7 +1059,7 @@ bool TSheet::get_write_diskio_cpu_time(float &time)
 QList<TAudioTrack *> TSheet::get_solo_tracks() const
 {
     QList<TAudioTrack*> soloTracks;
-    for(auto track : m_audioTracks) {
+    for(auto track : m_audioTracks.items()) {
         if (track->is_solo()) {
             soloTracks.append(track);
         }
@@ -1068,7 +1070,7 @@ QList<TAudioTrack *> TSheet::get_solo_tracks() const
 QList<TAudioTrack *> TSheet::get_armed_tracks() const
 {
     QList<TAudioTrack*> armedTracks;
-    for(auto track : m_audioTracks) {
+    for(auto track : m_audioTracks.items()) {
         if (track->armed()) {
             armedTracks.append(track);
         }

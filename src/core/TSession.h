@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TAudioBuffer.h"
 #include "TLocation.h"
-#include "TRealTimeLinkedList.h"
+#include "TRtList.h"
 #include "defines.h"
 #include "TTimeRef.h"
 
@@ -101,10 +101,8 @@ public:
 protected:
 	TSession*               m_parentSession;
 	QList<TSession*>        m_childSessions;
-    TRealTimeLinkedList<TAudioTrack*>           m_rtAudioTracks;
-    TRealTimeLinkedList<TBusTrack*>           m_rtBusTracks;
-	QList<TAudioTrack*>      m_audioTracks;
-	QList<TBusTrack*>       m_busTracks;
+    TRtList<TAudioTrack>    m_audioTracks;
+    TRtList<TBusTrack>      m_busTracks;
 	QHash<qint64, TTrack* >	m_tracks;
     TBusTrack*              m_masterOutBusTrack;
     TBounceTrack*           m_bounceTrack;
@@ -149,16 +147,12 @@ public slots:
 	TCommand* toggle_arm();
 	virtual TCommand* start_transport();
 
-protected slots:
+protected:
 	void private_add_track(TTrack* track);
 	void private_remove_track(TTrack* track);
-	void private_track_added(TTrack* track);
-	void private_track_removed(TTrack* track);
 
 
 signals:
-	void privateTrackRemoved(TTrack*);
-	void privateTrackAdded(TTrack*);
 	void trackRemoved(TTrack* );
 	void trackAdded(TTrack* );
 	void sessionAdded(TSession*);

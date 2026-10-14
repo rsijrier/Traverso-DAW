@@ -406,13 +406,16 @@ int TProject::load(const QString& projectfile)
     QDomNode busTracksNode = docElem.firstChildElement("BusTracks");
     QDomNode busTrackNode = busTracksNode.firstChild();
 
-    while(!busTrackNode.isNull()) {
-        TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
-        busTrack->set_state(busTrackNode);
-        private_add_track(busTrack);
-        private_track_added(busTrack);
+    {
+        TRtTransaction transaction;
 
-        busTrackNode = busTrackNode.nextSibling();
+        while(!busTrackNode.isNull()) {
+            TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
+            busTrack->set_state(busTrackNode);
+            private_add_track(busTrack);
+
+            busTrackNode = busTrackNode.nextSibling();
+        }
     }
 
     // Load all the AudioSources for this project
@@ -632,7 +635,7 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
 
 
     QDomNode busTracksNode = doc.createElement("BusTracks");
-    foreach(TBusTrack* busTrack, m_busTracks) {
+    foreach(TBusTrack* busTrack, m_busTracks.items()) {
         busTracksNode.appendChild(busTrack->get_state(doc, istemplate));
     }
 
@@ -1627,7 +1630,7 @@ int TProject::process(TProcessCallBackData &processData)
     }
 
 
-    for(TBusTrack* busTrack = m_rtBusTracks.first(); busTrack != nullptr; busTrack = busTrack->next) {
+    for(TBusTrack* busTrack : m_busTracks.rt_items()) {
         busTrack->process(processData);
     }
 
