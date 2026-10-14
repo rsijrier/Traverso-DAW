@@ -624,7 +624,7 @@ void TShortCutManager::write_resolution_table(QTextStream& out)
         }
         out << function->get_command_name()
             << "\tclass=" << function->get_metaobject()->className()
-            << "\tbase=" << (function->get_base_metaobject() ? function->get_base_metaobject()->className() : "")
+            << "\tbase=" << (function->get_base_shortcut_function() ? function->get_base_shortcut_function()->get_command_name() : "")
             << "\tusesbase=" << function->uses_inherited_base()
             << "\tplugin=" << function->get_plugin_name()
             << "\talwayssafe=" << function->always_safe_to_dispatch()
