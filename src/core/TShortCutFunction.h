@@ -28,9 +28,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QStringList>
 #include <QVariantList>
 
+#include <functional>
+
 class TShortCutFunction {
 
 public:
+    // Calls the function on an object of the class it is registered for
+    using Invoker = std::function<TCommand*(QObject*)>;
+
     explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName, const char* slotSignature = "");
     ~TShortCutFunction();
 
@@ -64,6 +69,9 @@ public:
     bool uses_x() const {return m_useX;}
     bool uses_y() const {return m_useY;}
     bool always_safe_to_dispatch() const {
+        if (m_invoker) {
+            return m_alwaysSafeToDispatch;
+        }
         return TCommand::matches_dispatch_rule_always(m_metaMethod.tag());
     }
     bool plugin_based() const {return !m_pluginname.isEmpty();}
@@ -95,11 +103,19 @@ public:
     void set_use_y(bool useY) {m_useY = useY;}
     void set_arguments(const QVariantList &args) {m_arguments = args;}
     void set_auto_repeats_on_itself(bool dispatchesOnItself) {m_autoRepeatsOnItself = dispatchesOnItself;}
+    void set_invoker(Invoker invoker, bool alwaysSafeToDispatch)
+    {
+        m_invoker = std::move(invoker);
+        m_alwaysSafeToDispatch = alwaysSafeToDispatch;
+    }
 
     static void make_shortcut_key_human_readable(QString& key, bool formatHtml=false);
 
     TCommand* dispatch_with_command_return(QObject* object) {
         PENTER;
+        if (m_invoker) {
+            return m_invoker(object);
+        }
         Q_ASSERT(m_metaMethod.isValid());
         TCommand* command = nullptr;
         [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection, Q_RETURN_ARG(TCommand*, command));
@@ -108,6 +124,10 @@ public:
     }
     bool dispatch(QObject* object) {
         PENTER;
+        if (m_invoker) {
+            m_invoker(object);
+            return true;
+        }
         Q_ASSERT(m_metaMethod.isValid());
         Q_ASSERT(m_metaObject);
         [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection);
@@ -122,6 +142,7 @@ private:
     const QMetaObject*	m_baseMetaObject{nullptr};
     TShortCutFunction*  m_baseShortCutFunction{nullptr};
     QMetaMethod         m_metaMethod;
+    Invoker             m_invoker;
 
     QVariantList        m_arguments;
     QStringList         m_keys;
@@ -136,6 +157,7 @@ private:
     bool                m_usesAutoRepeat{false};
     bool                m_autoRepeatsOnItself{false};
     bool                m_usesBaseFunction{false};
+    bool                m_alwaysSafeToDispatch{false};
 
     int                 m_sortorder{0};
     int                 m_autorepeatInterval{-1};

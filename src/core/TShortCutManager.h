@@ -27,12 +27,22 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QHash>
 #include <QMap>
 
+#include <type_traits>
+
+#include "TShortCutFunction.h"
+
 class TCommandPlugin;
 class TCommand;
 class TShortCut;
 class TShortCutFunction;
 class QTextStream;
 
+
+// Whether a function may also run on an object below a holding command
+enum class TDispatchRule {
+    Default,
+    AlwaysSafeDuringHold
+};
 
 class TShortCutManager : public QObject
 {
@@ -48,6 +58,24 @@ public:
     TShortCutFunction* add_function(const QMetaObject *metaObject, const QString &description, const char *commandName, const char *slotSignature);
     TShortCutFunction* add_function(const QMetaObject *metaObject, const QMetaObject *baseMetaObject, const char *commandName, const char *slotSignature);
     TShortCutFunction* get_shortcut_function_for_base_metaobject(const QMetaObject *metaObject) const;
+
+    // Registers method of class T as a shortcut function. A method that does
+    // not exist or does not belong to T is a compile error.
+    template <class T, class U, class R>
+    TShortCutFunction* add_function(const QString &description, const char *commandName, R (U::*method)(),
+                                    TDispatchRule rule = TDispatchRule::Default)
+    {
+        return add_typed_function<T>(nullptr, description, commandName, method, rule);
+    }
+
+    // Registers method of class T as a shortcut function that uses the keys of
+    // the base function baseMetaObject
+    template <class T, class U, class R>
+    TShortCutFunction* add_function(const QMetaObject *baseMetaObject, const char *commandName, R (U::*method)(),
+                                    TDispatchRule rule = TDispatchRule::Default)
+    {
+        return add_typed_function<T>(baseMetaObject, QString(), commandName, method, rule);
+    }
 
     QList<TShortCutFunction* > get_shortcut_functions_for_class(QString className);
     TShortCut* get_shortcut_for_key(const QString& key);
@@ -84,6 +112,33 @@ public:
     void write_resolution_table(QTextStream& out);
 
 private:
+    template <class T, class U, class R>
+    TShortCutFunction* add_typed_function(const QMetaObject *baseMetaObject, const QString &description,
+                                          const char *commandName, R (U::*method)(), TDispatchRule rule)
+    {
+        static_assert(std::is_base_of_v<U, T>, "the method does not belong to the class it is registered for");
+        static_assert(std::is_same_v<R, void> || std::is_same_v<R, TCommand*>,
+                      "a shortcut function returns void or TCommand*");
+
+        TShortCutFunction* function = add_function(&T::staticMetaObject, description, commandName, "");
+        if (baseMetaObject) {
+            function->set_base_metaobject(baseMetaObject);
+        }
+
+        function->set_invoker([method](QObject* object) -> TCommand* {
+            T* target = qobject_cast<T*>(object);
+            Q_ASSERT(target);
+            if constexpr (std::is_same_v<R, void>) {
+                (target->*method)();
+                return nullptr;
+            } else {
+                return (target->*method)();
+            }
+        }, rule == TDispatchRule::AlwaysSafeDuringHold);
+
+        return function;
+    }
+
     QHash<QString, TCommandPlugin*>	m_commandPlugins;
 
     QHash<QString, TShortCutFunction*>	m_shortCutFunctions;

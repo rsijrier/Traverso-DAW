@@ -170,10 +170,10 @@ void TraversoCommands::load(TShortCutManager* m)
 
     // ArrowKeyBrowserCommand will create an ArrowKeyBrowser Command, and since that will start autorepeat the same key
     // we can now register a new shortcut function to dispatch on the ArrowKeyBrowser Command object
-    m->add_function(&ArrowKeyBrowser::staticMetaObject, &TNavigationBaseUp::staticMetaObject,       "ArrowKeyBrowserUp",      "up()");
-    m->add_function(&ArrowKeyBrowser::staticMetaObject, &TNavigationBaseDown::staticMetaObject,     "ArrowKeyBrowserDown",    "down()");
-    m->add_function(&ArrowKeyBrowser::staticMetaObject, &TNavigationBaseLeft::staticMetaObject,     "ArrowKeyBrowserLeft",    "left()");
-    m->add_function(&ArrowKeyBrowser::staticMetaObject, &TNavigationBaseRight::staticMetaObject,    "ArrowKeyBrowserRight",   "right()");
+    m->add_function<ArrowKeyBrowser>(&TNavigationBaseUp::staticMetaObject, "ArrowKeyBrowserUp", &ArrowKeyBrowser::up);
+    m->add_function<ArrowKeyBrowser>(&TNavigationBaseDown::staticMetaObject, "ArrowKeyBrowserDown", &ArrowKeyBrowser::down);
+    m->add_function<ArrowKeyBrowser>(&TNavigationBaseLeft::staticMetaObject, "ArrowKeyBrowserLeft", &ArrowKeyBrowser::left);
+    m->add_function<ArrowKeyBrowser>(&TNavigationBaseRight::staticMetaObject, "ArrowKeyBrowserRight", &ArrowKeyBrowser::right);
 
     m->add_base_function(&TDeleteBase::staticMetaObject,            tr("Delete"),               "DeleteBase");
 
@@ -185,7 +185,7 @@ void TraversoCommands::load(TShortCutManager* m)
 
     m->add_base_function(&TEditPropertiesBase::staticMetaObject,    tr("Edit Properties"),      "EditPropertiesBase");
 
-    m->add_function(&TTrackView::staticMetaObject,      &TEditPropertiesBase::staticMetaObject, "EditTrackProperties", "edit_properties()");
+    m->add_function<TTrackView>(&TEditPropertiesBase::staticMetaObject, "EditTrackProperties", &TTrackView::edit_properties);
 
     m->add_base_function(&TGainBase::staticMetaObject,              tr("Gain"),                 "GainBase");
 
@@ -253,60 +253,60 @@ void TraversoCommands::load(TShortCutManager* m)
 
     // ----------------------------------------------------------------------------------------------------------------------- //
 
-    m->add_function(&TAudioClip::staticMetaObject,      tr("Lock"),             "AudioClipLock",                "lock()");
-    m->add_function(&TAudioClipView::staticMetaObject,      &TEditPropertiesBase::staticMetaObject,         "EditAudioClipProperties", "edit_properties()");
-    m->add_function(&TAudioClipView::staticMetaObject,  tr("Reset Audio File"), "AudioClipSetAudioFile",     "set_audio_file()");
+    m->add_function<TAudioClip>(tr("Lock"), "AudioClipLock", &TAudioClip::lock);
+    m->add_function<TAudioClipView>(&TEditPropertiesBase::staticMetaObject, "EditAudioClipProperties", &TAudioClipView::edit_properties);
+    m->add_function<TAudioClipView>(tr("Reset Audio File"), "AudioClipSetAudioFile", &TAudioClipView::set_audio_file);
 
-    m->add_function(&TAudioPlugin::staticMetaObject,        &TToggleBypassBase::staticMetaObject,           "PluginToggleBypass", "toggle_bypass()");
-    m->add_function(&TAudioPluginView::staticMetaObject,    &TEditPropertiesBase::staticMetaObject,         "EditPluginProperties", "edit_properties()");
+    m->add_function<TAudioPlugin>(&TToggleBypassBase::staticMetaObject, "PluginToggleBypass", &TAudioPlugin::toggle_bypass);
+    m->add_function<TAudioPluginView>(&TEditPropertiesBase::staticMetaObject, "EditPluginProperties", &TAudioPluginView::edit_properties);
 
-    m->add_function(&TAudioProcessingNode::staticMetaObject, tr("Mute"),    "Mute",                         "mute()");
+    m->add_function<TAudioProcessingNode>(tr("Mute"), "Mute", &TAudioProcessingNode::mute, TDispatchRule::AlwaysSafeDuringHold);
 
-    m->add_function(&TAudioTrack::staticMetaObject, tr("Record: On/Off"),   "AudioTrackToggleRecord",       "toggle_arm()");
+    m->add_function<TAudioTrack>(tr("Record: On/Off"), "AudioTrackToggleRecord", &TAudioTrack::toggle_arm, TDispatchRule::AlwaysSafeDuringHold);
 
-    m->add_function(&TAudioTrackView::staticMetaObject, tr("Insert Silence"), "AudioTrackInsertSilence",    "insert_silence()");
+    m->add_function<TAudioTrackView>(tr("Insert Silence"), "AudioTrackInsertSilence", &TAudioTrackView::insert_silence);
 
-    m->add_function(&CropClip::staticMetaObject,    tr("Adjust Left"),      "CropClipAdjustLeft",           "adjust_left()");
-    m->add_function(&CropClip::staticMetaObject,    tr("Adjust Right"),     "CropClipAdjustRight",          "adjust_right()");
+    m->add_function<CropClip>(tr("Adjust Left"), "CropClipAdjustLeft", &CropClip::adjust_left);
+    m->add_function<CropClip>(tr("Adjust Right"), "CropClipAdjustRight", &CropClip::adjust_right);
 
-    m->add_function(&CorrelationMeterView::staticMetaObject, tr("Toggle display range"), "CorrelationMeterToggleDisplayRange", "set_mode()");
+    m->add_function<CorrelationMeterView>(tr("Toggle display range"), "CorrelationMeterToggleDisplayRange", &CorrelationMeterView::set_mode);
 
-    m->add_function(&TCurveView::staticMetaObject,   tr("New Node"),         "AddCurveNode",                 "add_node()");
-    m->add_function(&TCurveView::staticMetaObject,   tr("Select All Nodes"), "CurveSelectAllNodes",          "toggle_select_all_nodes()");
-    m->add_function(&TCurveView::staticMetaObject,   tr("Select Node"),      "CurveSelectNode",              "select_lazy_selected_node()");
+    m->add_function<TCurveView>(tr("New Node"), "AddCurveNode", &TCurveView::add_node);
+    m->add_function<TCurveView>(tr("Select All Nodes"), "CurveSelectAllNodes", &TCurveView::toggle_select_all_nodes);
+    m->add_function<TCurveView>(tr("Select Node"), "CurveSelectNode", &TCurveView::select_lazy_selected_node);
 
-    m->add_function(&TFadeCurve::staticMetaObject,  tr("Cycle Shape"),      "FadeCurveCycleShape",          "set_mode()");
-    m->add_function(&TFadeCurve::staticMetaObject,  &TToggleBypassBase::staticMetaObject,                   "FadeCurveToggleBypass", "toggle_bypass()");
-    m->add_function(&TFadeCurve::staticMetaObject,  tr("Toggle Raster"),    "FadeCurveToggleRaster",        "toggle_raster()");
-    m->add_function(&TFadeCurveView::staticMetaObject, tr("Select Preset"), "FadeSelectPreset",             "select_fade_shape()");
+    m->add_function<TFadeCurve>(tr("Cycle Shape"), "FadeCurveCycleShape", &TFadeCurve::set_mode, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TFadeCurve>(&TToggleBypassBase::staticMetaObject, "FadeCurveToggleBypass", &TFadeCurve::toggle_bypass, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TFadeCurve>(tr("Toggle Raster"), "FadeCurveToggleRaster", &TFadeCurve::toggle_raster, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TFadeCurveView>(tr("Select Preset"), "FadeSelectPreset", &TFadeCurveView::select_fade_shape);
 
-    m->add_function(&TFadeRangeCommand::staticMetaObject, &TResetBase::staticMetaObject, "FadeResetLength",         "reset_length()");
+    m->add_function<TFadeRangeCommand>(&TResetBase::staticMetaObject, "FadeResetLength", &TFadeRangeCommand::reset_length);
 
-    m->add_function(&TFaderGroupCommand::staticMetaObject, tr("Increase"),   "GainIncrease",                 "increase_gain()");
-    m->add_function(&TFaderGroupCommand::staticMetaObject, tr("Decrease"),   "GainDecrease",                 "decrease_gain()");
-    m->add_function(&TFaderGroupCommand::staticMetaObject, tr("Input dB value"), "GainNumericalInput",       "numerical_input()");
-    m->add_function(&TFaderGroupCommand::staticMetaObject, tr("To Selection: On/Off"), "GainToggleSelection",    "toggle_primary_gain_only()");
-    m->add_function(&TFaderGroupCommand::staticMetaObject, &TResetBase::staticMetaObject, "GainReset",       "reset_gain()");
+    m->add_function<TFaderGroupCommand>(tr("Increase"), "GainIncrease", &TFaderGroupCommand::increase_gain);
+    m->add_function<TFaderGroupCommand>(tr("Decrease"), "GainDecrease", &TFaderGroupCommand::decrease_gain);
+    m->add_function<TFaderGroupCommand>(tr("Input dB value"), "GainNumericalInput", &TFaderGroupCommand::numerical_input);
+    m->add_function<TFaderGroupCommand>(tr("To Selection: On/Off"), "GainToggleSelection", &TFaderGroupCommand::toggle_primary_gain_only);
+    m->add_function<TFaderGroupCommand>(&TResetBase::staticMetaObject, "GainReset", &TFaderGroupCommand::reset_gain);
 
-    m->add_function(&TMainWindow::staticMetaObject, tr("Context Menu"),         "ShowContextMenu",          "show_context_menu()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("New Track Dialog"),     "ShowNewTrackDialog",       "show_newtrack_dialog()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Activate Track Finder"), "MainWindowActivateTrackFinder", "show_track_finder()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Browse to first Track in current View"), "MainWindowNavigateToFirstTrack", "browse_to_first_track_in_active_sheet()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Browse to last Track in current View"), "MainWindowNavigateToLastTrack", "browse_to_last_track_in_active_sheet()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Full Screen"),          "MainWindowShowFullScreen",     "full_screen()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Show Project Management Dialog"), "MainWindowShowProjectManagementDialog", "show_project_manager_dialog()");
-    m->add_function(&TMainWindow::staticMetaObject, tr("Show Help"), "ShowHelp", "quick_start()");
+    m->add_function<TMainWindow>(tr("Context Menu"), "ShowContextMenu", &TMainWindow::show_context_menu, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TMainWindow>(tr("New Track Dialog"), "ShowNewTrackDialog", &TMainWindow::show_newtrack_dialog);
+    m->add_function<TMainWindow>(tr("Activate Track Finder"), "MainWindowActivateTrackFinder", &TMainWindow::show_track_finder);
+    m->add_function<TMainWindow>(tr("Browse to first Track in current View"), "MainWindowNavigateToFirstTrack", &TMainWindow::browse_to_first_track_in_active_sheet);
+    m->add_function<TMainWindow>(tr("Browse to last Track in current View"), "MainWindowNavigateToLastTrack", &TMainWindow::browse_to_last_track_in_active_sheet);
+    m->add_function<TMainWindow>(tr("Full Screen"), "MainWindowShowFullScreen", &TMainWindow::full_screen);
+    m->add_function<TMainWindow>(tr("Show Project Management Dialog"), "MainWindowShowProjectManagementDialog", &TMainWindow::show_project_manager_dialog);
+    m->add_function<TMainWindow>(tr("Show Help"), "ShowHelp", &TMainWindow::quick_start);
 
-    m->add_function(&MoveClip::staticMetaObject, &TToggleVerticalBase::staticMetaObject, "MoveClipToggleVerticalOnly", "toggle_vertical_only()");
+    m->add_function<MoveClip>(&TToggleVerticalBase::staticMetaObject, "MoveClipToggleVerticalOnly", &MoveClip::toggle_vertical_only);
 
     // m->add_function(&TMoveCommand::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");
     // m->add_function(&TMoveCommand::staticMetaObject, tr("Move Right"),      "MoveCommandRight",             "move_right()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Up"),         "MoveCommandUp",                "move_up()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Down"),       "MoveCommandDown",              "move_down()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Faster"),     "MoveCommandFaster",            "move_faster()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Move Slower"),     "MoveCommandSlower",            "move_slower()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Moving Speed"),    "MoveCommandSpeed",             "numerical_input()");
-    m->add_function(&TMoveCommand::staticMetaObject, tr("Snap On/Off"),     "MoveCommandToggleSnap",        "toggle_snap_on_off()");
+    m->add_function<TMoveCommand>(tr("Move Up"), "MoveCommandUp", &TMoveCommand::move_up);
+    m->add_function<TMoveCommand>(tr("Move Down"), "MoveCommandDown", &TMoveCommand::move_down);
+    m->add_function<TMoveCommand>(tr("Move Faster"), "MoveCommandFaster", &TMoveCommand::move_faster);
+    m->add_function<TMoveCommand>(tr("Move Slower"), "MoveCommandSlower", &TMoveCommand::move_slower);
+    m->add_function<TMoveCommand>(tr("Moving Speed"), "MoveCommandSpeed", &TMoveCommand::numerical_input);
+    m->add_function<TMoveCommand>(tr("Snap On/Off"), "MoveCommandToggleSnap", &TMoveCommand::toggle_snap_on_off);
 
     // m->add_function(&TCommandController::staticMetaObject, tr("Move Left"),       "MoveCommandLeft",              "move_left()");
     // m->add_function(&TCommandController::staticMetaObject, tr("Move Right"),      "MoveCommandRight",             "move_right()");
@@ -318,67 +318,67 @@ void TraversoCommands::load(TShortCutManager* m)
     // m->add_function(&TCommandController::staticMetaObject, tr("Snap On/Off"),     "MoveCommandToggleSnap",        "toggle_snap_on_off()");
 
 
-    m->add_function(&MoveCurveNode::staticMetaObject, &TToggleVerticalBase::staticMetaObject, "MoveCurveNodeToggleVerticalOnly", "toggle_vertical_only()");
+    m->add_function<MoveCurveNode>(&TToggleVerticalBase::staticMetaObject, "MoveCurveNodeToggleVerticalOnly", &MoveCurveNode::toggle_vertical_only);
 
-    m->add_function(&MoveTrack::staticMetaObject,   tr("Move Down"),        "MoveTrackDown",                "move_down()");
-    m->add_function(&MoveTrack::staticMetaObject,   tr("To Top"),           "MoveTrackToTop",               "to_top()");
-    m->add_function(&MoveTrack::staticMetaObject,   tr("To Bottom"),        "MoveTrackToBottom",            "to_bottom()");
+    m->add_function<MoveTrack>(tr("Move Down"), "MoveTrackDown", &MoveTrack::move_down);
+    m->add_function<MoveTrack>(tr("To Top"), "MoveTrackToTop", &MoveTrack::to_top);
+    m->add_function<MoveTrack>(tr("To Bottom"), "MoveTrackToBottom", &MoveTrack::to_bottom);
 
-    m->add_function(&PlayHeadMove::staticMetaObject, tr("To Start"),        "PlayHeadMoveToStart",          "move_to_start()");
-    m->add_function(&PlayHeadMove::staticMetaObject, tr("To Work Cursor"),  "PlayHeadMoveToWorkCursor",     "move_to_work_cursor()");
+    m->add_function<PlayHeadMove>(tr("To Start"), "PlayHeadMoveToStart", &PlayHeadMove::move_to_start);
+    m->add_function<PlayHeadMove>(tr("To Work Cursor"), "PlayHeadMoveToWorkCursor", &PlayHeadMove::move_to_work_cursor);
 
-    m->add_function(&TProjectManager::staticMetaObject, tr("Save Project"), "ProjectSave",                  "save_project()");
+    m->add_function<TProjectManager>(tr("Save Project"), "ProjectSave", &TProjectManager::save_project, TDispatchRule::AlwaysSafeDuringHold);
 
-    m->add_function(&TSheetView::staticMetaObject,  &TEditPropertiesBase::staticMetaObject, "EditSongProperties",           "edit_properties()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("Up"),               "ViewScrollUp",                 "scroll_up()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("Down"),             "ViewScrollDown",               "scroll_down()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("Set"),              "WorkCursorTouch",              "touch()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("To start"),         "WorkCursorToStart",            "goto_begin()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("To end"),           "WorkCursorToEnd",              "goto_end()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("Set"),              "SheetSetPlayPosition",         "touch_play_cursor()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("Center"),           "SheetCenterPlayhead",          "center_playhead()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("One Layer Up"),     "NavigateToUpperContext",       "to_upper_context_level()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("One Layer Down"),   "NavigateToLowerContext",       "to_lower_context_level()");
-    m->add_function(&TSheetView::staticMetaObject,  tr("To Timeline"),      "NavigateToTimeLine",           "browse_to_time_line()");
+    m->add_function<TSheetView>(&TEditPropertiesBase::staticMetaObject, "EditSongProperties", &TSheetView::edit_properties);
+    m->add_function<TSheetView>(tr("Up"), "ViewScrollUp", &TSheetView::scroll_up);
+    m->add_function<TSheetView>(tr("Down"), "ViewScrollDown", &TSheetView::scroll_down);
+    m->add_function<TSheetView>(tr("Set"), "WorkCursorTouch", &TSheetView::touch);
+    m->add_function<TSheetView>(tr("To start"), "WorkCursorToStart", &TSheetView::goto_begin);
+    m->add_function<TSheetView>(tr("To end"), "WorkCursorToEnd", &TSheetView::goto_end);
+    m->add_function<TSheetView>(tr("Set"), "SheetSetPlayPosition", &TSheetView::touch_play_cursor);
+    m->add_function<TSheetView>(tr("Center"), "SheetCenterPlayhead", &TSheetView::center_playhead);
+    m->add_function<TSheetView>(tr("One Layer Up"), "NavigateToUpperContext", &TSheetView::to_upper_context_level);
+    m->add_function<TSheetView>(tr("One Layer Down"), "NavigateToLowerContext", &TSheetView::to_lower_context_level);
+    m->add_function<TSheetView>(tr("To Timeline"), "NavigateToTimeLine", &TSheetView::browse_to_time_line);
 
-    m->add_function(&TShortCutManager::staticMetaObject, tr("Export keymap"), "ExportShortcutMap",          "export_keymap()");
+    m->add_function<TShortCutManager>(tr("Export keymap"), "ExportShortcutMap", &TShortCutManager::export_keymap);
 
-    m->add_function(&SpectralMeterView::staticMetaObject, &TEditPropertiesBase::staticMetaObject,   "EditSpectralMeterProperties",      "edit_properties()");
-    m->add_function(&SpectralMeterView::staticMetaObject, tr("Reset average curve"),                "SpectralMeterResetAverageCurve",   "reset()");
-    m->add_function(&SpectralMeterView::staticMetaObject, tr("Toggle average curve"),               "SpectralMeterToggleDisplayRange",  "set_mode()");
+    m->add_function<SpectralMeterView>(&TEditPropertiesBase::staticMetaObject, "EditSpectralMeterProperties", &SpectralMeterView::edit_properties);
+    m->add_function<SpectralMeterView>(tr("Reset average curve"), "SpectralMeterResetAverageCurve", &SpectralMeterView::reset);
+    m->add_function<SpectralMeterView>(tr("Toggle average curve"), "SpectralMeterToggleDisplayRange", &SpectralMeterView::set_mode);
 
-    m->add_function(&TTimeLineRulerView::staticMetaObject, tr("Playhead to Marker"),              "TimeLinePlayheadToMarker",         "playhead_to_marker()");
-    m->add_function(&TTimeLineRulerView::staticMetaObject, tr("Edit Markers"),                    "TimeLineShowMarkerDialog",         "show_marker_dialog()");
+    m->add_function<TTimeLineRulerView>(tr("Playhead to Marker"), "TimeLinePlayheadToMarker", &TTimeLineRulerView::playhead_to_marker);
+    m->add_function<TTimeLineRulerView>(tr("Edit Markers"), "TimeLineShowMarkerDialog", &TTimeLineRulerView::show_marker_dialog);
 
-    m->add_function(&TTrack::staticMetaObject,      tr("Solo"),             "Solo",                         "solo()");
-    m->add_function(&TTrackView::staticMetaObject,   tr("Add new Plugin"),   "TrackAddPlugin",               "add_new_plugin()");
+    m->add_function<TTrack>(tr("Solo"), "Solo", &TTrack::solo, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TTrackView>(tr("Add new Plugin"), "TrackAddPlugin", &TTrackView::add_new_plugin);
 
-    m->add_function(&TPanKnobView::staticMetaObject, tr("Pan to Left"),     "PanKnobPanLeft",               "pan_left()");
-    m->add_function(&TPanKnobView::staticMetaObject, tr("Pan to Right"),    "PanKnobPanRight",              "pan_right()");
-    m->add_function(&TrackPan::staticMetaObject,     tr("Pan to Left"),     "TrackPanLeft",                 "pan_left()");
-    m->add_function(&TrackPan::staticMetaObject,     tr("Pan to Right"),    "TrackPanRight",                "pan_right()");
-    m->add_function(&TrackPan::staticMetaObject, &TResetBase::staticMetaObject, "TrackPanReset",            "reset_pan()");
+    m->add_function<TPanKnobView>(tr("Pan to Left"), "PanKnobPanLeft", &TPanKnobView::pan_left);
+    m->add_function<TPanKnobView>(tr("Pan to Right"), "PanKnobPanRight", &TPanKnobView::pan_right);
+    m->add_function<TrackPan>(tr("Pan to Left"), "TrackPanLeft", &TrackPan::pan_left);
+    m->add_function<TrackPan>(tr("Pan to Right"), "TrackPanRight", &TrackPan::pan_right);
+    m->add_function<TrackPan>(&TResetBase::staticMetaObject, "TrackPanReset", &TrackPan::reset_pan);
 
-    m->add_function(&TrackPanelGain::staticMetaObject, tr("Increase"),      "TrackPanelGainIncrement",      "gain_increment()");
-    m->add_function(&TrackPanelGain::staticMetaObject, tr("Decrease"),      "TrackPanelGainDecrement",      "gain_decrement()");
+    m->add_function<TrackPanelGain>(tr("Increase"), "TrackPanelGainIncrement", &TrackPanelGain::gain_increment);
+    m->add_function<TrackPanelGain>(tr("Decrease"), "TrackPanelGainDecrement", &TrackPanelGain::gain_decrement);
 
-    m->add_function(&TrackPanelLed::staticMetaObject,   tr("Toggle On/Off"), "PanelLedToggle",              "toggle()");
+    m->add_function<TrackPanelLed>(tr("Toggle On/Off"), "PanelLedToggle", &TrackPanelLed::toggle);
 
-    m->add_function(&TTransport::staticMetaObject,  tr("Play (Start/Stop)"),"TransportPlayStartStop",       "start_transport()");
-    m->add_function(&TTransport::staticMetaObject,  tr("Start Recording"),  "TransportSetRecordingPlayStart","set_recordable_and_start_transport()");
-    m->add_function(&TTransport::staticMetaObject,  tr("To start"),         "TransportToStart",             "to_start()");
-    m->add_function(&TTransport::staticMetaObject,  tr("To end"),           "TransportToEnd",               "to_end()");
+    m->add_function<TTransport>(tr("Play (Start/Stop)"), "TransportPlayStartStop", &TTransport::start_transport, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TTransport>(tr("Start Recording"), "TransportSetRecordingPlayStart", &TTransport::set_recordable_and_start_transport, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TTransport>(tr("To start"), "TransportToStart", &TTransport::to_start, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TTransport>(tr("To end"), "TransportToEnd", &TTransport::to_end, TDispatchRule::AlwaysSafeDuringHold);
 
-    m->add_function(&WorkCursorMove::staticMetaObject, tr("To Playhead"),   "WorkCursorMoveToPlayhead",     "move_to_play_cursor()");
-    m->add_function(&WorkCursorMove::staticMetaObject, tr("To Start"),      "WorkCursorMoveToStart",        "move_to_start()");
+    m->add_function<WorkCursorMove>(tr("To Playhead"), "WorkCursorMoveToPlayhead", &WorkCursorMove::move_to_play_cursor);
+    m->add_function<WorkCursorMove>(tr("To Start"), "WorkCursorMoveToStart", &WorkCursorMove::move_to_start);
 
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("In"),               "ZoomIn",                       "hzoom_in()");
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("Out"),              "ZoomOut",                      "hzoom_out()");
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("Track Vertical Zoom In"),   "ZoomTrackVerticalIn",  "track_vzoom_in()");
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("Track Vertical Zoom Out"),  "ZoomTrackVerticalOut", "track_vzoom_out()");
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("Track Height"),             "ZoomNumericalInput",   "numerical_input()");
-    m->add_function(&TZoomCommand::staticMetaObject,        tr("Expand/Collapse Tracks"),   "ZoomToggleExpandAllTracks", "toggle_expand_all_tracks()");
-    m->add_function(&TZoomCommand::staticMetaObject, &TToggleVerticalBase::staticMetaObject, "ZoomToggleVerticalHorizontal", "toggle_vertical_horizontal_jog_zoom()");
+    m->add_function<TZoomCommand>(tr("In"), "ZoomIn", &TZoomCommand::hzoom_in);
+    m->add_function<TZoomCommand>(tr("Out"), "ZoomOut", &TZoomCommand::hzoom_out);
+    m->add_function<TZoomCommand>(tr("Track Vertical Zoom In"), "ZoomTrackVerticalIn", &TZoomCommand::track_vzoom_in);
+    m->add_function<TZoomCommand>(tr("Track Vertical Zoom Out"), "ZoomTrackVerticalOut", &TZoomCommand::track_vzoom_out);
+    m->add_function<TZoomCommand>(tr("Track Height"), "ZoomNumericalInput", &TZoomCommand::numerical_input);
+    m->add_function<TZoomCommand>(tr("Expand/Collapse Tracks"), "ZoomToggleExpandAllTracks", &TZoomCommand::toggle_expand_all_tracks);
+    m->add_function<TZoomCommand>(&TToggleVerticalBase::staticMetaObject, "ZoomToggleVerticalHorizontal", &TZoomCommand::toggle_vertical_horizontal_jog_zoom);
 }
 
 
