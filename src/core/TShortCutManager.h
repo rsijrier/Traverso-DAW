@@ -31,6 +31,7 @@ class TCommandPlugin;
 class TCommand;
 class TShortCut;
 class TShortCutFunction;
+class QTextStream;
 
 
 class TShortCutManager : public QObject
@@ -76,6 +77,11 @@ public:
     void restore_defaults();
 
     bool is_command_class(const QString& className);
+
+    // Writes every registered function and, for every registered class, key and
+    // modifier combination, the function a key press resolves to. Used to verify
+    // that a new shortcut implementation behaves exactly like this one.
+    void write_resolution_table(QTextStream& out);
 
 private:
     QHash<QString, TCommandPlugin*>	m_commandPlugins;

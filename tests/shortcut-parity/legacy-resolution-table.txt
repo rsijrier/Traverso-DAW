@@ -1,0 +1,837 @@
+## KEYMAP simplified
+# FUNCTIONS
+AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserRight	class=ArrowKeyBrowser	base=TNavigationBaseRight	usesbase=1	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserStartDown	class=TSheetView	base=TNavigationBaseDown	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=1	usex=0	usey=1	args=
+ArrowKeyBrowserStartLeft	class=TSheetView	base=TNavigationBaseLeft	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=1	usex=1	usey=0	args=
+ArrowKeyBrowserStartRight	class=TSheetView	base=TNavigationBaseRight	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=1	usex=1	usey=0	args=
+ArrowKeyBrowserStartUp	class=TSheetView	base=TNavigationBaseUp	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Up	submenu=Navigate	sortorder=1	autorepeat=0,80,200	repeatsonitself=1	usex=0	usey=1	args=
+ArrowKeyBrowserUp	class=ArrowKeyBrowser	base=TNavigationBaseUp	usesbase=1	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Up	submenu=Navigate	sortorder=1	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipDualTrim	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=E	modifiers=16777248	ownkeys=E	ownmodifiers=16777248	description=Dual Trim	submenu=Edge Trim	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+AudioClipExternalProcessing	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=P	modifiers=16777249	ownkeys=P	ownmodifiers=16777249	description=External Processing	submenu=Utilities	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipFadeLength	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Adjust Length	submenu=Fade	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+AudioClipFadeLengthBoth	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=16777248	ownkeys=F	ownmodifiers=16777248	description=Adjust Length Both	submenu=Fade	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=both
+AudioClipGain	class=TAudioClip	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=G	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipLock	class=TAudioClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Lock	submenu=Utilities	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipSetAudioFile	class=TAudioClipView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=16777248	ownkeys=J	ownmodifiers=16777248	description=Reset Audio File	submenu=Utilities	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackGain	class=TAudioTrack	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackInsertSilence	class=TAudioTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Insert Silence	submenu=	sortorder=50	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackToggleRecord	class=TAudioTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Record: On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackGain	class=TBusTrack	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ClipSelectionSelect	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=(De)Select	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=toggle_selected
+CopyClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=C;MOUSEBUTTONLEFT	modifiers=16777249	ownkeys=C;MOUSEBUTTONLEFT	ownmodifiers=16777249	description=Copy	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=copy
+CorrelationMeterToggleDisplayRange	class=CorrelationMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle display range	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+CropClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=R	modifiers=16777248	ownkeys=R	ownmodifiers=16777248	description=Magnetic Cut	submenu=	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+CropClipAdjustLeft	class=CropClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Adjust Left	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+CropClipAdjustRight	class=CropClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Adjust Right	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+CurveSelectAllNodes	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=A	modifiers=16777249	ownkeys=A	ownmodifiers=16777249	description=Select All Nodes	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+CurveSelectNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Select Node	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+DeleteBase	class=TDeleteBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=BKSPACE;DELETE	ownmodifiers=	description=Delete	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditAudioClipProperties	class=TAudioClipView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=E	ownmodifiers=	description=Edit Properties	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditPluginProperties	class=TAudioPluginView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditPropertiesBase	class=TEditPropertiesBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=E	ownmodifiers=16777249	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditSongProperties	class=TSheetView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=17	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditSpectralMeterProperties	class=SpectralMeterView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditTrackProperties	class=TTrackView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ExportShortcutMap	class=TShortCutManager	base=	usesbase=0	plugin=	alwayssafe=0	keys=F12	modifiers=	ownkeys=F12	ownmodifiers=	description=Export keymap	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveBend	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=B	modifiers=	ownkeys=B	ownmodifiers=	description=Adjust Bend	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=
+FadeCurveCycleShape	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=H	modifiers=	ownkeys=H	ownmodifiers=	description=Cycle Shape	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveStrenght	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Adjust Strength	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+FadeCurveToggleBypass	class=TFadeCurve	base=TToggleBypassBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveToggleRaster	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Toggle Raster	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeResetLength	class=TFadeRangeCommand	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeSelectPreset	class=TFadeCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Select Preset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FoldMarkers	class=TTimeLineRulerView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248+16777249	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248+16777249	description=Fold Markers	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_markers
+FoldSheet	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248+16777249	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248+16777249	description=Fold Sheet	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=fold_sheet
+FoldTrack	class=TAudioTrackView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248+16777249	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248+16777249	description=Fold Track	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_track
+GainBase	class=TGainBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=G	modifiers=	ownkeys=G	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainDecrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Decrease	submenu=	sortorder=1	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
+GainIncrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
+GainNumericalInput	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Input dB value	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainReset	class=TFaderGroupCommand	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainShowAutomation	class=TAudioProcessingNode	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainToggleSelection	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=To Selection: On/Off	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ImportAudio	class=TAudioTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=I	modifiers=	ownkeys=I	ownmodifiers=	description=Import Audio	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowActivateTrackFinder	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=K	modifiers=	ownkeys=K	ownmodifiers=	description=Activate Track Finder	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowNavigateToFirstTrack	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Browse to first Track in current View	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowNavigateToLastTrack	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Browse to last Track in current View	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowShowFullScreen	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F11	modifiers=	ownkeys=F11	ownmodifiers=	description=Full Screen	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowShowProjectManagementDialog	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F4	modifiers=	ownkeys=F4	ownmodifiers=	description=Show Project Management Dialog	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveBase	class=TMoveBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveClip	class=TAudioClipView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT;D	ownmodifiers=	description=Move	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=move
+MoveClipEdge	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Move Edge	submenu=Edge Trim	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=false
+MoveClipToggleVerticalOnly	class=MoveClip	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=ALT	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandDown	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=3	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandFaster	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=PAGEUP;PLUS	modifiers=	ownkeys=PAGEUP;PLUS	ownmodifiers=	description=Move Faster	submenu=	sortorder=7	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandSlower	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=PAGEDOWN;MINUS	modifiers=	ownkeys=PAGEDOWN;MINUS	ownmodifiers=	description=Move Slower	submenu=	sortorder=8	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandSpeed	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Moving Speed	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandToggleSnap	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Snap On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandUp	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=2	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCurveNodeToggleVerticalOnly	class=MoveCurveNode	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCurveNodes	class=TCurveView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT;D	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+MoveMarker	class=TTimeLineMarkerView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+MovePlugin	class=TAudioPluginView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=false
+MoveTrack	class=TTrackView	base=TMoveBase	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D	modifiers=	ownkeys=D	ownmodifiers=	description=Move	submenu=	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=
+MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToUpperContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=16777248	ownkeys=UPARROW	ownmodifiers=16777248	description=One Layer Up	submenu=Navigate	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NormalizeClip	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=Normalize Clip	submenu=Utilities	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanLeft	class=TPanKnobView	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Pan to Left	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanRight	class=TPanKnobView	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Pan to Right	submenu=	sortorder=2	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanorama	class=TPanKnobView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT	ownmodifiers=	description=Pan	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PanelLedToggle	class=TrackPanelLed	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT	ownmodifiers=	description=Toggle On/Off	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PlayHeadMoveToStart	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Start	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PlayHeadMoveToWorkCursor	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=W	modifiers=16777248	ownkeys=W	ownmodifiers=16777248	description=To Work Cursor	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PluginToggleBypass	class=TAudioPlugin	base=TToggleBypassBase	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ProjectSave	class=TProjectManager	base=	usesbase=0	plugin=	alwayssafe=1	keys=S	modifiers=16777249	ownkeys=S	ownmodifiers=16777249	description=Save Project	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveClip	class=TAudioClip	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=BKSPACE;DELETE	ownmodifiers=	description=Delete	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveCurveNode	class=TCurveView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=BKSPACE;DELETE	ownmodifiers=	description=Delete	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemovePlugin	class=TAudioPluginView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveTimeLineRulerMarker	class=TTimeLineRulerView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveTrack	class=TTrack	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=BKSPACE;DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=12	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ResetBase	class=TResetBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Reset	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SheetAddMarker	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Add Marker	submenu=	sortorder=14	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=2
+SheetAddMarkerAtPlayhead	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777249	ownkeys=M	ownmodifiers=16777249	description=Add Marker at Playhead	submenu=	sortorder=21	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=0
+SheetAddMarkerAtWorkCursor	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777251	ownkeys=M	ownmodifiers=16777251	description=Add Marker at Work Cursor	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=1
+SheetCenterPlayhead	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=16777251	ownkeys=V	ownmodifiers=16777251	description=Center	submenu=Playhead	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SheetSetPlayPosition	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Set	submenu=Playhead	sortorder=22	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowContextMenu	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=1	keys=Q;MOUSEBUTTONRIGHT	modifiers=	ownkeys=Q;MOUSEBUTTONRIGHT	ownmodifiers=	description=Context Menu	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowHelp	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F1	modifiers=	ownkeys=F1	ownmodifiers=	description=Show Help	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowNewTrackDialog	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=16777249	ownkeys=T	ownmodifiers=16777249	description=New Track Dialog	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Shuttle	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=TAB	modifiers=	ownkeys=TAB	ownmodifiers=	description=Shuttle	submenu=Shuttle	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+Solo	class=TTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=O	modifiers=	ownkeys=O	ownmodifiers=	description=Solo	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SpectralMeterResetAverageCurve	class=SpectralMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=16777249	ownkeys=L	ownmodifiers=16777249	description=Reset average curve	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SpectralMeterToggleDisplayRange	class=SpectralMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle average curve	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SplitClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=X	modifiers=	ownkeys=X	ownmodifiers=	description=Split	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TNavigationBaseDown	class=TNavigationBaseDown	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Navigate Down	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseLeft	class=TNavigationBaseLeft	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=LEFTARROW	ownmodifiers=	description=Navigate Left	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseRight	class=TNavigationBaseRight	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=RIGHTARROW	ownmodifiers=	description=Navigate Right	submenu=	sortorder=4	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseUp	class=TNavigationBaseUp	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Navigate Up	submenu=	sortorder=1	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TimeLineAddMarker	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Add Marker	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=2
+TimeLineAddMarkerAtPlayhead	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777249	ownkeys=M	ownmodifiers=16777249	description=Add Marker at Playhead	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=0
+TimeLineAddMarkerAtWorkCursor	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777251	ownkeys=M	ownmodifiers=16777251	description=Add Marker at Work Cursor	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=1
+TimeLineMoveMarker	class=TTimeLineRulerView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT;D	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TimeLinePlayheadToMarker	class=TTimeLineRulerView	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=V	ownmodifiers=	description=Playhead to Marker	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TimeLineShowMarkerDialog	class=TTimeLineRulerView	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Edit Markers	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ToggleBypassBase	class=TToggleBypassBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ToggleVerticalBase	class=TToggleVerticalBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackAddPlugin	class=TTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=F5	modifiers=	ownkeys=F5	ownmodifiers=	description=Add new Plugin	submenu=	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPan	class=TTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Track Pan	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanLeft	class=TrackPan	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Pan to Left	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanReset	class=TrackPan	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanRight	class=TrackPan	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Pan to Right	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanelGainDecrement	class=TrackPanelGain	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALUP	modifiers=	ownkeys=MOUSESCROLLVERTICALUP	ownmodifiers=	description=Decrease	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanelGainIncrement	class=TrackPanelGain	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportPlayStartStop	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=SPACE	modifiers=	ownkeys=SPACE	ownmodifiers=	description=Play (Start/Stop)	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportSetPosition	class=TMainWindow	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=MOUSEBUTTONLEFT;V	modifiers=	ownkeys=MOUSEBUTTONLEFT;V	ownmodifiers=	description=Set Play Position	submenu=	sortorder=24	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TransportSetRecordingPlayStart	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=SPACE	modifiers=16777249	ownkeys=SPACE	ownmodifiers=16777249	description=Start Recording	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportToEnd	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To end	submenu=	sortorder=16	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportToStart	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To start	submenu=	sortorder=12	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ViewScrollDown	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Down	submenu=	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ViewScrollUp	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Up	submenu=	sortorder=18	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMove	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=W	modifiers=	ownkeys=W	ownmodifiers=	description=Move Work Cursor	submenu=WorkCursor	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMoveToPlayhead	class=WorkCursorMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=SPACE	modifiers=16777248	ownkeys=SPACE	ownmodifiers=16777248	description=To Playhead	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMoveToStart	class=WorkCursorMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=16777251	ownkeys=HOME	ownmodifiers=16777251	description=To Start	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorToEnd	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=16777249	ownkeys=END	ownmodifiers=16777249	description=To end	submenu=WorkCursor	sortorder=19	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorToStart	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=16777249	ownkeys=HOME	ownmodifiers=16777249	description=To start	submenu=WorkCursor	sortorder=15	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorTouch	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Set	submenu=WorkCursor	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Zoom	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=	ownkeys=Z	ownmodifiers=	description=Zoom	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=HJogZoom;1.2;0.2
+ZoomIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=RIGHTARROW	ownmodifiers=	description=In	submenu=	sortorder=1	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomNumericalInput	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Track Height	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=LEFTARROW	ownmodifiers=	description=Out	submenu=	sortorder=0	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomToggleExpandAllTracks	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Expand/Collapse Tracks	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomToggleVerticalHorizontal	class=TZoomCommand	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Track Vertical Zoom In	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+# RESOLUTION class key modifiers -> function
+ArmTracks	PLUS		MoveCommandFaster
+ArmTracks	MINUS		MoveCommandSlower
+ArmTracks	S		MoveCommandToggleSnap
+ArmTracks	UPARROW		MoveCommandUp
+ArmTracks	DOWNARROW		MoveCommandDown
+ArmTracks	PAGEUP		MoveCommandFaster
+ArmTracks	PAGEDOWN		MoveCommandSlower
+ArmTracks	NUMERICAL		MoveCommandSpeed
+ArrowKeyBrowser	LEFTARROW		ArrowKeyBrowserLeft
+ArrowKeyBrowser	UPARROW		ArrowKeyBrowserUp
+ArrowKeyBrowser	RIGHTARROW		ArrowKeyBrowserRight
+ArrowKeyBrowser	DOWNARROW		ArrowKeyBrowserDown
+CorrelationMeterView	M		CorrelationMeterToggleDisplayRange
+CropClip	MOUSESCROLLVERTICALDOWN		CropClipAdjustLeft
+CropClip	MOUSESCROLLVERTICALUP		CropClipAdjustRight
+CropClip	LEFTARROW		CropClipAdjustLeft
+CropClip	RIGHTARROW		CropClipAdjustRight
+MoveClip	PLUS		MoveCommandFaster
+MoveClip	MINUS		MoveCommandSlower
+MoveClip	L		MoveClipToggleVerticalOnly
+MoveClip	S		MoveCommandToggleSnap
+MoveClip	UPARROW		MoveCommandUp
+MoveClip	DOWNARROW		MoveCommandDown
+MoveClip	PAGEUP		MoveCommandFaster
+MoveClip	PAGEDOWN		MoveCommandSlower
+MoveClip	NUMERICAL		MoveCommandSpeed
+MoveCurveNode	PLUS		MoveCommandFaster
+MoveCurveNode	MINUS		MoveCommandSlower
+MoveCurveNode	L		MoveCurveNodeToggleVerticalOnly
+MoveCurveNode	S		MoveCommandToggleSnap
+MoveCurveNode	UPARROW		MoveCommandUp
+MoveCurveNode	DOWNARROW		MoveCommandDown
+MoveCurveNode	PAGEUP		MoveCommandFaster
+MoveCurveNode	PAGEDOWN		MoveCommandSlower
+MoveCurveNode	NUMERICAL		MoveCommandSpeed
+MoveEdge	PLUS		MoveCommandFaster
+MoveEdge	MINUS		MoveCommandSlower
+MoveEdge	S		MoveCommandToggleSnap
+MoveEdge	UPARROW		MoveCommandUp
+MoveEdge	DOWNARROW		MoveCommandDown
+MoveEdge	PAGEUP		MoveCommandFaster
+MoveEdge	PAGEDOWN		MoveCommandSlower
+MoveEdge	NUMERICAL		MoveCommandSpeed
+MoveMarker	PLUS		MoveCommandFaster
+MoveMarker	MINUS		MoveCommandSlower
+MoveMarker	S		MoveCommandToggleSnap
+MoveMarker	UPARROW		MoveCommandUp
+MoveMarker	DOWNARROW		MoveCommandDown
+MoveMarker	PAGEUP		MoveCommandFaster
+MoveMarker	PAGEDOWN		MoveCommandSlower
+MoveMarker	NUMERICAL		MoveCommandSpeed
+MoveTrack	PLUS		MoveCommandFaster
+MoveTrack	MINUS		MoveCommandSlower
+MoveTrack	S		MoveCommandToggleSnap
+MoveTrack	HOME		MoveTrackToTop
+MoveTrack	END		MoveTrackToBottom
+MoveTrack	UPARROW		MoveCommandUp
+MoveTrack	DOWNARROW		MoveTrackDown
+MoveTrack	PAGEUP		MoveCommandFaster
+MoveTrack	PAGEDOWN		MoveCommandSlower
+MoveTrack	NUMERICAL		MoveCommandSpeed
+PlayHeadMove	PLUS		MoveCommandFaster
+PlayHeadMove	MINUS		MoveCommandSlower
+PlayHeadMove	S		MoveCommandToggleSnap
+PlayHeadMove	W	16777248	PlayHeadMoveToWorkCursor
+PlayHeadMove	HOME		PlayHeadMoveToStart
+PlayHeadMove	UPARROW		MoveCommandUp
+PlayHeadMove	DOWNARROW		MoveCommandDown
+PlayHeadMove	PAGEUP		MoveCommandFaster
+PlayHeadMove	PAGEDOWN		MoveCommandSlower
+PlayHeadMove	NUMERICAL		MoveCommandSpeed
+SpectralMeterView	E	16777249	EditSpectralMeterProperties
+SpectralMeterView	L	16777249	SpectralMeterResetAverageCurve
+SpectralMeterView	M		SpectralMeterToggleDisplayRange
+TAudioClip	A		GainShowAutomation
+TAudioClip	G		AudioClipGain
+TAudioClip	L		AudioClipLock
+TAudioClip	M		Mute
+TAudioClip	N		NormalizeClip
+TAudioClip	P	16777249	AudioClipExternalProcessing
+TAudioClip	S		ClipSelectionSelect
+TAudioClip	BKSPACE		RemoveClip
+TAudioClip	DELETE		RemoveClip
+TAudioClipView	MOUSEBUTTONLEFT		MoveClip
+TAudioClipView	MOUSEBUTTONLEFT	16777249	CopyClip
+TAudioClipView	C	16777249	CopyClip
+TAudioClipView	D		MoveClip
+TAudioClipView	E		MoveClipEdge
+TAudioClipView	E	16777248	AudioClipDualTrim
+TAudioClipView	E	16777249	EditAudioClipProperties
+TAudioClipView	F		AudioClipFadeLength
+TAudioClipView	F	16777248	AudioClipFadeLengthBoth
+TAudioClipView	J	16777248	AudioClipSetAudioFile
+TAudioClipView	R	16777248	CropClip
+TAudioClipView	X		SplitClip
+TAudioPlugin	M		PluginToggleBypass
+TAudioPluginView	MOUSEBUTTONLEFT		MovePlugin
+TAudioPluginView	D		MovePlugin
+TAudioPluginView	E	16777249	EditPluginProperties
+TAudioPluginView	BKSPACE		RemovePlugin
+TAudioPluginView	DELETE		RemovePlugin
+TAudioProcessingNode	A		GainShowAutomation
+TAudioProcessingNode	M		Mute
+TAudioTrack	A		GainShowAutomation
+TAudioTrack	G		AudioTrackGain
+TAudioTrack	I		ImportAudio
+TAudioTrack	M		Mute
+TAudioTrack	O		Solo
+TAudioTrack	P		TrackPan
+TAudioTrack	R		AudioTrackToggleRecord
+TAudioTrack	BKSPACE		RemoveTrack
+TAudioTrack	DELETE		RemoveTrack
+TAudioTrackView	MOUSEBUTTONLEFT	16777248+16777249	FoldTrack
+TAudioTrackView	D		MoveTrack
+TAudioTrackView	D	16777248+16777249	FoldTrack
+TAudioTrackView	E	16777249	EditTrackProperties
+TAudioTrackView	F5		TrackAddPlugin
+TBusTrack	A		GainShowAutomation
+TBusTrack	G		BusTrackGain
+TBusTrack	M		Mute
+TBusTrack	O		Solo
+TBusTrack	P		TrackPan
+TBusTrack	BKSPACE		RemoveTrack
+TBusTrack	DELETE		RemoveTrack
+TBusTrackView	D		MoveTrack
+TBusTrackView	E	16777249	EditTrackProperties
+TBusTrackView	F5		TrackAddPlugin
+TCurveView	MOUSEBUTTONLEFT		MoveCurveNodes
+TCurveView	A	16777249	CurveSelectAllNodes
+TCurveView	D		MoveCurveNodes
+TCurveView	N		AddCurveNode
+TCurveView	S		CurveSelectNode
+TCurveView	BKSPACE		RemoveCurveNode
+TCurveView	DELETE		RemoveCurveNode
+TDeleteBase	BKSPACE		DeleteBase
+TDeleteBase	DELETE		DeleteBase
+TEditPropertiesBase	E	16777249	EditPropertiesBase
+TFadeCurve	H		FadeCurveCycleShape
+TFadeCurve	M		FadeCurveToggleBypass
+TFadeCurve	R		FadeCurveToggleRaster
+TFadeCurveView	B		FadeCurveBend
+TFadeCurveView	P		FadeSelectPreset
+TFadeCurveView	S		FadeCurveStrenght
+TFadeRangeCommand	PLUS		MoveCommandFaster
+TFadeRangeCommand	MINUS		MoveCommandSlower
+TFadeRangeCommand	R		FadeResetLength
+TFadeRangeCommand	S		MoveCommandToggleSnap
+TFadeRangeCommand	UPARROW		MoveCommandUp
+TFadeRangeCommand	DOWNARROW		MoveCommandDown
+TFadeRangeCommand	PAGEUP		MoveCommandFaster
+TFadeRangeCommand	PAGEDOWN		MoveCommandSlower
+TFadeRangeCommand	NUMERICAL		MoveCommandSpeed
+TFaderGroupCommand	MOUSESCROLLVERTICALDOWN		GainDecrease
+TFaderGroupCommand	MOUSESCROLLVERTICALUP		GainIncrease
+TFaderGroupCommand	R		GainReset
+TFaderGroupCommand	S		GainToggleSelection
+TFaderGroupCommand	UPARROW		GainIncrease
+TFaderGroupCommand	DOWNARROW		GainDecrease
+TFaderGroupCommand	NUMERICAL		GainNumericalInput
+TGainBase	G		GainBase
+TMainWindow	MOUSEBUTTONLEFT		TransportSetPosition
+TMainWindow	MOUSEBUTTONRIGHT		ShowContextMenu
+TMainWindow	K		MainWindowActivateTrackFinder
+TMainWindow	Q		ShowContextMenu
+TMainWindow	T	16777249	ShowNewTrackDialog
+TMainWindow	V		TransportSetPosition
+TMainWindow	UPARROW		MainWindowNavigateToFirstTrack
+TMainWindow	DOWNARROW		MainWindowNavigateToLastTrack
+TMainWindow	F1		ShowHelp
+TMainWindow	F4		MainWindowShowProjectManagementDialog
+TMainWindow	F11		MainWindowShowFullScreen
+TMoveBase	MOUSEBUTTONLEFT		MoveBase
+TMoveBase	D		MoveBase
+TMoveCommand	PLUS		MoveCommandFaster
+TMoveCommand	MINUS		MoveCommandSlower
+TMoveCommand	S		MoveCommandToggleSnap
+TMoveCommand	UPARROW		MoveCommandUp
+TMoveCommand	DOWNARROW		MoveCommandDown
+TMoveCommand	PAGEUP		MoveCommandFaster
+TMoveCommand	PAGEDOWN		MoveCommandSlower
+TMoveCommand	NUMERICAL		MoveCommandSpeed
+TNavigationBaseDown	DOWNARROW		TNavigationBaseDown
+TNavigationBaseLeft	LEFTARROW		TNavigationBaseLeft
+TNavigationBaseRight	RIGHTARROW		TNavigationBaseRight
+TNavigationBaseUp	UPARROW		TNavigationBaseUp
+TPanKnobView	MOUSESCROLLVERTICALDOWN		PanKnobPanLeft
+TPanKnobView	MOUSESCROLLVERTICALUP		PanKnobPanRight
+TPanKnobView	MOUSEBUTTONLEFT		PanKnobPanorama
+TPanKnobView	LEFTARROW		PanKnobPanLeft
+TPanKnobView	RIGHTARROW		PanKnobPanRight
+TProjectManager	S	16777249	ProjectSave
+TResetBase	R		ResetBase
+TSheet	M		SheetAddMarker
+TSheet	M	16777249	SheetAddMarkerAtPlayhead
+TSheet	M	16777251	SheetAddMarkerAtWorkCursor
+TSheetView	MOUSEBUTTONLEFT	16777248+16777249	FoldSheet
+TSheetView	D	16777248+16777249	FoldSheet
+TSheetView	E	16777249	EditSongProperties
+TSheetView	T		NavigateToTimeLine
+TSheetView	V	16777251	SheetCenterPlayhead
+TSheetView	W		WorkCursorMove
+TSheetView	Z		Zoom
+TSheetView	TAB		Shuttle
+TSheetView	HOME	16777249	WorkCursorToStart
+TSheetView	END	16777249	WorkCursorToEnd
+TSheetView	LEFTARROW		ArrowKeyBrowserStartLeft
+TSheetView	UPARROW		ArrowKeyBrowserStartUp
+TSheetView	UPARROW	16777248	NavigateToUpperContext
+TSheetView	RIGHTARROW		ArrowKeyBrowserStartRight
+TSheetView	DOWNARROW		ArrowKeyBrowserStartDown
+TSheetView	DOWNARROW	16777248	NavigateToLowerContext
+TShortCutManager	F12		ExportShortcutMap
+TTimeLineMarkerView	MOUSEBUTTONLEFT		MoveMarker
+TTimeLineMarkerView	D		MoveMarker
+TTimeLineRuler	M		TimeLineAddMarker
+TTimeLineRuler	M	16777249	TimeLineAddMarkerAtPlayhead
+TTimeLineRuler	M	16777251	TimeLineAddMarkerAtWorkCursor
+TTimeLineRulerView	MOUSEBUTTONLEFT		TimeLineMoveMarker
+TTimeLineRulerView	MOUSEBUTTONLEFT	16777248+16777249	FoldMarkers
+TTimeLineRulerView	D		TimeLineMoveMarker
+TTimeLineRulerView	D	16777248+16777249	FoldMarkers
+TTimeLineRulerView	E		TimeLineShowMarkerDialog
+TTimeLineRulerView	V		TimeLinePlayheadToMarker
+TTimeLineRulerView	BKSPACE		RemoveTimeLineRulerMarker
+TTimeLineRulerView	DELETE		RemoveTimeLineRulerMarker
+TToggleBypassBase	M		ToggleBypassBase
+TToggleVerticalBase	L		ToggleVerticalBase
+TTrack	A		GainShowAutomation
+TTrack	M		Mute
+TTrack	O		Solo
+TTrack	P		TrackPan
+TTrack	BKSPACE		RemoveTrack
+TTrack	DELETE		RemoveTrack
+TTrackView	D		MoveTrack
+TTrackView	E	16777249	EditTrackProperties
+TTrackView	F5		TrackAddPlugin
+TTransport	SPACE		TransportPlayStartStop
+TTransport	SPACE	16777249	TransportSetRecordingPlayStart
+TTransport	HOME		TransportToStart
+TTransport	END		TransportToEnd
+TZoomCommand	MOUSESCROLLVERTICALDOWN		ZoomTrackVerticalIn
+TZoomCommand	MOUSESCROLLVERTICALUP		ZoomTrackVerticalOut
+TZoomCommand	E		ZoomToggleExpandAllTracks
+TZoomCommand	L		ZoomToggleVerticalHorizontal
+TZoomCommand	LEFTARROW		ZoomOut
+TZoomCommand	UPARROW		ZoomTrackVerticalOut
+TZoomCommand	RIGHTARROW		ZoomIn
+TZoomCommand	DOWNARROW		ZoomTrackVerticalIn
+TZoomCommand	NUMERICAL		ZoomNumericalInput
+TrackPan	MOUSESCROLLVERTICALDOWN		TrackPanLeft
+TrackPan	MOUSESCROLLVERTICALUP		TrackPanRight
+TrackPan	R		TrackPanReset
+TrackPan	LEFTARROW		TrackPanLeft
+TrackPan	RIGHTARROW		TrackPanRight
+TrackPanelGain	MOUSESCROLLVERTICALDOWN		TrackPanelGainIncrement
+TrackPanelGain	MOUSESCROLLVERTICALUP		TrackPanelGainDecrement
+TrackPanelLed	MOUSEBUTTONLEFT		PanelLedToggle
+WorkCursorMove	SPACE	16777248	WorkCursorMoveToPlayhead
+WorkCursorMove	PLUS		MoveCommandFaster
+WorkCursorMove	MINUS		MoveCommandSlower
+WorkCursorMove	S		MoveCommandToggleSnap
+WorkCursorMove	HOME	16777251	WorkCursorMoveToStart
+WorkCursorMove	UPARROW		MoveCommandUp
+WorkCursorMove	DOWNARROW		MoveCommandDown
+WorkCursorMove	PAGEUP		MoveCommandFaster
+WorkCursorMove	PAGEDOWN		MoveCommandSlower
+WorkCursorMove	NUMERICAL		MoveCommandSpeed
+## KEYMAP advanced
+# FUNCTIONS
+AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserRight	class=ArrowKeyBrowser	base=TNavigationBaseRight	usesbase=1	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ArrowKeyBrowserStartDown	class=TSheetView	base=TNavigationBaseDown	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=1	usex=0	usey=1	args=
+ArrowKeyBrowserStartLeft	class=TSheetView	base=TNavigationBaseLeft	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=1	usex=1	usey=0	args=
+ArrowKeyBrowserStartRight	class=TSheetView	base=TNavigationBaseRight	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=1	usex=1	usey=0	args=
+ArrowKeyBrowserStartUp	class=TSheetView	base=TNavigationBaseUp	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Up	submenu=Navigate	sortorder=1	autorepeat=0,80,200	repeatsonitself=1	usex=0	usey=1	args=
+ArrowKeyBrowserUp	class=ArrowKeyBrowser	base=TNavigationBaseUp	usesbase=1	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Up	submenu=Navigate	sortorder=1	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipDualTrim	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=E	modifiers=16777248	ownkeys=E	ownmodifiers=16777248	description=Dual Trim	submenu=Edge Trim	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+AudioClipExternalProcessing	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=P	modifiers=16777249	ownkeys=P	ownmodifiers=16777249	description=External Processing	submenu=Utilities	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipFadeLength	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Adjust Length	submenu=Fade	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+AudioClipFadeLengthBoth	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=16777248	ownkeys=F	ownmodifiers=16777248	description=Adjust Length Both	submenu=Fade	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=both
+AudioClipGain	class=TAudioClip	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipLock	class=TAudioClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Lock	submenu=Utilities	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipSetAudioFile	class=TAudioClipView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=16777248	ownkeys=J	ownmodifiers=16777248	description=Reset Audio File	submenu=Utilities	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackGain	class=TAudioTrack	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackInsertSilence	class=TAudioTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=	ownkeys=J	ownmodifiers=	description=Insert Silence	submenu=	sortorder=50	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackToggleRecord	class=TAudioTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Record: On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackGain	class=TBusTrack	base=TGainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ClipSelectionSelect	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=(De)Select	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=toggle_selected
+CopyClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=C;MOUSEBUTTONLEFT	modifiers=16777249	ownkeys=C;MOUSEBUTTONLEFT	ownmodifiers=16777249	description=Copy	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=copy
+CorrelationMeterToggleDisplayRange	class=CorrelationMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle display range	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+CropClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=R	modifiers=16777248	ownkeys=R	ownmodifiers=16777248	description=Magnetic Cut	submenu=	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+CropClipAdjustLeft	class=CropClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Adjust Left	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+CropClipAdjustRight	class=CropClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Adjust Right	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+CurveSelectAllNodes	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=A	modifiers=16777249	ownkeys=A	ownmodifiers=16777249	description=Select All Nodes	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+CurveSelectNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Select Node	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+DeleteBase	class=TDeleteBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=DELETE	ownmodifiers=	description=Delete	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditAudioClipProperties	class=TAudioClipView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditPluginProperties	class=TAudioPluginView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditPropertiesBase	class=TEditPropertiesBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=E	ownmodifiers=16777249	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditSongProperties	class=TSheetView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=17	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditSpectralMeterProperties	class=SpectralMeterView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+EditTrackProperties	class=TTrackView	base=TEditPropertiesBase	usesbase=1	plugin=	alwayssafe=0	keys=E	modifiers=16777249	ownkeys=	ownmodifiers=	description=Edit Properties	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ExportShortcutMap	class=TShortCutManager	base=	usesbase=0	plugin=	alwayssafe=0	keys=F12	modifiers=	ownkeys=F12	ownmodifiers=	description=Export keymap	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveBend	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=B	modifiers=	ownkeys=B	ownmodifiers=	description=Adjust Bend	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=
+FadeCurveCycleShape	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=H	modifiers=	ownkeys=H	ownmodifiers=	description=Cycle Shape	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveStrenght	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Adjust Strength	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+FadeCurveToggleBypass	class=TFadeCurve	base=TToggleBypassBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeCurveToggleRaster	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Toggle Raster	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeResetLength	class=TFadeRangeCommand	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeSelectPreset	class=TFadeCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Select Preset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FoldMarkers	class=TTimeLineRulerView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248	description=Fold Markers	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_markers
+FoldSheet	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248+16777249	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248+16777249	description=Fold Sheet	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=fold_sheet
+FoldTrack	class=TAudioTrackView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248	description=Fold Track	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_track
+GainBase	class=TGainBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=G	modifiers=	ownkeys=G	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainDecrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Decrease	submenu=	sortorder=1	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
+GainIncrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
+GainNumericalInput	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Input dB value	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainReset	class=TFaderGroupCommand	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainShowAutomation	class=TAudioProcessingNode	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainToggleSelection	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=To Selection: On/Off	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ImportAudio	class=TAudioTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=I	modifiers=	ownkeys=I	ownmodifiers=	description=Import Audio	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowActivateTrackFinder	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=K	modifiers=	ownkeys=K	ownmodifiers=	description=Activate Track Finder	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowNavigateToFirstTrack	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Browse to first Track in current View	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowNavigateToLastTrack	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Browse to last Track in current View	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowShowFullScreen	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F11	modifiers=	ownkeys=F11	ownmodifiers=	description=Full Screen	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MainWindowShowProjectManagementDialog	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F4	modifiers=	ownkeys=F4	ownmodifiers=	description=Show Project Management Dialog	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveBase	class=TMoveBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveClip	class=TAudioClipView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=move
+MoveClipEdge	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Move Edge	submenu=Edge Trim	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=false
+MoveClipToggleVerticalOnly	class=MoveClip	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandDown	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=3	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandFaster	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=PAGEUP;PLUS	modifiers=	ownkeys=PAGEUP;PLUS	ownmodifiers=	description=Move Faster	submenu=	sortorder=7	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandSlower	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=PAGEDOWN;MINUS	modifiers=	ownkeys=PAGEDOWN;MINUS	ownmodifiers=	description=Move Slower	submenu=	sortorder=8	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandSpeed	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Moving Speed	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandToggleSnap	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Snap On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCommandUp	class=TMoveCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=2	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveCurveNodeToggleVerticalOnly	class=MoveCurveNode	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveCurveNodes	class=TCurveView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+MoveMarker	class=TTimeLineMarkerView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+MovePlugin	class=TAudioPluginView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=false
+MoveTrack	class=TTrackView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=
+MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Move Down	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NavigateToUpperContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=16777248	ownkeys=UPARROW	ownmodifiers=16777248	description=One Layer Up	submenu=Navigate	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+NormalizeClip	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=Normalize Clip	submenu=Utilities	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanLeft	class=TPanKnobView	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Pan to Left	submenu=	sortorder=1	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanRight	class=TPanKnobView	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Pan to Right	submenu=	sortorder=2	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+PanKnobPanorama	class=TPanKnobView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT	ownmodifiers=	description=Pan	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PanelLedToggle	class=TrackPanelLed	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSEBUTTONLEFT	modifiers=	ownkeys=MOUSEBUTTONLEFT	ownmodifiers=	description=Toggle On/Off	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PlayHeadMoveToStart	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Start	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PlayHeadMoveToWorkCursor	class=PlayHeadMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=W	modifiers=	ownkeys=W	ownmodifiers=	description=To Work Cursor	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+PluginToggleBypass	class=TAudioPlugin	base=TToggleBypassBase	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ProjectSave	class=TProjectManager	base=	usesbase=0	plugin=	alwayssafe=1	keys=S	modifiers=16777249	ownkeys=S	ownmodifiers=16777249	description=Save Project	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveClip	class=TAudioClip	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveCurveNode	class=TCurveView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemovePlugin	class=TAudioPluginView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveTimeLineRulerMarker	class=TTimeLineRulerView	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+RemoveTrack	class=TTrack	base=TDeleteBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=DELETE	modifiers=	ownkeys=	ownmodifiers=	description=Delete	submenu=	sortorder=12	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ResetBase	class=TResetBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Reset	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SheetAddMarker	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Add Marker	submenu=	sortorder=14	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=2
+SheetAddMarkerAtPlayhead	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777249	ownkeys=M	ownmodifiers=16777249	description=Add Marker at Playhead	submenu=	sortorder=21	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=0
+SheetAddMarkerAtWorkCursor	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777251	ownkeys=M	ownmodifiers=16777251	description=Add Marker at Work Cursor	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=1
+SheetCenterPlayhead	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=16777248	ownkeys=V	ownmodifiers=16777248	description=Center	submenu=Playhead	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SheetSetPlayPosition	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=16777249	ownkeys=V	ownmodifiers=16777249	description=Set	submenu=Playhead	sortorder=22	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowContextMenu	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=1	keys=Q;MOUSEBUTTONRIGHT	modifiers=	ownkeys=Q;MOUSEBUTTONRIGHT	ownmodifiers=	description=Context Menu	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowHelp	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=F1	modifiers=	ownkeys=F1	ownmodifiers=	description=Show Help	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ShowNewTrackDialog	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=16777249	ownkeys=T	ownmodifiers=16777249	description=New Track Dialog	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Shuttle	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=TAB	modifiers=	ownkeys=TAB	ownmodifiers=	description=Shuttle	submenu=Shuttle	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=
+Solo	class=TTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=O	modifiers=	ownkeys=O	ownmodifiers=	description=Solo	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SpectralMeterResetAverageCurve	class=SpectralMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Reset average curve	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SpectralMeterToggleDisplayRange	class=SpectralMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle average curve	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+SplitClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=X	modifiers=	ownkeys=X	ownmodifiers=	description=Split	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TNavigationBaseDown	class=TNavigationBaseDown	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=DOWNARROW	ownmodifiers=	description=Navigate Down	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseLeft	class=TNavigationBaseLeft	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=LEFTARROW	ownmodifiers=	description=Navigate Left	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseRight	class=TNavigationBaseRight	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=RIGHTARROW	ownmodifiers=	description=Navigate Right	submenu=	sortorder=4	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TNavigationBaseUp	class=TNavigationBaseUp	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Navigate Up	submenu=	sortorder=1	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+TimeLineAddMarker	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Add Marker	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=2
+TimeLineAddMarkerAtPlayhead	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777249	ownkeys=M	ownmodifiers=16777249	description=Add Marker at Playhead	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=0
+TimeLineAddMarkerAtWorkCursor	class=TTimeLineRuler	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=M	modifiers=16777251	ownkeys=M	ownmodifiers=16777251	description=Add Marker at Work Cursor	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=1
+TimeLineMoveMarker	class=TTimeLineRulerView	base=TMoveBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=	ownkeys=	ownmodifiers=	description=Move	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TimeLinePlayheadToMarker	class=TTimeLineRulerView	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=V	ownmodifiers=	description=Playhead to Marker	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TimeLineShowMarkerDialog	class=TTimeLineRulerView	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Edit Markers	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ToggleBypassBase	class=TToggleBypassBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ToggleVerticalBase	class=TToggleVerticalBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=V	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackAddPlugin	class=TTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=F5	modifiers=	ownkeys=F5	ownmodifiers=	description=Add new Plugin	submenu=	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPan	class=TTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Track Pan	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanLeft	class=TrackPan	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=LEFTARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Pan to Left	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanReset	class=TrackPan	base=TResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanRight	class=TrackPan	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=RIGHTARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Pan to Right	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanelGainDecrement	class=TrackPanelGain	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALUP	modifiers=	ownkeys=MOUSESCROLLVERTICALUP	ownmodifiers=	description=Decrease	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TrackPanelGainIncrement	class=TrackPanelGain	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportPlayStartStop	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=SPACE	modifiers=	ownkeys=SPACE	ownmodifiers=	description=Play (Start/Stop)	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportSetPosition	class=TMainWindow	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=V	modifiers=	ownkeys=V	ownmodifiers=	description=Set Play Position	submenu=	sortorder=24	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
+TransportSetRecordingPlayStart	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=SPACE	modifiers=16777249	ownkeys=SPACE	ownmodifiers=16777249	description=Start Recording	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportToEnd	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To end	submenu=	sortorder=16	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+TransportToStart	class=TTransport	base=	usesbase=0	plugin=	alwayssafe=1	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To start	submenu=	sortorder=12	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ViewScrollDown	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Down	submenu=	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ViewScrollUp	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=MOUSESCROLLVERTICALUP	modifiers=	ownkeys=MOUSESCROLLVERTICALUP	ownmodifiers=	description=Up	submenu=	sortorder=18	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMove	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=W	modifiers=	ownkeys=W	ownmodifiers=	description=Move Work Cursor	submenu=WorkCursor	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMoveToPlayhead	class=WorkCursorMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=V	ownmodifiers=	description=To Playhead	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorMoveToStart	class=WorkCursorMove	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Start	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorToEnd	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=16777249	ownkeys=END	ownmodifiers=16777249	description=To end	submenu=WorkCursor	sortorder=19	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorToStart	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=16777249	ownkeys=HOME	ownmodifiers=16777249	description=To start	submenu=WorkCursor	sortorder=15	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+WorkCursorTouch	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=W	modifiers=16777248	ownkeys=W	ownmodifiers=16777248	description=Set	submenu=WorkCursor	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+Zoom	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=	ownkeys=Z	ownmodifiers=	description=Zoom	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=HJogZoom;1.2;0.2
+ZoomIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=RIGHTARROW	ownmodifiers=	description=In	submenu=	sortorder=1	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomNumericalInput	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Track Height	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=LEFTARROW	ownmodifiers=	description=Out	submenu=	sortorder=0	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomToggleExpandAllTracks	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=E	modifiers=	ownkeys=E	ownmodifiers=	description=Expand/Collapse Tracks	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomToggleVerticalHorizontal	class=TZoomCommand	base=TToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Track Vertical Zoom In	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+# RESOLUTION class key modifiers -> function
+ArmTracks	PLUS		MoveCommandFaster
+ArmTracks	MINUS		MoveCommandSlower
+ArmTracks	S		MoveCommandToggleSnap
+ArmTracks	UPARROW		MoveCommandUp
+ArmTracks	DOWNARROW		MoveCommandDown
+ArmTracks	PAGEUP		MoveCommandFaster
+ArmTracks	PAGEDOWN		MoveCommandSlower
+ArmTracks	NUMERICAL		MoveCommandSpeed
+ArrowKeyBrowser	LEFTARROW		ArrowKeyBrowserLeft
+ArrowKeyBrowser	UPARROW		ArrowKeyBrowserUp
+ArrowKeyBrowser	RIGHTARROW		ArrowKeyBrowserRight
+ArrowKeyBrowser	DOWNARROW		ArrowKeyBrowserDown
+CorrelationMeterView	M		CorrelationMeterToggleDisplayRange
+CropClip	MOUSESCROLLVERTICALDOWN		CropClipAdjustLeft
+CropClip	MOUSESCROLLVERTICALUP		CropClipAdjustRight
+CropClip	LEFTARROW		CropClipAdjustLeft
+CropClip	RIGHTARROW		CropClipAdjustRight
+MoveClip	PLUS		MoveCommandFaster
+MoveClip	MINUS		MoveCommandSlower
+MoveClip	S		MoveCommandToggleSnap
+MoveClip	V		MoveClipToggleVerticalOnly
+MoveClip	UPARROW		MoveCommandUp
+MoveClip	DOWNARROW		MoveCommandDown
+MoveClip	PAGEUP		MoveCommandFaster
+MoveClip	PAGEDOWN		MoveCommandSlower
+MoveClip	NUMERICAL		MoveCommandSpeed
+MoveCurveNode	PLUS		MoveCommandFaster
+MoveCurveNode	MINUS		MoveCommandSlower
+MoveCurveNode	S		MoveCommandToggleSnap
+MoveCurveNode	V		MoveCurveNodeToggleVerticalOnly
+MoveCurveNode	UPARROW		MoveCommandUp
+MoveCurveNode	DOWNARROW		MoveCommandDown
+MoveCurveNode	PAGEUP		MoveCommandFaster
+MoveCurveNode	PAGEDOWN		MoveCommandSlower
+MoveCurveNode	NUMERICAL		MoveCommandSpeed
+MoveEdge	PLUS		MoveCommandFaster
+MoveEdge	MINUS		MoveCommandSlower
+MoveEdge	S		MoveCommandToggleSnap
+MoveEdge	UPARROW		MoveCommandUp
+MoveEdge	DOWNARROW		MoveCommandDown
+MoveEdge	PAGEUP		MoveCommandFaster
+MoveEdge	PAGEDOWN		MoveCommandSlower
+MoveEdge	NUMERICAL		MoveCommandSpeed
+MoveMarker	PLUS		MoveCommandFaster
+MoveMarker	MINUS		MoveCommandSlower
+MoveMarker	S		MoveCommandToggleSnap
+MoveMarker	UPARROW		MoveCommandUp
+MoveMarker	DOWNARROW		MoveCommandDown
+MoveMarker	PAGEUP		MoveCommandFaster
+MoveMarker	PAGEDOWN		MoveCommandSlower
+MoveMarker	NUMERICAL		MoveCommandSpeed
+MoveTrack	PLUS		MoveCommandFaster
+MoveTrack	MINUS		MoveCommandSlower
+MoveTrack	S		MoveCommandToggleSnap
+MoveTrack	HOME		MoveTrackToTop
+MoveTrack	END		MoveTrackToBottom
+MoveTrack	UPARROW		MoveCommandUp
+MoveTrack	DOWNARROW		MoveTrackDown
+MoveTrack	PAGEUP		MoveCommandFaster
+MoveTrack	PAGEDOWN		MoveCommandSlower
+MoveTrack	NUMERICAL		MoveCommandSpeed
+PlayHeadMove	PLUS		MoveCommandFaster
+PlayHeadMove	MINUS		MoveCommandSlower
+PlayHeadMove	S		MoveCommandToggleSnap
+PlayHeadMove	W		PlayHeadMoveToWorkCursor
+PlayHeadMove	HOME		PlayHeadMoveToStart
+PlayHeadMove	UPARROW		MoveCommandUp
+PlayHeadMove	DOWNARROW		MoveCommandDown
+PlayHeadMove	PAGEUP		MoveCommandFaster
+PlayHeadMove	PAGEDOWN		MoveCommandSlower
+PlayHeadMove	NUMERICAL		MoveCommandSpeed
+SpectralMeterView	E	16777249	EditSpectralMeterProperties
+SpectralMeterView	L		SpectralMeterResetAverageCurve
+SpectralMeterView	M		SpectralMeterToggleDisplayRange
+TAudioClip	A		GainShowAutomation
+TAudioClip	G		AudioClipGain
+TAudioClip	L		AudioClipLock
+TAudioClip	M		Mute
+TAudioClip	N		NormalizeClip
+TAudioClip	P	16777249	AudioClipExternalProcessing
+TAudioClip	S		ClipSelectionSelect
+TAudioClip	DELETE		RemoveClip
+TAudioClipView	MOUSEBUTTONLEFT		MoveClip
+TAudioClipView	MOUSEBUTTONLEFT	16777249	CopyClip
+TAudioClipView	C	16777249	CopyClip
+TAudioClipView	D		MoveClip
+TAudioClipView	E		MoveClipEdge
+TAudioClipView	E	16777248	AudioClipDualTrim
+TAudioClipView	E	16777249	EditAudioClipProperties
+TAudioClipView	F		AudioClipFadeLength
+TAudioClipView	F	16777248	AudioClipFadeLengthBoth
+TAudioClipView	J	16777248	AudioClipSetAudioFile
+TAudioClipView	R	16777248	CropClip
+TAudioClipView	X		SplitClip
+TAudioPlugin	M		PluginToggleBypass
+TAudioPluginView	MOUSEBUTTONLEFT		MovePlugin
+TAudioPluginView	D		MovePlugin
+TAudioPluginView	E	16777249	EditPluginProperties
+TAudioPluginView	DELETE		RemovePlugin
+TAudioProcessingNode	A		GainShowAutomation
+TAudioProcessingNode	M		Mute
+TAudioTrack	A		GainShowAutomation
+TAudioTrack	G		AudioTrackGain
+TAudioTrack	I		ImportAudio
+TAudioTrack	M		Mute
+TAudioTrack	O		Solo
+TAudioTrack	P		TrackPan
+TAudioTrack	R		AudioTrackToggleRecord
+TAudioTrack	DELETE		RemoveTrack
+TAudioTrackView	MOUSEBUTTONLEFT		MoveTrack
+TAudioTrackView	MOUSEBUTTONLEFT	16777248	FoldTrack
+TAudioTrackView	D		MoveTrack
+TAudioTrackView	D	16777248	FoldTrack
+TAudioTrackView	E	16777249	EditTrackProperties
+TAudioTrackView	J		AudioTrackInsertSilence
+TAudioTrackView	F5		TrackAddPlugin
+TBusTrack	A		GainShowAutomation
+TBusTrack	G		BusTrackGain
+TBusTrack	M		Mute
+TBusTrack	O		Solo
+TBusTrack	P		TrackPan
+TBusTrack	DELETE		RemoveTrack
+TBusTrackView	MOUSEBUTTONLEFT		MoveTrack
+TBusTrackView	D		MoveTrack
+TBusTrackView	E	16777249	EditTrackProperties
+TBusTrackView	F5		TrackAddPlugin
+TCurveView	MOUSEBUTTONLEFT		MoveCurveNodes
+TCurveView	A	16777249	CurveSelectAllNodes
+TCurveView	D		MoveCurveNodes
+TCurveView	N		AddCurveNode
+TCurveView	S		CurveSelectNode
+TCurveView	DELETE		RemoveCurveNode
+TDeleteBase	DELETE		DeleteBase
+TEditPropertiesBase	E	16777249	EditPropertiesBase
+TFadeCurve	H		FadeCurveCycleShape
+TFadeCurve	M		FadeCurveToggleBypass
+TFadeCurve	R		FadeCurveToggleRaster
+TFadeCurveView	B		FadeCurveBend
+TFadeCurveView	P		FadeSelectPreset
+TFadeCurveView	S		FadeCurveStrenght
+TFadeRangeCommand	PLUS		MoveCommandFaster
+TFadeRangeCommand	MINUS		MoveCommandSlower
+TFadeRangeCommand	R		FadeResetLength
+TFadeRangeCommand	S		MoveCommandToggleSnap
+TFadeRangeCommand	UPARROW		MoveCommandUp
+TFadeRangeCommand	DOWNARROW		MoveCommandDown
+TFadeRangeCommand	PAGEUP		MoveCommandFaster
+TFadeRangeCommand	PAGEDOWN		MoveCommandSlower
+TFadeRangeCommand	NUMERICAL		MoveCommandSpeed
+TFaderGroupCommand	MOUSESCROLLVERTICALDOWN		GainDecrease
+TFaderGroupCommand	MOUSESCROLLVERTICALUP		GainIncrease
+TFaderGroupCommand	R		GainReset
+TFaderGroupCommand	S		GainToggleSelection
+TFaderGroupCommand	UPARROW		GainIncrease
+TFaderGroupCommand	DOWNARROW		GainDecrease
+TFaderGroupCommand	NUMERICAL		GainNumericalInput
+TGainBase	G		GainBase
+TMainWindow	MOUSEBUTTONRIGHT		ShowContextMenu
+TMainWindow	K		MainWindowActivateTrackFinder
+TMainWindow	Q		ShowContextMenu
+TMainWindow	T	16777249	ShowNewTrackDialog
+TMainWindow	V		TransportSetPosition
+TMainWindow	UPARROW		MainWindowNavigateToFirstTrack
+TMainWindow	DOWNARROW		MainWindowNavigateToLastTrack
+TMainWindow	F1		ShowHelp
+TMainWindow	F4		MainWindowShowProjectManagementDialog
+TMainWindow	F11		MainWindowShowFullScreen
+TMoveBase	MOUSEBUTTONLEFT		MoveBase
+TMoveBase	D		MoveBase
+TMoveCommand	PLUS		MoveCommandFaster
+TMoveCommand	MINUS		MoveCommandSlower
+TMoveCommand	S		MoveCommandToggleSnap
+TMoveCommand	UPARROW		MoveCommandUp
+TMoveCommand	DOWNARROW		MoveCommandDown
+TMoveCommand	PAGEUP		MoveCommandFaster
+TMoveCommand	PAGEDOWN		MoveCommandSlower
+TMoveCommand	NUMERICAL		MoveCommandSpeed
+TNavigationBaseDown	DOWNARROW		TNavigationBaseDown
+TNavigationBaseLeft	LEFTARROW		TNavigationBaseLeft
+TNavigationBaseRight	RIGHTARROW		TNavigationBaseRight
+TNavigationBaseUp	UPARROW		TNavigationBaseUp
+TPanKnobView	MOUSESCROLLVERTICALDOWN		PanKnobPanLeft
+TPanKnobView	MOUSESCROLLVERTICALUP		PanKnobPanRight
+TPanKnobView	MOUSEBUTTONLEFT		PanKnobPanorama
+TPanKnobView	LEFTARROW		PanKnobPanLeft
+TPanKnobView	RIGHTARROW		PanKnobPanRight
+TProjectManager	S	16777249	ProjectSave
+TResetBase	R		ResetBase
+TSheet	M		SheetAddMarker
+TSheet	M	16777249	SheetAddMarkerAtPlayhead
+TSheet	M	16777251	SheetAddMarkerAtWorkCursor
+TSheetView	MOUSESCROLLVERTICALDOWN		ViewScrollDown
+TSheetView	MOUSESCROLLVERTICALUP		ViewScrollUp
+TSheetView	MOUSEBUTTONLEFT	16777248+16777249	FoldSheet
+TSheetView	D	16777248+16777249	FoldSheet
+TSheetView	E	16777249	EditSongProperties
+TSheetView	T		NavigateToTimeLine
+TSheetView	V	16777248	SheetCenterPlayhead
+TSheetView	V	16777249	SheetSetPlayPosition
+TSheetView	W		WorkCursorMove
+TSheetView	W	16777248	WorkCursorTouch
+TSheetView	Z		Zoom
+TSheetView	TAB		Shuttle
+TSheetView	HOME	16777249	WorkCursorToStart
+TSheetView	END	16777249	WorkCursorToEnd
+TSheetView	LEFTARROW		ArrowKeyBrowserStartLeft
+TSheetView	UPARROW		ArrowKeyBrowserStartUp
+TSheetView	UPARROW	16777248	NavigateToUpperContext
+TSheetView	RIGHTARROW		ArrowKeyBrowserStartRight
+TSheetView	DOWNARROW		ArrowKeyBrowserStartDown
+TSheetView	DOWNARROW	16777248	NavigateToLowerContext
+TShortCutManager	F12		ExportShortcutMap
+TTimeLineMarkerView	MOUSEBUTTONLEFT		MoveMarker
+TTimeLineMarkerView	D		MoveMarker
+TTimeLineRuler	M		TimeLineAddMarker
+TTimeLineRuler	M	16777249	TimeLineAddMarkerAtPlayhead
+TTimeLineRuler	M	16777251	TimeLineAddMarkerAtWorkCursor
+TTimeLineRulerView	MOUSEBUTTONLEFT		TimeLineMoveMarker
+TTimeLineRulerView	MOUSEBUTTONLEFT	16777248	FoldMarkers
+TTimeLineRulerView	D		TimeLineMoveMarker
+TTimeLineRulerView	D	16777248	FoldMarkers
+TTimeLineRulerView	E		TimeLineShowMarkerDialog
+TTimeLineRulerView	V		TimeLinePlayheadToMarker
+TTimeLineRulerView	DELETE		RemoveTimeLineRulerMarker
+TToggleBypassBase	M		ToggleBypassBase
+TToggleVerticalBase	V		ToggleVerticalBase
+TTrack	A		GainShowAutomation
+TTrack	M		Mute
+TTrack	O		Solo
+TTrack	P		TrackPan
+TTrack	DELETE		RemoveTrack
+TTrackView	MOUSEBUTTONLEFT		MoveTrack
+TTrackView	D		MoveTrack
+TTrackView	E	16777249	EditTrackProperties
+TTrackView	F5		TrackAddPlugin
+TTransport	SPACE		TransportPlayStartStop
+TTransport	SPACE	16777249	TransportSetRecordingPlayStart
+TTransport	HOME		TransportToStart
+TTransport	END		TransportToEnd
+TZoomCommand	MOUSESCROLLVERTICALDOWN		ZoomTrackVerticalIn
+TZoomCommand	MOUSESCROLLVERTICALUP		ZoomTrackVerticalOut
+TZoomCommand	E		ZoomToggleExpandAllTracks
+TZoomCommand	V		ZoomToggleVerticalHorizontal
+TZoomCommand	LEFTARROW		ZoomOut
+TZoomCommand	UPARROW		ZoomTrackVerticalOut
+TZoomCommand	RIGHTARROW		ZoomIn
+TZoomCommand	DOWNARROW		ZoomTrackVerticalIn
+TZoomCommand	NUMERICAL		ZoomNumericalInput
+TrackPan	MOUSESCROLLVERTICALDOWN		TrackPanLeft
+TrackPan	MOUSESCROLLVERTICALUP		TrackPanRight
+TrackPan	R		TrackPanReset
+TrackPan	LEFTARROW		TrackPanLeft
+TrackPan	RIGHTARROW		TrackPanRight
+TrackPanelGain	MOUSESCROLLVERTICALDOWN		TrackPanelGainIncrement
+TrackPanelGain	MOUSESCROLLVERTICALUP		TrackPanelGainDecrement
+TrackPanelLed	MOUSEBUTTONLEFT		PanelLedToggle
+WorkCursorMove	PLUS		MoveCommandFaster
+WorkCursorMove	MINUS		MoveCommandSlower
+WorkCursorMove	S		MoveCommandToggleSnap
+WorkCursorMove	V		WorkCursorMoveToPlayhead
+WorkCursorMove	HOME		WorkCursorMoveToStart
+WorkCursorMove	UPARROW		MoveCommandUp
+WorkCursorMove	DOWNARROW		MoveCommandDown
+WorkCursorMove	PAGEUP		MoveCommandFaster
+WorkCursorMove	PAGEDOWN		MoveCommandSlower
+WorkCursorMove	NUMERICAL		MoveCommandSpeed

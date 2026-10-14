@@ -631,6 +631,116 @@ TCommand * TShortCutManager::get_keymap(QString &str)
     return nullptr;
 }
 
+void TShortCutManager::write_resolution_table(QTextStream& out)
+{
+    auto join_ints = [](QList<int> values) {
+        std::sort(values.begin(), values.end());
+        QStringList list;
+        for (int value : values) {
+            list << QString::number(value);
+        }
+        return list.join("+");
+    };
+
+    // Functions, sorted by command name
+    QList<TShortCutFunction*> functions = m_shortCutFunctions.values();
+    std::sort(functions.begin(), functions.end(), [](TShortCutFunction* left, TShortCutFunction* right) {
+        return QString(left->get_command_name()) < QString(right->get_command_name());
+    });
+
+    out << "# FUNCTIONS\n";
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        QStringList arguments;
+        for (const QVariant& argument : function->get_arguments()) {
+            arguments << argument.toString();
+        }
+        out << function->get_command_name()
+            << "\tclass=" << function->get_metaobject()->className()
+            << "\tbase=" << (function->get_base_metaobject() ? function->get_base_metaobject()->className() : "")
+            << "\tusesbase=" << function->uses_inherited_base()
+            << "\tplugin=" << function->get_plugin_name()
+            << "\talwayssafe=" << function->always_safe_to_dispatch()
+            << "\tkeys=" << function->get_keys().join(";")
+            << "\tmodifiers=" << join_ints(function->get_modifier_keys())
+            << "\townkeys=" << function->get_keys(false).join(";")
+            << "\townmodifiers=" << join_ints(function->get_modifier_keys(false))
+            << "\tdescription=" << function->get_description()
+            << "\tsubmenu=" << function->get_submenu_name()
+            << "\tsortorder=" << function->get_sort_order()
+            << "\tautorepeat=" << function->uses_autorepeat()
+            << "," << function->get_autorepeat_interval()
+            << "," << function->get_autorepeat_start_delay()
+            << "\trepeatsonitself=" << function->auto_repeats_on_itself()
+            << "\tusex=" << function->uses_x()
+            << "\tusey=" << function->uses_y()
+            << "\targs=" << arguments.join(";")
+            << "\n";
+    }
+
+    // Every class that can be a context item or a hold command: the registered
+    // classes and the classes functions are registered on
+    QMap<QString, const QMetaObject*> classes;
+    for (const QMetaObject* metaObject : std::as_const(m_metaObjects)) {
+        classes.insert(metaObject->className(), metaObject);
+    }
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        classes.insert(function->get_metaobject()->className(), function->get_metaobject());
+    }
+
+    // Key names and the modifier combinations in use
+    QMap<int, QString> keyNames;
+    QList<QList<int>> modifierSets{QList<int>()};
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        for (const QString& key : function->get_keys()) {
+            int value;
+            if (keyboard_key_string_to_numerical_value(key, value)) {
+                keyNames.insert(value, key);
+            }
+        }
+        QList<int> modifiers = function->get_modifier_keys();
+        std::sort(modifiers.begin(), modifiers.end());
+        if (!modifierSets.contains(modifiers)) {
+            modifierSets.append(modifiers);
+        }
+    }
+    std::sort(modifierSets.begin(), modifierSets.end());
+
+    out << "# RESOLUTION class key modifiers -> function\n";
+    for (auto it = classes.cbegin(); it != classes.cend(); ++it) {
+        for (auto keyIt = keyNames.cbegin(); keyIt != keyNames.cend(); ++keyIt) {
+            TShortCut* shortCut = m_shortcuts.value(keyIt.key());
+            if (!shortCut) {
+                continue;
+            }
+            for (const QList<int>& modifiers : std::as_const(modifierSets)) {
+                TShortCutFunction* function = shortCut->find_function(it.value(), modifiers);
+                if (!function) {
+                    continue;
+                }
+
+                // Several functions matching on the same class make the result
+                // depend on hash order, report them all
+                QStringList candidates;
+                for (TShortCutFunction* candidate : shortCut->get_shortcut_functions_for_metaobject(function->get_metaobject())) {
+                    if (modifiers.isEmpty() ? candidate->get_modifier_keys().isEmpty()
+                                            : TShortCut::modifier_keys_match(modifiers, candidate->get_modifier_keys())) {
+                        candidates << candidate->get_command_name();
+                    }
+                }
+                candidates.sort();
+
+                out << it.key() << "\t" << keyIt.value() << "\t" << join_ints(modifiers) << "\t";
+                if (candidates.size() > 1) {
+                    out << "AMBIGUOUS(" << candidates.join("|") << ")";
+                } else {
+                    out << function->get_command_name();
+                }
+                out << "\n";
+            }
+        }
+    }
+}
+
 bool TShortCutManager::class_inherits(const QString& className, const QString &inherited)
 {
     QList<const QMetaObject*> metaObjects = m_metaObjects.values(className);

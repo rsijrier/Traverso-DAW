@@ -316,33 +316,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
 
 TShortCutFunction *TInputEventDispatcher::find_shortcut_function_for_metaobject(const QMetaObject *metaObject, TShortCut *shortCut)
 {
-    // traverse upwards till no more superclasses are found
-    // this supports inheritance on QObjects.
-    while (metaObject)
-    {
-        QList<TShortCutFunction*> functions = shortCut->get_shortcut_functions_for_metaobject(metaObject);
-
-        for(TShortCutFunction* function : functions) {
-
-            if (m_activeModifierKeys.size()) {
-                if (modifierKeysMatch(m_activeModifierKeys, function->get_modifier_keys())) {
-                    PMESG("found match in objectUsingModierKeys");
-                    return function;
-                } else {
-                    PMESG("m_activeModifierKeys doesn't contain code %d", shortCut->get_key_value());
-                }
-            } else {
-                if (function->get_modifier_keys().isEmpty()) {
-                    PMESG("found match in obects NOT using modifier keys");
-                    return function;
-                }
-            }
-        }
-
-        metaObject = metaObject->superClass();
-    }
-
-    return nullptr;
+    return shortCut->find_function(metaObject, m_activeModifierKeys);
 }
 
 TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem, TShortCutFunction* shortCutFunction)
@@ -933,20 +907,3 @@ TCommand * TInputEventDispatcher::get_holding_command() const
     return m_holdingCommand;
 }
 
-bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>& second)
-{
-    if (first.size() != second.size())
-    {
-        return false;
-    }
-
-    foreach(int key, first)
-    {
-        if (!second.contains(key))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}

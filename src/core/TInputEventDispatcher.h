@@ -143,7 +143,6 @@ private:
     void process_press_event(int keyValue);
     void process_release_event(int keyValue);
     bool is_modifier_keyfact(int eventcode);
-    bool modifierKeysMatch(QList<int> first, const QList<int>& second);
     void clear_hold_modifier_keys();
 
 

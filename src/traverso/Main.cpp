@@ -24,7 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <cstdlib>
 #include <unistd.h>
 
+#include <QFile>
 #include <QLocale>
+#include <QTextStream>
 #include <QTranslator>
 
 #include "TConfig.h"
@@ -32,6 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProject.h"
 #include "TProjectManager.h"
 #include "TMainWindow.h"
+#include "TShortCutManager.h"
 #include "Debugger.h"
 
 Traverso* traverso;
@@ -87,6 +90,7 @@ int main( int argc, char **argv )
 				printf("\t--log \t\t Create a ~/traverso.log file instead of dumping debug messages to stdout\n");
 				printf("\t--show-compile-options\t\t Print options used during compilation\n");
                                 printf("\t--fft-meter   \t\t Start Traverso as a Spectral Analyzer\n");
+                                printf("\t--dump-shortcut-table FILE\t Write the shortcut resolution table to FILE and quit\n");
                                 printf("\n");
 				return 0;
 			}
@@ -103,6 +107,27 @@ int main( int argc, char **argv )
 	PENTER;
 
 	traverso = new Traverso(argc, argv);
+
+	// Writes the shortcut resolution table for both built-in keymaps and quits,
+	// used to verify that shortcut handling keeps behaving the same
+	for (int i=1; i<argc-1; i++) {
+		if (strcmp(argv[i],"--dump-shortcut-table")==0) {
+			QFile file(QString::fromLocal8Bit(argv[i+1]));
+			if (!file.open(QFile::WriteOnly | QFile::Truncate)) {
+				return 1;
+			}
+			QTextStream out(&file);
+			QVariant simplified = config().get_property("InputEventDispatcher", "UseSimplifiedShortcuts", true);
+			for (bool useSimplified : {true, false}) {
+				config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", useSimplified);
+				tShortCutManager().load_shortcuts();
+				out << "## KEYMAP " << (useSimplified ? "simplified" : "advanced") << "\n";
+				tShortCutManager().write_resolution_table(out);
+			}
+			config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", simplified);
+			return 0;
+		}
+	}
 	
     QTranslator traversoTranslator;
 	QString systemLanguage = QLocale::system().name();
