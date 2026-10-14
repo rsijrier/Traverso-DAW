@@ -134,11 +134,11 @@ void MoveCurveNode::set_cursor_shape(int useX, int useY)
     Q_UNUSED(useX);
     Q_UNUSED(useY);
 
-    // 1. Schakel direct over naar de dedicated automation-cursor
+    // Switch to the automation node cursor
     m_contextPointer->set_canvas_cursor_type(TContextPointer::CursorType::AutomationNode);
 
-    // 2. Haal de startwaarde op en voeg direct de [DRAG] vlag toe!
-    // Hierdoor transformeren de streepjes direct in pijltjes zodra je de Hold-toets indrukt.
+    // The [DRAG] prefix makes the cursor renderer draw drag arrows as soon as
+    // the hold starts.
     if (m_nodeDatas.size() == 1) {
         float dbFactor = Mixer::coefficient_to_dB(m_nodeDatas.at(0).origValue + m_valueDiff);
         m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(QString("[DRAG]%1 dB").arg(dbFactor, 0, 'f', 1)));

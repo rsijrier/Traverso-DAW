@@ -62,7 +62,7 @@ void TDefaultCursorRenderer::draw(QPainter *painter, const QVariant &liveData)
         font.setKerning(false);
         painter->setFont(font);
 
-        // Teken de letter exact gecentreerd in de druppelvorm van de cursor
+        // Draw the letter centered in the drop shape of the cursor
         QRectF textRect(startX, startY + 11, width + 2, height - 11);
         painter->drawText(textRect, Qt::AlignCenter, displayStr);
     }

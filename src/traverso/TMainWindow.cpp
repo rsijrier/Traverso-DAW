@@ -750,12 +750,12 @@ void TMainWindow::create_menus()
     QAction* action;
 
     // ==========================================
-    // BESTAND (FILE) MENU
+    // FILE MENU
     // ==========================================
     QMenu* fileMenu = m_mainMenuBar->addMenu(tr("&File"));
     fileMenu->installEventFilter(this);
 
-    // Nieuw Project
+    // New Project
     action = fileMenu->addAction(tr("&New..."));
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentNew, QIcon(QStringLiteral(":/icons/new.svg"))));
     action->setShortcut(QKeySequence::New);
@@ -769,7 +769,7 @@ void TMainWindow::create_menus()
 
     fileMenu->addSeparator();
 
-    // Project Opslaan
+    // Save Project
     action = fileMenu->addAction(tr("&Save"));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentSave, QIcon(QStringLiteral(":/icons/save.svg"))));
@@ -778,7 +778,7 @@ void TMainWindow::create_menus()
 
     fileMenu->addSeparator();
 
-    // Project Sluiten
+    // Close Project
     action = fileMenu->addAction(tr("&Close Project"));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::WindowClose, QIcon(QStringLiteral(":/icons/close.svg"))));
@@ -787,7 +787,7 @@ void TMainWindow::create_menus()
 
     fileMenu->addSeparator();
 
-    // Project Beheer (F4)
+    // Project Management (F4)
     action = fileMenu->addAction(tr("&Manage Project..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentProperties, QIcon(QStringLiteral(":/icons/projectmanager.svg"))));
@@ -796,7 +796,7 @@ void TMainWindow::create_menus()
     m_projectToolBar->addAction(action);
     connect(action, &QAction::triggered, this, &TMainWindow::show_project_manager_dialog);
 
-    // Audio Exporteren (F9)
+    // Export Audio (F9)
     action = fileMenu->addAction(tr("&Export..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentSend, QIcon(QStringLiteral(":/icons/export.svg"))));
@@ -804,7 +804,7 @@ void TMainWindow::create_menus()
     m_projectToolBar->addAction(action);
     connect(action, &QAction::triggered, this, &TMainWindow::show_export_widget);
 
-    // CD Branden (F8)
+    // Burn CD (F8)
     action = fileMenu->addAction(tr("&CD Writing..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DriveOptical, QIcon(QStringLiteral(":/icons/write-cd.svg"))));
@@ -812,7 +812,7 @@ void TMainWindow::create_menus()
     m_projectToolBar->addAction(action);
     connect(action, &QAction::triggered, this, &TMainWindow::show_cd_writing_dialog);
 
-    // Back-up Herstellen (F10)
+    // Restore Backup (F10)
     action = fileMenu->addAction(tr("&Restore Backup..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::EditUndo, QIcon(QStringLiteral(":/icons/restore.svg"))));
@@ -823,7 +823,7 @@ void TMainWindow::create_menus()
 
     fileMenu->addSeparator();
 
-    // Applicatie Afsluiten
+    // Quit Application
     action = fileMenu->addAction(tr("&Quit"));
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit, QIcon(QStringLiteral(":/icons/exit.svg"))));
     action->setShortcut(QKeySequence(QStringLiteral("CTRL+Q")));
@@ -831,7 +831,7 @@ void TMainWindow::create_menus()
 
 
     // ==========================================
-    // BEWERKEN (EDIT) MENU
+    // EDIT MENU
     // ==========================================
     QMenu* editMenu = m_mainMenuBar->addMenu(tr("&Edit"));
     editMenu->installEventFilter(this);
@@ -855,14 +855,14 @@ void TMainWindow::create_menus()
     editMenu->addSeparator();
     m_editToolBar->addSeparator();
 
-    // Audio Importeren
+    // Import Audio
     action = editMenu->addAction(tr("Import &Audio..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::ListAdd, QIcon(QStringLiteral(":/icons/import-audio.svg"))));
     m_editToolBar->addAction(action);
     connect(action, &QAction::triggered, this, &TMainWindow::import_audio);
 
-    // Stilte Invoegen
+    // Insert Silence
     action = editMenu->addAction(tr("Insert Si&lence..."));
     m_projectMenuToolbarActions.append(action);
     action->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::InsertLink, QIcon(QStringLiteral(":/icons/import-silence.svg"))));
@@ -872,7 +872,7 @@ void TMainWindow::create_menus()
     editMenu->addSeparator();
     m_editToolBar->addSeparator();
 
-    // Magnetische Snap (Vaste functionele kleur behouden via setIsMask(false))
+    // Snap (setIsMask(false) keeps the icon's own colors)
     m_snapAction = editMenu->addAction(tr("&Snap"));
     m_projectMenuToolbarActions.append(m_snapAction);
     QIcon snapIcon = QIcon::fromTheme(QStringLiteral("snap-magnet"), QIcon(QStringLiteral(":/icons/snap-magnet.svg")));
@@ -894,7 +894,7 @@ void TMainWindow::create_menus()
 
 
     // ==========================================
-    // BEELD (VIEW) MENU
+    // VIEW MENU
     // ==========================================
     QMenu* viewMenu = m_mainMenuBar->addMenu(tr("&View"));
     viewMenu->installEventFilter(this);
@@ -909,11 +909,11 @@ void TMainWindow::create_menus()
     m_projectMenuToolbarActions.append(action);
     connect(action, &QAction::triggered, this, &TMainWindow::show_marker_dialog);
 
-    // Volledig Scherm
+    // Full Screen
     action = viewMenu->addAction(tr("Toggle Full Screen"));
     connect(action, &QAction::triggered, this, &TMainWindow::full_screen);
 
-    // FFT Analyse Modus
+    // FFT Analysis Mode
     action = viewMenu->addAction(tr("Toggle FFT Only"));
     connect(action, &QAction::triggered, this, &TMainWindow::show_fft_meter_only);
 
@@ -927,7 +927,7 @@ void TMainWindow::create_menus()
     action->setEnabled(false);
     viewMenu->addSeparator();
 
-    // Toolbars in/uitschakelen
+    // Show/hide toolbars
     viewMenu->addAction(m_transportConsole->toggleViewAction());
     m_transportConsole->toggleViewAction()->setText(tr("Transport Console"));
 
@@ -948,12 +948,12 @@ void TMainWindow::create_menus()
 
 
     // ==========================================
-    // INSTELLINGEN (SETTINGS) MENU
+    // SETTINGS MENU
     // ==========================================
     QMenu* settingsMenu = m_mainMenuBar->addMenu(tr("&Settings"));
     settingsMenu->installEventFilter(this);
 
-    // Submenu: Opname Formaat
+    // Submenu: Recording Format
     m_encodingMenu = settingsMenu->addMenu(tr("&Recording File Format"));
 
     action = m_encodingMenu->addAction(QStringLiteral("WAVE"));
@@ -967,7 +967,7 @@ void TMainWindow::create_menus()
     action = m_encodingMenu->addAction(QStringLiteral("WAVE-64"));
     action->setData(QStringLiteral("w64"));
     connect(action, &QAction::triggered, this, &TMainWindow::change_recording_format_to_wav64);
-    // Submenu: Resample Kwaliteit
+    // Submenu: Resample Quality
     m_resampleQualityMenu = settingsMenu->addMenu(tr("Resample &Quality"));
     m_resampleQualityMenu->setToolTipsVisible(true);
     for (int convertorType : TResampleAudioReader::get_convertor_types()) {
@@ -981,25 +981,25 @@ void TMainWindow::create_menus()
     }
     config_changed();
     settingsMenu->addSeparator();
-    // Sneltoetsen Configuratiescherm
+    // Shortcut Editor
     action = settingsMenu->addAction(tr("&Shortcut Configuration"));
     connect(action, &QAction::triggered, this, &TMainWindow::show_shortcuts_edit_dialog);
-    // Voorkeursinstellingen
+    // Preferences
     action = settingsMenu->addAction(tr("&Preferences..."));
     connect(action, &QAction::triggered, this, &TMainWindow::show_settings_dialog);
     // ==========================================
-    // HULP (HELP) MENU
+    // HELP MENU
     // ==========================================
     QMenu* helpMenu = m_mainMenuBar->addMenu(tr("&Help"));
     helpMenu->installEventFilter(this);
-    // Snel aan de slag
+    // Getting Started
     action = helpMenu->addAction(tr("&Getting Started"));
     connect(action, &QAction::triggered, this, &TMainWindow::quick_start);
-    // Gebruikershandleiding
+    // User Manual
     action = helpMenu->addAction(tr("&User Manual"));
     action->setIcon(style()->standardIcon(QStyle::SP_DialogHelpButton));
     connect(action, &QAction::triggered, this, &TMainWindow::open_help_browser);
-    // Over Traverso
+    // About Traverso
     action = helpMenu->addAction(tr("&About Traverso"));
     connect(action, &QAction::triggered, this, &TMainWindow::about_traverso);
     set_project_actions_enabled(false);

@@ -50,7 +50,6 @@ void TZoomCursorRenderer::draw(QPainter* painter, const QVariant& liveData)
     qreal radius = 12.0;
     painter->drawEllipse(lensCenter, radius, radius);
 
-    // GECORRIGEERD: Gebruik QPointF om floats correct en veilig door te geven zonder compiler errors
     painter->drawLine(QPointF(8.5, -1.5), QPointF(16.0, 6.0));
 
     // 3. Crisp Navigation Indicator Arrows (Subtle 1.8px pen stroke)

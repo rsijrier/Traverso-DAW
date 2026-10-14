@@ -39,42 +39,42 @@ TransportConsoleWidget::TransportConsoleWidget(QWidget* parent)
     m_timeLabel = new QPushButton(this);
     m_timeLabel->setFocusPolicy(Qt::NoFocus);
 
-    // 1. Skip to Start: OS Icoon met eigen schaalbare SVG als fallback
+    // 1. Skip to Start: theme icon, own SVG as fallback
     m_toStartAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaSkipBackward, QIcon(QStringLiteral(":/icons/skip-start.svg"))),
         tr("Skip to Start")
         );
     connect(m_toStartAction, &QAction::triggered, &transport(), &TTransport::to_start);
 
-    // 2. Previous Snap (Geen direct OS equivalent, gebruik uw eigen SVG)
+    // 2. Previous Snap: no direct theme equivalent, own SVG as fallback
     m_toLeftAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaSeekBackward, QIcon(QStringLiteral(":/icons/seek-prev.svg"))),
         tr("Previous Snap Position")
         );
     connect(m_toLeftAction, &QAction::triggered, &transport(), &TTransport::prev_skip_pos);
 
-    // 3. Record: OS Icoon met eigen rode/schone SVG als fallback
+    // 3. Record: theme icon, own SVG as fallback
     m_recAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaRecord, QIcon(QStringLiteral(":/icons/record.svg"))),
         tr("Record")
         );
     connect(m_recAction, &QAction::triggered, this, &TransportConsoleWidget::rec_toggled);
 
-    // 4. Play / Stop: OS Icoon met eigen SVG als fallback
+    // 4. Play / Stop: theme icon, own SVG as fallback
     m_playAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaPlaybackStart, QIcon(QStringLiteral(":/icons/play.svg"))),
         tr("Play / Stop")
         );
     connect(m_playAction, &QAction::triggered, &transport(), &TTransport::start_transport);
 
-    // 5. Next Snap (Eigen SVG)
+    // 5. Next Snap: own SVG as fallback
     m_toRightAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaSeekForward, QIcon(QStringLiteral(":/icons/seek-prev.svg"))),
         tr("Next Snap Position")
         );
     connect(m_toRightAction, &QAction::triggered, &transport(), &TTransport::next_skip_pos);
 
-    // 6. Skip to End: OS Icoon met eigen SVG als fallback
+    // 6. Skip to End: theme icon, own SVG as fallback
     m_toEndAction = addAction(
         QIcon::fromTheme(QIcon::ThemeIcon::MediaSkipForward, QIcon(QStringLiteral(":/icons/skip-end.svg"))),
         tr("Skip to End")
@@ -168,7 +168,7 @@ void TransportConsoleWidget::rec_toggled()
 void TransportConsoleWidget::transport_started()
 {
     m_playAction->setChecked(true);
-    // Dynamisch en schaalbaar wisselen naar de OS Stop-knop met eigen SVG-fallback
+    // Switch to the Stop icon, own SVG as fallback
     m_playAction->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::MediaPlaybackStop, QIcon(QStringLiteral(":/icons/stop.svg"))));
     m_recAction->setEnabled(false);
 
@@ -180,7 +180,7 @@ void TransportConsoleWidget::transport_started()
 void TransportConsoleWidget::transport_stopped()
 {
     m_playAction->setChecked(false);
-    // Dynamisch en schaalbaar terugwisselen naar de OS Play-knop met eigen SVG-fallback
+    // Switch back to the Play icon, own SVG as fallback
     m_playAction->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::MediaPlaybackStart, QIcon(QStringLiteral(":/icons/play.svg"))));
     m_recAction->setEnabled(true);
 }

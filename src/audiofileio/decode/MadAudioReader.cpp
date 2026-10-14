@@ -764,7 +764,6 @@ nframes_t MadAudioReader::read_private(TFileIOBuffer& fileIOBuffer, nframes_t fr
         for (uint chan = 0; chan < m_channels; chan++) {
             TAudioBuffer &destination = fileIOBuffer.get_channel_buffer(chan);
             for (nframes_t frame = 0; frame < framesToCopy; ++frame) {
-                // Direct uitlezen via het pure object!
                 destination[frame] = d->overflowBuffers[chan][d->overflowStart + frame];
                 readBuffer[frame * m_channels + chan] = d->overflowBuffers[chan][d->overflowStart + frame];
             }
