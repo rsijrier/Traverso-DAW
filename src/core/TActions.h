@@ -149,6 +149,7 @@ enum class TActionId : int {
     ZoomNumericalInput,
     ZoomToggleExpandAllTracks,
     ZoomToggleVerticalHorizontal,
+    FadeLength,
     Count
 };
 
@@ -309,6 +310,7 @@ struct TActions
     static constexpr TAction ZoomNumericalInput                    {TActionId::ZoomNumericalInput, "ZoomNumericalInput", QT_TRANSLATE_NOOP("TraversoCommands", "Track Height")};
     static constexpr TAction ZoomToggleExpandAllTracks             {TActionId::ZoomToggleExpandAllTracks, "ZoomToggleExpandAllTracks", QT_TRANSLATE_NOOP("TraversoCommands", "Expand/Collapse Tracks")};
     static constexpr TAction ZoomToggleVerticalHorizontal          {TActionId::ZoomToggleVerticalHorizontal, "ZoomToggleVerticalHorizontal", ""};
+    static constexpr TAction FadeLength                            {TActionId::FadeLength, "FadeLength", QT_TRANSLATE_NOOP("TraversoCommands", "Length")};
 
     static constexpr std::array All{
         ArrowKeyBrowserStartUp,
@@ -449,6 +451,7 @@ struct TActions
         ZoomNumericalInput,
         ZoomToggleExpandAllTracks,
         ZoomToggleVerticalHorizontal,
+        FadeLength,
     };
 };
 

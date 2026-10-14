@@ -41,6 +41,7 @@ FadeCurveCycleShape	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=
 FadeCurveStrenght	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Adjust Strength	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 FadeCurveToggleBypass	class=TFadeCurve	base=ToggleBypassBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FadeCurveToggleRaster	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Toggle Raster	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeLength	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Length	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 FadeResetLength	class=TFadeRangeCommand	base=ResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FadeSelectPreset	class=TFadeCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Select Preset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FoldMarkers	class=TTimeLineRulerView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248+16777249	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248+16777249	description=Fold Markers	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_markers
@@ -291,6 +292,7 @@ TFadeCurve	H		FadeCurveCycleShape
 TFadeCurve	M		FadeCurveToggleBypass
 TFadeCurve	R		FadeCurveToggleRaster
 TFadeCurveView	B		FadeCurveBend
+TFadeCurveView	F		FadeLength
 TFadeCurveView	P		FadeSelectPreset
 TFadeCurveView	S		FadeCurveStrenght
 TFadeRangeCommand	PLUS		MoveCommandFaster
@@ -421,7 +423,6 @@ WorkCursorMove	NUMERICAL		MoveCommandSpeed
 command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry AcceptHoldCommand is not a known function
-keymap entry FadeLength is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 keymap entry MoveTrackUp is not a known function
@@ -470,6 +471,7 @@ FadeCurveCycleShape	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=
 FadeCurveStrenght	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=Adjust Strength	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 FadeCurveToggleBypass	class=TFadeCurve	base=ToggleBypassBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Bypass	submenu=	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FadeCurveToggleRaster	class=TFadeCurve	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Toggle Raster	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+FadeLength	class=TFadeCurveView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Length	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 FadeResetLength	class=TFadeRangeCommand	base=ResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FadeSelectPreset	class=TFadeCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=P	modifiers=	ownkeys=P	ownmodifiers=	description=Select Preset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 FoldMarkers	class=TTimeLineRulerView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=D;MOUSEBUTTONLEFT	modifiers=16777248	ownkeys=D;MOUSEBUTTONLEFT	ownmodifiers=16777248	description=Fold Markers	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=fold_markers
@@ -717,6 +719,7 @@ TFadeCurve	H		FadeCurveCycleShape
 TFadeCurve	M		FadeCurveToggleBypass
 TFadeCurve	R		FadeCurveToggleRaster
 TFadeCurveView	B		FadeCurveBend
+TFadeCurveView	F		FadeLength
 TFadeCurveView	P		FadeSelectPreset
 TFadeCurveView	S		FadeCurveStrenght
 TFadeRangeCommand	PLUS		MoveCommandFaster
@@ -849,7 +852,6 @@ WorkCursorMove	NUMERICAL		MoveCommandSpeed
 command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry AcceptHoldCommand is not a known function
-keymap entry FadeLength is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 keymap entry MoveTrackUp is not a known function

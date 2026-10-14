@@ -218,6 +218,7 @@ void TraversoCommands::load(TShortCutManager* m)
 
     add_function(&TAudioClipView::staticMetaObject, TActions::AudioClipFadeLength, FadeRangeCommand, USE_X, NO_Y);
     add_function(&TAudioClipView::staticMetaObject, TActions::AudioClipFadeLengthBoth, FadeRangeCommand, USE_X, NO_Y, QVariantList() << "both");
+    add_function(&TFadeCurveView::staticMetaObject, TActions::FadeLength, FadeRangeCommand, USE_X, NO_Y);
     add_function(&TFadeCurveView::staticMetaObject, TActions::FadeCurveBend, FadeCurveBendCommand, NO_X, USE_Y);
     add_function(&TFadeCurveView::staticMetaObject, TActions::FadeCurveStrenght, FadeCurveStrengthCommand, USE_X, NO_Y);
 
@@ -769,6 +770,14 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
     }
     case FadeRangeCommand:
     {
+        // The length of the fade the cursor is on
+        if (TFadeCurveView* fadeCurveView = qobject_cast<TFadeCurveView*>(obj)) {
+            TFadeCurve* fade = fadeCurveView->get_fade();
+            bool fadeIn = fade->get_fade_type() == TFadeCurve::FadeIn;
+            return new TFadeRangeCommand(fadeCurveView->get_audio_clip(), fadeIn ? fade : nullptr, fadeIn ? nullptr : fade,
+                                         fadeCurveView->get_sheetview()->timeref_scalefactor);
+        }
+
         TAudioClipView* audioClipView = qobject_cast<TAudioClipView*>(obj);
         Q_ASSERT(audioClipView);
 

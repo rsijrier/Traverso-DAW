@@ -6,7 +6,6 @@
 command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry AcceptHoldCommand is not a known function
-keymap entry FadeLength is not a known function
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 keymap entry MoveTrackUp is not a known function
