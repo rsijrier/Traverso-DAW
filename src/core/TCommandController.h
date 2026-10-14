@@ -88,6 +88,10 @@ public:
 
     virtual void cancel() {}
 
+    // Whether Enter, or the key that started the hold pressed again, may end
+    // the hold. Like TCommand::supportsEnterFinishesHold().
+    virtual bool supports_enter_finishes_hold() const { return true; }
+
     // Ends the interaction and returns its change. The reason of a failed
     // commit is shown to the user with tInformUser(). Feedback about an invalid
     // state while holding belongs in the controller's cursor data.

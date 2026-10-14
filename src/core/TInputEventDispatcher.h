@@ -136,7 +136,7 @@ private:
     TShortCutFunction* find_shortcut_function_for_metaobject(const QMetaObject* metaObject, TShortCut* shortCut);
     TCommand* create_command_from_plugin(QObject *contextItem, TShortCutFunction* shortCutFunction);
     TCommandController* create_controller_from_plugin(QObject* contextItem, TShortCutFunction* shortCutFunction);
-    int start_controller(TCommandController* controller, TShortCut* shortCut);
+    int start_controller(TCommandController* controller, TShortCut* shortCut, bool fromContextMenu);
     void commit_controller(TCommandController* controller);
 
     void set_holding(bool holding);

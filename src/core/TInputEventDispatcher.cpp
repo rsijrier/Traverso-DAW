@@ -206,7 +206,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
                 // Commands that are ported to a controller are created as one,
                 // all others are still created as a TCommand
                 if (TCommandController* controller = create_controller_from_plugin(contextItem, shortCutFunction)) {
-                    return start_controller(controller, shortCut);
+                    return start_controller(controller, shortCut, fromContextMenu);
                 }
                 command = create_command_from_plugin(contextItem, shortCutFunction);
             } else {
@@ -375,7 +375,7 @@ TCommandController* TInputEventDispatcher::create_controller_from_plugin(QObject
     return plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
 }
 
-int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut)
+int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut, bool fromContextMenu)
 {
     if (!controller->is_hold()) {
         // No hold phase: commit right away
@@ -393,6 +393,17 @@ int TInputEventDispatcher::start_controller(TCommandController* controller, TSho
     m_holdingCommand = nullptr;
     m_holdEventKeyValue = shortCut->get_key_value();
     set_holding(true);
+
+    // As for legacy hold commands: Enter finishes the hold if the user wants
+    // so, and always when the hold started from the context menu, where Enter
+    // is the only way to accept it
+    m_enterFinishesHold = config().get_property("InputEventDispatcher", "EnterFinishesHold", false).toBool();
+    if (fromContextMenu) {
+        m_enterFinishesHold = true;
+    }
+    if (!controller->supports_enter_finishes_hold()) {
+        m_enterFinishesHold = false;
+    }
 
     if (TViewPortInterface* viewport = m_contextPointer->get_viewport()) {
         viewport->set_canvas_cursor_controller_type(controller->cursor_type());
@@ -651,7 +662,11 @@ void TInputEventDispatcher::process_press_event(int keyValue)
         return;
     }
 
-    if (keyValue == m_holdEventKeyValue && is_holding() && m_holdingCommand->supportsEnterFinishesHold())
+    // Pressing the key that started the hold again finishes it. The hold is
+    // either a legacy command or a controller.
+    const bool holdSupportsEnterFinishesHold = m_holdingCommand ? m_holdingCommand->supportsEnterFinishesHold()
+                                               : m_holdingController && m_holdingController->supports_enter_finishes_hold();
+    if (keyValue == m_holdEventKeyValue && is_holding() && holdSupportsEnterFinishesHold)
     {
         finish_hold();
         return;
