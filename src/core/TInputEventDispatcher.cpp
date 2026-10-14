@@ -170,7 +170,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
         }
 
         PMESG("Function found for metaobject %s", metaObject->className());
-        PMESG("setting slotsignature to %s", QS_C(shortCutFunction->get_slot_signature()));
         PMESG("setting pluginname to %s", QS_C(shortCutFunction->get_plugin_name()));
         PMESG("setting commandname to %s", shortCutFunction->get_command_name());
 

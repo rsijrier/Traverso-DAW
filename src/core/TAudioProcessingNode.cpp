@@ -73,7 +73,7 @@ void TAudioProcessingNode::set_muted_by_solo(bool mutedBySolo)
     update_operational_gain();
 }
 
-DISPATCH_RULE_IS_ALWAYS TCommand* TAudioProcessingNode::mute()
+TCommand* TAudioProcessingNode::mute()
 {
     PENTER;
     set_muted(!m_isMuted);

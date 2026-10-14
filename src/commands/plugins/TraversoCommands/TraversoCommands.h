@@ -94,12 +94,11 @@ private:
                       const QString &description,
                       const char *commandName,
                       TraversoCommand command=NoCommand,
-                      const char *slotSignature = "",
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList())
     {
-        return add_function(metaObject, nullptr, description, commandName, command, slotSignature, useX, useY, args);
+        return add_function(metaObject, nullptr, description, commandName, command, useX, useY, args);
     }
 
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
@@ -107,7 +106,6 @@ private:
                       const QString &description,
                       const char *commandName,
                       TraversoCommand command=NoCommand,
-                      const char *slotSignature = "",
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList());

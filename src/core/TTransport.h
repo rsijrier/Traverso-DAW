@@ -35,13 +35,13 @@ class TTransport : public TGlobalContext
 public:
 
 public slots:
-    DISPATCH_RULE_IS_ALWAYS TCommand* start_transport();
-    DISPATCH_RULE_IS_ALWAYS TCommand* set_recordable_and_start_transport();
-    DISPATCH_RULE_IS_ALWAYS TCommand* to_start();
-    DISPATCH_RULE_IS_ALWAYS TCommand* to_end();
+    TCommand* start_transport();
+    TCommand* set_recordable_and_start_transport();
+    TCommand* to_start();
+    TCommand* to_end();
 
-    DISPATCH_RULE_IS_ALWAYS TCommand* next_skip_pos();
-    DISPATCH_RULE_IS_ALWAYS TCommand* prev_skip_pos();
+    TCommand* next_skip_pos();
+    TCommand* prev_skip_pos();
 
 private:
     TTransport();

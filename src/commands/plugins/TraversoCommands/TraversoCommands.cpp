@@ -152,19 +152,19 @@ void TraversoCommands::load(TShortCutManager* m)
     // We have to register the navigation keys twice, one to start the hold command and one for the
     // the autorepeat slot to get invoked.
     TShortCutFunction* shortCutFunction{nullptr};
-    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseUp::staticMetaObject, "", "ArrowKeyBrowserStartUp",  ArrowKeyBrowserCommand, "", NO_X, USE_Y);
+    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseUp::staticMetaObject, "", "ArrowKeyBrowserStartUp",  ArrowKeyBrowserCommand, NO_X, USE_Y);
     Q_ASSERT(shortCutFunction);
     shortCutFunction->set_auto_repeats_on_itself(true);
 
-    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseDown::staticMetaObject, "", "ArrowKeyBrowserStartDown",     ArrowKeyBrowserCommand, "", NO_X, USE_Y);
+    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseDown::staticMetaObject, "", "ArrowKeyBrowserStartDown",     ArrowKeyBrowserCommand, NO_X, USE_Y);
     Q_ASSERT(shortCutFunction);
     shortCutFunction->set_auto_repeats_on_itself(true);
 
-    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseLeft::staticMetaObject, "", "ArrowKeyBrowserStartLeft",     ArrowKeyBrowserCommand, "", USE_X, NO_Y);
+    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseLeft::staticMetaObject, "", "ArrowKeyBrowserStartLeft",     ArrowKeyBrowserCommand, USE_X, NO_Y);
     Q_ASSERT(shortCutFunction);
     shortCutFunction->set_auto_repeats_on_itself(true);
 
-    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseRight::staticMetaObject, "", "ArrowKeyBrowserStartRight",   ArrowKeyBrowserCommand, "", USE_X, NO_Y);
+    shortCutFunction = add_function(&TSheetView::staticMetaObject, &TNavigationBaseRight::staticMetaObject, "", "ArrowKeyBrowserStartRight",   ArrowKeyBrowserCommand, USE_X, NO_Y);
     Q_ASSERT(shortCutFunction);
     shortCutFunction->set_auto_repeats_on_itself(true);
 
@@ -195,61 +195,61 @@ void TraversoCommands::load(TShortCutManager* m)
 
     m->add_base_function(&TMoveBase::staticMetaObject,              tr("Move"),                 "MoveBase");
 
-    add_function(&TAudioClipView::staticMetaObject,     &TMoveBase::staticMetaObject, "",                        "MoveClip",             MoveClipCommand, "", USE_X, USE_Y, QVariantList() << "move");
-    add_function(&TAudioPluginView::staticMetaObject,   &TMoveBase::staticMetaObject, "",                        "MovePlugin",           MovePluginCommand, "", USE_X, NO_Y, QVariantList() << "false");
-    add_function(&TCurveView::staticMetaObject,         &TMoveBase::staticMetaObject, tr("Move Curve Node(s)"),  "MoveCurveNodes",       MoveCurveNodesCommand, "", USE_X, USE_Y);
-    add_function(&TTrackView::staticMetaObject,         &TMoveBase::staticMetaObject, tr("Move Up/Down"),        "MoveTrack",            MoveTrackCommand, "", NO_X, USE_Y);
-    add_function(&TTimeLineRulerView::staticMetaObject, &TMoveBase::staticMetaObject, tr("Move Marker"),         "TimeLineMoveMarker",   MoveMarkerCommand, "", USE_X, NO_Y);
-    add_function(&TTimeLineMarkerView::staticMetaObject,&TMoveBase::staticMetaObject, tr("Move Marker"),         "MoveMarker",           MoveMarkerCommand, "", USE_X, NO_Y);
+    add_function(&TAudioClipView::staticMetaObject,     &TMoveBase::staticMetaObject, "",                        "MoveClip",             MoveClipCommand, USE_X, USE_Y, QVariantList() << "move");
+    add_function(&TAudioPluginView::staticMetaObject,   &TMoveBase::staticMetaObject, "",                        "MovePlugin",           MovePluginCommand, USE_X, NO_Y, QVariantList() << "false");
+    add_function(&TCurveView::staticMetaObject,         &TMoveBase::staticMetaObject, tr("Move Curve Node(s)"),  "MoveCurveNodes",       MoveCurveNodesCommand, USE_X, USE_Y);
+    add_function(&TTrackView::staticMetaObject,         &TMoveBase::staticMetaObject, tr("Move Up/Down"),        "MoveTrack",            MoveTrackCommand, NO_X, USE_Y);
+    add_function(&TTimeLineRulerView::staticMetaObject, &TMoveBase::staticMetaObject, tr("Move Marker"),         "TimeLineMoveMarker",   MoveMarkerCommand, USE_X, NO_Y);
+    add_function(&TTimeLineMarkerView::staticMetaObject,&TMoveBase::staticMetaObject, tr("Move Marker"),         "MoveMarker",           MoveMarkerCommand, USE_X, NO_Y);
 
-    add_function(&TSheet::staticMetaObject,         tr("Add Marker"),                       "SheetAddMarker",               AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
-    add_function(&TSheet::staticMetaObject,         tr("Add Marker at Playhead"),           "SheetAddMarkerAtPlayhead",     AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
-    add_function(&TSheet::staticMetaObject,         tr("Add Marker at Work Cursor"),        "SheetAddMarkerAtWorkCursor",   AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);
-    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker"),                       "TimeLineAddMarker",            AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
-    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker at Playhead"),           "TimeLineAddMarkerAtPlayhead",  AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
-    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker at Work Cursor"),        "TimeLineAddMarkerAtWorkCursor",AddMarkerCommand, "", NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);
+    add_function(&TSheet::staticMetaObject,         tr("Add Marker"),                       "SheetAddMarker",               AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
+    add_function(&TSheet::staticMetaObject,         tr("Add Marker at Playhead"),           "SheetAddMarkerAtPlayhead",     AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
+    add_function(&TSheet::staticMetaObject,         tr("Add Marker at Work Cursor"),        "SheetAddMarkerAtWorkCursor",   AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);
+    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker"),                       "TimeLineAddMarker",            AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
+    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker at Playhead"),           "TimeLineAddMarkerAtPlayhead",  AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
+    add_function(&TTimeLineRuler::staticMetaObject, tr("Add Marker at Work Cursor"),        "TimeLineAddMarkerAtWorkCursor",AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);
 
     add_function(&TAudioClip::staticMetaObject,     tr("External Processing"),  "AudioClipExternalProcessing", AudioClipExternalProcessingCommand);
 
-    add_function(&TAudioClip::staticMetaObject,     tr("(De)Select"),       "ClipSelectionSelect", ClipSelectionCommand, "", NO_X, NO_Y, QVariantList()<< "toggle_selected");
-    add_function(&TAudioClipView::staticMetaObject, tr("Magnetic Cut"),     "CropClip",         CropClipCommand, "", USE_X, USE_Y);
+    add_function(&TAudioClip::staticMetaObject,     tr("(De)Select"),       "ClipSelectionSelect", ClipSelectionCommand, NO_X, NO_Y, QVariantList()<< "toggle_selected");
+    add_function(&TAudioClipView::staticMetaObject, tr("Magnetic Cut"),     "CropClip",         CropClipCommand, USE_X, USE_Y);
 
-    add_function(&TAudioClipView::staticMetaObject, tr("Adjust Length"),    "AudioClipFadeLength",  FadeRangeCommand, "", USE_X, NO_Y);
-    add_function(&TAudioClipView::staticMetaObject, tr("Adjust Length Both"),    "AudioClipFadeLengthBoth",  FadeRangeCommand, "", USE_X, NO_Y, QVariantList() << "both");
-    add_function(&TFadeCurveView::staticMetaObject, tr("Adjust Bend"),      "FadeCurveBend",    FadeCurveBendCommand, "", NO_X, USE_Y);
-    add_function(&TFadeCurveView::staticMetaObject, tr("Adjust Strength"),  "FadeCurveStrenght",FadeCurveStrengthCommand, "", USE_X, NO_Y);
+    add_function(&TAudioClipView::staticMetaObject, tr("Adjust Length"),    "AudioClipFadeLength",  FadeRangeCommand, USE_X, NO_Y);
+    add_function(&TAudioClipView::staticMetaObject, tr("Adjust Length Both"),    "AudioClipFadeLengthBoth",  FadeRangeCommand, USE_X, NO_Y, QVariantList() << "both");
+    add_function(&TFadeCurveView::staticMetaObject, tr("Adjust Bend"),      "FadeCurveBend",    FadeCurveBendCommand, NO_X, USE_Y);
+    add_function(&TFadeCurveView::staticMetaObject, tr("Adjust Strength"),  "FadeCurveStrenght",FadeCurveStrengthCommand, USE_X, NO_Y);
 
-    add_function(&TAudioProcessingNode::staticMetaObject, tr("Gain Envelope"), "GainShowAutomation", GainShowAutomationCommand, "");
+    add_function(&TAudioProcessingNode::staticMetaObject, tr("Gain Envelope"), "GainShowAutomation", GainShowAutomationCommand);
 
     add_function(&TAudioTrack::staticMetaObject,    tr("Import Audio"),     "ImportAudio",      ImportAudioCommand);
 
     add_function(&TAudioClip::staticMetaObject,     tr("Normalize Clip"),   "NormalizeClip",    NormalizeClipCommand);
 
-    add_function(&TAudioClipView::staticMetaObject, tr("Copy"),             "CopyClip",         MoveClipCommand,    "", USE_X, USE_Y,   QVariantList() << "copy");
-    add_function(&TAudioTrackView::staticMetaObject,tr("Fold Track"),       "FoldTrack",        MoveClipCommand,    "", USE_X, NO_Y,    QVariantList() << "fold_track");
-    add_function(&TSheetView::staticMetaObject,     tr("Fold Sheet"),       "FoldSheet",        MoveClipCommand,    "", USE_X, USE_Y,   QVariantList() << "fold_sheet");
-    add_function(&TTimeLineRulerView::staticMetaObject,   tr("Fold Markers"),     "FoldMarkers",      MoveClipCommand,    "", USE_X, NO_Y,    QVariantList() << "fold_markers");
+    add_function(&TAudioClipView::staticMetaObject, tr("Copy"),             "CopyClip",         MoveClipCommand, USE_X, USE_Y,   QVariantList() << "copy");
+    add_function(&TAudioTrackView::staticMetaObject,tr("Fold Track"),       "FoldTrack",        MoveClipCommand, USE_X, NO_Y,    QVariantList() << "fold_track");
+    add_function(&TSheetView::staticMetaObject,     tr("Fold Sheet"),       "FoldSheet",        MoveClipCommand, USE_X, USE_Y,   QVariantList() << "fold_sheet");
+    add_function(&TTimeLineRulerView::staticMetaObject,   tr("Fold Markers"),     "FoldMarkers",      MoveClipCommand, USE_X, NO_Y,    QVariantList() << "fold_markers");
 
-    add_function(&TAudioClipView::staticMetaObject, tr("Move Edge"),        "MoveClipEdge",     MoveEdgeCommand,    "", USE_X, NO_Y,    QVariantList() << "false");
+    add_function(&TAudioClipView::staticMetaObject, tr("Move Edge"),        "MoveClipEdge",     MoveEdgeCommand, USE_X, NO_Y,    QVariantList() << "false");
 
     m->add_base_function(&TResetBase::staticMetaObject,  tr("Reset"),       "ResetBase");
 
-    add_function(&TSheetView::staticMetaObject,     tr("Shuttle"),          "Shuttle",          ShuttleCommand,     "", USE_X, USE_Y);
+    add_function(&TSheetView::staticMetaObject,     tr("Shuttle"),          "Shuttle",          ShuttleCommand, USE_X, USE_Y);
 
-    add_function(&TAudioClipView::staticMetaObject, tr("Split"),            "SplitClip",        SplitAudioClipCommand,   "", USE_X, NO_Y);
-    add_function(&TAudioClipView::staticMetaObject,tr("Dual Trim"),         "AudioClipDualTrim",AudioClipDualTrimCommand,"", USE_X, NO_Y);
+    add_function(&TAudioClipView::staticMetaObject, tr("Split"),            "SplitClip",        SplitAudioClipCommand, USE_X, NO_Y);
+    add_function(&TAudioClipView::staticMetaObject,tr("Dual Trim"),         "AudioClipDualTrim",AudioClipDualTrimCommand, USE_X, NO_Y);
 
     add_function(&TTrack::staticMetaObject,         tr("Track Pan"),        "TrackPan",         TrackPanCommand);
     add_function(&TPanKnobView::staticMetaObject,   tr("Pan"),              "PanKnobPanorama",  TrackPanCommand);
 
-    add_function(&TMainWindow::staticMetaObject,    tr("Set Play Position"),"TransportSetPosition", TransportSetPositionCommand, "", USE_X, NO_Y);
+    add_function(&TMainWindow::staticMetaObject,    tr("Set Play Position"),"TransportSetPosition", TransportSetPositionCommand, USE_X, NO_Y);
 
     m->add_base_function(&TToggleBypassBase::staticMetaObject,              tr("Toggle Bypass"),            "ToggleBypassBase");
     m->add_base_function(&TToggleVerticalBase::staticMetaObject,            tr("Toggle Vertical"),          "ToggleVerticalBase");
 
     add_function(&TSheetView::staticMetaObject,     tr("Move Work Cursor"), "WorkCursorMove",   WorkCursorMoveCommand);
 
-    add_function(&TSheetView::staticMetaObject,     tr("Zoom"),             "Zoom",             ZoomCommand,        "", USE_X, NO_Y,    QVariantList() << "HJogZoom" << "1.2" << "0.2");
+    add_function(&TSheetView::staticMetaObject,     tr("Zoom"),             "Zoom",             ZoomCommand, USE_X, NO_Y,    QVariantList() << "HJogZoom" << "1.2" << "0.2");
 
     // ----------------------------------------------------------------------------------------------------------------------- //
 
@@ -387,12 +387,11 @@ TShortCutFunction* TraversoCommands::add_function(const QMetaObject *metaObject,
                                                   const QString &description,
                                                   const char *commandName,
                                                   TraversoCommand command,
-                                                  const char *slotSignature,
                                                   bool useX,
                                                   bool useY,
                                                   const QVariantList &args)
 {
-    auto function = m_manager->add_function(metaObject, description, commandName, slotSignature);
+    auto function = m_manager->add_function(metaObject, description, commandName);
 
     if (!function) {
         PERROR(QString("TraversoCommands::add_function: Could not register function for %1").arg(commandName));

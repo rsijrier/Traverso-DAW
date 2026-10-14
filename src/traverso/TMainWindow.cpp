@@ -1015,7 +1015,7 @@ void TMainWindow::set_project_actions_enabled(bool enable)
 }
 
 
-DISPATCH_RULE_IS_ALWAYS TCommand * TMainWindow::show_context_menu( )
+TCommand * TMainWindow::show_context_menu( )
 {
     QList<QObject* > items;
 

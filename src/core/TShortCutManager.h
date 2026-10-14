@@ -55,8 +55,7 @@ public:
     static const int MouseScrollVerticalDown = -4;
 
     TShortCutFunction* add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
-    TShortCutFunction* add_function(const QMetaObject *metaObject, const QString &description, const char *commandName, const char *slotSignature);
-    TShortCutFunction* add_function(const QMetaObject *metaObject, const QMetaObject *baseMetaObject, const char *commandName, const char *slotSignature);
+    TShortCutFunction* add_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
     TShortCutFunction* get_shortcut_function_for_base_metaobject(const QMetaObject *metaObject) const;
 
     // Registers method of class T as a shortcut function. A method that does
@@ -120,7 +119,7 @@ private:
         static_assert(std::is_same_v<R, void> || std::is_same_v<R, TCommand*>,
                       "a shortcut function returns void or TCommand*");
 
-        TShortCutFunction* function = add_function(&T::staticMetaObject, description, commandName, "");
+        TShortCutFunction* function = add_function(&T::staticMetaObject, description, commandName);
         if (baseMetaObject) {
             function->set_base_metaobject(baseMetaObject);
         }

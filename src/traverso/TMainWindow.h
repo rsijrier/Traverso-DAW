@@ -223,7 +223,7 @@ public slots :
     TCommand* quick_start();
     TCommand* show_export_widget();
     TCommand* show_cd_writing_dialog();
-    DISPATCH_RULE_IS_ALWAYS TCommand* show_context_menu();
+    TCommand* show_context_menu();
     TCommand* show_open_project_dialog();
     TCommand* show_project_manager_dialog();
     TCommand* show_restore_project_backup_dialog(QString projectdir);

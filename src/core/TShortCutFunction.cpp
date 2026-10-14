@@ -28,23 +28,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Utils.h"
 #include "qmetaobject.h"
 
-TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName, const char *slotSignature)
+TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName)
     : m_metaObject(metaObject)
     , m_commandName(commandName)
     , m_description(description)
 {
     Q_ASSERT(metaObject);
     Q_ASSERT(std::strlen(commandName) > 0);
-
-    if (std::strlen(slotSignature) == 0) {
-        return;
-    }
-
-    auto index = metaObject->indexOfSlot(slotSignature);
-    Q_ASSERT_X(index >= 0, "TShortCutFunction::TShortCutFunction()", QS_C(QString("slot signature not valid: %1::%2").arg(metaObject->className(), slotSignature)));
-
-    m_metaMethod = metaObject->method(index);
-    Q_ASSERT(m_metaMethod.isValid());
 }
 
 TShortCutFunction::~TShortCutFunction()
@@ -108,19 +98,6 @@ QList<int> TShortCutFunction::get_modifier_keys(bool fromInheritedBase) const
     }
 
     return m_modifierkeys;
-}
-
-QString TShortCutFunction::get_slot_signature() const
-{
-    // a slotsignature is only set for hold commands, not for modifier keys
-    // if the shortcut is from a modifier key then the slotsignature will be
-    // empty in which case we do return the slotsignature set for the TFunction
-    if (m_baseShortCutFunction && !m_baseShortCutFunction->get_slot_signature().isEmpty())
-    {
-        return m_baseShortCutFunction->get_slot_signature();
-    }
-
-    return m_metaMethod.methodSignature();
 }
 
 QString TShortCutFunction::get_description() const

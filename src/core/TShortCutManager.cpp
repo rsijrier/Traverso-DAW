@@ -84,8 +84,7 @@ TShortCutFunction *TShortCutManager::add_base_function(const QMetaObject *metaOb
 
 TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
                                                   const QString &description,
-                                                  const char *commandName,
-                                                  const char *slotSignature)
+                                                  const char *commandName)
 {
     if (m_shortCutFunctions.contains(commandName)) {
         printf("There is already a function registered with command name %s\n", commandName);
@@ -94,24 +93,10 @@ TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
         return m_shortCutFunctions.value(commandName);
 	}
 
-    auto function = new TShortCutFunction(metaObject, description, commandName, slotSignature);
+    auto function = new TShortCutFunction(metaObject, description, commandName);
 
     m_shortCutFunctions.insert(commandName, function);
 
-    return function;
-}
-
-TShortCutFunction *TShortCutManager::add_function(const QMetaObject *metaObject,
-                                                  const QMetaObject *baseMetaObject,
-                                                  const char *commandName,
-                                                  const char *slotSignature)
-{
-    Q_ASSERT(std::strlen(slotSignature) > 0);
-
-    auto function = add_function(metaObject, "", commandName, slotSignature);
-    if (function) {
-        function->set_base_metaobject(baseMetaObject);
-    }
     return function;
 }
 
@@ -134,24 +119,7 @@ QList< TShortCutFunction* > TShortCutManager::get_shortcut_functions_for_class(Q
 	{
         for(TShortCutFunction* function : std::as_const(m_shortCutFunctions))
 		{
-			// filter out objects that inherit from MoveCommand
-			// but do not support move up/down
-			bool hasRequiredSlot = true;
-            if (!function->get_slot_signature().isEmpty())
-			{
-                QList<const QMetaObject*> metaObjects = m_metaObjects.values(className);
-                if (metaObjects.size())
-				{
-                    if (function->get_slot_signature() == "move_up" && metaObjects.first()->indexOfMethod("move_up(bool)") == -1) {
-						hasRequiredSlot = false;
-					}
-                    if (function->get_slot_signature() == "move_down" && metaObjects.first()->indexOfMethod("move_down(bool)") == -1) {
-						hasRequiredSlot = false;
-					}
-				}
-			}
-
-            if (function->get_metaobject()->className() == objectName && hasRequiredSlot)
+            if (function->get_metaobject()->className() == objectName)
 			{
 				functionsList.append(function);
 			}

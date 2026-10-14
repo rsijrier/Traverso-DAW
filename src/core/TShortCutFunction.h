@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Debugger.h"
 #include "TCommand.h"
-#include "qmetaobject.h"
 #include <QStringList>
 #include <QVariantList>
 
@@ -36,12 +35,11 @@ public:
     // Calls the function on an object of the class it is registered for
     using Invoker = std::function<TCommand*(QObject*)>;
 
-    explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName, const char* slotSignature = "");
+    explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName);
     ~TShortCutFunction();
 
     QString get_key_sequence(bool formatHtml=false) const;
     QString get_modifier_sequence(bool fromInheritedBase=true) const;
-    QString get_slot_signature() const;
     QString get_description() const;
     QString get_long_description() const;
     QString get_plugin_name() const {return m_pluginname;}
@@ -68,12 +66,7 @@ public:
     bool uses_inherited_base() const {return m_usesBaseFunction;}
     bool uses_x() const {return m_useX;}
     bool uses_y() const {return m_useY;}
-    bool always_safe_to_dispatch() const {
-        if (m_invoker) {
-            return m_alwaysSafeToDispatch;
-        }
-        return TCommand::matches_dispatch_rule_always(m_metaMethod.tag());
-    }
+    bool always_safe_to_dispatch() const {return m_alwaysSafeToDispatch;}
     bool plugin_based() const {return !m_pluginname.isEmpty();}
 
     void set_base_metaobject(const QMetaObject* base)
@@ -111,28 +104,20 @@ public:
 
     static void make_shortcut_key_human_readable(QString& key, bool formatHtml=false);
 
+    // Plugin based functions create a command instead and have no invoker
     TCommand* dispatch_with_command_return(QObject* object) {
         PENTER;
-        if (m_invoker) {
-            return m_invoker(object);
-        }
-        Q_ASSERT(m_metaMethod.isValid());
-        TCommand* command = nullptr;
-        [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection, Q_RETURN_ARG(TCommand*, command));
-        PMESG((result ? "TShortCutFunction::dispatch_with_command_return: SUCCES invoking %s::%s" : "TShortCutFunction::dispatch_with_command_return: FAILED invoking %s::%s"), m_metaObject->className(), m_metaMethod.methodSignature().constData());
-        return command;
+        Q_ASSERT(m_invoker);
+        return m_invoker ? m_invoker(object) : nullptr;
     }
     bool dispatch(QObject* object) {
         PENTER;
-        if (m_invoker) {
-            m_invoker(object);
-            return true;
+        Q_ASSERT(m_invoker);
+        if (!m_invoker) {
+            return false;
         }
-        Q_ASSERT(m_metaMethod.isValid());
-        Q_ASSERT(m_metaObject);
-        [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection);
-        PMESG((result ? "TShortCutFunction::dispatch: SUCCESS invoking %s::%s" : "TShortCutFunction::dispatch: FAILED invoking %s::%s"), m_metaObject->className(), m_metaMethod.methodSignature().constData());
-        return result;
+        m_invoker(object);
+        return true;
     }
 
 
@@ -141,7 +126,6 @@ private:
     const char*         m_commandName;
     const QMetaObject*	m_baseMetaObject{nullptr};
     TShortCutFunction*  m_baseShortCutFunction{nullptr};
-    QMetaMethod         m_metaMethod;
     Invoker             m_invoker;
 
     QVariantList        m_arguments;
