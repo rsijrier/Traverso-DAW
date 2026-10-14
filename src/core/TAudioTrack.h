@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomDocument>
 #include <QList>
 
-#include "TAudioClipAddRemoveSpec.h"
 #include "TContextItem.h"
 #include "TProcessCallBackData.h"
 #include "TRtList.h"
@@ -49,8 +48,6 @@ public :
     ~TAudioTrack();
 
     TAudioClip* init_recording();
-    [[deprecated]] TCommand* add_clip(const TAudioClipAddRemoveSpec &spec);
-    [[deprecated]] TCommand* remove_clip(const TAudioClipAddRemoveSpec &spec);
     void apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove);
 
     TAudioClip* get_clip_after(const TTimeRef& pos) const;

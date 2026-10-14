@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TResourcesManager.h"
 #include "TLocation.h"
 #include "Utils.h"
-#include "TAddRemoveCommand.h"
 #include "Debugger.h"
 
 
@@ -433,78 +432,6 @@ TAudioClip *TAudioTrack::get_clip_at_location(const TTimeRef &location) const
         }
     }
     return nullptr;
-}
-
-TCommand* TAudioTrack::add_clip(const TAudioClipAddRemoveSpec &spec)
-{
-    PENTER;
-    TAudioClip* clip = spec.get_clip();
-    const bool isMove = spec.is_move();
-
-    clip->set_track(this);
-
-    // A move only changes the clip's track, the clip manager keeps knowing it.
-    auto doAction = [this, clip, isMove]() {
-        apply_clip_mutation({clip}, {});
-        if (!isMove) {
-            m_sheet->get_audioclip_manager()->add_clip(clip);
-        }
-    };
-
-    auto undoAction = [this, clip, isMove]() {
-        if (!isMove) {
-            m_sheet->get_audioclip_manager()->remove_clip(clip);
-        }
-        apply_clip_mutation({}, {clip});
-    };
-
-    return new TAddRemoveCommand(
-        this,
-        clip,
-        spec.is_historabel(),
-        m_sheet,
-        std::move(doAction),
-        nullptr,
-        std::move(undoAction),
-        nullptr,
-        tr("Add Clip")
-        );
-}
-
-TCommand* TAudioTrack::remove_clip(const TAudioClipAddRemoveSpec &spec)
-{
-    PENTER;
-    TAudioClip* clip = spec.get_clip();
-    const bool isMove = spec.is_move();
-
-    // apply_clip_mutation() deactivates the clip's read source on removal
-    // and activates it again (via set_track()) when undo adds it back.
-    // A move only changes the clip's track, the clip manager keeps knowing it.
-    auto doAction = [this, clip, isMove]() {
-        if (!isMove) {
-            m_sheet->get_audioclip_manager()->remove_clip(clip);
-        }
-        apply_clip_mutation({}, {clip});
-    };
-
-    auto undoAction = [this, clip, isMove]() {
-        apply_clip_mutation({clip}, {});
-        if (!isMove) {
-            m_sheet->get_audioclip_manager()->add_clip(clip);
-        }
-    };
-
-    return new TAddRemoveCommand(
-        this,
-        clip,
-        spec.is_historabel(),
-        m_sheet,
-        std::move(doAction),
-        nullptr,
-        std::move(undoAction),
-        nullptr,
-        tr("Remove Clip")
-        );
 }
 
 void TAudioTrack::clip_position_changed(TAudioClip* clip)
