@@ -36,6 +36,7 @@ class TCommand;
 class TShortCut;
 class TShortCutFunction;
 class QTextStream;
+class QSettings;
 
 
 // Whether a function may also run on an object below a holding command
@@ -111,6 +112,21 @@ public:
     // that a new shortcut implementation behaves exactly like this one.
     void write_resolution_table(QTextStream& out);
 
+    // Problems with the registered functions themselves: actions and groups
+    // without a registration and plugin commands no action uses.
+    QStringList check_registrations();
+
+    // Keys that resolve to more than one function for the same class, which
+    // one runs then depends on hash order.
+    QStringList check_ambiguous_bindings();
+
+    // Problems of a keymap against the registered functions: entries for
+    // unknown functions, unknown keys or modifiers, and, if complete is set,
+    // functions without an entry.
+    QStringList check_keymap(QSettings& keymap, bool complete);
+
+    QString default_keymap_file() const;
+
 private:
     template <class T, class U, class R>
     TShortCutFunction* add_typed_function(const TAction &action, const TActionGroup *group,
@@ -158,6 +174,7 @@ private:
     friend TShortCutManager& tShortCutManager();
 
     bool keyboard_key_string_to_numerical_value(const QString& text, int& value);
+    void write_resolution_table_entries(QTextStream& out);
 
 public slots:
 	TCommand* export_keymap();

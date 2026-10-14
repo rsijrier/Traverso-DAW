@@ -60,6 +60,11 @@ public:
 		return m_dict.contains(action);
 	}
 
+	// Commands the plugin can create but no action is registered for
+	virtual QStringList unregistered_commands() const {
+		return QStringList();
+	}
+
 protected:
 	QHash<TActionId, int> m_dict;
 };

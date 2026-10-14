@@ -39,6 +39,7 @@ public:
     void load(TShortCutManager* m);
     TCommand* create(QObject* obj, TActionId action, QVariantList arguments);
     TCommandController* create_controller(QObject* obj, TActionId action, QVariantList arguments);
+    QStringList unregistered_commands() const override;
 
 private:
 
@@ -82,6 +83,8 @@ private:
         GainShowAutomationCommand,
         TransportSetPositionCommand,
 	};
+    Q_ENUM(TraversoCommand)
+
 
     enum MarkerLocation {
         PlayCursor = 0,

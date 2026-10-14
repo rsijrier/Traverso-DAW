@@ -1,0 +1,16 @@
+# Problems check.sh accepts for now, one per line, exactly as the resolution
+# table reports them. Every other problem makes check.sh fail.
+#
+# Remove a line when the problem is fixed. The keymap entries MoveCommandLeft
+# and MoveCommandRight stay until Move Left/Right work again (D4).
+command AddNewAudioTrackCommand of plugin TraversoCommands has no action
+command ArmTracksCommand of plugin TraversoCommands has no action
+keymap entry AcceptHoldCommand is not a known function
+keymap entry AudioTrackSilenceOthers is not a known function
+keymap entry FadeLength is not a known function
+keymap entry MoveCommandLeft is not a known function
+keymap entry MoveCommandRight is not a known function
+keymap entry MoveTrackUp is not a known function
+keymap entry RejectHoldCommand is not a known function
+keymap entry RemoveMarker is not a known function
+keymap entry ZoomVertical is not a known function

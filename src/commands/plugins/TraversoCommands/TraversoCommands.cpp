@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TraversoCommands.h"
 
+#include <QMetaEnum>
+
 #include <QInputDialog>
 #include <QStringList>
 
@@ -409,6 +411,19 @@ TShortCutFunction* TraversoCommands::add_function(const QMetaObject *metaObject,
 
     return function;
 
+}
+
+QStringList TraversoCommands::unregistered_commands() const
+{
+    QStringList unregistered;
+    const QMetaEnum commands = QMetaEnum::fromType<TraversoCommand>();
+    for (int i = 0; i < commands.keyCount(); ++i) {
+        int command = commands.value(i);
+        if (command != NoCommand && !m_dict.values().contains(command)) {
+            unregistered << commands.key(i);
+        }
+    }
+    return unregistered;
 }
 
 TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList arguments)
