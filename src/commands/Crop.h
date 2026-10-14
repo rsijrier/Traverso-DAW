@@ -24,10 +24,13 @@
 
 #include "TCommand.h"
 
+#include <memory>
+
 class TAudioClipView;
 class TAudioTrack;
 class TAudioClip;
 class QGraphicsRectItem;
+class QUndoCommand;
 
 class CropClip : public TCommand
 {
@@ -52,6 +55,7 @@ private:
         TAudioClip* m_clip;
         TAudioClip* leftClip{};
         TAudioClip* rightClip{};
+        std::unique_ptr<QUndoCommand> m_mutation;
         QGraphicsRectItem* m_selection;
         qint64 x1;
         qint64 x2;

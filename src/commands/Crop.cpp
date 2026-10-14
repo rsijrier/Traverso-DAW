@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioTrack.h"
 #include "TInputEventDispatcher.h"
 #include <limits.h>
+#include <QUndoCommand>
 
 
  #include <QGraphicsRectItem>
@@ -99,6 +100,12 @@ int CropClip::prepare_actions()
     rightClip->move_to_location(leftClip->get_location_end());
     rightClip->reset_fade_in();
 
+    leftClip->set_track(m_track);
+    rightClip->set_track(m_track);
+
+    // The two cropped clips replace the original as one real-time change
+    m_mutation.reset(m_track->get_sheet()->create_command_mutate_clips({leftClip, rightClip}, {m_clip}, text()));
+
 	return 1;
 }
 
@@ -117,36 +124,14 @@ int CropClip::finish_hold()
 int CropClip::do_action()
 {
 	PENTER;
-    TAudioClipAddRemoveSpec spec;
-    spec.set_clip(leftClip);
-    spec.set_is_historable(false);
-    spec.set_is_move(false);
-
-    TCommand::process_command(m_track->add_clip(spec));
-    spec.set_clip(rightClip);
-    TCommand::process_command(m_track->add_clip(spec));
-
-    spec.set_clip(m_clip);
-    TCommand::process_command(m_track->remove_clip(spec));
-
+    m_mutation->redo();
 	return 1;
 }
 
 int CropClip::undo_action()
 {
 	PENTER;
-    TAudioClipAddRemoveSpec spec;
-    spec.set_is_historable(false);
-    spec.set_is_move(false);
-
-    spec.set_clip(m_clip);
-    TCommand::process_command(m_track->add_clip(spec));
-
-    spec.set_clip(leftClip);
-    TCommand::process_command(m_track->remove_clip(spec));
-    spec.set_clip(rightClip);
-    TCommand::process_command(m_track->remove_clip(spec));
-
+    m_mutation->undo();
 	return 1;
 }
 
