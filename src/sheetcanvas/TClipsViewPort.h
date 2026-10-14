@@ -23,10 +23,10 @@
 
 #include <QGraphicsScene>
 #include <QList>
+#include <QStringList>
 #include "TViewPort.h"
 
 class TSheetWidget;
-class TAudioFileImportCommand;
 class TAudioTrack;
 
 class TClipsViewPort : public TViewPort
@@ -46,7 +46,7 @@ protected:
 
 private:
     TSheetWidget*                   m_sw;
-    QList<TAudioFileImportCommand*> m_imports;
+    QStringList                     m_importFiles;
     QList<qint64>                   m_resourcesImport;
     TAudioTrack*                    m_importTrack{nullptr};
 };

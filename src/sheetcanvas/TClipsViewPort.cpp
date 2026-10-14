@@ -32,9 +32,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSheet.h"
 #include "TAudioTrackView.h"
 #include "TViewItem.h"
-#include "TAudioFileImportCommand.h"
+#include "TAudioClipFactory.h"
+#include "decode/AbstractAudioReader.h"
+#include "TInformUser.h"
 #include "TInputEventDispatcher.h"
-#include "CommandGroup.h"
 
 #include <QScrollBar>
 #include <QSet>
@@ -74,7 +75,7 @@ void TClipsViewPort::paintEvent(QPaintEvent * e)
 
 void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 {
-	m_imports.clear();
+	m_importFiles.clear();
 	m_resourcesImport.clear();
 	
 	// let's see if the D&D was from the resources bin.
@@ -104,24 +105,18 @@ void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
                 continue;
 			}
 			
-            TAudioFileImportCommand* import = new TAudioFileImportCommand(pm().get_project());
-            import->set_file_name(fileName);
-			m_imports.append(import);
-			
-			// If a readsource fails to init, the D&D should be
-			// marked as failed, cleanup allready created imports,
-			// and clear the import list.
-            if (import->create_readsource() == -1) {
-                foreach(TAudioFileImportCommand* import, m_imports) {
-					delete import;
-				}
-				m_imports.clear();
+			// Only probe the file here, it is imported on drop. If a file
+			// can't be decoded, the D&D is marked as failed.
+			if (!AbstractAudioReader::can_decode(fileName)) {
+				m_importFiles.clear();
 				break;
 			}
+
+			m_importFiles.append(fileName);
 		}
 	}
 	
-    if (!m_imports.empty() || !m_resourcesImport.empty()) {
+    if (!m_importFiles.empty() || !m_resourcesImport.empty()) {
         event->accept();
     }
 }
@@ -135,9 +130,8 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 		return;
 	}
 
-	CommandGroup* group = new CommandGroup(m_sw->get_sheet(), 
-               tr("Import %n audiofile(s)", "", m_imports.size() + m_resourcesImport.size()));
-	
+	QList<TAudioClip*> clips;
+
 	TTimeRef startpos = TTimeRef(mapFromGlobal(QCursor::pos()).x() * m_sw->get_sheetview()->timeref_scalefactor);
 	
 	foreach(qint64 id, m_resourcesImport) {
@@ -151,11 +145,7 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 			}
             clip->move_to_location(startpos);
             startpos = clip->get_location_end();
-            TAudioClipAddRemoveSpec spec;
-            spec.set_clip(clip);
-            spec.set_is_historable(true);
-            spec.set_is_move(false);
-            group->add_command(clip->get_track()->add_clip(spec));
+            clips.append(clip);
             continue;
 		}
 		TBufferedAudioStreamReader* source = resources_manager()->get_readsource(id);
@@ -166,26 +156,45 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 			clip->set_track(m_importTrack);
 			clip->move_to_location(startpos);
             startpos = clip->get_location_end();
-            TAudioClipAddRemoveSpec spec;
-            spec.set_clip(clip);
-            spec.set_is_historable(true);
-            spec.set_is_move(false);
-            group->add_command(clip->get_track()->add_clip(spec));
+            clips.append(clip);
         }
 	}
 	
-	bool firstItem = true;
-    foreach(TAudioFileImportCommand* import, m_imports) {
-		import->set_track(m_importTrack);
-		if (firstItem) {
-			// Place first item at cursor, others at end of track.
-			import->set_import_location(startpos);
-			firstItem = false;
-		}
-		group->add_command(import);
+	// Place the first file at the cursor, the others at the end of the track,
+	// including the clips added by this drop
+	TTimeRef trackEnd = m_importTrack->get_end_location();
+	for (TAudioClip* clip : std::as_const(clips)) {
+		trackEnd = std::max(trackEnd, clip->get_location_end());
 	}
 
-	TCommand::process_command(group);
+	bool firstItem = true;
+	for (const QString& fileName : std::as_const(m_importFiles)) {
+		QString error;
+		TTimeRef location = firstItem ? startpos : trackEnd;
+		TAudioClip* clip = TAudioClipFactory::create_from_file(m_importTrack, fileName, location, &error);
+		if (!clip) {
+			tInformUser().warning(error);
+			continue;
+		}
+		firstItem = false;
+		trackEnd = std::max(trackEnd, clip->get_location_end());
+		clips.append(clip);
+	}
+
+	if (clips.isEmpty()) {
+		return;
+	}
+
+	// All dropped clips in one undo step
+	TSheet* sheet = m_sw->get_sheet();
+	QUndoCommand* command = sheet->create_command_mutate_clips(clips, {}, tr("Import %n audiofile(s)", "", clips.size()));
+
+	if (QUndoStack* undoStack = sheet->get_history_stack()) {
+		undoStack->push(command);
+	} else {
+		command->redo();
+		delete command;
+	}
 }
 
 void TClipsViewPort::dragMoveEvent( QDragMoveEvent * event )
