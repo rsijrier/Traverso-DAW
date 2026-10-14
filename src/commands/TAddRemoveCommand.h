@@ -38,6 +38,18 @@ public:
                       std::function<void()> undoMethod, std::function<void()> undoSignal,
                       const QString& des);
 
+    // For owners whose lists are TRtLists: the methods change them in the GUI
+    // thread with the transaction they are given, so the command runs them
+    // directly. Goes away with TAddRemoveCommand itself.
+    using TransactionMethod = std::function<void(TRtTransaction& transaction)>;
+
+    TAddRemoveCommand(TContextItem* parent,
+                      TContextItem* item,
+                      bool historable,
+                      TransactionMethod doMethod,
+                      TransactionMethod undoMethod,
+                      const QString& des);
+
     ~TAddRemoveCommand() override = default;
 
     bool is_hold_command() const override { return false; }

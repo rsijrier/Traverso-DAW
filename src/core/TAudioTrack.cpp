@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TAudioTrack.h"
+#include "TSplitableTimeLineEntity.h"
 
 #include <QDomElement>
 #include <QDomNode>
@@ -41,6 +42,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
     : TTrack(sheet)
     , m_sheet(sheet)
+    , m_clips(TSplitableTimeLineEntity::starts_before)
 {
     PENTERCONS;
     m_name = name;
@@ -56,6 +58,7 @@ TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
 TAudioTrack::TAudioTrack( TSheet * sheet, const QDomNode node)
     : TTrack(sheet)
     , m_sheet(sheet)
+    , m_clips(TSplitableTimeLineEntity::starts_before)
 {
     PENTERCONS;
     Q_UNUSED(node);
@@ -75,10 +78,6 @@ void TAudioTrack::init()
     m_type = TRACKTYPE::AUDIO;
     m_isArmed = false;
     m_processBus = m_sheet->get_render_bus();
-
-    m_clips.set_sort_function([](const TAudioClip* left, const TAudioClip* right) {
-        return left->get_location_start() < right->get_location_start();
-    });
 }
 
 QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
@@ -158,7 +157,7 @@ int TAudioTrack::set_state( const QDomNode & node )
 
     // Loading a project, publish all clips of this track as one event
     TRtTransaction transaction;
-    apply_clip_mutation(clipsToAdd, {});
+    apply_clip_mutation(clipsToAdd, {}, transaction);
 
     return 1;
 }
@@ -438,21 +437,25 @@ void TAudioTrack::clip_position_changed(TAudioClip* clip)
 {
     // Clips that are not (yet) on this track, e.g. while a split prepares its
     // new clips, don't affect the order of this track's clips.
+    // A changed position is a complete change on its own; called during a
+    // larger change, this transaction joins that one.
     if (m_clips.items().contains(clip)) {
-        m_clips.resort();
+        TRtTransaction transaction;
+        m_clips.resort(transaction);
     }
 }
 
-void TAudioTrack::apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove)
+void TAudioTrack::apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove,
+                                      TRtTransaction& transaction)
 {
     for (auto* clip : clipsToRemove) {
-        m_clips.remove(clip);
+        m_clips.remove(clip, transaction);
         clip->removed_from_track();
         emit audioClipRemoved(clip);
     }
 
     for (auto* clip : clipsToAdd) {
-        m_clips.add(clip);
+        m_clips.add(clip, transaction);
         clip->set_track(this);
         emit audioClipAdded(clip);
     }

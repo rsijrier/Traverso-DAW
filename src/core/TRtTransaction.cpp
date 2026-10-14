@@ -34,16 +34,9 @@ bool TRtListBase::is_gui_thread()
     return QThread::currentThread() == QCoreApplication::instance()->thread();
 }
 
-void TRtListBase::mark_dirty()
+void TRtListBase::mark_dirty(TRtTransaction& transaction)
 {
-    if (TRtTransaction* transaction = TRtTransaction::current()) {
-        transaction->mark_dirty(this);
-        return;
-    }
-
-    PWARN("TRtList changed outside a TRtTransaction, publishing the change on its own");
-
-    TRtTransaction transaction;
+    Q_ASSERT_X(is_gui_thread(), "TRtListBase::mark_dirty", "TRtLists can only be changed in the GUI thread");
     transaction.mark_dirty(this);
 }
 
@@ -63,11 +56,6 @@ TRtTransaction::~TRtTransaction()
     if (!m_outer) {
         commit();
     }
-}
-
-TRtTransaction* TRtTransaction::current()
-{
-    return s_current;
 }
 
 void TRtTransaction::mark_dirty(TRtListBase* list)

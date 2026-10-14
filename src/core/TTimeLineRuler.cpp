@@ -215,9 +215,7 @@ void TTimeLineRuler::marker_position_changed()
 
 void TTimeLineRuler::index_markers()
 {
-    std::sort(m_markers.begin(), m_markers.end(), [&](TTimeLineMarker* left, TTimeLineMarker* right) {
-        return left->get_location()->get_start() < right->get_location()->get_start();
-    });
+    std::sort(m_markers.begin(), m_markers.end(), TTimeLineEntity::comes_before);
 
 	// let the markers know about their position (index)
 	for (int i = 0; i < m_markers.size(); i++) {

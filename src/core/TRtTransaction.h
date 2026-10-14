@@ -6,7 +6,10 @@
 #pragma once
 
 #include <QList>
+#include <cstddef>
 #include <memory>
+
+class TRtTransaction;
 
 /**
  * @brief One change to apply in the audio thread as part of a TRtTransaction.
@@ -35,8 +38,8 @@ public:
     virtual ~TRtListBase() = default;
 
 protected:
-    // GUI thread: register this list as changed in the current transaction.
-    void mark_dirty();
+    // GUI thread: register this list as changed in transaction.
+    void mark_dirty(TRtTransaction& transaction);
 
     // Used by debug assertions to check that each side of a list is only used
     // from its own thread.
@@ -53,17 +56,19 @@ private:
  * @brief Collects all changes to real-time state made during one user action
  *        and publishes them to the audio thread as a single event.
  *
- * Create one on the stack in the GUI thread around the code that changes the
- * state. Transactions nest: an inner transaction joins the outermost one, and
- * only the outermost transaction publishes when it goes out of scope.
+ * Create one on the stack in the GUI thread and pass it to every function that
+ * changes real-time state; a TRtList can only be changed with a transaction.
+ * It publishes when it goes out of scope.
  *
  *     {
  *         TRtTransaction transaction;
- *         track->apply_clip_mutation(clipsToAdd, clipsToRemove);
+ *         track->apply_clip_mutation(clipsToAdd, clipsToRemove, transaction);
  *     } // one event posted for everything changed above
  *
- * A TRtList changed while no transaction is open publishes on its own, and
- * warns in debug builds, so such code paths can be found and wrapped.
+ * A transaction created while another one is open joins it, and only the
+ * outermost one publishes. Undo commands rely on that: QUndoCommand::redo()
+ * takes no arguments, so a command opens its own transaction, which joins
+ * the one of a command or hold it runs in.
  *
  * The audio thread always runs (TAudioDevice falls back to the dummy driver),
  * so the event is always posted. Only while the audio device is switching
@@ -78,12 +83,15 @@ public:
     TRtTransaction(const TRtTransaction&) = delete;
     TRtTransaction& operator=(const TRtTransaction&) = delete;
 
-    // The innermost open transaction in the GUI thread, or nullptr.
-    static TRtTransaction* current();
-
-    void mark_dirty(TRtListBase* list);
+    // Only on the stack, so it publishes when the change is done instead of
+    // living on unnoticed
+    static void* operator new(std::size_t) = delete;
+    static void* operator new[](std::size_t) = delete;
 
 private:
+    friend class TRtListBase;
+
+    void mark_dirty(TRtListBase* list);
     void commit();
 
     TRtTransaction*      m_outer{nullptr};

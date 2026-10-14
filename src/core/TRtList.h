@@ -30,7 +30,17 @@ template <class T>
 class TRtList final : public TRtListBase
 {
 public:
+    using LessThan = std::function<bool(const T*, const T*)>;
+
     TRtList() : m_rtItems(new std::vector<T*>()) {}
+
+    // Keeps the list sorted by lessThan, e.g. clips by start location. The
+    // order is fixed for the list's lifetime, so it never changes unpublished.
+    explicit TRtList(LessThan lessThan)
+        : m_rtItems(new std::vector<T*>())
+        , m_lessThan(std::move(lessThan))
+    {}
+
     ~TRtList() override { delete m_rtItems; }
 
     TRtList(const TRtList&) = delete;
@@ -44,35 +54,27 @@ public:
         return m_items;
     }
 
-    void add(T* item)
+    void add(T* item, TRtTransaction& transaction)
     {
         Q_ASSERT_X(is_gui_thread(), "TRtList::add", "GUI side used outside the GUI thread");
         m_items.append(item);
         sort();
-        mark_dirty();
+        mark_dirty(transaction);
     }
 
-    void remove(T* item)
+    void remove(T* item, TRtTransaction& transaction)
     {
         Q_ASSERT_X(is_gui_thread(), "TRtList::remove", "GUI side used outside the GUI thread");
         m_items.removeAll(item);
-        mark_dirty();
-    }
-
-    // Keeps the list sorted, e.g. clips by start location
-    void set_sort_function(std::function<bool(const T*, const T*)> lessThan)
-    {
-        Q_ASSERT_X(is_gui_thread(), "TRtList::set_sort_function", "GUI side used outside the GUI thread");
-        m_lessThan = std::move(lessThan);
-        sort();
+        mark_dirty(transaction);
     }
 
     // Call after the sort order of items changed, e.g. a clip moved
-    void resort()
+    void resort(TRtTransaction& transaction)
     {
         Q_ASSERT_X(is_gui_thread(), "TRtList::resort", "GUI side used outside the GUI thread");
         sort();
-        mark_dirty();
+        mark_dirty(transaction);
     }
 
     // Audio thread
@@ -114,5 +116,5 @@ private:
 
     QList<T*>                              m_items;
     std::vector<T*>*                       m_rtItems;
-    std::function<bool(const T*, const T*)> m_lessThan;
+    LessThan                               m_lessThan;
 };

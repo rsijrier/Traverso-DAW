@@ -148,8 +148,8 @@ public slots:
 	virtual TCommand* start_transport();
 
 protected:
-	void private_add_track(TTrack* track);
-	void private_remove_track(TTrack* track);
+	void private_add_track(TTrack* track, TRtTransaction& transaction);
+	void private_remove_track(TTrack* track, TRtTransaction& transaction);
 
 
 signals:

@@ -66,6 +66,23 @@ TAddRemoveCommand::TAddRemoveCommand(
     }
 }
 
+TAddRemoveCommand::TAddRemoveCommand(TContextItem* parent,
+                                     TContextItem* item,
+                                     bool historable,
+                                     TransactionMethod doMethod,
+                                     TransactionMethod undoMethod,
+                                     const QString& des)
+    : TCommand(parent, des)
+    , m_parentItem(item)
+    , m_doMethod([doMethod]() { TRtTransaction transaction; doMethod(transaction); })
+    , m_undoMethod([undoMethod]() { TRtTransaction transaction; undoMethod(transaction); })
+    , m_instantanious(true)
+{
+    if (!historable) {
+        set_do_not_push_to_historystack();
+    }
+}
+
 int TAddRemoveCommand::do_action()
 {
     if (m_doSignal || m_undoSignal) {

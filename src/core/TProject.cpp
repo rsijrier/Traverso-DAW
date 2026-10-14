@@ -412,7 +412,7 @@ int TProject::load(const QString& projectfile)
         while(!busTrackNode.isNull()) {
             TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
             busTrack->set_state(busTrackNode);
-            private_add_track(busTrack);
+            private_add_track(busTrack, transaction);
 
             busTrackNode = busTrackNode.nextSibling();
         }

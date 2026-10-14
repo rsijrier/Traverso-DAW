@@ -22,4 +22,10 @@ public:
     virtual bool validate_split_boundary(const TTimeRef& splitLocation) const = 0;
 
     virtual TSplitMutationResult calculate_split_mutation(const TTimeRef& splitLocation) = 0;
+
+    // Orders entities with a length, e.g. clips, by where they start
+    static bool starts_before(const TSplitableTimeLineEntity* left, const TSplitableTimeLineEntity* right)
+    {
+        return left->get_location_start() < right->get_location_start();
+    }
 };

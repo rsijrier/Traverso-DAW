@@ -48,7 +48,8 @@ public :
     ~TAudioTrack();
 
     TAudioClip* init_recording();
-    void apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove);
+    void apply_clip_mutation(const QList<TAudioClip*>& clipsToAdd, const QList<TAudioClip*>& clipsToRemove,
+                             TRtTransaction& transaction);
 
     TAudioClip* get_clip_after(const TTimeRef& pos) const;
     TAudioClip* get_audio_clip_after(TAudioClip* audioClip) const;
@@ -92,8 +93,9 @@ protected:
 private:
     TSheet*          m_sheet;
 
-    // Sorted by start location. The GUI thread owns the list,
-    // process() reads its snapshot in the audio thread.
+    // Sorted by TSplitableTimeLineEntity::starts_before, see the constructors.
+    // The GUI thread owns the list, process() reads its snapshot in the audio
+    // thread.
     TRtList<TAudioClip>  m_clips;
 
     int             m_numtakes{};

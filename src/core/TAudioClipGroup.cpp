@@ -72,8 +72,8 @@ void TAudioClipGroup::move_to(int trackIndex, const TTimeRef &location)
         if (trackIndexDelta != 0) {
             TAudioTrack* track = clip->get_sheet()->get_audio_track_for_index(clip->get_track()->get_sort_index() + trackIndexDelta);
             if (track) {
-                clip->get_track()->apply_clip_mutation({}, {clip});
-                track->apply_clip_mutation({clip}, {});
+                clip->get_track()->apply_clip_mutation({}, {clip}, transaction);
+                track->apply_clip_mutation({clip}, {}, transaction);
             }
         }
 

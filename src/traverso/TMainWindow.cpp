@@ -1512,8 +1512,8 @@ void TMainWindow::import_audio()
         TTimeLineMarker* m = timeLineRuler->get_end_marker();
         TTimeRef origLocation = m->get_location()->get_start();
         QUndoCommand* moveEndMarker = new TUndoCommand(tr("Move End Marker"),
-            [m, importLocation]() { m->set_when(importLocation); },
-            [m, origLocation]() { m->set_when(origLocation); });
+            [m, importLocation](TRtTransaction&) { m->set_when(importLocation); },
+            [m, origLocation](TRtTransaction&) { m->set_when(origLocation); });
         if (undoStack) {
             undoStack->push(moveEndMarker);
         } else {

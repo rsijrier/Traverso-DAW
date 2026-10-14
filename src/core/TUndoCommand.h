@@ -12,14 +12,17 @@
 
 #include "TRtTransaction.h"
 
-// Runs redo and undo in a TRtTransaction, so all real-time changes of one
-// undo step reach the audio thread as a single event.
+// Runs redo and undo in a TRtTransaction, which the actions get to change
+// real-time state with, so all changes of one undo step reach the audio
+// thread as a single event.
 class TUndoCommand : public QUndoCommand
 {
 public:
+    using Action = std::function<void(TRtTransaction& transaction)>;
+
     explicit TUndoCommand(const QString& description,
-                          const std::function<void()>& redoAction,
-                          const std::function<void()>& undoAction)
+                          const Action& redoAction,
+                          const Action& undoAction)
         : QUndoCommand(description)
         , m_redoAction(redoAction)
         , m_undoAction(undoAction)
@@ -38,16 +41,16 @@ public:
     void redo() final
     {
         TRtTransaction transaction;
-        m_redoAction();
+        m_redoAction(transaction);
     }
 
     void undo() final
     {
         TRtTransaction transaction;
-        m_undoAction();
+        m_undoAction(transaction);
     }
 
 private:
-    std::function<void()> m_redoAction;
-    std::function<void()> m_undoAction;
+    Action m_redoAction;
+    Action m_undoAction;
 };

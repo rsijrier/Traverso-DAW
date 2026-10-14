@@ -466,34 +466,25 @@ TCommand* TSession::add_track(TTrack* track, bool historable)
     if (is_child_session()) {
         set_track_height(track->get_id(), m_parentSession->get_track_height(track->get_id()));
         TRtTransaction transaction;
-        private_add_track(track);
+        private_add_track(track, transaction);
         return nullptr;
     }
 
-    auto* cmd = new TAddRemoveCommand(
+    return new TAddRemoveCommand(
         this,
         track,
         historable,
-        this,
-        [this, track]() { private_add_track(track); },
-        nullptr,
-        [this, track]() { private_remove_track(track); },
-        nullptr,
+        [this, track](TRtTransaction& transaction) { private_add_track(track, transaction); },
+        [this, track](TRtTransaction& transaction) { private_remove_track(track, transaction); },
         tr("Added %1: %2").arg(track->metaObject()->className(), track->get_name())
         );
-
-    // The track lists are TRtLists, changed in the GUI thread and published
-    // to the audio thread by the TRtTransaction the command runs in
-    cmd->set_instantanious(true);
-
-    return cmd;
 }
 
 TCommand* TSession::remove_track(TTrack* track, bool historable)
 {
     if (m_parentSession) {
         TRtTransaction transaction;
-        private_remove_track(track);
+        private_remove_track(track, transaction);
         return nullptr;
     }
 
@@ -502,31 +493,24 @@ TCommand* TSession::remove_track(TTrack* track, bool historable)
         return nullptr;
     }
 
-    auto* cmd = new TAddRemoveCommand(
+    return new TAddRemoveCommand(
         this,
         track,
         historable,
-        this,
-        [this, track]() { private_remove_track(track); },
-        nullptr,
-        [this, track]() { private_add_track(track); },
-        nullptr,
+        [this, track](TRtTransaction& transaction) { private_remove_track(track, transaction); },
+        [this, track](TRtTransaction& transaction) { private_add_track(track, transaction); },
         tr("Removed %1: %2").arg(track->metaObject()->className(), track->get_name())
         );
-
-    cmd->set_instantanious(true);
-
-    return cmd;
 }
 
-void TSession::private_add_track(TTrack* track)
+void TSession::private_add_track(TTrack* track, TRtTransaction& transaction)
 {
 	switch(track->get_type()) {
     case TTrack::AUDIO:
-        m_audioTracks.add(qobject_cast<TAudioTrack*>(track));
+        m_audioTracks.add(qobject_cast<TAudioTrack*>(track), transaction);
 		break;
     case TTrack::BUS:
-        m_busTracks.add(qobject_cast<TBusTrack*>(track));
+        m_busTracks.add(qobject_cast<TBusTrack*>(track), transaction);
 		break;
 	default:
         qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
@@ -541,14 +525,14 @@ void TSession::private_add_track(TTrack* track)
 	emit trackAdded(track);
 }
 
-void TSession::private_remove_track(TTrack* track)
+void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
 {
 	switch(track->get_type()) {
     case TTrack::AUDIO:
-        m_audioTracks.remove(qobject_cast<TAudioTrack*>(track));
+        m_audioTracks.remove(qobject_cast<TAudioTrack*>(track), transaction);
 		break;
     case TTrack::BUS:
-        m_busTracks.remove(qobject_cast<TBusTrack*>(track));
+        m_busTracks.remove(qobject_cast<TBusTrack*>(track), transaction);
 		break;
 	default:
         qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");

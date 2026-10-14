@@ -31,6 +31,12 @@ public:
     TTimeRef get_location_end() const;
     TLocation* get_location() const { return m_location.get(); }
 
+    // Orders entities at a point in time, e.g. markers, by that point
+    static bool comes_before(const TTimeLineEntity* left, const TTimeLineEntity* right)
+    {
+        return left->get_location_start() < right->get_location_start();
+    }
+
 protected:
     std::unique_ptr<TLocation> m_location;
 };

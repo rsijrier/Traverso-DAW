@@ -89,7 +89,7 @@ TSheet::TSheet(TProject* project, int numtracks)
         int height = TAudioTrack::INITIAL_HEIGHT;
         QString trackname = QString("Audio Track %1").arg(i);
         TAudioTrack* track = new TAudioTrack(this, trackname, height);
-        private_add_track(track);
+        private_add_track(track, transaction);
     }
 
     resize_buffers(audiodevice().get_buffer_size());
@@ -222,7 +222,7 @@ int TSheet::set_state( const QDomNode & node )
     while(!busTrackNode.isNull()) {
         TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
         busTrack->set_state(busTrackNode);
-        private_add_track(busTrack);
+        private_add_track(busTrack, transaction);
 
         busTrackNode = busTrackNode.nextSibling();
     }
@@ -233,7 +233,7 @@ int TSheet::set_state( const QDomNode & node )
     while(!trackNode.isNull()) {
         TAudioTrack* track = new TAudioTrack(this, trackNode);
         track->set_state(trackNode);
-        private_add_track(track);
+        private_add_track(track, transaction);
 
         trackNode = trackNode.nextSibling();
     }
@@ -1103,7 +1103,7 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
         }
     }
 
-    auto doAction = [mutationsPerTrack, clipManager]() {
+    auto doAction = [mutationsPerTrack, clipManager](TRtTransaction& transaction) {
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
             for (TAudioClip* oldClip : it.value().toRemove) {
                 clipManager->remove_clip(oldClip);
@@ -1111,7 +1111,7 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
         }
 
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
-            it.key()->apply_clip_mutation(it.value().toAdd, it.value().toRemove);
+            it.key()->apply_clip_mutation(it.value().toAdd, it.value().toRemove, transaction);
         }
 
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
@@ -1121,7 +1121,7 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
         }
     };
 
-    auto undoAction = [mutationsPerTrack, clipManager]() {
+    auto undoAction = [mutationsPerTrack, clipManager](TRtTransaction& transaction) {
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
             for (TAudioClip* newClip : it.value().toAdd) {
                 clipManager->remove_clip(newClip);
@@ -1129,7 +1129,7 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
         }
 
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
-            it.key()->apply_clip_mutation(it.value().toRemove, it.value().toAdd);
+            it.key()->apply_clip_mutation(it.value().toRemove, it.value().toAdd, transaction);
         }
 
         for (auto it = mutationsPerTrack.begin(); it != mutationsPerTrack.end(); ++it) {
