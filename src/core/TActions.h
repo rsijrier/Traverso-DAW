@@ -6,8 +6,7 @@
 #include <QCoreApplication>
 #include <QHash>
 
-#include <iterator>
-#include <string_view>
+#include <array>
 
 // Every feature that can be bound to a key. The name is what users see and
 // edit in the keymap files, so it must never change; code only uses the id.
@@ -311,7 +310,7 @@ struct TActions
     static constexpr TAction ZoomToggleExpandAllTracks             {TActionId::ZoomToggleExpandAllTracks, "ZoomToggleExpandAllTracks", QT_TRANSLATE_NOOP("TraversoCommands", "Expand/Collapse Tracks")};
     static constexpr TAction ZoomToggleVerticalHorizontal          {TActionId::ZoomToggleVerticalHorizontal, "ZoomToggleVerticalHorizontal", ""};
 
-    static constexpr TAction All[] = {
+    static constexpr std::array All{
         ArrowKeyBrowserStartUp,
         ArrowKeyBrowserStartDown,
         ArrowKeyBrowserStartLeft,
@@ -497,7 +496,7 @@ struct TActionGroups
     static constexpr TActionGroup ToggleBypassBase     {TActionGroupId::ToggleBypassBase, "ToggleBypassBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Bypass")};
     static constexpr TActionGroup ToggleVerticalBase   {TActionGroupId::ToggleVerticalBase, "ToggleVerticalBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Vertical")};
 
-    static constexpr TActionGroup All[] = {
+    static constexpr std::array All{
         TNavigationBaseUp,
         TNavigationBaseDown,
         TNavigationBaseLeft,
@@ -512,9 +511,20 @@ struct TActionGroups
     };
 };
 
+// Compares two names, stopping at the first difference, so checking all
+// pairs stays well within the compilers' constexpr evaluation limits
+constexpr bool t_names_are_equal(const char* left, const char* right)
+{
+    while (*left != '\0' && *left == *right) {
+        ++left;
+        ++right;
+    }
+    return *left == *right;
+}
+
 // Every id has exactly one entry, in id order, and every name is unique
 template <class Entry, size_t N>
-constexpr bool t_entries_are_consistent(const Entry (&entries)[N], size_t count)
+constexpr bool t_entries_are_consistent(const std::array<Entry, N>& entries, size_t count)
 {
     if (N != count) {
         return false;
@@ -524,7 +534,7 @@ constexpr bool t_entries_are_consistent(const Entry (&entries)[N], size_t count)
             return false;
         }
         for (size_t j = i + 1; j < N; ++j) {
-            if (std::string_view(entries[i].name) == std::string_view(entries[j].name)) {
+            if (t_names_are_equal(entries[i].name, entries[j].name)) {
                 return false;
             }
         }
