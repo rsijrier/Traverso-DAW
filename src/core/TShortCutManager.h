@@ -55,25 +55,25 @@ public:
     static const int MouseScrollVerticalDown = -4;
 
     TShortCutFunction* add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
-    TShortCutFunction* add_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
+    TShortCutFunction* add_function(const QMetaObject *metaObject, const TAction &action);
     TShortCutFunction* get_shortcut_function_for_base_metaobject(const QMetaObject *metaObject) const;
 
     // Registers method of class T as a shortcut function. A method that does
     // not exist or does not belong to T is a compile error.
     template <class T, class U, class R>
-    TShortCutFunction* add_function(const QString &description, const char *commandName, R (U::*method)(),
+    TShortCutFunction* add_function(const TAction &action, R (U::*method)(),
                                     TDispatchRule rule = TDispatchRule::Default)
     {
-        return add_typed_function<T>(nullptr, description, commandName, method, rule);
+        return add_typed_function<T>(action, nullptr, method, rule);
     }
 
     // Registers method of class T as a shortcut function that uses the keys of
     // the base function baseMetaObject
     template <class T, class U, class R>
-    TShortCutFunction* add_function(const QMetaObject *baseMetaObject, const char *commandName, R (U::*method)(),
+    TShortCutFunction* add_function(const TAction &action, const QMetaObject *baseMetaObject, R (U::*method)(),
                                     TDispatchRule rule = TDispatchRule::Default)
     {
-        return add_typed_function<T>(baseMetaObject, QString(), commandName, method, rule);
+        return add_typed_function<T>(action, baseMetaObject, method, rule);
     }
 
     QList<TShortCutFunction* > get_shortcut_functions_for_class(QString className);
@@ -112,14 +112,14 @@ public:
 
 private:
     template <class T, class U, class R>
-    TShortCutFunction* add_typed_function(const QMetaObject *baseMetaObject, const QString &description,
-                                          const char *commandName, R (U::*method)(), TDispatchRule rule)
+    TShortCutFunction* add_typed_function(const TAction &action, const QMetaObject *baseMetaObject,
+                                          R (U::*method)(), TDispatchRule rule)
     {
         static_assert(std::is_base_of_v<U, T>, "the method does not belong to the class it is registered for");
         static_assert(std::is_same_v<R, void> || std::is_same_v<R, TCommand*>,
                       "a shortcut function returns void or TCommand*");
 
-        TShortCutFunction* function = add_function(&T::staticMetaObject, description, commandName);
+        TShortCutFunction* function = add_function(&T::staticMetaObject, action);
         if (baseMetaObject) {
             function->set_base_metaobject(baseMetaObject);
         }

@@ -37,6 +37,15 @@ TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const QStrin
     Q_ASSERT(std::strlen(commandName) > 0);
 }
 
+TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const TAction &action)
+    : m_metaObject(metaObject)
+    , m_action(&action)
+    , m_commandName(action.name)
+    , m_description(action.translated_description())
+{
+    Q_ASSERT(metaObject);
+}
+
 TShortCutFunction::~TShortCutFunction()
 {
 }

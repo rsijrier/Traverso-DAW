@@ -72,6 +72,7 @@ add_library(traversocore STATIC
     TExportSpecification.cpp
     TAudioResampler.cpp
     TCommandPlugin.h
+    TActions.h
     TUndoCommand.h
     TRtTransaction.h TRtTransaction.cpp
     TRtList.h

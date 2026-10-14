@@ -37,8 +37,8 @@ public:
 	TraversoCommands();
 
     void load(TShortCutManager* m);
-    TCommand* create(QObject* obj, const QString& commandName, QVariantList arguments);
-    TCommandController* create_controller(QObject* obj, const QString& commandName, QVariantList arguments);
+    TCommand* create(QObject* obj, TActionId action, QVariantList arguments);
+    TCommandController* create_controller(QObject* obj, TActionId action, QVariantList arguments);
 
 private:
 
@@ -91,20 +91,18 @@ private:
 
 private:
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
-                      const QString &description,
-                      const char *commandName,
+                      const TAction &action,
                       TraversoCommand command=NoCommand,
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList())
     {
-        return add_function(metaObject, nullptr, description, commandName, command, useX, useY, args);
+        return add_function(metaObject, nullptr, action, command, useX, useY, args);
     }
 
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
                       const QMetaObject *basedMetaObject,
-                      const QString &description,
-                      const char *commandName,
+                      const TAction &action,
                       TraversoCommand command=NoCommand,
                       bool useX = false,
                       bool useY = false,

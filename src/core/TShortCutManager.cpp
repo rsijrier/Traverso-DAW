@@ -82,10 +82,10 @@ TShortCutFunction *TShortCutManager::add_base_function(const QMetaObject *metaOb
     return function;
 }
 
-TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
-                                                  const QString &description,
-                                                  const char *commandName)
+TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject, const TAction &action)
 {
+    const char* commandName = action.name;
+
     if (m_shortCutFunctions.contains(commandName)) {
         printf("There is already a function registered with command name %s\n", commandName);
         // Return the old function here to fix a crash on first start with no existing user Shortcuts file.
@@ -93,7 +93,7 @@ TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
         return m_shortCutFunctions.value(commandName);
 	}
 
-    auto function = new TShortCutFunction(metaObject, description, commandName);
+    auto function = new TShortCutFunction(metaObject, action);
 
     m_shortCutFunctions.insert(commandName, function);
 

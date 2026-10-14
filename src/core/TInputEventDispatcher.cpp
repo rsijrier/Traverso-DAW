@@ -327,12 +327,13 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
         return nullptr;
     }
 
-    const QString& commandName = shortCutFunction->get_command_name();
-    if (plug->implements(commandName)) {
-        PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), shortCutFunction->get_command_name());
-        return plug->create(contextItem, commandName, shortCutFunction->get_arguments());
+    const TAction* action = shortCutFunction->get_action();
+    Q_ASSERT(action);
+    if (action && plug->implements(action->id)) {
+        PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), action->name);
+        return plug->create(contextItem, action->id, shortCutFunction->get_arguments());
     } else {
-        tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, commandName));
+        tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, shortCutFunction->get_command_name()));
     }
     return nullptr;
 }
@@ -341,11 +342,12 @@ TCommandController* TInputEventDispatcher::create_controller_from_plugin(QObject
 {
     // A missing plugin is reported by create_command_from_plugin()
     TCommandPlugin* plug = m_shortCutManager->get_command_plugin(shortCutFunction->get_plugin_name());
-    if (!plug) {
+    const TAction* action = shortCutFunction->get_action();
+    if (!plug || !action) {
         return nullptr;
     }
 
-    return plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
+    return plug->create_controller(contextItem, action->id, shortCutFunction->get_arguments());
 }
 
 int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut, bool fromContextMenu)

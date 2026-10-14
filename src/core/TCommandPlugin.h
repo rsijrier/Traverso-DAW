@@ -32,6 +32,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  * \brief An abstract class to create new Command's which can be loaded dynamically
  *
  */
+#include "TActions.h"
+
 class TShortCutManager;
 class TCommand;
 class TCommandController;
@@ -50,20 +52,16 @@ public:
 	 * @param arguments List of arguments which can be parsed by the to be created Command object.
 	 * @return On success a Command object, the caller takes authorship, or 0 on failure.
  */
-    virtual TCommand* create(QObject* obj, const QString& command, QVariantList arguments) = 0;
-    virtual TCommandController* create_controller(QObject* obj, const QString& command, QVariantList arguments) = 0;
+    virtual TCommand* create(QObject* obj, TActionId action, QVariantList arguments) = 0;
+    virtual TCommandController* create_controller(QObject* obj, TActionId action, QVariantList arguments) = 0;
     virtual void load(TShortCutManager* manager) = 0;
 
-	virtual QStringList commands() const {
-		return QStringList(m_dict.keys());
-	}
-
-	virtual bool implements(const QString& command) const {
-		return m_dict.contains(command);
+	virtual bool implements(TActionId action) const {
+		return m_dict.contains(action);
 	}
 
 protected:
-	QHash<QString, int> m_dict;
+	QHash<TActionId, int> m_dict;
 };
 
 #endif

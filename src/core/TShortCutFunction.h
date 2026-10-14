@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define TSHORTCUTFUNCTION_H
 
 #include "Debugger.h"
+#include "TActions.h"
 #include "TCommand.h"
 #include <QStringList>
 #include <QVariantList>
@@ -35,7 +36,9 @@ public:
     // Calls the function on an object of the class it is registered for
     using Invoker = std::function<TCommand*(QObject*)>;
 
+    // A base function, that only supplies keys to the functions using it
     explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName);
+    explicit TShortCutFunction(const QMetaObject *metaObject, const TAction &action);
     ~TShortCutFunction();
 
     QString get_key_sequence(bool formatHtml=false) const;
@@ -46,6 +49,8 @@ public:
     QString get_submenu_name() const {return m_submenu;}
 
     const char* get_command_name() const {return m_commandName;}
+    // nullptr for a base function
+    const TAction* get_action() const {return m_action;}
 
     QList<int> get_modifier_keys(bool fromInheritedBase=true) const;
     QStringList get_keys(bool fromInheritedBase=true) const;
@@ -123,6 +128,7 @@ public:
 
 private:
     const QMetaObject*  m_metaObject{nullptr};
+    const TAction*      m_action{nullptr};
     const char*         m_commandName;
     const QMetaObject*	m_baseMetaObject{nullptr};
     TShortCutFunction*  m_baseShortCutFunction{nullptr};
