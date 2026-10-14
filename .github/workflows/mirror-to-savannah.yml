@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2026 Remon Sijrier
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+# GitHub is the main repository, Savannah a backup that follows it.
+# Every push to GitHub is pushed on to Savannah. Pushes are never forced:
+# if Savannah got commits that are not on GitHub, the run fails instead of
+# overwriting them. A daily run catches up when Savannah was unreachable.
+
+name: Mirror to Savannah
+
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-to-savannah
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    if: github.repository == 'rsijrier/Traverso-DAW'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone all branches and tags
+        run: git clone --mirror "https://github.com/${{ github.repository }}.git" repo.git
+
+      - name: Set up SSH for Savannah
+        env:
+          SAVANNAH_SSH_KEY: ${{ secrets.SAVANNAH_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SAVANNAH_SSH_KEY" > ~/.ssh/savannah
+          chmod 600 ~/.ssh/savannah
+          # Savannah's published host key (vcs.savannah.gnu.org, ECDSA
+          # SHA256:qRLLJ4w/GAeiDyYnbx4yWJbZXwGiYYxgNty7lAfUyuM)
+          echo 'git.savannah.nongnu.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBP9c1Z2f4OHxymvLxqxQ/hY1g0ol0/iiXUrVFGZBBq4h5gD05c7Gw9rRrcrvF9XvumBvOghOQzDSZZLRWvFGocA=' > ~/.ssh/known_hosts
+
+      - name: Push branches and tags to Savannah
+        working-directory: repo.git
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/savannah -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+        run: |
+          for attempt in 1 2 3; do
+            if git push r_sijrier@git.savannah.nongnu.org:/srv/git/traverso.git \
+                'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'; then
+              exit 0
+            fi
+            echo "Push failed (attempt $attempt), retrying in 60 s"
+            sleep 60
+          done
+          exit 1
