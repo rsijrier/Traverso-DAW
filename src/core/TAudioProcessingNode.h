@@ -66,7 +66,7 @@ public slots:
 
     void set_gain(float gain);
     void set_gain_animated(float gain);
-    DISPATCH_RULE_IS_ALWAYS TCommand* mute();
+    TCommand* mute();
 
 signals:
     void audibleStateChanged();

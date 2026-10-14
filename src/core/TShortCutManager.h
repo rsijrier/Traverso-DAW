@@ -27,11 +27,23 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QHash>
 #include <QMap>
 
+#include <type_traits>
+
+#include "TShortCutFunction.h"
+
 class TCommandPlugin;
 class TCommand;
 class TShortCut;
 class TShortCutFunction;
+class QTextStream;
+class QSettings;
 
+
+// Whether a function may also run on an object below a holding command
+enum class TDispatchRule {
+    Default,
+    AlwaysSafeDuringHold
+};
 
 class TShortCutManager : public QObject
 {
@@ -43,10 +55,31 @@ public:
     static const int MouseScrollVerticalUp = -3;
     static const int MouseScrollVerticalDown = -4;
 
-    TShortCutFunction* add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
-    TShortCutFunction* add_function(const QMetaObject *metaObject, const QString &description, const char *commandName, const char *slotSignature);
-    TShortCutFunction* add_function(const QMetaObject *metaObject, const QMetaObject *baseMetaObject, const char *commandName, const char *slotSignature);
-    TShortCutFunction* get_shortcut_function_for_base_metaobject(const QMetaObject *metaObject) const;
+    // Registers a group of functions sharing keys. itemMetaObject is the item the
+    // group is shown as in the shortcut editor and help.
+    TShortCutFunction* add_group(const TActionGroup &group, const QMetaObject *itemMetaObject);
+    TShortCutFunction* add_function(const QMetaObject *metaObject, const TAction &action);
+    // A function the input event dispatcher handles itself, shown in the
+    // menus and help of class metaObject, e.g. accepting a hold
+    TShortCutFunction* add_dispatcher_function(const QMetaObject *metaObject, const TAction &action);
+    TShortCutFunction* get_shortcut_function_for_group(TActionGroupId group) const;
+
+    // Registers method of class T as a shortcut function. A method that does
+    // not exist or does not belong to T is a compile error.
+    template <class T, class U, class R>
+    TShortCutFunction* add_function(const TAction &action, R (U::*method)(),
+                                    TDispatchRule rule = TDispatchRule::Default)
+    {
+        return add_typed_function<T>(action, nullptr, method, rule);
+    }
+
+    // Registers method of class T as a shortcut function in group
+    template <class T, class U, class R>
+    TShortCutFunction* add_function(const TAction &action, const TActionGroup &group, R (U::*method)(),
+                                    TDispatchRule rule = TDispatchRule::Default)
+    {
+        return add_typed_function<T>(action, &group, method, rule);
+    }
 
     QList<TShortCutFunction* > get_shortcut_functions_for_class(QString className);
     TShortCut* get_shortcut_for_key(const QString& key);
@@ -77,11 +110,58 @@ public:
 
     bool is_command_class(const QString& className);
 
+    // Writes every registered function and, for every registered class, key and
+    // modifier combination, the function a key press resolves to. Used to verify
+    // that a new shortcut implementation behaves exactly like this one.
+    void write_resolution_table(QTextStream& out);
+
+    // Problems with the registered functions themselves: actions and groups
+    // without a registration and plugin commands no action uses.
+    QStringList check_registrations();
+
+    // Keys that resolve to more than one function for the same class, which
+    // one runs then depends on hash order.
+    QStringList check_ambiguous_bindings();
+
+    // Problems of a keymap against the registered functions: entries for
+    // unknown functions, unknown keys or modifiers, and, if complete is set,
+    // functions without an entry.
+    QStringList check_keymap(QSettings& keymap, bool complete);
+
+    QString default_keymap_file() const;
+
 private:
+    template <class T, class U, class R>
+    TShortCutFunction* add_typed_function(const TAction &action, const TActionGroup *group,
+                                          R (U::*method)(), TDispatchRule rule)
+    {
+        static_assert(std::is_base_of_v<U, T>, "the method does not belong to the class it is registered for");
+        static_assert(std::is_same_v<R, void> || std::is_same_v<R, TCommand*>,
+                      "a shortcut function returns void or TCommand*");
+
+        TShortCutFunction* function = add_function(&T::staticMetaObject, action);
+        if (group) {
+            function->set_group(group);
+        }
+
+        function->set_invoker([method](QObject* object) -> TCommand* {
+            T* target = qobject_cast<T*>(object);
+            Q_ASSERT(target);
+            if constexpr (std::is_same_v<R, void>) {
+                (target->*method)();
+                return nullptr;
+            } else {
+                return (target->*method)();
+            }
+        }, rule == TDispatchRule::AlwaysSafeDuringHold);
+
+        return function;
+    }
+
     QHash<QString, TCommandPlugin*>	m_commandPlugins;
 
     QHash<QString, TShortCutFunction*>	m_shortCutFunctions;
-    QHash<const QMetaObject*, TShortCutFunction*>  m_baseShortCutFunctions;
+    QHash<TActionGroupId, TShortCutFunction*>  m_groupShortCutFunctions;
     QHash<int, TShortCut*>		m_shortcuts;
 	QHash<QString, QString>		m_translations;
     QMultiHash<QString, const QMetaObject*> m_metaObjects;
@@ -97,6 +177,7 @@ private:
     friend TShortCutManager& tShortCutManager();
 
     bool keyboard_key_string_to_numerical_value(const QString& text, int& value);
+    void write_resolution_table_entries(QTextStream& out);
 
 public slots:
 	TCommand* export_keymap();

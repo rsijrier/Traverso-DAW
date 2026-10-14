@@ -104,7 +104,7 @@ private:
     void init();
 
 public slots:
-    DISPATCH_RULE_IS_ALWAYS TCommand* toggle_arm();
+    TCommand* toggle_arm();
 
 signals:
     void audioClipAdded(TAudioClip* clip);

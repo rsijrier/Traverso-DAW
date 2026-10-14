@@ -66,27 +66,26 @@ TShortCutManager::~TShortCutManager()
     }
 }
 
-TShortCutFunction *TShortCutManager::add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName)
+TShortCutFunction *TShortCutManager::add_group(const TActionGroup &group, const QMetaObject *itemMetaObject)
 {
-    if (m_baseShortCutFunctions.contains(metaObject)) {
-        printf("TShortCutManager::add_base_function: base metaObject %s already in database (commandName %s)\n", metaObject->className(), commandName);
+    if (m_groupShortCutFunctions.contains(group.id)) {
+        printf("TShortCutManager::add_group: group %s already in database\n", group.name);
         return nullptr;
     }
 
-    add_meta_object(metaObject, description);
+    add_meta_object(itemMetaObject, group.translated_description());
 
-    auto function = new TShortCutFunction(metaObject, description, commandName);
-    m_baseShortCutFunctions.insert(metaObject, function);
-    m_shortCutFunctions.insert(commandName, function);
+    auto function = new TShortCutFunction(itemMetaObject, group);
+    m_groupShortCutFunctions.insert(group.id, function);
+    m_shortCutFunctions.insert(group.name, function);
 
     return function;
 }
 
-TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
-                                                  const QString &description,
-                                                  const char *commandName,
-                                                  const char *slotSignature)
+TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject, const TAction &action)
 {
+    const char* commandName = action.name;
+
     if (m_shortCutFunctions.contains(commandName)) {
         printf("There is already a function registered with command name %s\n", commandName);
         // Return the old function here to fix a crash on first start with no existing user Shortcuts file.
@@ -94,33 +93,27 @@ TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
         return m_shortCutFunctions.value(commandName);
 	}
 
-    auto function = new TShortCutFunction(metaObject, description, commandName, slotSignature);
+    auto function = new TShortCutFunction(metaObject, action);
 
     m_shortCutFunctions.insert(commandName, function);
 
     return function;
 }
 
-TShortCutFunction *TShortCutManager::add_function(const QMetaObject *metaObject,
-                                                  const QMetaObject *baseMetaObject,
-                                                  const char *commandName,
-                                                  const char *slotSignature)
+TShortCutFunction* TShortCutManager::add_dispatcher_function(const QMetaObject *metaObject, const TAction &action)
 {
-    Q_ASSERT(std::strlen(slotSignature) > 0);
-
-    auto function = add_function(metaObject, "", commandName, slotSignature);
-    if (function) {
-        function->set_base_metaobject(baseMetaObject);
-    }
+    TShortCutFunction* function = add_function(metaObject, action);
+    function->set_handled_by_dispatcher();
     return function;
 }
 
-TShortCutFunction* TShortCutManager::get_shortcut_function_for_base_metaobject(const QMetaObject* metaObject) const
+TShortCutFunction* TShortCutManager::get_shortcut_function_for_group(TActionGroupId group) const
 {
-    auto function = m_baseShortCutFunctions.value(metaObject);
+    auto function = m_groupShortCutFunctions.value(group);
 	if (!function)
 	{
-        printf("TShortCutManager::get_shortcut_function_for_base_metaobject: base QMetaObject %s not in database!!\n", metaObject->className());
+        printf("TShortCutManager::get_shortcut_function_for_group: group %s not in database!!\n",
+               TActionGroups::All[static_cast<int>(group)].name);
 	}
 
 	return function;
@@ -134,24 +127,7 @@ QList< TShortCutFunction* > TShortCutManager::get_shortcut_functions_for_class(Q
 	{
         for(TShortCutFunction* function : std::as_const(m_shortCutFunctions))
 		{
-			// filter out objects that inherit from MoveCommand
-			// but do not support move up/down
-			bool hasRequiredSlot = true;
-            if (!function->get_slot_signature().isEmpty())
-			{
-                QList<const QMetaObject*> metaObjects = m_metaObjects.values(className);
-                if (metaObjects.size())
-				{
-                    if (function->get_slot_signature() == "move_up" && metaObjects.first()->indexOfMethod("move_up(bool)") == -1) {
-						hasRequiredSlot = false;
-					}
-                    if (function->get_slot_signature() == "move_down" && metaObjects.first()->indexOfMethod("move_down(bool)") == -1) {
-						hasRequiredSlot = false;
-					}
-				}
-			}
-
-            if (function->get_metaobject()->className() == objectName && hasRequiredSlot)
+            if (function->get_metaobject()->className() == objectName)
 			{
 				functionsList.append(function);
 			}
@@ -303,13 +279,11 @@ void TShortCutManager::unload_shortcuts()
 void TShortCutManager::load_shortcuts()
 {
     PENTER;
-    PMESG("Registered ShortCut Functions: %lld", m_shortCutFunctions.count() - m_baseShortCutFunctions.count());
+    PMESG("Registered ShortCut Functions: %lld", m_shortCutFunctions.count() - m_groupShortCutFunctions.count());
 
     unload_shortcuts();
 
-    bool useSimplifiedShortcuts = config().get_property("InputEventDispatcher", "UseSimplifiedShortcuts", true).toBool();
-
-	QSettings defaultSettings((useSimplifiedShortcuts) ? ":/Traverso/shortcuts-simplified.ini" : ":/Traverso/shortcuts-advanced.ini", QSettings::IniFormat);
+	QSettings defaultSettings(default_keymap_file(), QSettings::IniFormat);
 	QSettings userSettings(QSettings::IniFormat, QSettings::UserScope, "Traverso", "Shortcuts");
 	QSettings* settings;
 
@@ -381,7 +355,7 @@ void TShortCutManager::load_shortcuts()
 
         function->add_keys(keys);
 
-        if (function->get_base_metaobject()) {
+        if (function->get_group()) {
 			functionsThatInherit.append(function);
 		}
 
@@ -397,7 +371,7 @@ void TShortCutManager::load_shortcuts()
 
     for(TShortCutFunction* function : functionsThatInherit)
 	{
-        TShortCutFunction* inheritedFunction = get_shortcut_function_for_base_metaobject(function->get_base_metaobject());
+        TShortCutFunction* inheritedFunction = get_shortcut_function_for_group(function->get_group()->id);
 
         if (!inheritedFunction) {
             continue;
@@ -419,7 +393,129 @@ void TShortCutManager::load_shortcuts()
         }
 	}
 
+    // The user's own keymap only holds the functions they changed, so only
+    // report what makes it wrong: unknown functions or keys, and keys bound
+    // twice for the same item
+    QStringList problems = check_keymap(userSettings, false);
+    problems << check_ambiguous_bindings();
+    if (!problems.isEmpty()) {
+        PWARN(QS_C(problems.join("\n")));
+        tInformUser().warning(tr("Shortcuts: %1").arg(problems.join(", ")));
+    }
+
     emit functionKeysChanged();
+}
+
+QString TShortCutManager::default_keymap_file() const
+{
+    bool useSimplifiedShortcuts = config().get_property("InputEventDispatcher", "UseSimplifiedShortcuts", true).toBool();
+    return useSimplifiedShortcuts ? ":/Traverso/shortcuts-simplified.ini" : ":/Traverso/shortcuts-advanced.ini";
+}
+
+QStringList TShortCutManager::check_registrations()
+{
+    QStringList problems;
+
+    for (const TAction& action : TActions::All) {
+        TShortCutFunction* function = m_shortCutFunctions.value(action.name);
+        if (!function || !function->get_action() || function->get_action()->id != action.id) {
+            problems << QString("action %1 is not registered").arg(action.name);
+        }
+    }
+
+    for (const TActionGroup& group : TActionGroups::All) {
+        if (!m_groupShortCutFunctions.contains(group.id)) {
+            problems << QString("group %1 is not registered").arg(group.name);
+        }
+    }
+
+    for (auto it = m_commandPlugins.cbegin(); it != m_commandPlugins.cend(); ++it) {
+        for (const QString& command : it.value()->unregistered_commands()) {
+            problems << QString("command %1 of plugin %2 has no action").arg(command, it.key());
+        }
+    }
+
+    problems.sort();
+    return problems;
+}
+
+QStringList TShortCutManager::check_ambiguous_bindings()
+{
+    QStringList problems;
+
+    for (TShortCut* shortCut : std::as_const(m_shortcuts)) {
+        // Grouped by class and modifiers, different classes may show the same name
+        QMap<QString, QStringList> bindings;
+        QMap<QString, QString> bindingLabels;
+        for (TShortCutFunction* function : shortCut->get_shortcut_functions()) {
+            QList<int> modifiers = function->get_modifier_keys();
+            std::sort(modifiers.begin(), modifiers.end());
+            QString binding = QString(function->get_metaobject()->className());
+            for (int modifier : modifiers) {
+                binding += QString("+%1").arg(modifier);
+            }
+
+            // The key as the user wrote it, with the function's modifiers
+            QString key;
+            for (const QString& keyString : function->get_keys()) {
+                int value;
+                if (keyboard_key_string_to_numerical_value(keyString, value) && value == shortCut->get_key_value()) {
+                    key = function->get_modifier_sequence() + keyString;
+                    break;
+                }
+            }
+            TShortCutFunction::make_shortcut_key_human_readable(key);
+
+            bindingLabels[binding] = tr("%1 on %2").arg(key, get_translation_for(function->get_metaobject()->className()));
+            bindings[binding] << function->get_description();
+        }
+        for (auto it = bindings.cbegin(); it != bindings.cend(); ++it) {
+            if (it.value().size() > 1) {
+                QStringList descriptions = it.value();
+                descriptions.sort();
+                problems << tr("%1 is bound to both %2").arg(bindingLabels.value(it.key()), descriptions.join(tr(" and ")));
+            }
+        }
+    }
+
+    problems.sort();
+    return problems;
+}
+
+QStringList TShortCutManager::check_keymap(QSettings& keymap, bool complete)
+{
+    QStringList problems;
+    const QStringList entries = keymap.childGroups();
+
+    for (const QString& entry : entries) {
+        if (!m_shortCutFunctions.contains(entry)) {
+            problems << tr("keymap entry %1 is not a known function").arg(entry);
+            continue;
+        }
+
+        keymap.beginGroup(entry);
+        const QStringList keys = keymap.value("keys").toString().toUpper().split(";", Qt::SkipEmptyParts);
+        const QStringList modifiers = keymap.value("modifiers").toString().toUpper().split(";", Qt::SkipEmptyParts);
+        keymap.endGroup();
+
+        for (const QString& key : keys + modifiers) {
+            int value;
+            if (!keyboard_key_string_to_numerical_value(key, value)) {
+                problems << tr("keymap entry %1 has the unknown key %2").arg(entry, key);
+            }
+        }
+    }
+
+    if (complete) {
+        for (auto it = m_shortCutFunctions.cbegin(); it != m_shortCutFunctions.cend(); ++it) {
+            if (!entries.contains(it.key())) {
+                problems << QString("function %1 has no keymap entry").arg(it.key());
+            }
+        }
+    }
+
+    problems.sort();
+    return problems;
 }
 
 void TShortCutManager::set_shortcut_function_keys(TShortCutFunction *function, const QStringList& keys, const QStringList &modifiers)
@@ -629,6 +725,130 @@ TCommand * TShortCutManager::get_keymap(QString &str)
 	str += "</body>\n</html>";
 
     return nullptr;
+}
+
+void TShortCutManager::write_resolution_table(QTextStream& out)
+{
+    write_resolution_table_entries(out);
+
+    QSettings keymap(default_keymap_file(), QSettings::IniFormat);
+    QStringList problems = check_keymap(keymap, true) + check_registrations() + check_ambiguous_bindings();
+    problems.sort();
+
+    out << "# PROBLEMS\n";
+    for (const QString& problem : std::as_const(problems)) {
+        out << problem << "\n";
+    }
+}
+
+void TShortCutManager::write_resolution_table_entries(QTextStream& out)
+{
+    auto join_ints = [](QList<int> values) {
+        std::sort(values.begin(), values.end());
+        QStringList list;
+        for (int value : values) {
+            list << QString::number(value);
+        }
+        return list.join("+");
+    };
+
+    // Functions, sorted by command name
+    QList<TShortCutFunction*> functions = m_shortCutFunctions.values();
+    std::sort(functions.begin(), functions.end(), [](TShortCutFunction* left, TShortCutFunction* right) {
+        return QString(left->get_command_name()) < QString(right->get_command_name());
+    });
+
+    out << "# FUNCTIONS\n";
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        QStringList arguments;
+        for (const QVariant& argument : function->get_arguments()) {
+            arguments << argument.toString();
+        }
+        out << function->get_command_name()
+            << "\tclass=" << function->get_metaobject()->className()
+            << "\tbase=" << (function->get_base_shortcut_function() ? function->get_base_shortcut_function()->get_command_name() : "")
+            << "\tusesbase=" << function->uses_inherited_base()
+            << "\tplugin=" << function->get_plugin_name()
+            << "\talwayssafe=" << function->always_safe_to_dispatch()
+            << "\tkeys=" << function->get_keys().join(";")
+            << "\tmodifiers=" << join_ints(function->get_modifier_keys())
+            << "\townkeys=" << function->get_keys(false).join(";")
+            << "\townmodifiers=" << join_ints(function->get_modifier_keys(false))
+            << "\tdescription=" << function->get_description()
+            << "\tsubmenu=" << function->get_submenu_name()
+            << "\tsortorder=" << function->get_sort_order()
+            << "\tautorepeat=" << function->uses_autorepeat()
+            << "," << function->get_autorepeat_interval()
+            << "," << function->get_autorepeat_start_delay()
+            << "\trepeatsonitself=" << function->auto_repeats_on_itself()
+            << "\tusex=" << function->uses_x()
+            << "\tusey=" << function->uses_y()
+            << "\targs=" << arguments.join(";")
+            << "\n";
+    }
+
+    // Every class that can be a context item or a hold command: the registered
+    // classes and the classes functions are registered on
+    QMap<QString, const QMetaObject*> classes;
+    for (const QMetaObject* metaObject : std::as_const(m_metaObjects)) {
+        classes.insert(metaObject->className(), metaObject);
+    }
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        classes.insert(function->get_metaobject()->className(), function->get_metaobject());
+    }
+
+    // Key names and the modifier combinations in use
+    QMap<int, QString> keyNames;
+    QList<QList<int>> modifierSets{QList<int>()};
+    for (TShortCutFunction* function : std::as_const(functions)) {
+        for (const QString& key : function->get_keys()) {
+            int value;
+            if (keyboard_key_string_to_numerical_value(key, value)) {
+                keyNames.insert(value, key);
+            }
+        }
+        QList<int> modifiers = function->get_modifier_keys();
+        std::sort(modifiers.begin(), modifiers.end());
+        if (!modifierSets.contains(modifiers)) {
+            modifierSets.append(modifiers);
+        }
+    }
+    std::sort(modifierSets.begin(), modifierSets.end());
+
+    out << "# RESOLUTION class key modifiers -> function\n";
+    for (auto it = classes.cbegin(); it != classes.cend(); ++it) {
+        for (auto keyIt = keyNames.cbegin(); keyIt != keyNames.cend(); ++keyIt) {
+            TShortCut* shortCut = m_shortcuts.value(keyIt.key());
+            if (!shortCut) {
+                continue;
+            }
+            for (const QList<int>& modifiers : std::as_const(modifierSets)) {
+                TShortCutFunction* function = shortCut->find_function(it.value(), modifiers);
+                if (!function) {
+                    continue;
+                }
+
+                // Several functions matching on the same class make the result
+                // depend on hash order, report them all
+                QStringList candidates;
+                for (TShortCutFunction* candidate : shortCut->get_shortcut_functions_for_metaobject(function->get_metaobject())) {
+                    if (modifiers.isEmpty() ? candidate->get_modifier_keys().isEmpty()
+                                            : TShortCut::modifier_keys_match(modifiers, candidate->get_modifier_keys())) {
+                        candidates << candidate->get_command_name();
+                    }
+                }
+                candidates.sort();
+
+                out << it.key() << "\t" << keyIt.value() << "\t" << join_ints(modifiers) << "\t";
+                if (candidates.size() > 1) {
+                    out << "AMBIGUOUS(" << candidates.join("|") << ")";
+                } else {
+                    out << function->get_command_name();
+                }
+                out << "\n";
+            }
+        }
+    }
 }
 
 bool TShortCutManager::class_inherits(const QString& className, const QString &inherited)

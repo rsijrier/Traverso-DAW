@@ -46,6 +46,13 @@ public:
 
     void add_shortcut_function(TShortCutFunction* shortCutFunction);
 
+    // The function a key press resolves to for an object of class metaObject:
+    // the first class in the superclass chain with a function whose modifier
+    // keys equal activeModifierKeys (no modifiers if none are pressed).
+    TShortCutFunction* find_function(const QMetaObject* metaObject, const QList<int>& activeModifierKeys) const;
+
+    static bool modifier_keys_match(const QList<int>& first, const QList<int>& second);
+
 private:
     QMultiHash<const QMetaObject*, TShortCutFunction*> m_dict;
 

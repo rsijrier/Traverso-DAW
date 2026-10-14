@@ -21,7 +21,6 @@ add_library(traversocommands STATIC
     TAudioClipDualTrimCommand.cpp
     TrackPan.cpp
     TZoomCommand.cpp
-    ArmTracks.cpp
     PlayHeadMove.cpp
     WorkCursorMove.cpp
     TMoveCommand.cpp

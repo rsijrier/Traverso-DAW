@@ -121,7 +121,7 @@ private:
     void process_send(TSend* send, nframes_t nframes);
 
 public slots:
-    DISPATCH_RULE_IS_ALWAYS TCommand* solo();
+    TCommand* solo();
     TCommand* toggle_presend();
 
 private slots:

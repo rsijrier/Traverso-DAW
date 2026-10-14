@@ -37,8 +37,9 @@ public:
 	TraversoCommands();
 
     void load(TShortCutManager* m);
-    TCommand* create(QObject* obj, const QString& commandName, QVariantList arguments);
-    TCommandController* create_controller(QObject* obj, const QString& commandName, QVariantList arguments);
+    TCommand* create(QObject* obj, TActionId action, QVariantList arguments);
+    TCommandController* create_controller(QObject* obj, TActionId action, QVariantList arguments);
+    QStringList unregistered_commands() const override;
 
 private:
 
@@ -66,7 +67,6 @@ private:
         SplitAudioClipCommand,
         AudioClipDualTrimCommand,
 		CropClipCommand,
-		ArmTracksCommand,
 		ZoomCommand,
         ShuttleCommand,
 		NormalizeClipCommand,
@@ -82,6 +82,8 @@ private:
         GainShowAutomationCommand,
         TransportSetPositionCommand,
 	};
+    Q_ENUM(TraversoCommand)
+
 
     enum MarkerLocation {
         PlayCursor = 0,
@@ -91,23 +93,30 @@ private:
 
 private:
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
-                      const QString &description,
-                      const char *commandName,
+                      const TAction &action,
                       TraversoCommand command=NoCommand,
-                      const char *slotSignature = "",
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList())
     {
-        return add_function(metaObject, nullptr, description, commandName, command, slotSignature, useX, useY, args);
+        return add_function(metaObject, action, nullptr, command, useX, useY, args);
     }
 
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
-                      const QMetaObject *basedMetaObject,
-                      const QString &description,
-                      const char *commandName,
+                      const TAction &action,
+                      const TActionGroup &group,
                       TraversoCommand command=NoCommand,
-                      const char *slotSignature = "",
+                      bool useX = false,
+                      bool useY = false,
+                      const QVariantList &args = QVariantList())
+    {
+        return add_function(metaObject, action, &group, command, useX, useY, args);
+    }
+
+    TShortCutFunction* add_function(const QMetaObject *metaObject,
+                      const TAction &action,
+                      const TActionGroup *group,
+                      TraversoCommand command,
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList());

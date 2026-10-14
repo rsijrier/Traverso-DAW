@@ -41,6 +41,48 @@ QList<TShortCutFunction *> TShortCut::get_shortcut_functions_for_metaobject(cons
     return m_dict.values(metaObject);
 }
 
+TShortCutFunction* TShortCut::find_function(const QMetaObject* metaObject, const QList<int>& activeModifierKeys) const
+{
+    // traverse upwards till no more superclasses are found
+    // this supports inheritance on QObjects.
+    while (metaObject)
+    {
+        const QList<TShortCutFunction*> functions = get_shortcut_functions_for_metaobject(metaObject);
+
+        for(TShortCutFunction* function : functions) {
+            if (activeModifierKeys.size()) {
+                if (modifier_keys_match(activeModifierKeys, function->get_modifier_keys())) {
+                    return function;
+                }
+            } else if (function->get_modifier_keys().isEmpty()) {
+                return function;
+            }
+        }
+
+        metaObject = metaObject->superClass();
+    }
+
+    return nullptr;
+}
+
+bool TShortCut::modifier_keys_match(const QList<int>& first, const QList<int>& second)
+{
+    if (first.size() != second.size())
+    {
+        return false;
+    }
+
+    for(int key : first)
+    {
+        if (!second.contains(key))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void TShortCut::add_shortcut_function(TShortCutFunction *shortCutFunction)
 {
     Q_ASSERT(shortCutFunction);

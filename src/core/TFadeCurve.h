@@ -99,9 +99,9 @@ public slots:
     void solve_node_positions();
     void set_range(double range) final;
 
-    DISPATCH_RULE_IS_ALWAYS TCommand* toggle_bypass();
-    DISPATCH_RULE_IS_ALWAYS TCommand* set_mode();
-    DISPATCH_RULE_IS_ALWAYS TCommand* toggle_raster();
+    TCommand* toggle_bypass();
+    TCommand* set_mode();
+    TCommand* toggle_raster();
 
 signals:
     void modeChanged();

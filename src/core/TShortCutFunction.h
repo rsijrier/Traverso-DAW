@@ -23,26 +23,36 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #define TSHORTCUTFUNCTION_H
 
 #include "Debugger.h"
+#include "TActions.h"
 #include "TCommand.h"
-#include "qmetaobject.h"
 #include <QStringList>
 #include <QVariantList>
+
+#include <functional>
 
 class TShortCutFunction {
 
 public:
-    explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName, const char* slotSignature = "");
+    // Calls the function on an object of the class it is registered for
+    using Invoker = std::function<TCommand*(QObject*)>;
+
+    // The function of a group, it only supplies keys to the functions in the group
+    explicit TShortCutFunction(const QMetaObject *metaObject, const TActionGroup &group);
+    explicit TShortCutFunction(const QMetaObject *metaObject, const TAction &action);
     ~TShortCutFunction();
 
     QString get_key_sequence(bool formatHtml=false) const;
     QString get_modifier_sequence(bool fromInheritedBase=true) const;
-    QString get_slot_signature() const;
     QString get_description() const;
     QString get_long_description() const;
     QString get_plugin_name() const {return m_pluginname;}
     QString get_submenu_name() const {return m_submenu;}
 
     const char* get_command_name() const {return m_commandName;}
+    // nullptr for the function of a group
+    const TAction* get_action() const {return m_action;}
+    // The group this function is in, nullptr if none
+    const TActionGroup* get_group() const {return m_group;}
 
     QList<int> get_modifier_keys(bool fromInheritedBase=true) const;
     QStringList get_keys(bool fromInheritedBase=true) const;
@@ -54,7 +64,6 @@ public:
     QVariantList get_arguments() const {return m_arguments;}
 
     const QMetaObject* get_metaobject() const {return m_metaObject;}
-    const QMetaObject* get_base_metaobject() const {return m_baseMetaObject;}
 
     TShortCutFunction* get_base_shortcut_function() const {return m_baseShortCutFunction;}
 
@@ -63,15 +72,16 @@ public:
     bool uses_inherited_base() const {return m_usesBaseFunction;}
     bool uses_x() const {return m_useX;}
     bool uses_y() const {return m_useY;}
-    bool always_safe_to_dispatch() const {
-        return TCommand::matches_dispatch_rule_always(m_metaMethod.tag());
-    }
+    bool always_safe_to_dispatch() const {return m_alwaysSafeToDispatch;}
     bool plugin_based() const {return !m_pluginname.isEmpty();}
+    // Handled by the input event dispatcher itself, e.g. accepting a hold
+    bool handled_by_dispatcher() const {return m_handledByDispatcher;}
+    void set_handled_by_dispatcher() {m_handledByDispatcher = true;}
 
-    void set_base_metaobject(const QMetaObject* base)
+    void set_group(const TActionGroup* group)
     {
-        Q_ASSERT(base);
-        m_baseMetaObject = base;
+        Q_ASSERT(group);
+        m_group = group;
     }
     void set_base_shortcut_function(TShortCutFunction* baseShortCutFunction)
     {
@@ -95,33 +105,39 @@ public:
     void set_use_y(bool useY) {m_useY = useY;}
     void set_arguments(const QVariantList &args) {m_arguments = args;}
     void set_auto_repeats_on_itself(bool dispatchesOnItself) {m_autoRepeatsOnItself = dispatchesOnItself;}
+    void set_invoker(Invoker invoker, bool alwaysSafeToDispatch)
+    {
+        m_invoker = std::move(invoker);
+        m_alwaysSafeToDispatch = alwaysSafeToDispatch;
+    }
 
     static void make_shortcut_key_human_readable(QString& key, bool formatHtml=false);
 
+    // Plugin based functions create a command instead and have no invoker
     TCommand* dispatch_with_command_return(QObject* object) {
         PENTER;
-        Q_ASSERT(m_metaMethod.isValid());
-        TCommand* command = nullptr;
-        [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection, Q_RETURN_ARG(TCommand*, command));
-        PMESG((result ? "TShortCutFunction::dispatch_with_command_return: SUCCES invoking %s::%s" : "TShortCutFunction::dispatch_with_command_return: FAILED invoking %s::%s"), m_metaObject->className(), m_metaMethod.methodSignature().constData());
-        return command;
+        Q_ASSERT(m_invoker);
+        return m_invoker ? m_invoker(object) : nullptr;
     }
     bool dispatch(QObject* object) {
         PENTER;
-        Q_ASSERT(m_metaMethod.isValid());
-        Q_ASSERT(m_metaObject);
-        [[maybe_unused]] bool result = m_metaMethod.invoke(object, Qt::DirectConnection);
-        PMESG((result ? "TShortCutFunction::dispatch: SUCCESS invoking %s::%s" : "TShortCutFunction::dispatch: FAILED invoking %s::%s"), m_metaObject->className(), m_metaMethod.methodSignature().constData());
-        return result;
+        if (!m_invoker) {
+            Q_ASSERT(m_handledByDispatcher);
+            return false;
+        }
+        m_invoker(object);
+        return true;
     }
 
 
 private:
     const QMetaObject*  m_metaObject{nullptr};
+    const TAction*      m_action{nullptr};
+    const TActionGroup* m_definedGroup{nullptr};
     const char*         m_commandName;
-    const QMetaObject*	m_baseMetaObject{nullptr};
+    const TActionGroup* m_group{nullptr};
     TShortCutFunction*  m_baseShortCutFunction{nullptr};
-    QMetaMethod         m_metaMethod;
+    Invoker             m_invoker;
 
     QVariantList        m_arguments;
     QStringList         m_keys;
@@ -136,6 +152,8 @@ private:
     bool                m_usesAutoRepeat{false};
     bool                m_autoRepeatsOnItself{false};
     bool                m_usesBaseFunction{false};
+    bool                m_alwaysSafeToDispatch{false};
+    bool                m_handledByDispatcher{false};
 
     int                 m_sortorder{0};
     int                 m_autorepeatInterval{-1};

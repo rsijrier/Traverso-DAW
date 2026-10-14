@@ -106,6 +106,19 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TShortCutFunction*
 
     m_contextPointer->restore_global_mouse_pos_after_context_menu_dispatch();
 
+    // Accept and reject work from the menu whatever their keys are
+    if (const TAction* action = function->get_action(); action && is_holding()) {
+        if (action->id == TActionId::RejectHoldCommand) {
+            m_cancelHold = true;
+            finish_hold();
+            return 1;
+        }
+        if (action->id == TActionId::AcceptHoldCommand) {
+            finish_hold();
+            return 1;
+        }
+    }
+
     QStringList keys = function->get_keys();
     if (!keys.size()) {
         return -1;
@@ -119,16 +132,6 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TShortCutFunction*
     }
 
     m_activeModifierKeys.append(function->get_modifier_keys());
-
-    if (function->get_command_name() == QString("RejectHoldCommand")) {
-        process_press_event(Qt::Key_Escape);
-        return 1;
-    }
-
-    if (function->get_command_name() == QString("AcceptHoldCommand")) {
-        process_press_event(Qt::Key_Enter);
-        return 1;
-    }
 
     dispatch_shortcut(shortCut, true);
 
@@ -170,7 +173,6 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
         }
 
         PMESG("Function found for metaobject %s", metaObject->className());
-        PMESG("setting slotsignature to %s", QS_C(shortCutFunction->get_slot_signature()));
         PMESG("setting pluginname to %s", QS_C(shortCutFunction->get_plugin_name()));
         PMESG("setting commandname to %s", shortCutFunction->get_command_name());
 
@@ -316,33 +318,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
 
 TShortCutFunction *TInputEventDispatcher::find_shortcut_function_for_metaobject(const QMetaObject *metaObject, TShortCut *shortCut)
 {
-    // traverse upwards till no more superclasses are found
-    // this supports inheritance on QObjects.
-    while (metaObject)
-    {
-        QList<TShortCutFunction*> functions = shortCut->get_shortcut_functions_for_metaobject(metaObject);
-
-        for(TShortCutFunction* function : functions) {
-
-            if (m_activeModifierKeys.size()) {
-                if (modifierKeysMatch(m_activeModifierKeys, function->get_modifier_keys())) {
-                    PMESG("found match in objectUsingModierKeys");
-                    return function;
-                } else {
-                    PMESG("m_activeModifierKeys doesn't contain code %d", shortCut->get_key_value());
-                }
-            } else {
-                if (function->get_modifier_keys().isEmpty()) {
-                    PMESG("found match in obects NOT using modifier keys");
-                    return function;
-                }
-            }
-        }
-
-        metaObject = metaObject->superClass();
-    }
-
-    return nullptr;
+    return shortCut->find_function(metaObject, m_activeModifierKeys);
 }
 
 TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem, TShortCutFunction* shortCutFunction)
@@ -354,12 +330,13 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
         return nullptr;
     }
 
-    const QString& commandName = shortCutFunction->get_command_name();
-    if (plug->implements(commandName)) {
-        PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), shortCutFunction->get_command_name());
-        return plug->create(contextItem, commandName, shortCutFunction->get_arguments());
+    const TAction* action = shortCutFunction->get_action();
+    Q_ASSERT(action);
+    if (action && plug->implements(action->id)) {
+        PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), action->name);
+        return plug->create(contextItem, action->id, shortCutFunction->get_arguments());
     } else {
-        tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, commandName));
+        tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, shortCutFunction->get_command_name()));
     }
     return nullptr;
 }
@@ -368,11 +345,12 @@ TCommandController* TInputEventDispatcher::create_controller_from_plugin(QObject
 {
     // A missing plugin is reported by create_command_from_plugin()
     TCommandPlugin* plug = m_shortCutManager->get_command_plugin(shortCutFunction->get_plugin_name());
-    if (!plug) {
+    const TAction* action = shortCutFunction->get_action();
+    if (!plug || !action) {
         return nullptr;
     }
 
-    return plug->create_controller(contextItem, shortCutFunction->get_command_name(), shortCutFunction->get_arguments());
+    return plug->create_controller(contextItem, action->id, shortCutFunction->get_arguments());
 }
 
 int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut, bool fromContextMenu)
@@ -933,20 +911,3 @@ TCommand * TInputEventDispatcher::get_holding_command() const
     return m_holdingCommand;
 }
 
-bool TInputEventDispatcher::modifierKeysMatch(QList<int> first, const QList<int>& second)
-{
-    if (first.size() != second.size())
-    {
-        return false;
-    }
-
-    foreach(int key, first)
-    {
-        if (!second.contains(key))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}

@@ -73,7 +73,7 @@ public:
 
 
 public slots:
-    DISPATCH_RULE_IS_ALWAYS TCommand* save_project();
+    TCommand* save_project();
     TCommand* close_current_project();
     TCommand* exit();
 

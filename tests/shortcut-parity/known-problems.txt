@@ -1,0 +1,7 @@
+# Problems check.sh accepts for now, one per line, exactly as the resolution
+# table reports them. Every other problem makes check.sh fail.
+#
+# Remove a line when the problem is fixed. The keymap entries MoveCommandLeft
+# and MoveCommandRight stay until Move Left/Right work again (D4).
+keymap entry MoveCommandLeft is not a known function
+keymap entry MoveCommandRight is not a known function
