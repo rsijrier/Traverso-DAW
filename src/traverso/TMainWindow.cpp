@@ -1438,6 +1438,8 @@ void TMainWindow::import_audio()
         return;
     }
 
+    project->set_import_dir(QFileInfo(files.first()).absolutePath());
+
     QList<TAudioTrack*> tracks = sheet->get_audio_tracks();
     TAudioTrack*	track = tracks.first();
 
