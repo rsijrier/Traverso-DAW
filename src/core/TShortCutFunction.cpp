@@ -111,12 +111,17 @@ QList<int> TShortCutFunction::get_modifier_keys(bool fromInheritedBase) const
 
 QString TShortCutFunction::get_description() const
 {
-    if (m_baseShortCutFunction)
+    // Translated when shown, the translator is installed after the
+    // functions are registered
+    QString description = m_action ? m_action->translated_description() : m_description;
+
+    // A function without a description of its own shows the one of its base
+    if (description.isEmpty() && m_baseShortCutFunction)
     {
         return m_baseShortCutFunction->get_description();
     }
 
-    return m_description;
+    return description;
 }
 
 QString TShortCutFunction::get_long_description() const
