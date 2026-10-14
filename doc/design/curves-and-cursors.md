@@ -86,6 +86,33 @@ TSheetView::context_changed (no hold) → type Default + letter                 
    system, explicit items) instead of a letter from the class name.
 9. Legacy cursor text disappears as the commands are ported.
 
+## 5b. Drawing curves from the time domain: validity check
+
+Question (user): can views use the curve solved in the time domain and transform
+it into pixels, instead of solving a mirror curve in pixel units?
+
+1. **Shape: valid.** The constrained cubic spline (Kruger) only uses ratios of
+   differences (slopes Δy/Δx, second derivatives Δy/Δx²). A uniform scale of x
+   (time → pixel) or a shift transforms every term consistently, so the curve is
+   identical up to rounding. Evaluate in time, then
+   `pixel = (time − curve start offset) / time per pixel`.
+2. **Precision: equal in both domains, and a real issue.** The coefficients describe
+   one absolute polynomial per segment, `a + b·x + c·x² + d·x³`, evaluated at the
+   absolute x (`TCurve::solve`, `TCurve::multipoint_eval`). Late in the timeline and on
+   short segments the terms cancel catastrophically; the error grows with
+   (x / segment width)³, which is unit independent. Example: a 10 ms segment of a
+   track curve after one hour gives a ratio of ~360,000, cubed ~5·10¹⁶: a double can
+   be off by whole units. This affects the audio thread today. **Fix:** store the
+   coefficients per segment relative to the segment start (x − x_start).
+3. Minor, valid in both domains: views sample every third pixel and add node
+   positions explicitly; `get_vector()` uses a different sampling step for two nodes
+   (`veclen − 1`) than for more (`veclen`), cosmetic; linear interpolation accumulates
+   in float, small drift.
+
+Consequence: views draw from the shared solved snapshot in time units with one
+time ↔ pixel conversion (timeline view model); segment-relative coefficients make
+results slightly more accurate, so curve tests compare within a tolerance.
+
 ## 6. Open questions (UX, for the user)
 1. Do the smart cursors help in practice? Is the context letter useful, and should it
    become an icon or short name instead of one ambiguous letter?
