@@ -117,7 +117,7 @@ void TAudioFileCopyConvert::process_task(CopyTask task)
 
         task.readsource->file_read(fileIOBuffer, task.spec->get_export_location(), nframes);
 
-        TQueueBufferSlot virtualSlot(nframes, task.spec->get_channel_count(), 0);
+        TQueueBufferSlot virtualSlot(0, task.spec->get_channel_count(), nframes);
 
         for (uint chan = 0; chan < task.spec->get_channel_count(); ++chan) {
             float* channelDataPtr = fileIOBuffer.get_channel_buffer(chan).get_data(nframes);
