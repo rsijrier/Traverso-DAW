@@ -23,11 +23,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TAudioClip.h"
 #include "TAudioClipManager.h"
-#include "TCommand.h"
 #include "TProjectManager.h"
 #include "TResourcesManager.h"
 #include "TSheet.h"
 #include "TAudioTrack.h"
+#include "TRtTransaction.h"
+
+#include <QUndoCommand>
+#include <memory>
 
 #include "Debugger.h"
 #include "TLocation.h"
@@ -61,16 +64,16 @@ void TAudioClipGroup::move_to(int trackIndex, const TTimeRef &location)
     PENTER;
     int trackIndexDelta = trackIndex - m_topTrackIndex;
 
+    // Moving all clips, also to other tracks, is one real-time change. A move
+    // only changes a clip's track, the clip manager keeps knowing the clip.
+    TRtTransaction transaction;
+
     for(auto& clip : m_clips) {
         if (trackIndexDelta != 0) {
             TAudioTrack* track = clip->get_sheet()->get_audio_track_for_index(clip->get_track()->get_sort_index() + trackIndexDelta);
             if (track) {
-                TAudioClipAddRemoveSpec spec;
-                spec.set_clip(clip);
-                spec.set_is_historable(false);
-                spec.set_is_move(true);
-                TCommand::process_command(clip->get_track()->remove_clip(spec));
-                TCommand::process_command(track->add_clip(spec));
+                clip->get_track()->apply_clip_mutation({}, {clip});
+                track->apply_clip_mutation({clip}, {});
             }
         }
 
@@ -141,25 +144,22 @@ QList<TAudioClip*> TAudioClipGroup::copy_clips()
 
 void TAudioClipGroup::add_all_clips_to_tracks()
 {
-
-    for(auto& clip : m_clips) {
-        TAudioClipAddRemoveSpec spec;
-        spec.set_clip(clip);
-        spec.set_is_historable(false);
-        spec.set_is_move(false);
-        TCommand::process_command(clip->get_track()->add_clip(spec));
+    if (m_clips.isEmpty()) {
+        return;
     }
+
+    std::unique_ptr<QUndoCommand> mutation(m_clips.first()->get_sheet()->create_command_mutate_clips(m_clips, {}, QString()));
+    mutation->redo();
 }
 
 void TAudioClipGroup::remove_all_clips_from_tracks()
 {
-    for(auto& clip : m_clips) {
-        TAudioClipAddRemoveSpec spec;
-        spec.set_clip(clip);
-        spec.set_is_historable(false);
-        spec.set_is_move(false);
-        TCommand::process_command(clip->get_track()->remove_clip(spec));
+    if (m_clips.isEmpty()) {
+        return;
     }
+
+    std::unique_ptr<QUndoCommand> mutation(m_clips.first()->get_sheet()->create_command_mutate_clips({}, m_clips, QString()));
+    mutation->redo();
 }
 
 int TAudioClipGroup::check_valid_track_index_delta(int delta)
