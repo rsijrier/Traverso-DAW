@@ -23,7 +23,7 @@
 #include "TProjectManager.h"
 #include "TProject.h"
 #include "TSheet.h"
-#include "TAudioFileImportCommand.h"
+#include "TAudioClipFactory.h"
 #include "TAudioTrack.h"
 #include "TAudioClip.h"
 
@@ -83,12 +83,18 @@ void InsertSilenceDialog::accept()
             m_track = shortestTrack;
         }
 
+        // Appended to the end of the track
         TTimeRef length = TTimeRef(lengthSpinBox->value() * TTimeRef::UNIVERSAL_SAMPLE_RATE);
-        TAudioFileImportCommand* cmd = new TAudioFileImportCommand(m_track);
-        cmd->set_track(m_track);
-        cmd->set_length(length);
-        cmd->set_silent(true);
-        TCommand::process_command(cmd);
+        TAudioClip* clip = TAudioClipFactory::create_silent(m_track, m_track->get_end_location(), length);
+
+        QUndoCommand* command = sheet->create_command_mutate_clips({clip}, {}, tr("Insert Silence"));
+
+        if (QUndoStack* undoStack = sheet->get_history_stack()) {
+            undoStack->push(command);
+        } else {
+            command->redo();
+            delete command;
+        }
     }
 
     hide();
