@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioClip.h"
 #include "TAudioTrack.h"
 #include "TMainWindow.h"
+#include "TSheet.h"
+
+#include <QUndoCommand>
 
 
 
@@ -57,7 +60,10 @@ int AudioClipExternalProcessing::prepare_actions()
 	if (! m_resultingclip) {
 		return -1;
 	}
-	
+
+    // The processed clip replaces the original as one real-time change
+    m_mutation.reset(m_track->get_sheet()->create_command_mutate_clips({m_resultingclip}, {m_clip}, text()));
+
 	return 1;
 }
 
@@ -74,33 +80,14 @@ int AudioClipExternalProcessing::finish_hold()
 int AudioClipExternalProcessing::do_action()
 {
 	PENTER;
-        // Remove has to be done BEFORE adding, else the TRealTimeLinkedList logic
-        // gets messed up for the Tracks AudioClipList, which is an TRealTimeLinkedList :(
-    TAudioClipAddRemoveSpec spec;
-    spec.set_clip(m_clip);
-    spec.set_is_historable(false);
-    spec.set_is_move(false);
-
-    TCommand::process_command(m_track->remove_clip(spec));
-    spec.set_clip(m_resultingclip);
-    TCommand::process_command(m_track->add_clip(spec));
-	
+    m_mutation->redo();
 	return 1;
 }
 
 int AudioClipExternalProcessing::undo_action()
 {
 	PENTER;
-        // Remove has to be done BEFORE adding, else the TRealTimeLinkedList logic
-        // gets messed up for the Tracks AudioClipList, which is an TRealTimeLinkedList :(
-    TAudioClipAddRemoveSpec spec;
-    spec.set_clip(m_resultingclip);
-    spec.set_is_historable(false);
-    spec.set_is_move(false);
-    TCommand::process_command(m_track->remove_clip(spec));
-
-    spec.set_clip(m_clip);
-    TCommand::process_command(m_track->add_clip(spec));
+    m_mutation->undo();
 	return 1;
 }
 

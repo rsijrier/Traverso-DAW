@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <Utils.h>
 #include "TMainWindow.h"
 #include "TBufferedAudioStreamReader.h"
+#include "TAudioClipFactory.h"
 
 #include <QFile>
 #include <QCompleter>
@@ -208,12 +209,10 @@ void ExternalProcessingDialog::process_finished(int exitcode, QProcess::ExitStat
 		return rejected();
 	}
 		
-	m_acep->m_resultingclip = resources_manager()->new_audio_clip(m_newClipName);
-    resources_manager()->set_source_for_clip(m_acep->m_resultingclip, source);
-	// Clips live at project level, we have to set its Sheet, Track and ReadSource explicitely!!
-	m_acep->m_resultingclip->set_sheet(m_acep->m_clip->get_sheet());
-	m_acep->m_resultingclip->set_track(m_acep->m_clip->get_track());
-    m_acep->m_resultingclip->move_to_location(m_acep->m_clip->get_location_start());
+    m_acep->m_resultingclip = TAudioClipFactory::create_for_source(m_acep->m_clip->get_track(),
+                                                                   source,
+                                                                   m_newClipName,
+                                                                   m_acep->m_clip->get_location_start());
 	
 	close();
 }

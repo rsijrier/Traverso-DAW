@@ -24,8 +24,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TCommand.h"
 
+#include <memory>
+
 class TAudioClip;
 class TAudioTrack;
+class QUndoCommand;
 
 class AudioClipExternalProcessing : public TCommand
 {
@@ -48,6 +51,7 @@ public :
 	TAudioTrack* m_track;
 	TAudioClip* m_clip;
 	TAudioClip* m_resultingclip;
+    std::unique_ptr<QUndoCommand> m_mutation;
 
 // 	friend class ExternalProcessingDialog;
 
