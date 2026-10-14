@@ -253,6 +253,7 @@ void TraversoCommands::load(TShortCutManager* m)
     add_function(&TSheetView::staticMetaObject, TActions::WorkCursorMove, WorkCursorMoveCommand);
 
     add_function(&TSheetView::staticMetaObject, TActions::Zoom, ZoomCommand, USE_X, NO_Y,    QVariantList() << "HJogZoom" << "1.2" << "0.2");
+    add_function(&TSheetView::staticMetaObject, TActions::ZoomVertical, ZoomCommand, NO_X, USE_Y, QVariantList() << "VJogZoom" << "1.2" << "0.2");
 
     // ----------------------------------------------------------------------------------------------------------------------- //
 

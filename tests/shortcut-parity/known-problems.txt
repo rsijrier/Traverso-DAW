@@ -10,4 +10,3 @@ keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 keymap entry MoveTrackUp is not a known function
 keymap entry RejectHoldCommand is not a known function
-keymap entry ZoomVertical is not a known function

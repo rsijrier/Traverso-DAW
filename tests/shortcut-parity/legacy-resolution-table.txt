@@ -150,6 +150,7 @@ ZoomToggleExpandAllTracks	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe
 ZoomToggleVerticalHorizontal	class=TZoomCommand	base=ToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Track Vertical Zoom In	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=16777248	ownkeys=Z	ownmodifiers=16777248	description=Zoom Vertical	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=VJogZoom;1.2;0.2
 # RESOLUTION class key modifiers -> function
 ArmTracks	PLUS		MoveCommandFaster
 ArmTracks	MINUS		MoveCommandSlower
@@ -354,6 +355,7 @@ TSheetView	T		NavigateToTimeLine
 TSheetView	V	16777251	SheetCenterPlayhead
 TSheetView	W		WorkCursorMove
 TSheetView	Z		Zoom
+TSheetView	Z	16777248	ZoomVertical
 TSheetView	TAB		Shuttle
 TSheetView	HOME	16777249	WorkCursorToStart
 TSheetView	END	16777249	WorkCursorToEnd
@@ -427,7 +429,6 @@ keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 keymap entry MoveTrackUp is not a known function
 keymap entry RejectHoldCommand is not a known function
-keymap entry ZoomVertical is not a known function
 ## KEYMAP advanced
 # FUNCTIONS
 AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -580,6 +581,7 @@ ZoomToggleExpandAllTracks	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe
 ZoomToggleVerticalHorizontal	class=TZoomCommand	base=ToggleVerticalBase	usesbase=1	plugin=	alwayssafe=0	keys=V	modifiers=	ownkeys=	ownmodifiers=	description=Toggle Vertical	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW;MOUSESCROLLVERTICALDOWN	modifiers=	ownkeys=DOWNARROW;MOUSESCROLLVERTICALDOWN	ownmodifiers=	description=Track Vertical Zoom In	submenu=	sortorder=3	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
+ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=16777248	ownkeys=Z	ownmodifiers=16777248	description=Zoom Vertical	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=VJogZoom;1.2;0.2
 # RESOLUTION class key modifiers -> function
 ArmTracks	PLUS		MoveCommandFaster
 ArmTracks	MINUS		MoveCommandSlower
@@ -784,6 +786,7 @@ TSheetView	V	16777249	SheetSetPlayPosition
 TSheetView	W		WorkCursorMove
 TSheetView	W	16777248	WorkCursorTouch
 TSheetView	Z		Zoom
+TSheetView	Z	16777248	ZoomVertical
 TSheetView	TAB		Shuttle
 TSheetView	HOME	16777249	WorkCursorToStart
 TSheetView	END	16777249	WorkCursorToEnd
