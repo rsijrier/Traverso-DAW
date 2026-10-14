@@ -43,6 +43,10 @@ TContextHelpWidget::TContextHelpWidget(QWidget* parent)
     setObjectName("ShortcutsHelpWidget");
 
     m_comboBox = new QComboBox(parent);
+    // A scrollable list instead of a menu showing all entries: taller than
+    // the screen, such a menu loses its first entries on Wayland
+    m_comboBox->setStyleSheet(QStringLiteral("combobox-popup: 0;"));
+    m_comboBox->setMaxVisibleItems(30);
     m_textEdit = new QTextEdit(parent);
     m_textEdit->setTextInteractionFlags(Qt::NoTextInteraction);
 
