@@ -66,18 +66,18 @@ TShortCutManager::~TShortCutManager()
     }
 }
 
-TShortCutFunction *TShortCutManager::add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName)
+TShortCutFunction *TShortCutManager::add_group(const TActionGroup &group, const QMetaObject *itemMetaObject)
 {
-    if (m_baseShortCutFunctions.contains(metaObject)) {
-        printf("TShortCutManager::add_base_function: base metaObject %s already in database (commandName %s)\n", metaObject->className(), commandName);
+    if (m_groupShortCutFunctions.contains(group.id)) {
+        printf("TShortCutManager::add_group: group %s already in database\n", group.name);
         return nullptr;
     }
 
-    add_meta_object(metaObject, description);
+    add_meta_object(itemMetaObject, group.translated_description());
 
-    auto function = new TShortCutFunction(metaObject, description, commandName);
-    m_baseShortCutFunctions.insert(metaObject, function);
-    m_shortCutFunctions.insert(commandName, function);
+    auto function = new TShortCutFunction(itemMetaObject, group);
+    m_groupShortCutFunctions.insert(group.id, function);
+    m_shortCutFunctions.insert(group.name, function);
 
     return function;
 }
@@ -100,12 +100,13 @@ TShortCutFunction* TShortCutManager::add_function(const QMetaObject *metaObject,
     return function;
 }
 
-TShortCutFunction* TShortCutManager::get_shortcut_function_for_base_metaobject(const QMetaObject* metaObject) const
+TShortCutFunction* TShortCutManager::get_shortcut_function_for_group(TActionGroupId group) const
 {
-    auto function = m_baseShortCutFunctions.value(metaObject);
+    auto function = m_groupShortCutFunctions.value(group);
 	if (!function)
 	{
-        printf("TShortCutManager::get_shortcut_function_for_base_metaobject: base QMetaObject %s not in database!!\n", metaObject->className());
+        printf("TShortCutManager::get_shortcut_function_for_group: group %s not in database!!\n",
+               TActionGroups::All[static_cast<int>(group)].name);
 	}
 
 	return function;
@@ -271,7 +272,7 @@ void TShortCutManager::unload_shortcuts()
 void TShortCutManager::load_shortcuts()
 {
     PENTER;
-    PMESG("Registered ShortCut Functions: %lld", m_shortCutFunctions.count() - m_baseShortCutFunctions.count());
+    PMESG("Registered ShortCut Functions: %lld", m_shortCutFunctions.count() - m_groupShortCutFunctions.count());
 
     unload_shortcuts();
 
@@ -349,7 +350,7 @@ void TShortCutManager::load_shortcuts()
 
         function->add_keys(keys);
 
-        if (function->get_base_metaobject()) {
+        if (function->get_group()) {
 			functionsThatInherit.append(function);
 		}
 
@@ -365,7 +366,7 @@ void TShortCutManager::load_shortcuts()
 
     for(TShortCutFunction* function : functionsThatInherit)
 	{
-        TShortCutFunction* inheritedFunction = get_shortcut_function_for_base_metaobject(function->get_base_metaobject());
+        TShortCutFunction* inheritedFunction = get_shortcut_function_for_group(function->get_group()->id);
 
         if (!inheritedFunction) {
             continue;

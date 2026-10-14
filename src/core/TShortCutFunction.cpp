@@ -28,13 +28,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Utils.h"
 #include "qmetaobject.h"
 
-TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName)
+TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const TActionGroup &group)
     : m_metaObject(metaObject)
-    , m_commandName(commandName)
-    , m_description(description)
+    , m_definedGroup(&group)
+    , m_commandName(group.name)
+    , m_description(group.translated_description())
 {
     Q_ASSERT(metaObject);
-    Q_ASSERT(std::strlen(commandName) > 0);
 }
 
 TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const TAction &action)
@@ -113,7 +113,9 @@ QString TShortCutFunction::get_description() const
 {
     // Translated when shown, the translator is installed after the
     // functions are registered
-    QString description = m_action ? m_action->translated_description() : m_description;
+    QString description = m_action ? m_action->translated_description()
+                                   : m_definedGroup ? m_definedGroup->translated_description()
+                                                    : m_description;
 
     // A function without a description of its own shows the one of its base
     if (description.isEmpty() && m_baseShortCutFunction)

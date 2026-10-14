@@ -54,9 +54,11 @@ public:
     static const int MouseScrollVerticalUp = -3;
     static const int MouseScrollVerticalDown = -4;
 
-    TShortCutFunction* add_base_function(const QMetaObject *metaObject, const QString &description, const char *commandName);
+    // Registers a group of functions sharing keys. itemMetaObject is the item the
+    // group is shown as in the shortcut editor and help.
+    TShortCutFunction* add_group(const TActionGroup &group, const QMetaObject *itemMetaObject);
     TShortCutFunction* add_function(const QMetaObject *metaObject, const TAction &action);
-    TShortCutFunction* get_shortcut_function_for_base_metaobject(const QMetaObject *metaObject) const;
+    TShortCutFunction* get_shortcut_function_for_group(TActionGroupId group) const;
 
     // Registers method of class T as a shortcut function. A method that does
     // not exist or does not belong to T is a compile error.
@@ -67,13 +69,12 @@ public:
         return add_typed_function<T>(action, nullptr, method, rule);
     }
 
-    // Registers method of class T as a shortcut function that uses the keys of
-    // the base function baseMetaObject
+    // Registers method of class T as a shortcut function in group
     template <class T, class U, class R>
-    TShortCutFunction* add_function(const TAction &action, const QMetaObject *baseMetaObject, R (U::*method)(),
+    TShortCutFunction* add_function(const TAction &action, const TActionGroup &group, R (U::*method)(),
                                     TDispatchRule rule = TDispatchRule::Default)
     {
-        return add_typed_function<T>(action, baseMetaObject, method, rule);
+        return add_typed_function<T>(action, &group, method, rule);
     }
 
     QList<TShortCutFunction* > get_shortcut_functions_for_class(QString className);
@@ -112,7 +113,7 @@ public:
 
 private:
     template <class T, class U, class R>
-    TShortCutFunction* add_typed_function(const TAction &action, const QMetaObject *baseMetaObject,
+    TShortCutFunction* add_typed_function(const TAction &action, const TActionGroup *group,
                                           R (U::*method)(), TDispatchRule rule)
     {
         static_assert(std::is_base_of_v<U, T>, "the method does not belong to the class it is registered for");
@@ -120,8 +121,8 @@ private:
                       "a shortcut function returns void or TCommand*");
 
         TShortCutFunction* function = add_function(&T::staticMetaObject, action);
-        if (baseMetaObject) {
-            function->set_base_metaobject(baseMetaObject);
+        if (group) {
+            function->set_group(group);
         }
 
         function->set_invoker([method](QObject* object) -> TCommand* {
@@ -141,7 +142,7 @@ private:
     QHash<QString, TCommandPlugin*>	m_commandPlugins;
 
     QHash<QString, TShortCutFunction*>	m_shortCutFunctions;
-    QHash<const QMetaObject*, TShortCutFunction*>  m_baseShortCutFunctions;
+    QHash<TActionGroupId, TShortCutFunction*>  m_groupShortCutFunctions;
     QHash<int, TShortCut*>		m_shortcuts;
 	QHash<QString, QString>		m_translations;
     QMultiHash<QString, const QMetaObject*> m_metaObjects;

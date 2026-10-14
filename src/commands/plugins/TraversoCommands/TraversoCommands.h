@@ -97,13 +97,24 @@ private:
                       bool useY = false,
                       const QVariantList &args = QVariantList())
     {
-        return add_function(metaObject, nullptr, action, command, useX, useY, args);
+        return add_function(metaObject, action, nullptr, command, useX, useY, args);
     }
 
     [[maybe_unused]] TShortCutFunction* add_function(const QMetaObject *metaObject,
-                      const QMetaObject *basedMetaObject,
                       const TAction &action,
+                      const TActionGroup &group,
                       TraversoCommand command=NoCommand,
+                      bool useX = false,
+                      bool useY = false,
+                      const QVariantList &args = QVariantList())
+    {
+        return add_function(metaObject, action, &group, command, useX, useY, args);
+    }
+
+    TShortCutFunction* add_function(const QMetaObject *metaObject,
+                      const TAction &action,
+                      const TActionGroup *group,
+                      TraversoCommand command,
                       bool useX = false,
                       bool useY = false,
                       const QVariantList &args = QVariantList());

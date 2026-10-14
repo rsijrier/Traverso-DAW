@@ -453,18 +453,78 @@ struct TActions
     };
 };
 
-// Every id has exactly one entry, in id order, and every name is unique
-constexpr bool t_actions_are_consistent()
+// Groups of functions that share keys, e.g. Delete for clips, tracks and
+// markers. A function in a group uses the group's keys unless the user
+// gives it its own. The name is the group's name in the keymap files.
+enum class TActionGroupId : int {
+    TNavigationBaseUp,
+    TNavigationBaseDown,
+    TNavigationBaseLeft,
+    TNavigationBaseRight,
+    DeleteBase,
+    EditPropertiesBase,
+    GainBase,
+    MoveBase,
+    ResetBase,
+    ToggleBypassBase,
+    ToggleVerticalBase,
+    Count
+};
+
+struct TActionGroup
 {
-    if (std::size(TActions::All) != static_cast<size_t>(TActionId::Count)) {
+    TActionGroupId id;
+    const char*    name;         // the name in the keymap files
+    const char*    description;  // translated with translated_description()
+
+    QString translated_description() const
+    {
+        return QCoreApplication::translate("TraversoCommands", description);
+    }
+};
+
+struct TActionGroups
+{
+    static constexpr TActionGroup TNavigationBaseUp    {TActionGroupId::TNavigationBaseUp, "TNavigationBaseUp", QT_TRANSLATE_NOOP("TraversoCommands", "Navigate Up")};
+    static constexpr TActionGroup TNavigationBaseDown  {TActionGroupId::TNavigationBaseDown, "TNavigationBaseDown", QT_TRANSLATE_NOOP("TraversoCommands", "Navigate Down")};
+    static constexpr TActionGroup TNavigationBaseLeft  {TActionGroupId::TNavigationBaseLeft, "TNavigationBaseLeft", QT_TRANSLATE_NOOP("TraversoCommands", "Navigate Left")};
+    static constexpr TActionGroup TNavigationBaseRight {TActionGroupId::TNavigationBaseRight, "TNavigationBaseRight", QT_TRANSLATE_NOOP("TraversoCommands", "Navigate Right")};
+    static constexpr TActionGroup DeleteBase           {TActionGroupId::DeleteBase, "DeleteBase", QT_TRANSLATE_NOOP("TraversoCommands", "Delete")};
+    static constexpr TActionGroup EditPropertiesBase   {TActionGroupId::EditPropertiesBase, "EditPropertiesBase", QT_TRANSLATE_NOOP("TraversoCommands", "Edit Properties")};
+    static constexpr TActionGroup GainBase             {TActionGroupId::GainBase, "GainBase", QT_TRANSLATE_NOOP("TraversoCommands", "Gain")};
+    static constexpr TActionGroup MoveBase             {TActionGroupId::MoveBase, "MoveBase", QT_TRANSLATE_NOOP("TraversoCommands", "Move")};
+    static constexpr TActionGroup ResetBase            {TActionGroupId::ResetBase, "ResetBase", QT_TRANSLATE_NOOP("TraversoCommands", "Reset")};
+    static constexpr TActionGroup ToggleBypassBase     {TActionGroupId::ToggleBypassBase, "ToggleBypassBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Bypass")};
+    static constexpr TActionGroup ToggleVerticalBase   {TActionGroupId::ToggleVerticalBase, "ToggleVerticalBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Vertical")};
+
+    static constexpr TActionGroup All[] = {
+        TNavigationBaseUp,
+        TNavigationBaseDown,
+        TNavigationBaseLeft,
+        TNavigationBaseRight,
+        DeleteBase,
+        EditPropertiesBase,
+        GainBase,
+        MoveBase,
+        ResetBase,
+        ToggleBypassBase,
+        ToggleVerticalBase,
+    };
+};
+
+// Every id has exactly one entry, in id order, and every name is unique
+template <class Entry, size_t N>
+constexpr bool t_entries_are_consistent(const Entry (&entries)[N], size_t count)
+{
+    if (N != count) {
         return false;
     }
-    for (size_t i = 0; i < std::size(TActions::All); ++i) {
-        if (TActions::All[i].id != static_cast<TActionId>(i)) {
+    for (size_t i = 0; i < N; ++i) {
+        if (static_cast<size_t>(entries[i].id) != i) {
             return false;
         }
-        for (size_t j = i + 1; j < std::size(TActions::All); ++j) {
-            if (std::string_view(TActions::All[i].name) == std::string_view(TActions::All[j].name)) {
+        for (size_t j = i + 1; j < N; ++j) {
+            if (std::string_view(entries[i].name) == std::string_view(entries[j].name)) {
                 return false;
             }
         }
@@ -472,4 +532,7 @@ constexpr bool t_actions_are_consistent()
     return true;
 }
 
-static_assert(t_actions_are_consistent(), "TActions::All must list every TActionId once, in order, with unique names");
+static_assert(t_entries_are_consistent(TActions::All, static_cast<size_t>(TActionId::Count)),
+              "TActions::All must list every TActionId once, in order, with unique names");
+static_assert(t_entries_are_consistent(TActionGroups::All, static_cast<size_t>(TActionGroupId::Count)),
+              "TActionGroups::All must list every TActionGroupId once, in order, with unique names");

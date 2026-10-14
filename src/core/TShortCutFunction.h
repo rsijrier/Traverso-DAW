@@ -36,8 +36,8 @@ public:
     // Calls the function on an object of the class it is registered for
     using Invoker = std::function<TCommand*(QObject*)>;
 
-    // A base function, that only supplies keys to the functions using it
-    explicit TShortCutFunction(const QMetaObject *metaObject, const QString &description, const char *commandName);
+    // The function of a group, it only supplies keys to the functions in the group
+    explicit TShortCutFunction(const QMetaObject *metaObject, const TActionGroup &group);
     explicit TShortCutFunction(const QMetaObject *metaObject, const TAction &action);
     ~TShortCutFunction();
 
@@ -49,8 +49,10 @@ public:
     QString get_submenu_name() const {return m_submenu;}
 
     const char* get_command_name() const {return m_commandName;}
-    // nullptr for a base function
+    // nullptr for the function of a group
     const TAction* get_action() const {return m_action;}
+    // The group this function is in, nullptr if none
+    const TActionGroup* get_group() const {return m_group;}
 
     QList<int> get_modifier_keys(bool fromInheritedBase=true) const;
     QStringList get_keys(bool fromInheritedBase=true) const;
@@ -62,7 +64,6 @@ public:
     QVariantList get_arguments() const {return m_arguments;}
 
     const QMetaObject* get_metaobject() const {return m_metaObject;}
-    const QMetaObject* get_base_metaobject() const {return m_baseMetaObject;}
 
     TShortCutFunction* get_base_shortcut_function() const {return m_baseShortCutFunction;}
 
@@ -74,10 +75,10 @@ public:
     bool always_safe_to_dispatch() const {return m_alwaysSafeToDispatch;}
     bool plugin_based() const {return !m_pluginname.isEmpty();}
 
-    void set_base_metaobject(const QMetaObject* base)
+    void set_group(const TActionGroup* group)
     {
-        Q_ASSERT(base);
-        m_baseMetaObject = base;
+        Q_ASSERT(group);
+        m_group = group;
     }
     void set_base_shortcut_function(TShortCutFunction* baseShortCutFunction)
     {
@@ -129,8 +130,9 @@ public:
 private:
     const QMetaObject*  m_metaObject{nullptr};
     const TAction*      m_action{nullptr};
+    const TActionGroup* m_definedGroup{nullptr};
     const char*         m_commandName;
-    const QMetaObject*	m_baseMetaObject{nullptr};
+    const TActionGroup* m_group{nullptr};
     TShortCutFunction*  m_baseShortCutFunction{nullptr};
     Invoker             m_invoker;
 
