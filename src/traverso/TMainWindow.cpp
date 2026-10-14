@@ -65,7 +65,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TFadeCurve.h"
 #include "TConfig.h"
 #include "TAudioPlugin.h"
-#include "TAudioFileImportCommand.h"
+#include "TAudioClipFactory.h"
+#include "TUndoCommand.h"
 #include "TTimeLineRuler.h"
 #include "TThemer.h"
 #include "TAudioFileCopyConvert.h"
@@ -1462,34 +1463,69 @@ void TMainWindow::import_audio()
         n -= 1;
     }
 
+    QList<TAudioClip*> clips;
+    QList<TTimeLineMarker*> markers;
+
     while(!files.isEmpty()) {
         QString fileName = files.takeFirst();
-        TAudioFileImportCommand* import = new TAudioFileImportCommand(track);
-        import->set_track(track);
-        import->set_file_name(fileName);
-        import->set_import_location(importLocation);
+        TAudioClip* clip = TAudioClipFactory::create_from_file(track, fileName, importLocation);
 
-        QFileInfo fi(fileName);
-        TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation);
-        m->set_description(QString(tr("%1: %2")).arg(n).arg(fi.baseName()));
+        if (clip) {
+            QFileInfo fi(fileName);
+            TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation);
+            m->set_description(QString(tr("%1: %2")).arg(n).arg(fi.baseName()));
 
-        if (import->create_readsource() != -1) {
-            importLocation += import->readsource()->get_length();
-            TCommand::process_command(import);
-            TCommand::process_command(timeLineRuler->add_marker(m, true));
+            clips.append(clip);
+            markers.append(m);
+            importLocation += clip->get_length();
         }
         ++n;
     }
 
+    delete importClips;
+
+    if (clips.isEmpty()) {
+        return;
+    }
+
+    // The clips and markers are added as one undo step
+    QUndoStack* undoStack = sheet->get_history_stack();
+    if (undoStack) {
+        undoStack->beginMacro(tr("Import Audio Files"));
+    }
+
+    QUndoCommand* command = sheet->create_command_mutate_clips(clips, {}, tr("Import Audio Files"));
+    if (undoStack) {
+        undoStack->push(command);
+    } else {
+        command->redo();
+        delete command;
+    }
+
+    for (TTimeLineMarker* m : markers) {
+        TCommand::process_command(timeLineRuler->add_marker(m, true));
+    }
+
     if (timeLineRuler->has_end_marker()) {
         TTimeLineMarker* m = timeLineRuler->get_end_marker();
-        m->set_when(importLocation);
+        TTimeRef origLocation = m->get_location()->get_start();
+        QUndoCommand* moveEndMarker = new TUndoCommand(tr("Move End Marker"),
+            [m, importLocation]() { m->set_when(importLocation); },
+            [m, origLocation]() { m->set_when(origLocation); });
+        if (undoStack) {
+            undoStack->push(moveEndMarker);
+        } else {
+            moveEndMarker->redo();
+            delete moveEndMarker;
+        }
     } else {
         TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation, TTimeLineMarker::ENDMARKER);
         TCommand::process_command(timeLineRuler->add_marker(m, true));
     }
 
-    delete importClips;
+    if (undoStack) {
+        undoStack->endMacro();
+    }
 }
 
 
