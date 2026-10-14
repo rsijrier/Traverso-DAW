@@ -67,7 +67,6 @@ private:
         SplitAudioClipCommand,
         AudioClipDualTrimCommand,
 		CropClipCommand,
-		ArmTracksCommand,
 		ZoomCommand,
         ShuttleCommand,
 		NormalizeClipCommand,

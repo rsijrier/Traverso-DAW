@@ -156,17 +156,6 @@ ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	key
 ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=16777248	ownkeys=Z	ownmodifiers=16777248	description=Zoom Vertical	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=VJogZoom;1.2;0.2
 # RESOLUTION class key modifiers -> function
-ArmTracks	PLUS		MoveCommandFaster
-ArmTracks	MINUS		MoveCommandSlower
-ArmTracks	S		MoveCommandToggleSnap
-ArmTracks	ESC		RejectHoldCommand
-ArmTracks	RETURN		AcceptHoldCommand
-ArmTracks	ENTER		AcceptHoldCommand
-ArmTracks	UPARROW		MoveCommandUp
-ArmTracks	DOWNARROW		MoveCommandDown
-ArmTracks	PAGEUP		MoveCommandFaster
-ArmTracks	PAGEDOWN		MoveCommandSlower
-ArmTracks	NUMERICAL		MoveCommandSpeed
 ArrowKeyBrowser	ESC		RejectHoldCommand
 ArrowKeyBrowser	RETURN		AcceptHoldCommand
 ArrowKeyBrowser	ENTER		AcceptHoldCommand
@@ -484,7 +473,6 @@ WorkCursorMove	PAGEUP		MoveCommandFaster
 WorkCursorMove	PAGEDOWN		MoveCommandSlower
 WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
-command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
 ## KEYMAP advanced
@@ -645,17 +633,6 @@ ZoomTrackVerticalIn	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	key
 ZoomTrackVerticalOut	class=TZoomCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Track Vertical Zoom Out	submenu=	sortorder=2	autorepeat=1,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ZoomVertical	class=TSheetView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=Z	modifiers=16777248	ownkeys=Z	ownmodifiers=16777248	description=Zoom Vertical	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=1	args=VJogZoom;1.2;0.2
 # RESOLUTION class key modifiers -> function
-ArmTracks	PLUS		MoveCommandFaster
-ArmTracks	MINUS		MoveCommandSlower
-ArmTracks	S		MoveCommandToggleSnap
-ArmTracks	ESC		RejectHoldCommand
-ArmTracks	RETURN		AcceptHoldCommand
-ArmTracks	ENTER		AcceptHoldCommand
-ArmTracks	UPARROW		MoveCommandUp
-ArmTracks	DOWNARROW		MoveCommandDown
-ArmTracks	PAGEUP		MoveCommandFaster
-ArmTracks	PAGEDOWN		MoveCommandSlower
-ArmTracks	NUMERICAL		MoveCommandSpeed
 ArrowKeyBrowser	ESC		RejectHoldCommand
 ArrowKeyBrowser	RETURN		AcceptHoldCommand
 ArrowKeyBrowser	ENTER		AcceptHoldCommand
@@ -972,6 +949,5 @@ WorkCursorMove	PAGEUP		MoveCommandFaster
 WorkCursorMove	PAGEDOWN		MoveCommandSlower
 WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
-command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function

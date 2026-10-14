@@ -17,7 +17,6 @@
 #include "CommandGroup.h"
 #include "TAddRemoveCommand.h"
 #include "AudioClipExternalProcessing.h"
-#include "ArmTracks.h"
 #include "Crop.h"
 #include "ArrowKeyBrowser.h"
 #include "TFadeRangeCommand.h"

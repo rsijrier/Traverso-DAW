@@ -129,7 +129,6 @@ void TraversoCommands::load(TShortCutManager* m)
     m->add_meta_object(&SpectralMeterView::staticMetaObject,    tr("Spectral Analyzer"));
     m->add_meta_object(&CorrelationMeterView::staticMetaObject, tr("Correlation Meter"));
     m->add_meta_object(&ArrowKeyBrowser::staticMetaObject,      tr("Arrow Key Browser"));
-    m->add_meta_object(&ArmTracks::staticMetaObject,            tr("Arm Tracks"));
     m->add_meta_object(&TMoveCommand::staticMetaObject,         tr("Shuttle"));
     m->add_meta_object(&TTimeLineMarker::staticMetaObject,      tr("Marker"));
     m->add_meta_object(&TBusTrackPanelView::staticMetaObject,   tr("Bus Track"));
@@ -684,13 +683,6 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
         TAudioClipView* audioClipView = qobject_cast<TAudioClipView*>(obj);
         Q_ASSERT(audioClipView);
         return new CropClip(audioClipView);
-    }
-
-    case ArmTracksCommand:
-    {
-        TSheetView* sheetView = qobject_cast<TSheetView*>(obj);
-        Q_ASSERT(sheetView);
-        return new ArmTracks(sheetView);
     }
 
     case ZoomCommand:
