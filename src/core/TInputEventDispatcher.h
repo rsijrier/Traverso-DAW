@@ -137,7 +137,7 @@ private:
     TCommand* create_command_from_plugin(QObject *contextItem, TShortCutFunction* shortCutFunction);
     TCommandController* create_controller_from_plugin(QObject* contextItem, TShortCutFunction* shortCutFunction);
     int start_controller(TCommandController* controller, TShortCut* shortCut);
-    void commit_controller_transaction(TCommandController* controller);
+    void commit_controller(TCommandController* controller);
 
     void set_holding(bool holding);
     void process_press_event(int keyValue);

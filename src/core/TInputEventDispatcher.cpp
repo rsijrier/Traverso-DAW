@@ -23,15 +23,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TCommandController.h"
 #include "TContextPointer.h"
-#include "THoldInteraction.h"
 #include "TInformUser.h"
 #include "TCommand.h"
 #include "TMoveCommand.h"
 #include "TCommandPlugin.h"
 #include "TShortCut.h"
 #include "TShortCutFunction.h"
-#include "TShuttleableController.h"
-#include "TTransactional.h"
 #include "TRtTransaction.h"
 #include "Utils.h"
 #include "TShortCutManager.h"
@@ -380,16 +377,14 @@ TCommandController* TInputEventDispatcher::create_controller_from_plugin(QObject
 
 int TInputEventDispatcher::start_controller(TCommandController* controller, TShortCut* shortCut)
 {
-    auto* hold = dynamic_cast<THoldInteraction*>(controller);
-
-    if (!hold) {
-        // Instant controller: run its transaction now
-        commit_controller_transaction(controller);
+    if (!controller->is_hold()) {
+        // No hold phase: commit right away
+        commit_controller(controller);
         delete controller;
         return 1;
     }
 
-    if (hold->begin_hold() == -1) {
+    if (!controller->begin_hold()) {
         delete controller;
         return 0;
     }
@@ -400,43 +395,41 @@ int TInputEventDispatcher::start_controller(TCommandController* controller, TSho
     set_holding(true);
 
     if (TViewPortInterface* viewport = m_contextPointer->get_viewport()) {
-        viewport->set_canvas_cursor_controller_type(hold->get_cursor_type());
+        viewport->set_canvas_cursor_controller_type(controller->cursor_type());
     }
 
-    if (auto* shuttleable = dynamic_cast<TShuttleableController*>(controller)) {
-        TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
-        if (mode != TViewPortInterface::None) {
-            m_viewportScroller.set_scroll_modes(mode);
-            qreal intensityX = 0.0, intensityY = 0.0;
-            if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
-                if (!m_shuttleTimer.isActive()) m_shuttleTimer.start();
-            }
+    TViewPortInterface::ScrollModes mode = controller->scrolling_mode();
+    if (mode != TViewPortInterface::None) {
+        m_viewportScroller.set_scroll_modes(mode);
+        qreal intensityX = 0.0, intensityY = 0.0;
+        if (m_viewportScroller.calculate_shuttle_intensity(controller, intensityX, intensityY)) {
+            if (!m_shuttleTimer.isActive()) m_shuttleTimer.start();
         }
     }
 
-    hold->jog();
+    controller->update();
     return 1;
 }
 
-void TInputEventDispatcher::commit_controller_transaction(TCommandController* controller)
+void TInputEventDispatcher::commit_controller(TCommandController* controller)
 {
-    // A controller does not have to be transactional, e.g. one that only
-    // navigates or zooms
-    auto* tx = dynamic_cast<TTransactional*>(controller);
-    if (!tx || tx->prepare_actions() == -1) {
-        return;
-    }
+    TCommitResult result = controller->commit();
 
-    QUndoCommand* undoCommand = tx->get_undo_command();
-    if (!undoCommand) {
+    switch (result.status) {
+    case TCommitResult::Status::Failed:
+        tInformUser().information(result.reason);
         return;
+    case TCommitResult::Status::NothingToDo:
+        return;
+    case TCommitResult::Status::Committed:
+        break;
     }
 
     if (QUndoStack* undoStack = controller->get_context_item_undo_stack()) {
-        undoStack->push(undoCommand);
+        // The stack takes ownership and calls redo()
+        undoStack->push(result.command.release());
     } else {
-        undoCommand->redo();
-        delete undoCommand;
+        result.command->redo();
     }
 }
 
@@ -465,31 +458,25 @@ void TInputEventDispatcher::jog()
     if (!m_isHolding) return;
 
     if (m_holdingController) {
-        auto* shuttleable = qobject_cast<TShuttleableController*>(m_holdingController);
+        TViewPortInterface::ScrollModes mode = m_holdingController->scrolling_mode();
+        if (mode != TViewPortInterface::None) {
+            m_viewportScroller.set_scroll_modes(mode);
+            qreal intensityX = 0.0;
+            qreal intensityY = 0.0;
 
-        if (shuttleable) {
-            TViewPortInterface::ScrollModes mode = shuttleable->scrolling_mode();
-            if (mode != TViewPortInterface::None) {
-                m_viewportScroller.set_scroll_modes(mode);
-                qreal intensityX = 0.0;
-                qreal intensityY = 0.0;
-
-                // Only start or stop shuttling here, execute_shuttle_heartbeat() scrolls
-                if (m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY)) {
-                    if (!m_shuttleTimer.isActive()) {
-                        m_shuttleTimer.start();
-                    }
-                } else {
-                    m_shuttleTimer.stop();
+            // Only start or stop shuttling here, execute_shuttle_heartbeat() scrolls
+            if (m_viewportScroller.calculate_shuttle_intensity(m_holdingController, intensityX, intensityY)) {
+                if (!m_shuttleTimer.isActive()) {
+                    m_shuttleTimer.start();
                 }
+            } else {
+                m_shuttleTimer.stop();
             }
         }
 
-        auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
-        if (hold) {
-            if (hold->jog() == 1 && hold->canvas_cursor_follows_mouse_cursor()) {
-                m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
-            }
+        m_holdingController->update();
+        if (m_holdingController->canvas_cursor_follows_mouse_cursor()) {
+            m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
         }
         return;
     }
@@ -522,24 +509,16 @@ void TInputEventDispatcher::execute_shuttle_heartbeat()
         return;
     }
 
-    auto* shuttleable = qobject_cast<TShuttleableController*>(m_holdingController);
-    auto* hold        = qobject_cast<THoldInteraction*>(m_holdingController);
-
-    if (!shuttleable || !hold) {
-        m_shuttleTimer.stop();
-        return;
-    }
-
     qreal intensityX = 0.0;
     qreal intensityY = 0.0;
 
-    bool isCurrentlyShuttling = m_viewportScroller.calculate_shuttle_intensity(shuttleable, intensityX, intensityY);
+    bool isCurrentlyShuttling = m_viewportScroller.calculate_shuttle_intensity(m_holdingController, intensityX, intensityY);
 
     if (isCurrentlyShuttling && (intensityX != 0.0 || intensityY != 0.0)) {
         TViewPortInterface* viewport = m_contextPointer->get_viewport();
         if (!viewport) return;
 
-        QPoint step = m_viewportScroller.calculate_scroll_step(shuttleable, intensityX, intensityY);
+        QPoint step = m_viewportScroller.calculate_scroll_step(m_holdingController, intensityX, intensityY);
 
         if (step.x() != 0) {
             viewport->scroll_horizontal(step.x());
@@ -548,7 +527,8 @@ void TInputEventDispatcher::execute_shuttle_heartbeat()
             viewport->scroll_vertical(step.y());
         }
 
-        if (hold->jog() == 1 && hold->canvas_cursor_follows_mouse_cursor()) {
+        m_holdingController->update();
+        if (m_holdingController->canvas_cursor_follows_mouse_cursor()) {
             m_contextPointer->set_canvas_cursor_pos(m_contextPointer->scene_pos());
         }
 
@@ -802,25 +782,18 @@ void TInputEventDispatcher::finish_hold()
     if (m_holdingController) {
         PMESG("Finishing modern hold controller: %s", m_holdingController->metaObject()->className());
 
-        // hold can only be null if a non-hold controller ended up in
-        // m_holdingController, which is a dispatcher bug.
-        auto* hold = dynamic_cast<THoldInteraction*>(m_holdingController);
-        Q_ASSERT(hold);
-
         // TODO: restore the hardware cursor position for controllers that use relative
-        // pointer input (e.g. gain). THoldInteraction has no equivalent of
+        // pointer input (e.g. gain). TCommandController has no equivalent of
         // TCommand::wants_cursor_position_to_be_restored() yet.
-        // if (hold->wants_cursor_position_to_be_restored()) {
+        // if (m_holdingController->wants_cursor_position_to_be_restored()) {
         //     m_contextPointer->set_canvas_cursor_pos(m_contextPointer->on_first_input_event_scene_pos());
         // }
 
-        if (!hold) {
-            PERROR(QString("Holding controller %1 does not implement THoldInteraction").arg(m_holdingController->metaObject()->className()));
-        } else if (m_cancelHold) {
+        if (m_cancelHold) {
             PMESG("Canceling modern hold controller");
-            hold->cancel_action();
-        } else if (hold->finish_hold() > 0) {
-            commit_controller_transaction(m_holdingController);
+            m_holdingController->cancel();
+        } else {
+            commit_controller(m_holdingController);
         }
 
         delete m_holdingController;

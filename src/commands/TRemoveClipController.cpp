@@ -18,7 +18,7 @@ TRemoveClipController::TRemoveClipController(TAudioClip* targetClip)
     Q_ASSERT(m_sheet);
 }
 
-int TRemoveClipController::prepare_actions()
+TCommitResult TRemoveClipController::commit()
 {
     PENTER;
     Q_ASSERT(m_sheet);
@@ -26,28 +26,20 @@ int TRemoveClipController::prepare_actions()
     TAudioClipManager* clipManager = m_sheet->get_audioclip_manager();
     Q_ASSERT(clipManager);
 
-    m_clipsToRemove.clear();
+    QList<TAudioClip*> clipsToRemove;
 
     if (m_targetClip->is_selected()) {
-        clipManager->get_selected_clips(m_clipsToRemove);
+        clipManager->get_selected_clips(clipsToRemove);
     } else {
-        m_clipsToRemove.append(m_targetClip);
+        clipsToRemove.append(m_targetClip);
     }
 
-    if (m_clipsToRemove.isEmpty()) {
-        return -1;
+    if (clipsToRemove.isEmpty()) {
+        return TCommitResult::nothing_to_do();
     }
 
-    return 1;
-}
-
-QUndoCommand* TRemoveClipController::get_undo_command()
-{
-    Q_ASSERT(m_sheet);
-
-    return m_sheet->create_command_mutate_clips(
+    return TCommitResult::committed(std::unique_ptr<QUndoCommand>(m_sheet->create_command_mutate_clips(
         {},
-        m_clipsToRemove,
-        m_targetClip->is_selected() ? tr("Remove Selected Clips") : tr("Remove Clip")
-        );
+        clipsToRemove,
+        m_targetClip->is_selected() ? tr("Remove Selected Clips") : tr("Remove Clip"))));
 }

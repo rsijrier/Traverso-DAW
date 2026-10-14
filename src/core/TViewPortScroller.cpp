@@ -5,7 +5,7 @@
 
 #include "TViewPortScroller.h"
 #include "TContextPointer.h"
-#include "TShuttleableController.h"
+#include "TCommandController.h"
 #include "TSelectionTimeBounds.h"
 
 #include <algorithm>
@@ -17,7 +17,7 @@ TViewportScroller::TViewportScroller(TViewPortInterface::ScrollModes modes)
     m_shuttleCurve.setType(QEasingCurve::InOutQuad);
 }
 
-bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shuttleable,
+bool TViewportScroller::calculate_shuttle_intensity(TCommandController* controller,
                                                     qreal &calculatedHorizontalShuttleVelocity,
                                                     qreal &calculatedVerticalShuttleVelocity)
 {
@@ -27,7 +27,7 @@ bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shut
     TContextPointer& pointer = cpointer();
     TViewPortInterface* viewport = pointer.get_viewport();
 
-    if (!viewport || !shuttleable) {
+    if (!viewport || !controller) {
         return false;
     }
 
@@ -35,7 +35,7 @@ bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shut
         calculatedHorizontalShuttleVelocity = determine_shuttle_vector(
             pointer.mouse_viewport_x(),
             viewport->viewport_width(),
-            shuttleable->shuttle_range_x()
+            SHUTTLE_ZONE
             );
     }
 
@@ -43,13 +43,13 @@ bool TViewportScroller::calculate_shuttle_intensity(TShuttleableController *shut
         calculatedVerticalShuttleVelocity = determine_shuttle_vector(
             pointer.mouse_viewport_y(),
             viewport->viewport_height(),
-            shuttleable->shuttle_range_y()
+            SHUTTLE_ZONE
             );
     }
 
     // No horizontal shuttling once the controller's time range reached its limit
     if (!qFuzzyIsNull(calculatedHorizontalShuttleVelocity)
-        && calculate_scroll_step(shuttleable, calculatedHorizontalShuttleVelocity, 0.0).x() == 0) {
+        && calculate_scroll_step(controller, calculatedHorizontalShuttleVelocity, 0.0).x() == 0) {
         calculatedHorizontalShuttleVelocity = 0.0;
     }
 
@@ -89,7 +89,7 @@ qreal TViewportScroller::determine_shuttle_vector(int mouseViewportPosition, int
     return 0.0;
 }
 
-QPoint TViewportScroller::calculate_scroll_step(TShuttleableController* shuttleable,
+QPoint TViewportScroller::calculate_scroll_step(TCommandController* controller,
                                                qreal horizontalShuttleVelocity,
                                                qreal verticalShuttleVelocity) const
 {
@@ -101,16 +101,16 @@ QPoint TViewportScroller::calculate_scroll_step(TShuttleableController* shuttlea
     int stepX = qRound(horizontalShuttleVelocity * viewport->viewport_width() * MAX_STEP_FRACTION);
     int stepY = qRound(verticalShuttleVelocity * viewport->viewport_height() * MAX_STEP_FRACTION);
 
-    return QPoint(clamp_horizontal_step(shuttleable, stepX), stepY);
+    return QPoint(clamp_horizontal_step(controller, stepX), stepY);
 }
 
-int TViewportScroller::clamp_horizontal_step(TShuttleableController* shuttleable, int stepPixels) const
+int TViewportScroller::clamp_horizontal_step(TCommandController* controller, int stepPixels) const
 {
-    if (!shuttleable || stepPixels == 0) {
+    if (!controller || stepPixels == 0) {
         return stepPixels;
     }
 
-    TSelectionTimeBounds bounds = shuttleable->get_time_line_entity_constraints();
+    TSelectionTimeBounds bounds = controller->time_constraints();
     if (!bounds.isValid()) {
         return stepPixels;
     }
@@ -123,7 +123,7 @@ int TViewportScroller::clamp_horizontal_step(TShuttleableController* shuttleable
 
     // The controller's time range stays at least this far inside the viewport,
     // so its boundary never moves into the shuttle zone
-    int margin = static_cast<int>(viewportWidth * shuttleable->shuttle_range_x());
+    int margin = static_cast<int>(viewportWidth * SHUTTLE_ZONE);
 
     // Clamp the step instead of refusing it: otherwise a smaller step (mouse less
     // deep in the shuttle zone) could still pass once a larger one was refused,

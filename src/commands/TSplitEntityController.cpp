@@ -29,18 +29,11 @@ TSplitEntityController::TSplitEntityController(TTimeLineEntity* entity, TSheet* 
     Q_ASSERT_X(splitable != nullptr, "TSplitEntityController", "Initiating split on a non-splitable entity!");
 }
 
-int TSplitEntityController::begin_hold()
+bool TSplitEntityController::begin_hold()
 {
     m_isHolding = true;
     emit isHoldingChanged();
-    return 1;
-}
-
-int TSplitEntityController::finish_hold()
-{
-    m_isHolding = false;
-    emit isHoldingChanged();
-    return 1;
+    return true;
 }
 
 TSelectionTimeBounds TSplitEntityController::calculate_selection_bounds(const QList<TTimeLineEntity*>& selectedEntities) const
@@ -66,7 +59,7 @@ TSelectionTimeBounds TSplitEntityController::calculate_selection_bounds(const QL
     return bounds;
 }
 
-int TSplitEntityController::jog()
+void TSplitEntityController::update()
 {
     m_splitLocation = cpointer().timeref_location();
 
@@ -98,8 +91,6 @@ int TSplitEntityController::jog()
 
     emit splitLocationChanged();
     cpointer().set_canvas_cursor_data(QVariant::fromValue(TTimeRef::timeref_to_ms_2(m_splitLocation)));
-
-    return 1;
 }
 
 void TSplitEntityController::do_keyboard_move(const TTimeRef& location)
@@ -118,7 +109,7 @@ void TSplitEntityController::do_keyboard_move(const TTimeRef& location)
 }
 
 
-void TSplitEntityController::cancel_action()
+void TSplitEntityController::cancel()
 {
     PENTER;
     m_isHolding = false;
@@ -133,9 +124,14 @@ void TSplitEntityController::cancel_action()
     );
 }
 
-int TSplitEntityController::prepare_actions()
+TCommitResult TSplitEntityController::commit()
 {
     PENTER;
+
+    if (m_isHolding) {
+        m_isHolding = false;
+        emit isHoldingChanged();
+    }
 
     if (m_splitLocation == TTimeRef()) {
         TViewPortInterface* viewport = cpointer().get_viewport();
@@ -145,14 +141,9 @@ int TSplitEntityController::prepare_actions()
 
     auto* splitable = dynamic_cast<TSplitableTimeLineEntity*>(m_entity);
     if (!splitable || !splitable->validate_split_boundary(m_splitLocation)) {
-        return -1;
+        return TCommitResult::failed(tr("The split position is not inside the clip"));
     }
 
-    return 1;
-}
-
-QUndoCommand* TSplitEntityController::get_undo_command()
-{
     QList<TTimeLineEntity*> targets = m_sheet->get_selection_service()->get_selected_entities();
     QList<TSplitableTimeLineEntity*> splitableTargets;
 
@@ -168,10 +159,11 @@ QUndoCommand* TSplitEntityController::get_undo_command()
         }
     }
 
-    return m_sheet->create_command_split_entities(splitableTargets, m_splitLocation, tr("Split Selection"));
+    return TCommitResult::committed(std::unique_ptr<QUndoCommand>(
+        m_sheet->create_command_split_entities(splitableTargets, m_splitLocation, tr("Split Selection"))));
 }
 
-const TSelectionTimeBounds TSplitEntityController::get_time_line_entity_constraints()
+TSelectionTimeBounds TSplitEntityController::time_constraints() const
 {
     QList<TTimeLineEntity*> selectedEntities = m_sheet->get_selection_service()->get_selected_entities();
 

@@ -9,7 +9,7 @@
 #include <QEasingCurve>
 #include <QPoint>
 
-class TShuttleableController;
+class TCommandController;
 
 class TViewportScroller final
 {
@@ -17,7 +17,7 @@ public:
     explicit TViewportScroller(TViewPortInterface::ScrollModes modes = TViewPortInterface::None);
     ~TViewportScroller() = default;
 
-    bool calculate_shuttle_intensity(TShuttleableController* shuttleable,
+    bool calculate_shuttle_intensity(TCommandController* controller,
                                      qreal& calculatedHorizontalShuttleVelocity,
                                      qreal& calculatedVerticalShuttleVelocity);
 
@@ -25,7 +25,7 @@ public:
 
     // Pixels to scroll per shuttle timer tick for the given velocities, the
     // horizontal step is clamped to the controller's time range
-    QPoint calculate_scroll_step(TShuttleableController* shuttleable,
+    QPoint calculate_scroll_step(TCommandController* controller,
                                  qreal horizontalShuttleVelocity,
                                  qreal verticalShuttleVelocity) const;
 
@@ -35,10 +35,14 @@ public:
 private:
     qreal determine_shuttle_vector(int mouseViewportPosition, int viewportDimension, qreal triggerZoneWidth);
 
-    int clamp_horizontal_step(TShuttleableController* shuttleable, int stepPixels) const;
+    int clamp_horizontal_step(TCommandController* controller, int stepPixels) const;
 
     TViewPortInterface::ScrollModes m_scrollModes;
     QEasingCurve                    m_shuttleCurve;
+
+    // Size of the zone at each viewport edge that starts shuttling, as a fraction
+    // of the viewport size; the same as the legacy TMoveCommand shuttle
+    static constexpr qreal SHUTTLE_ZONE = 0.18;
 
     // At full velocity a tick scrolls this fraction of the viewport size, the
     // same maximum speed as the legacy TMoveCommand shuttle (about 48 pixels

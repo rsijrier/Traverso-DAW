@@ -6,10 +6,6 @@
 #pragma once
 
 #include "TCommandController.h"
-#include "THoldInteraction.h"
-#include "TTransactional.h"
-#include "TSnapableTimeController.h"
-#include "TShuttleableController.h"
 #include "TTimeRef.h"
 
 class TSheet;
@@ -17,17 +13,9 @@ class QUndoCommand;
 class TTimeLineEntity;
 struct TSelectionTimeBounds;
 
-class TSplitEntityController final : public TCommandController,
-                                     public THoldInteraction,
-                                     public TTransactional,
-                                     public TSnapableTimeController,
-                                     public TShuttleableController
+class TSplitEntityController final : public TCommandController
 {
     Q_OBJECT
-    Q_INTERFACES(THoldInteraction
-                TTransactional
-                TSnapableTimeController
-                TShuttleableController)
 
     Q_PROPERTY(bool isHolding READ is_holding NOTIFY isHoldingChanged)
     Q_PROPERTY(qint64 splitFrame READ get_split_frame NOTIFY splitLocationChanged)
@@ -36,27 +24,21 @@ public:
     explicit TSplitEntityController(TTimeLineEntity* entity, TSheet* sheet);
     ~TSplitEntityController() override = default;
 
-    // THoldInteraction contract
-    int begin_hold() final;
-    int jog() final;
-    int finish_hold() final;
-    void cancel_action() final;
-    bool canvas_cursor_follows_mouse_cursor() const final { return true; }
-    TraversoDAW::CursorType get_cursor_type() const final {return TraversoDAW::CursorType::Split;}
+    // TCommandController
+    bool is_hold() const override { return true; }
+    bool begin_hold() override;
+    void update() override;
+    void cancel() override;
+    TCommitResult commit() override;
+    TraversoDAW::CursorType cursor_type() const override { return TraversoDAW::CursorType::Split; }
+    TViewPortInterface::ScrollModes scrolling_mode() const override { return TViewPortInterface::Horizontal; }
+    TSelectionTimeBounds time_constraints() const override;
 
-    // TTransactional contract
-    int prepare_actions() final;
-    QUndoCommand* get_undo_command() final;
-
-    // TShuttleableController contract
-    TViewPortInterface::ScrollModes scrolling_mode() const final { return TViewPortInterface::Horizontal; }
-    const TSelectionTimeBounds get_time_line_entity_constraints() final;
-
-    // TSnapableTimeController contract
-    void move_left() final;
-    void move_right() final;
-    void next_snap_pos() final;
-    void prev_snap_pos() final;
+    // Keyboard navigation. Not reachable yet, it moves to the input layer.
+    void move_left();
+    void move_right();
+    void next_snap_pos();
+    void prev_snap_pos();
 
     bool is_holding() const { return m_isHolding; }
     qint64 get_split_frame() const { return m_splitLocation.universal_frame(); }
