@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TContextPointer.h"
 #include "TPositionIndicator.h"
-#include "TRemoveClipController.h"
+#include "TRemoveEntitiesController.h"
 #include "TSheetWidget.h"
 #include "TAudioClipManager.h"
 #include "TAudioClip.h"
@@ -854,7 +854,21 @@ TCommandController *TraversoCommands::create_controller(QObject *obj, const QStr
         TAudioClip* audioClip = qobject_cast<TAudioClip*>(obj);
         Q_ASSERT(audioClip);
 
-        return new TRemoveClipController(audioClip);
+        TSheet* sheet = audioClip->get_sheet();
+        Q_ASSERT(sheet);
+
+        return new TRemoveEntitiesController(audioClip, sheet->get_selection_service(),
+            [sheet](const QList<TTimeLineEntity*>& entities, bool removingSelection) {
+                QList<TAudioClip*> clips;
+                for (TTimeLineEntity* entity : entities) {
+                    if (auto* clip = dynamic_cast<TAudioClip*>(entity)) {
+                        clips.append(clip);
+                    }
+                }
+                return std::unique_ptr<QUndoCommand>(sheet->create_command_mutate_clips(
+                    {}, clips,
+                    removingSelection ? TraversoCommands::tr("Remove Selected Clips") : TraversoCommands::tr("Remove Clip")));
+            });
     }
 
     }
