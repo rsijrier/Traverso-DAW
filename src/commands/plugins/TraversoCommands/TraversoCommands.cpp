@@ -207,6 +207,7 @@ void TraversoCommands::load(TShortCutManager* m)
     add_function(&TSheet::staticMetaObject, TActions::SheetAddMarker, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
     add_function(&TSheet::staticMetaObject, TActions::SheetAddMarkerAtPlayhead, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
     add_function(&TSheet::staticMetaObject, TActions::SheetAddMarkerAtWorkCursor, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);
+    add_function(&TSheet::staticMetaObject, TActions::AddNewAudioTrack, AddNewAudioTrackCommand);
     add_function(&TTimeLineRuler::staticMetaObject, TActions::TimeLineAddMarker, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::CursorLocation);
     add_function(&TTimeLineRuler::staticMetaObject, TActions::TimeLineAddMarkerAtPlayhead, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::PlayCursor);
     add_function(&TTimeLineRuler::staticMetaObject, TActions::TimeLineAddMarkerAtWorkCursor, AddMarkerCommand, NO_X, NO_Y, QVariantList() << MarkerLocation::WorkCursor);

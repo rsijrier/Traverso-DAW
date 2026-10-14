@@ -154,6 +154,7 @@ enum class TActionId : int {
     ZoomVertical,
     AcceptHoldCommand,
     RejectHoldCommand,
+    AddNewAudioTrack,
     Count
 };
 
@@ -319,6 +320,7 @@ struct TActions
     static constexpr TAction ZoomVertical                          {TActionId::ZoomVertical, "ZoomVertical", QT_TRANSLATE_NOOP("TraversoCommands", "Zoom Vertical")};
     static constexpr TAction AcceptHoldCommand                     {TActionId::AcceptHoldCommand, "AcceptHoldCommand", QT_TRANSLATE_NOOP("TraversoCommands", "Accept")};
     static constexpr TAction RejectHoldCommand                     {TActionId::RejectHoldCommand, "RejectHoldCommand", QT_TRANSLATE_NOOP("TraversoCommands", "Reject")};
+    static constexpr TAction AddNewAudioTrack                      {TActionId::AddNewAudioTrack, "AddNewAudioTrack", QT_TRANSLATE_NOOP("TraversoCommands", "Add Audio Track")};
 
     static constexpr std::array All{
         ArrowKeyBrowserStartUp,
@@ -464,6 +466,7 @@ struct TActions
         ZoomVertical,
         AcceptHoldCommand,
         RejectHoldCommand,
+        AddNewAudioTrack,
     };
 };
 

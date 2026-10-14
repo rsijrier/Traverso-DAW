@@ -3,7 +3,6 @@
 #
 # Remove a line when the problem is fixed. The keymap entries MoveCommandLeft
 # and MoveCommandRight stay until Move Left/Right work again (D4).
-command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function

@@ -2,6 +2,7 @@
 # FUNCTIONS
 AcceptHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ENTER;RETURN	modifiers=	ownkeys=ENTER;RETURN	ownmodifiers=	description=Accept	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AddNewAudioTrack	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=N	modifiers=16777248+16777249	ownkeys=N	ownmodifiers=16777248+16777249	description=Add Audio Track	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserRight	class=ArrowKeyBrowser	base=TNavigationBaseRight	usesbase=1	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
@@ -399,6 +400,7 @@ TResetBase	R		ResetBase
 TSheet	M		SheetAddMarker
 TSheet	M	16777249	SheetAddMarkerAtPlayhead
 TSheet	M	16777251	SheetAddMarkerAtWorkCursor
+TSheet	N	16777248+16777249	AddNewAudioTrack
 TSheetView	MOUSEBUTTONLEFT	16777248+16777249	FoldSheet
 TSheetView	D	16777248+16777249	FoldSheet
 TSheetView	E	16777249	EditSongProperties
@@ -482,7 +484,6 @@ WorkCursorMove	PAGEUP		MoveCommandFaster
 WorkCursorMove	PAGEDOWN		MoveCommandSlower
 WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
-command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
@@ -490,6 +491,7 @@ keymap entry MoveCommandRight is not a known function
 # FUNCTIONS
 AcceptHoldCommand	class=TCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=ENTER;RETURN	modifiers=	ownkeys=ENTER;RETURN	ownmodifiers=	description=Accept	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AddCurveNode	class=TCurveView	base=	usesbase=0	plugin=	alwayssafe=0	keys=N	modifiers=	ownkeys=N	ownmodifiers=	description=New Node	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AddNewAudioTrack	class=TSheet	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=N	modifiers=16777248+16777249	ownkeys=N	ownmodifiers=16777248+16777249	description=Add Audio Track	submenu=	sortorder=20	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserDown	class=ArrowKeyBrowser	base=TNavigationBaseDown	usesbase=1	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Down	submenu=Navigate	sortorder=2	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserLeft	class=ArrowKeyBrowser	base=TNavigationBaseLeft	usesbase=1	plugin=	alwayssafe=0	keys=LEFTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Left	submenu=Navigate	sortorder=3	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
 ArrowKeyBrowserRight	class=ArrowKeyBrowser	base=TNavigationBaseRight	usesbase=1	plugin=	alwayssafe=0	keys=RIGHTARROW	modifiers=	ownkeys=	ownmodifiers=	description=Navigate Right	submenu=Navigate	sortorder=4	autorepeat=0,80,200	repeatsonitself=0	usex=0	usey=0	args=
@@ -883,6 +885,7 @@ TResetBase	R		ResetBase
 TSheet	M		SheetAddMarker
 TSheet	M	16777249	SheetAddMarkerAtPlayhead
 TSheet	M	16777251	SheetAddMarkerAtWorkCursor
+TSheet	N	16777248+16777249	AddNewAudioTrack
 TSheetView	MOUSESCROLLVERTICALDOWN		ViewScrollDown
 TSheetView	MOUSESCROLLVERTICALUP		ViewScrollUp
 TSheetView	MOUSEBUTTONLEFT	16777248+16777249	FoldSheet
@@ -969,7 +972,6 @@ WorkCursorMove	PAGEUP		MoveCommandFaster
 WorkCursorMove	PAGEDOWN		MoveCommandSlower
 WorkCursorMove	NUMERICAL		MoveCommandSpeed
 # PROBLEMS
-command AddNewAudioTrackCommand of plugin TraversoCommands has no action
 command ArmTracksCommand of plugin TraversoCommands has no action
 keymap entry MoveCommandLeft is not a known function
 keymap entry MoveCommandRight is not a known function
