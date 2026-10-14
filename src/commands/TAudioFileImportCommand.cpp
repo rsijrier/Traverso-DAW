@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QFileDialog>
 #include "TAudioFileImportCommand.h"
+#include "TAudioClipFactory.h"
 #include "TAudioClip.h"
 #include "TAudioTrack.h"
 #include "TProject.h"
@@ -100,11 +101,7 @@ int TAudioFileImportCommand::create_readsource()
 void TAudioFileImportCommand::create_audioclip()
 {
 	Q_ASSERT(m_track);
-	m_clip = resources_manager()->new_audio_clip(m_name);
-    resources_manager()->set_source_for_clip(m_clip, m_readSource);
-	m_clip->set_sheet(m_track->get_sheet());
-	m_clip->set_track(m_track);
-	
+
 	TTimeRef startLocation;
     // check if m_importLocation still equals default value
     // it means it was never changed.
@@ -114,11 +111,7 @@ void TAudioFileImportCommand::create_audioclip()
         startLocation = m_importLocation;
 	}
 
-    m_clip->move_to_location(startLocation);
-	
-	if (m_initialLength > qint64(0)) {
-		m_clip->set_right_edge(m_initialLength + startLocation);
-	}
+    m_clip = TAudioClipFactory::create_for_source(m_track, m_readSource, m_name, startLocation, m_initialLength);
 }
 
 int TAudioFileImportCommand::prepare_actions()

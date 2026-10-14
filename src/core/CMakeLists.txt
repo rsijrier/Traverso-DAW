@@ -28,6 +28,7 @@ add_library(traversocore STATIC
     TAudioClip.cpp
     TAudioClipGroup.cpp
     TAudioClipManager.cpp
+    TAudioClipFactory.h TAudioClipFactory.cpp
     TAudioFileCopyConvert.cpp
     TAudioFileMerger.cpp
     TAudioTrack.cpp
