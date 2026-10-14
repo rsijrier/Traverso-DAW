@@ -53,7 +53,6 @@ private:
 		GainCommand,
 		TrackPanCommand,
 		ImportAudioCommand,
-		InsertSilenceCommand,
 		AddNewAudioTrackCommand,
 		RemoveClipCommand,
 		RemoveTrackCommand,

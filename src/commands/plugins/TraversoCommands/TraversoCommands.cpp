@@ -24,8 +24,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QInputDialog>
 #include <QStringList>
 
+#include <QFileDialog>
+#include <QFileInfo>
 #include "TContextPointer.h"
 #include "TPositionIndicator.h"
+#include "TAddClipsController.h"
+#include "TAudioClipFactory.h"
 #include "TRemoveEntitiesController.h"
 #include "TSheetWidget.h"
 #include "TAudioClipManager.h"
@@ -529,29 +533,6 @@ TCommand* TraversoCommands::create(QObject* obj, const QString& commandName, QVa
         return new TrackPan(track, arguments);
     }
 
-    case ImportAudioCommand:
-    {
-        TAudioTrack* track = qobject_cast<TAudioTrack*>(obj);
-        Q_ASSERT(track);
-
-        auto audioFileImportCommand = new TAudioFileImportCommand(track);
-        audioFileImportCommand->set_track(track);
-        return audioFileImportCommand;
-    }
-
-    case InsertSilenceCommand:
-    {
-        TAudioTrack* track = qobject_cast<TAudioTrack*>(obj);
-        Q_ASSERT(track);
-
-        TTimeRef length(10*TTimeRef::UNIVERSAL_SAMPLE_RATE);
-        auto audioFileImportCommand = new TAudioFileImportCommand(track);
-        audioFileImportCommand->set_track(track);
-        audioFileImportCommand->set_length(length);
-        audioFileImportCommand->set_silent(true);
-        return audioFileImportCommand;
-    }
-
     case AddNewAudioTrackCommand:
     {
         TSheet* sheet = qobject_cast<TSheet*>(obj);
@@ -848,6 +829,36 @@ TCommandController *TraversoCommands::create_controller(QObject *obj, const QStr
         return splitController;
     }
 
+
+    case ImportAudioCommand:
+    {
+        TAudioTrack* track = qobject_cast<TAudioTrack*>(obj);
+        Q_ASSERT(track);
+
+        return new TAddClipsController(track, track->get_sheet(),
+            [track](QString* error) -> QList<TAudioClip*> {
+                TProject* project = pm().get_project();
+                QString activeFilter = TraversoCommands::tr("Audio files (*.wav *.flac *.ogg *.mp3 *.wv *.w64 *.m4a *.aac)");
+                QString fileName = QFileDialog::getOpenFileName(TMainWindow::instance(),
+                                                                TraversoCommands::tr("Import audio source"),
+                                                                project->get_import_dir(),
+                                                                TraversoCommands::tr("All files (*)") + ";;" + activeFilter,
+                                                                &activeFilter);
+                if (fileName.isEmpty()) {
+                    return {};
+                }
+
+                project->set_import_dir(QFileInfo(fileName).absolutePath());
+
+                // Appended to the end of the track
+                TAudioClip* clip = TAudioClipFactory::create_from_file(track, fileName, track->get_end_location(), error);
+                if (!clip) {
+                    return {};
+                }
+                return {clip};
+            },
+            tr("Import Audio File"));
+    }
 
     case RemoveClipCommand:
     {
