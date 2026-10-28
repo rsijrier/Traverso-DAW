@@ -41,13 +41,20 @@ class TBusTrack;
 class TTrack;
 class TTimeLineRuler;
 
+class TAudioDevice;
 class TSession : public TContextItem
 {
 	Q_OBJECT
 
 public:
-    TSession(TSession* parentSession = nullptr);
+    // A root session (a project, a sheet): the audio device it runs on
+    explicit TSession(TAudioDevice& device);
+    // A child session: its parent's device
+    explicit TSession(TSession* parentSession);
     ~TSession();
+
+    // The audio device this session runs on (Traverso owns it)
+    TAudioDevice& audio_device() const { return m_device; }
 
 	QDomNode get_state(QDomDocument doc);
 	int set_state( const QDomNode & node );
@@ -114,6 +121,8 @@ public:
     }
 
 protected:
+    // First: the members below are made with it
+    TAudioDevice& m_device;
 	TSession*               m_parentSession;
 	QList<TSession*>        m_childSessions;
     TRtList<TAudioTrack>    m_audioTracks;
@@ -170,6 +179,7 @@ protected:
     void publish_transport_position(const TTransportPosition& position) {m_rtTransportPosition.publish(position);}
 
 private:
+    TSession(TAudioDevice& device, TSession* parentSession);
     TRtTransportPosition        m_rtTransportPosition;
     // GUI thread
     TTransportPositionEstimator m_heardPositionEstimator;

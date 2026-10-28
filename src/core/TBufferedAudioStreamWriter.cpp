@@ -60,14 +60,14 @@ TBufferedAudioStreamWriter::~TBufferedAudioStreamWriter()
     }
 }
 
-int TBufferedAudioStreamWriter::prepare_file(TExportSpecification *specification)
+int TBufferedAudioStreamWriter::prepare_file(TExportSpecification *specification, uint inputRate)
 {
     PENTER;
     Q_ASSERT(specification->is_valid() == 1);
 
     m_outputRate = specification->get_sample_rate();
     m_channelCount = specification->get_channel_count();
-    m_sampleRate = audiodevice().get_sample_rate();
+    m_sampleRate = inputRate;
 
     set_name(get_name() + specification->get_file_extension());
     specification->print_export_data();
@@ -262,7 +262,7 @@ void TBufferedAudioStreamWriter::set_process_peaks(bool process)
 
     Q_ASSERT(!m_peaks);
     Q_ASSERT(m_channelCount > 0);
-    m_peaks = std::make_shared<TPeakStream>(audiodevice().get_sample_rate(), int(m_channelCount), TWaveform::peak_path(this));
+    m_peaks = std::make_shared<TPeakStream>(m_sampleRate, int(m_channelCount), TWaveform::peak_path(this));
     QString error;
     if (m_peaks->open(&error) != TPeakFile::Status::Ok) {
         // No waveform meanwhile; built from the audio afterwards

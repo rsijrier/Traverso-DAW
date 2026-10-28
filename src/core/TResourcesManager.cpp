@@ -282,7 +282,7 @@ TBufferedAudioStreamReader* TResourcesManager::create_recording_source(
 	SourceData* data = new SourceData();
     data->stream = stream;
 	
-    stream->set_original_bit_depth(audiodevice().get_bit_depth());
+    stream->set_original_bit_depth(m_project->audio_device().get_bit_depth());
     stream->set_created_by_sheet(sheetId);
     stream->ref();
 	

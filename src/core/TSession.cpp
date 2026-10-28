@@ -37,9 +37,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 #include <qpoint.h>
 
-TSession::TSession(TSession *parentSession)
+TSession::TSession(TAudioDevice& device)
+    : TSession(device, nullptr)
+{
+}
+
+TSession::TSession(TSession* parentSession)
+    : TSession(parentSession->audio_device(), parentSession)
+{
+}
+
+TSession::TSession(TAudioDevice& device, TSession *parentSession)
 	: TContextItem()
-    , m_curveProcessBuffer(audiodevice().get_buffer_size())
+    , m_device(device)
+    , m_curveProcessBuffer(device.get_buffer_size())
 {
 	m_parentSession = nullptr;
     m_masterOutBusTrack = nullptr;
@@ -296,7 +307,7 @@ TTimeRef TSession::get_heard_transport_location(qint64 nowNanoseconds)
     if (nowNanoseconds != m_heardPositionNanoseconds) {
         m_heardPositionNanoseconds = nowNanoseconds;
         m_heardPosition = m_heardPositionEstimator.heard_position(
-            m_rtTransportPosition.read(), nowNanoseconds, audiodevice().get_playback_latency());
+            m_rtTransportPosition.read(), nowNanoseconds, audio_device().get_playback_latency());
     }
 
     return m_heardPosition;
@@ -573,7 +584,7 @@ void TSession::private_add_track(TTrack* track, TRtTransaction& transaction)
 
 	m_tracks.insert(track->get_id(), track);
 
-	if ( (!is_child_session()) && (audiodevice().get_driver_type() == "Jack")) {
+	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->connect_to_jack(true, true);
 	}
 
@@ -595,7 +606,7 @@ void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
 
 	m_tracks.remove(track->get_id());
 
-	if ( (!is_child_session()) && (audiodevice().get_driver_type() == "Jack")) {
+	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->disconnect_from_jack(true, true);
 	}
 

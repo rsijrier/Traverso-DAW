@@ -243,7 +243,7 @@ TProject* TProjectManager::create_new_project(int numSheets, int numTracks, cons
 		// The whole new project reaches the audio thread as one change
 		TRtTransaction transaction;
 
-		newProject = new TProject(projectName);
+		newProject = new TProject(audiodevice(), projectName);
 		result = newProject->create(numSheets, numTracks);
 	}
 
@@ -275,7 +275,7 @@ TProject* TProjectManager::create_new_project(const QString& templatefile, const
 		// The whole new project reaches the audio thread as one change
 		TRtTransaction transaction;
 
-		newProject = new TProject(projectName);
+		newProject = new TProject(audiodevice(), projectName);
 		result = newProject->create(0, 0);
 	}
 
@@ -305,7 +305,7 @@ int TProjectManager::load_project(const QString& projectName)
 
 	int err = 0;
 
-	TProject* newProject = new TProject(projectName);
+	TProject* newProject = new TProject(audiodevice(), projectName);
 
 	// Outside the transaction: closing the current project removes its
 	// client from the audio device, which must be applied by the audio

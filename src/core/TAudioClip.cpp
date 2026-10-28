@@ -635,9 +635,10 @@ int TAudioClip::init_recording()
     // What is played comes in the capture plus the playback latency after
     // the moment it belongs to: the writer drops that many frames first, so
     // the take lines up with what was heard (doc/design/recording-latency.md)
-    const uint rate = audiodevice().get_sample_rate();
+    TAudioDevice& device = m_sheet->audio_device();
+    const uint rate = device.get_sample_rate();
     m_captureCompensation = TRecordingLatency::compensation_frames(
-        audiodevice().get_capture_latency_frames(), audiodevice().get_playback_latency_frames(),
+        device.get_capture_latency_frames(), device.get_playback_latency_frames(),
         config().get_property("Recording", "ExtraLatency", 0.0).toDouble(), rate,
         bus->get_bus_type() == AudioBus::BusIsHardware, config().get_property("Recording", "LatencyCompensation", true).toBool());
     m_capturedFrames = 0;
@@ -674,7 +675,7 @@ int TAudioClip::init_recording()
     }
 
     spec->set_recording_state(TExportSpecification::RecordingState::RECORDING);
-    spec->set_block_size(audiodevice().get_buffer_size());
+    spec->set_block_size(device.get_buffer_size());
     spec->set_channel_count(channelcount);
     spec->set_sample_rate(m_sheet->get_project()->project_rate());
     spec->set_export_start_location(TTimeRef());
@@ -682,7 +683,7 @@ int TAudioClip::init_recording()
     spec->set_export_file_name(m_name + "-" + sourceid);
 
     m_writer = new TBufferedAudioStreamWriter(spec->get_export_dir(), spec->get_export_file_name());
-    if (m_writer->prepare_file(spec) == -1) {
+    if (m_writer->prepare_file(spec, device.get_sample_rate()) == -1) {
         TLOG_E("clip", "preparing the write source for recording failed");
         delete m_writer;
         m_writer = nullptr;
@@ -936,7 +937,7 @@ uint TAudioClip::get_bitdepth( ) const
         return m_readSource->get_bit_depth();
     }
 
-    return audiodevice().get_bit_depth();
+    return m_sheet->audio_device().get_bit_depth();
 
 }
 

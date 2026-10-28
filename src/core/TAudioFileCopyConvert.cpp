@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TAudioFileCopyConvert.h"
+#include "TAudioDevice.h"
 #include <QFile>
 #include <QMutexLocker>
 #include <QFileInfo>
@@ -98,7 +99,8 @@ void TAudioFileCopyConvert::process_task(CopyTask task)
     TBufferedAudioStreamWriter* writesource = new TBufferedAudioStreamWriter(task.spec->get_export_dir(), task.spec->get_export_file_name());
     bool failedToPrepareWritesource = false;
 
-    if (writesource->prepare_file(task.spec) == -1) {
+    // The frames come at the device's rate (T5)
+    if (writesource->prepare_file(task.spec, audiodevice().get_sample_rate()) == -1) {
         failedToPrepareWritesource = true;
         goto out;
     }

@@ -171,7 +171,7 @@ public slots:
     TCommand* remove_child_session();
 
 private:
-    TProject(const QString& title);
+    TProject(TAudioDevice& device, const QString& title);
 
 
     TResourcesManager*       m_resourcesManager;

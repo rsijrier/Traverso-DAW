@@ -79,7 +79,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 TSheet::TSheet(TProject* project, int numtracks)
-    : TSession(nullptr)
+    : TSession(project->audio_device())
     , m_project(project)
 {
     PENTERCONS;
@@ -97,11 +97,11 @@ TSheet::TSheet(TProject* project, int numtracks)
         private_add_track(track, transaction);
     }
 
-    resize_buffers(audiodevice().get_buffer_size());
+    resize_buffers(audio_device().get_buffer_size());
 }
 
 TSheet::TSheet(TProject* project, const QDomNode& node)
-    : TSession(nullptr)
+    : TSession(project->audio_device())
     , m_project(project)
 {
     PENTERCONS;
@@ -136,8 +136,8 @@ void TSheet::init()
 
     // The application's schedulers: this song is a group in the read one
     m_readScheduler = pm().get_read_scheduler();
-    m_readScheduler->set_output_sample_rate(audiodevice().get_sample_rate());
-    m_readScheduler->set_buffer_size(audiodevice().get_buffer_size());
+    m_readScheduler->set_output_sample_rate(audio_device().get_sample_rate());
+    m_readScheduler->set_buffer_size(audio_device().get_buffer_size());
     m_readScheduler->set_resampler(configured_resampler());
     m_readScheduler->add_group(&m_ioGroup);
     update_idle_limit();
@@ -149,7 +149,7 @@ void TSheet::init()
     }, Qt::QueuedConnection);
 
     m_writeScheduler = pm().get_write_scheduler();
-    m_writeScheduler->set_buffer_size(audiodevice().get_buffer_size());
+    m_writeScheduler->set_buffer_size(audio_device().get_buffer_size());
 
     m_audioClipManager = new TAudioClipManager(this);
     set_related_context_item( m_audioClipManager );
@@ -165,10 +165,10 @@ void TSheet::init()
     busConfig.channelcount = 2;
     busConfig.type = "output";
     busConfig.isInternalBus = true;
-    m_renderBus = new AudioBus(audiodevice(), busConfig);
+    m_renderBus = new AudioBus(audio_device(), busConfig);
 
     busConfig.name = "Sheet Clip Render Bus";
-    m_clipRenderBus = new AudioBus(audiodevice(), busConfig);
+    m_clipRenderBus = new AudioBus(audio_device(), busConfig);
 
     m_masterOutBusTrack = new MasterOutSubGroup(this, tr("Sheet Master"));
     m_masterOutBusTrack->set_gain(0.5);
@@ -177,7 +177,7 @@ void TSheet::init()
     // TODO: only on export add and after export remove this post send
     // m_masterOutBusTrack->add_post_send(m_bounceTrack->get_input_bus());
 
-    resize_buffers(audiodevice().get_buffer_size());
+    resize_buffers(audio_device().get_buffer_size());
 
     m_resumeTransport = m_readyToRecord = false;
 
@@ -607,18 +607,18 @@ void TSheet::resize_buffers(nframes_t size)
 void TSheet::audiodevice_params_changed()
 {
     PENTER;
-    resize_buffers(audiodevice().get_buffer_size());
+    resize_buffers(audio_device().get_buffer_size());
 
     // The samplerate possibly has been changed, this initiates
     // a seek in DiskIO, which clears the buffers and refills them
     // with the correct resampled audio data!
     // We need to seek to a different position then the current one,
     // else the seek won't happen at all :)
-    auto outputRate = audiodevice().get_sample_rate();
-    m_readScheduler->set_buffer_size(audiodevice().get_buffer_size());
-    m_writeScheduler->set_buffer_size(audiodevice().get_buffer_size());
+    auto outputRate = audio_device().get_sample_rate();
+    m_readScheduler->set_buffer_size(audio_device().get_buffer_size());
+    m_writeScheduler->set_buffer_size(audio_device().get_buffer_size());
     m_readScheduler->set_output_sample_rate(outputRate);
-    set_transport_location(m_transportLocation + TTimeRef(audiodevice().get_buffer_size(), outputRate));
+    set_transport_location(m_transportLocation + TTimeRef(audio_device().get_buffer_size(), outputRate));
 }
 
 TAudioClipManager * TSheet::get_audioclip_manager( ) const
@@ -743,9 +743,9 @@ TCommand* TSheet::start_transport()
     // this call will return directly to us (by a call to transport_control),
     // or handled by the driver
     if (is_transport_rolling()) {
-        audiodevice().transport_stop(m_audiodeviceClient, m_transportLocation);
+        audio_device().transport_stop(m_audiodeviceClient, m_transportLocation);
     } else {
-        audiodevice().transport_start(m_audiodeviceClient);
+        audio_device().transport_start(m_audiodeviceClient);
     }
 
     return ied().succes();
@@ -1114,7 +1114,7 @@ qreal TSheet::minimum_hzoom() const
     // hzoom counts frames per pixel at 44100 Hz and the recording runs at the
     // device rate: zoom in no further than the first power of two that keeps
     // at least one block per pixel
-    const qreal rate = audiodevice().get_sample_rate();
+    const qreal rate = audio_device().get_sample_rate();
     qreal limit = 1.0;
     while (limit * rate / 44100.0 < TPeakLevels::BlockFrames) {
         limit *= 2.0;
@@ -1152,7 +1152,7 @@ void TSheet::set_transport_location(TTimeRef location)
     }
 
     TLOG_I("transport", "locate to {}", TTimeRef::timeref_to_ms_3(location));
-    audiodevice().transport_locate(m_audiodeviceClient, location);
+    audio_device().transport_locate(m_audiodeviceClient, location);
 }
 
 
