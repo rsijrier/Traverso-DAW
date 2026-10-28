@@ -213,7 +213,9 @@ TAudioDevice::~TAudioDevice()
         delete audioChannel;
     }
 
-    s_bridge = nullptr;
+    if (s_bridge == this) {
+        s_bridge = nullptr;
+    }
 }
 
 /**

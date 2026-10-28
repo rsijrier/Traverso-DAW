@@ -937,6 +937,7 @@ uint TAudioClip::get_bitdepth( ) const
         return m_readSource->get_bit_depth();
     }
 
+    Q_ASSERT_X(m_sheet, "TAudioClip::get_bitdepth", "a clip without a source answers its sheet's device");
     return m_sheet->audio_device().get_bit_depth();
 
 }
@@ -948,7 +949,9 @@ uint TAudioClip::get_rate( ) const
         return m_readSource->get_sample_rate();
     }
 
-    // No source yet (a take being recorded): the rate it is written at
+    // No source yet (a take being recorded): the rate it is written at,
+    // its sheet's project's
+    Q_ASSERT_X(m_sheet, "TAudioClip::get_rate", "a clip without a source answers its sheet's project rate");
     return m_sheet->get_project()->project_rate();
 }
 
