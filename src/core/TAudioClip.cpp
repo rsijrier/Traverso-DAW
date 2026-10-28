@@ -942,11 +942,13 @@ uint TAudioClip::get_bitdepth( ) const
 
 uint TAudioClip::get_rate( ) const
 {
+    // The source's rate: the file's
     if (m_readSource) {
         return m_readSource->get_sample_rate();
     }
 
-    return audiodevice().get_sample_rate();
+    // No source yet (a take being recorded): the rate it is written at
+    return m_sheet->get_project()->project_rate();
 }
 
 TTimeRef TAudioClip::get_source_length( ) const
