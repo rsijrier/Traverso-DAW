@@ -1293,6 +1293,11 @@ TExportSpecification *TProject::get_export_specification()
     return m_exportSpecification;
 }
 
+uint TProject::project_rate() const
+{
+    return audiodevice().get_sample_rate();
+}
+
 uint TProject::get_rate( ) const
 {
     // FIXME: Projects should eventually just use the universal samplerate

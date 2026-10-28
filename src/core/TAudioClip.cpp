@@ -569,7 +569,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
     Q_ASSERT(readFrames == nframes - offset);
 
     for (TFadeCurve* fade : m_fades.rt_items()) {
-        fade->process(m_sheet->get_curve_buffer(), bus, startLocation, endLocation, nframes);
+        fade->process(context, m_sheet->get_curve_buffer(), bus, startLocation, endLocation, nframes);
     }
 
     TTimeRef faderEndLocation = fileLocation + TTimeRef(readFrames, outputRate);
@@ -676,7 +676,7 @@ int TAudioClip::init_recording()
     spec->set_recording_state(TExportSpecification::RecordingState::RECORDING);
     spec->set_block_size(audiodevice().get_buffer_size());
     spec->set_channel_count(channelcount);
-    spec->set_sample_rate(audiodevice().get_sample_rate());
+    spec->set_sample_rate(m_sheet->get_project()->project_rate());
     spec->set_export_start_location(TTimeRef());
     spec->set_export_end_location(TTimeRef());
     spec->set_export_file_name(m_name + "-" + sourceid);

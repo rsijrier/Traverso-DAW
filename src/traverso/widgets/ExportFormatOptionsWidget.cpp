@@ -24,6 +24,8 @@
 #include "TAudioDevice.h"
 #include "TConfig.h"
 #include "TExportSpecification.h"
+#include "TProject.h"
+#include "TProjectManager.h"
 #include "TAudioResampler.h"
 #include "TResamplerSettings.h"
 
@@ -70,7 +72,9 @@ ExportFormatOptionsWidget::ExportFormatOptionsWidget( QWidget * parent )
 	
 	channelComboBox->setCurrentIndex(channelComboBox->findData(2));
 	
-	int rateIndex = sampleRateComboBox->findData(audiodevice().get_sample_rate());
+	// The project's rate (no project: the device's)
+	const TProject* project = pm().get_project();
+	int rateIndex = sampleRateComboBox->findData(project ? project->project_rate() : audiodevice().get_sample_rate());
 	sampleRateComboBox->setCurrentIndex(rateIndex >= 0 ? rateIndex : 3);
 	
 	connect(audioTypeComboBox, &QComboBox::currentIndexChanged, this, &ExportFormatOptionsWidget::audio_type_changed);

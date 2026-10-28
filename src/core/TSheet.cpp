@@ -563,7 +563,7 @@ int TSheet::process(TProcessContext &context) T_REALTIME_SAFE
     });
 
     // update the transport location
-    m_transportLocation.add_frames(nframes, audiodevice().get_sample_rate());
+    m_transportLocation.add_frames(nframes, context.get_sample_rate());
     m_ioGroup.set_transport_location(m_transportLocation);
 
     if (!processResult) {

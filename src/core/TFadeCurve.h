@@ -39,6 +39,7 @@ $Id: FadeCurve.h,v 1.19 2008/01/21 16:22:14 r_sijrier Exp $
 #include <array>
 #include <memory>
 
+class TProcessContext;
 class AudioBus;
 class TTimeLineEntity;
 class TRtTransaction;
@@ -80,7 +81,8 @@ public:
 
 
     // Audio thread
-    void process(const TChannelBuffer &curveBuffer, AudioBus* bus, const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes) T_REALTIME_SAFE;
+    // context: the cycle (its rate is the rate the device was granted)
+    void process(const TProcessContext& context, const TChannelBuffer &curveBuffer, AudioBus* bus, const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes) T_REALTIME_SAFE;
 
     // GUI thread
 

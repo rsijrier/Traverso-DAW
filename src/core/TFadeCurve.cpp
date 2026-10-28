@@ -111,7 +111,7 @@ int TFadeCurve::set_state( const QDomNode & node )
 }
 
 
-void TFadeCurve::process(const TChannelBuffer &curveBuffer, AudioBus *bus, const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes) T_REALTIME_SAFE
+void TFadeCurve::process(const TProcessContext& context, const TChannelBuffer &curveBuffer, AudioBus *bus, const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes) T_REALTIME_SAFE
 {
     Q_ASSERT(bus->get_channel_count() == 2);
     Q_ASSERT(m_parentTimeLineEntity != nullptr);
@@ -123,7 +123,7 @@ void TFadeCurve::process(const TChannelBuffer &curveBuffer, AudioBus *bus, const
     }
 
     TLocation* parentLocation = m_parentTimeLineEntity->get_location();
-    uint outputRate = audiodevice().get_sample_rate();
+    uint outputRate = context.get_sample_rate();
     uint framesToProcess = nframes;
     uint channelCount = bus->get_channel_count();
 
