@@ -25,6 +25,10 @@
 #include <QApplication>
 #include <QSessionManager>
 
+#include <memory>
+
+class TAudioDevice;
+
 class Traverso : public QApplication
 {
 	Q_OBJECT
@@ -44,6 +48,10 @@ protected:
         void commitData ( QSessionManager& manager );
 
 private :
+        // Made before the configuration is read (it hands the driver
+        // settings to the device), gone after the projects and the window
+        std::unique_ptr<TAudioDevice> m_audioDevice;
+
         void prepare_audio_device();
         void close_without_questions();
 };

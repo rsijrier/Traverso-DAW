@@ -205,15 +205,17 @@ public:
 
     float get_cpu_time();
 
-private:
+    // The application owns its device (Traverso.cpp), a test its own; one
+    // at a time, which audiodevice() reaches while the callers move to a
+    // reference (T58)
     TAudioDevice();
     ~TAudioDevice();
-    TAudioDevice(const TAudioDevice&) : QObject() {}
+    TAudioDevice(const TAudioDevice&) = delete;
+    TAudioDevice& operator=(const TAudioDevice&) = delete;
 
-    // allow this function to create one instance
-    friend TAudioDevice& audiodevice() T_REALTIME_SAFE;
-    // The one device, made by the first call (audiodevice())
-    static TAudioDevice& make_instance();
+private:
+    friend TAudioDevice& audiodevice();
+    static TAudioDevice* s_bridge;
 
     friend class TAlsaDriver;
     friend class TPortAudioDriver;
@@ -374,7 +376,10 @@ private slots:
 
 
 // use this function to get the audiodevice object
-TAudioDevice& audiodevice() T_REALTIME_SAFE;
+// The bridge to the one device while callers still reach it this way (T58
+// step 2): the device that exists now. Not for the audio thread: a cycle has
+// TProcessContext, a driver m_device.
+TAudioDevice& audiodevice();
 
 
 

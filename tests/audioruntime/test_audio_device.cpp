@@ -72,7 +72,7 @@ static TAudioDeviceSetup dummy_setup(nframes_t bufferSize)
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
-    TAudioDevice& device = audiodevice();
+    TAudioDevice device;
 
     // Start
     device.set_parameters(dummy_setup(256));

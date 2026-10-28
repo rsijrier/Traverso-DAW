@@ -74,6 +74,7 @@ static bool wait_for(QCoreApplication& app, Done done)
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
+    TAudioDevice device;
 
     std::printf("denormals on the audio threads: %s\n", TDenormals::mode_name());
 #if !defined(TEST_MXCSR)
@@ -92,12 +93,12 @@ int main(int argc, char** argv)
 
     TAudioDeviceSetup setup;
     setup.set_driver_type("Dummy");
-    audiodevice().set_parameters(setup);
+    device.set_parameters(setup);
 
     Probe probe;
     TAudioDeviceClient client(QStringLiteral("denormals probe"));
     client.set_process_callback(TProcessCallBack::from_method<Probe, &Probe::process>(&probe));
-    audiodevice().add_client(&client);
+    device.add_client(&client);
 
     const bool ran = wait_for(app, [&] { return probe.cycles.load() >= 3; });
     check(ran, "the Dummy driver runs cycles");
@@ -108,8 +109,8 @@ int main(int argc, char** argv)
     check(cleared, "cycles after the bits were cleared on the audio thread");
     check(probe.active.load(), "the next cycles set them again");
 
-    audiodevice().remove_client(&client);
-    audiodevice().shutdown();
+    device.remove_client(&client);
+    device.shutdown();
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);
