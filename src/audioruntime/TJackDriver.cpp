@@ -312,7 +312,7 @@ int TJackDriver::process_callback (nframes_t nframes)
     jack_transport_state_t state = jack_transport_query (m_jackClient, &pos);
 
     m_transportControl.set_state(state);
-    m_transportControl.set_location(TTimeRef(pos.frame, audiodevice().get_sample_rate()));
+    m_transportControl.set_location(TTimeRef(pos.frame, m_device->get_sample_rate()));
     m_transportControl.set_realtime(true);
     m_transportControl.set_slave(true);
 

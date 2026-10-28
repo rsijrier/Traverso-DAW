@@ -327,7 +327,7 @@ int TProject::load(const QString& projectfile)
         conf.id = e.attribute("id", "-1").toLongLong();
         QStringList channelIds = e.attribute("channelids", "").split(";", Qt::SkipEmptyParts);
 
-        AudioBus* bus = new AudioBus(conf);
+        AudioBus* bus = new AudioBus(audiodevice(), conf);
 
         switch(bus->get_bus_type()) {
         case AudioBus::BusIsSoftware:
@@ -867,7 +867,7 @@ AudioBus* TProject::get_audio_bus(qint64 id)
 
 AudioBus* TProject::create_software_audio_bus(const TAudioBusConfiguration& conf)
 {
-    AudioBus* bus = new AudioBus(conf);
+    AudioBus* bus = new AudioBus(audiodevice(), conf);
 
     AudioChannel* channel;
     for (int i=0; i< conf.channelNames.size(); ++i) {
@@ -1483,7 +1483,7 @@ void TProject::setup_default_hardware_buses()
             i+=2;
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audiodevice(), config);
         bus->add_channel("capture_"+QByteArray::number(1 + i++));
         bus->add_channel("capture_"+QByteArray::number(1 + i++));
 
@@ -1497,7 +1497,7 @@ void TProject::setup_default_hardware_buses()
             // don't add a hardware bus with the same name, so continue:
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audiodevice(), config);
         bus->add_channel("capture_"+QByteArray::number(i + 1));
         m_hardwareAudioBuses.append(bus);
     }
@@ -1516,7 +1516,7 @@ void TProject::setup_default_hardware_buses()
             i+=2;
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audiodevice(), config);
         bus->add_channel("playback_"+QByteArray::number(1 + i++));
         bus->add_channel("playback_"+QByteArray::number(1 + i++));
         m_hardwareAudioBuses.append(bus);
@@ -1529,7 +1529,7 @@ void TProject::setup_default_hardware_buses()
             // don't add a hardware bus with the same name, so continue:
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audiodevice(), config);
         bus->add_channel("playback_"+QByteArray::number(i + 1));
         m_hardwareAudioBuses.append(bus);
     }

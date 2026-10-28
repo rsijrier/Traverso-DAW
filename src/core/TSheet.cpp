@@ -165,10 +165,10 @@ void TSheet::init()
     busConfig.channelcount = 2;
     busConfig.type = "output";
     busConfig.isInternalBus = true;
-    m_renderBus = new AudioBus(busConfig);
+    m_renderBus = new AudioBus(audiodevice(), busConfig);
 
     busConfig.name = "Sheet Clip Render Bus";
-    m_clipRenderBus = new AudioBus(busConfig);
+    m_clipRenderBus = new AudioBus(audiodevice(), busConfig);
 
     m_masterOutBusTrack = new MasterOutSubGroup(this, tr("Sheet Master"));
     m_masterOutBusTrack->set_gain(0.5);

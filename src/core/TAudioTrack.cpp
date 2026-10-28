@@ -480,7 +480,7 @@ TBounceTrack::TBounceTrack(TSheet *sheet, const QString &name, int height)
     busConfig.isInternalBus = true;
 
     // Joins the transaction that creates the sheet, if one is open
-    m_bounceInputBus = new AudioBus(busConfig);
+    m_bounceInputBus = new AudioBus(audiodevice(), busConfig);
     TRtTransaction transaction;
     set_input_bus(m_bounceInputBus, transaction);
 }
