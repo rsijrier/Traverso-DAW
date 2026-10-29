@@ -163,3 +163,55 @@ from the same columns. Specific to today's view: nothing that is worth it.
 a small part of a repaint, and the only notable case (a long build in view)
 is temporary. Build the tiles with the GPU view, on the grid's keys and the
 complete-chunk rule.
+
+## 7. Grid walk: measured and decided (2026-10-29)
+
+From the work order "Waveform grid-walk prototype" (Remon, 2026-10-29). On
+the grid an aligned column is one record on level `shift - 6`, so
+`device_columns()` of a finished file walks those records directly
+(`TWaveformColumns::walk_grid()`): all channels from one record, min and max
+through the code tables, the stored RMS code decoded directly. A file being
+written, a level above the chunk and the clip's edges keep the general query.
+About 40 lines.
+
+**Tests** (`test_waveform_grid`): min and max bit for bit the general
+query's, the RMS within one code step, on about 410 random grid views per
+channel count (1, 2, 3); the RMS against the true RMS of the samples within
+one code step on every grid level from 6 to 16.
+
+**Measured:** `device_columns()` on a finished file, one hour 48 kHz stereo,
+the whole file as the clip; CPU 2 (a P-core) at a fixed 1.6 GHz (performance
+governor, no turbo, minimum = maximum), Debian's flags (`-O2 -flto=auto`),
+best of three runs in two rounds, old (master `cd50ae2b`) and new
+alternating; one program linked against either library
+(`~/Development/Traverso/builds/gw-harness`, outside the repository):
+
+| view | shift | old ns per column | new ns per column | factor | new cycles per column |
+|---|---|---|---|---|---|
+| 64 frames per pixel, 3840 columns | 6 | 59.1 | 17.3 | 3.4 | 28 |
+| 256 | 8 | 63.5 | 16.1 | 3.9 | 26 |
+| 1000 | 10 | 72.8 | 20.8 | 3.5 | 33 |
+| 4096 | 12 | 76.6 | 16.8 | 4.6 | 27 |
+| 16384 | 14 | 84.3 | 18.9 | 4.5 | 30 |
+| 65536 | 16 | 76.8 | 21.0 | 3.7 | 34 |
+| 10 minutes on 1920 columns | 14 | 82.9 | 22.3 | 3.7 | 36 |
+
+Per query in the last case: 159.2 us old, 42.8 us new (at 1.6 GHz). The
+cycles include the mapping of pixels to grid columns, which old and new
+share.
+
+**Why the decision rule failed.** The work order fixed "keep it when at
+least 5 times faster per column" from an estimate of about 450 cycles per
+column for the old path (0.2 ms over about 1300 columns at an assumed
+3 GHz). Measured, the old path costs 95 to 135 cycles per column, so the
+rule judged the new path against a baseline that was wrong. The part
+designed for the hardware, the walk itself, costs 26 to 36 cycles per stereo
+column, inside the forecast of 30 to 60.
+
+**Decision (Remon, 2026-10-29):** keep it. The goal was speed by designing
+for the hardware, and the walk costs what the forecast said. `walk_grid()`
+is temporary: it goes together with the QPainter view's query
+(`from_pyramid()`) once the GPU view is there. From now on a benchmark's decision rule tests whether the part
+designed for the hardware costs what the forecast says, not whether the
+total is a factor faster than the old path.
+

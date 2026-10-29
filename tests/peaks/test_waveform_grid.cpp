@@ -12,7 +12,11 @@
 //   where the grid column reaches outside the clip; the grid columns in view
 //   follow each other without a gap, each 1 or 2 pixels wide; and, against
 //   the samples, every sample in view lies within the shown column of a
-//   pixel at most 2 pixels from its own.
+//   pixel at most 2 pixels from its own; a grid column's min and max are
+//   the general query's exactly, its RMS within one code step (the grid
+//   walk of a finished file decodes the stored RMS);
+// - the grid walk's RMS against the true RMS of the samples, within one
+//   code step.
 
 #include "TPeakFile.h"
 #include "TPeakPyramid.h"
@@ -58,6 +62,23 @@ static double random_unit()
 static bool same_column(const TWaveformColumn& a, const TWaveformColumn& b)
 {
     return a.min == b.min && a.max == b.max && a.rms == b.rms;
+}
+
+// One code step of the stored RMS: 1/1024 octave
+static bool within_one_step(float value, double reference)
+{
+    if (reference <= 0.0 || value <= 0.0f) {
+        return value == float(reference);
+    }
+    return std::fabs(std::log2(double(value) / reference)) * TPeakLevels::CodesPerOctave <= 1.0;
+}
+
+// A grid column: min and max exactly, the RMS within one code step (the
+// grid walk decodes a record's stored RMS; the general query squares and
+// roots it again)
+static bool same_grid_column(const TWaveformColumn& a, const TWaveformColumn& b)
+{
+    return a.min == b.min && a.max == b.max && within_one_step(a.rms, b.rms);
 }
 
 // The grid: shift, rates, exact edges
@@ -311,8 +332,8 @@ static int check_views(const TPeakLevels& levels, const std::vector<std::vector<
                 columnOf[size_t(i)] = column;
             }
             for (size_t c = 0; c < signal.size() && right; ++c) {
-                const TWaveformColumn& expected = inside ? reference[c] : exact[c * size_t(count) + size_t(i)];
-                right = same_column(out[c * size_t(count) + size_t(i)], expected);
+                const TWaveformColumn& shown = out[c * size_t(count) + size_t(i)];
+                right = inside ? same_grid_column(shown, reference[c]) : same_column(shown, exact[c * size_t(count) + size_t(i)]);
             }
             CHECK(right, "%s round %d (%g frames per pixel, 2^%d) pixel %d: not the %s column", what, round, framesPerPixel, grid.shift, i,
                   inside ? "grid" : "exact");
@@ -423,6 +444,34 @@ static void test_device_columns()
               "open the finished file");
         if (file.is_open()) {
             views += check_views(file.levels(), signal, "finished");
+
+            // The grid walk's RMS against the true RMS of the samples, on
+            // every grid level up to the chunk's
+            const TPeakLevels& levels = file.levels();
+            bool close = true;
+            for (int shift = TPeakLevels::BlockFramesShift; shift <= TPeakLevels::BlockFramesShift + TPeakLevels::ChunkLevel && close; ++shift) {
+                const TWaveformGrid grid = TWaveformGrid::power_of_two(std::ldexp(1.0, shift), rate);
+                const qint64 gridColumns = (frames + (qint64(1) << shift) - 1) >> shift;
+                const int count = int(std::min<qint64>(gridColumns, 64));
+                const qint64 firstColumn = random_between(0, gridColumns - count);
+                std::vector<TWaveformColumn> out(size_t(count) * size_t(channelCount));
+                TWaveformColumns::device_columns(levels, nullptr, grid.start_of(firstColumn), grid.column_width(), count, TTimeRef(),
+                                                 TTimeRef(uint64_t(frames), rate), out.data());
+                for (int i = 0; i < count && close; ++i) {
+                    const qint64 from = (firstColumn + i) << shift;
+                    const qint64 to = std::min(from + (qint64(1) << shift), frames);
+                    for (int c = 0; c < channelCount && close; ++c) {
+                        double squares = 0.0;
+                        for (qint64 n = from; n < to; ++n) {
+                            squares += double(signal[size_t(c)][size_t(n)]) * double(signal[size_t(c)][size_t(n)]);
+                        }
+                        const double rms = std::sqrt(squares / double(to - from));
+                        close = within_one_step(out[size_t(c) * size_t(count) + size_t(i)].rms, rms);
+                        CHECK(close, "%d channel(s), 2^%d frames, column %lld channel %d: RMS %g, the samples' %g", channelCount, shift,
+                              (long long)(firstColumn + i), c, double(out[size_t(c) * size_t(count) + size_t(i)].rms), rms);
+                    }
+                }
+            }
         }
         std::printf("%d channel(s): %d views on the grid checked\n", channelCount, views);
         CHECK(views > 250, "%d channel(s): only %d views on the grid", channelCount, views);

@@ -143,6 +143,14 @@ public:
                                  TWaveformColumn* out);
 
 private:
+    // The grid columns [firstColumn, firstColumn + count) of a finished file,
+    // straight from the records of level shift - 6: an aligned grid column is
+    // one record there. False when that does not hold (a file being written,
+    // a level above the chunk): then nothing is written.
+    // Temporary: goes together with the QPainter view's query
+    // (from_pyramid()) once the GPU view is there (doc/design/waveform-grid.md
+    // section 7).
+    static bool walk_grid(const TPeakLevels& levels, const TWaveformGrid& grid, qint64 firstColumn, int count, TWaveformColumn* out);
     static Source from_samples(const TPeakLevels& levels, TWaveformSampleSource* samples,
                                const TTimeRef& start, const TTimeRef& columnWidth, int count,
                                TWaveformColumn* out);

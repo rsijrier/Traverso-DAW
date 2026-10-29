@@ -264,10 +264,15 @@ TWaveformColumns::Source TWaveformColumns::device_columns(const TPeakLevels& lev
     const qint64 firstColumn = pixelColumn[size_t(inLeft)];
     const int columns = int(pixelColumn[size_t(inRight - 1)] - firstColumn + 1);
     if (inLeft == 0 && inRight == count && columns == count) {
+        if (walk_grid(levels, grid, firstColumn, count, out)) {
+            return Source::Pyramid;
+        }
         return query(levels, samples, grid.start_of(firstColumn), gridWidth, count, out);
     }
     std::vector<TWaveformColumn> gridColumns(size_t(columns) * size_t(channels));
-    const Source source = query(levels, samples, grid.start_of(firstColumn), grid.column_width(), columns, gridColumns.data());
+    const Source source = walk_grid(levels, grid, firstColumn, columns, gridColumns.data())
+        ? Source::Pyramid
+        : query(levels, samples, grid.start_of(firstColumn), grid.column_width(), columns, gridColumns.data());
     for (int channel = 0; channel < channels; ++channel) {
         for (int i = inLeft; i < inRight; ++i) {
             out[qsizetype(channel) * count + i] = gridColumns[size_t(channel) * size_t(columns) + size_t(pixelColumn[size_t(i)] - firstColumn)];
@@ -290,6 +295,36 @@ TWaveformColumns::Source TWaveformColumns::device_columns(const TPeakLevels& lev
     exactly(0, inLeft);
     exactly(inRight, count);
     return source;
+}
+
+bool TWaveformColumns::walk_grid(const TPeakLevels& levels, const TWaveformGrid& grid, qint64 firstColumn, int count, TWaveformColumn* out)
+{
+    const int level = grid.shift - TPeakLevels::BlockFramesShift;
+    const qint64 blocks = levels.block_count(0);
+    if (level < 0 || level >= levels.level_count() || blocks > levels.pyramid_end()) {
+        return false;
+    }
+
+    // Every channel from one record; the stored RMS is the column's (a
+    // parent's RMS is that of its frames), decoded without squares or root
+    const int channels = levels.channel_count();
+    const qint64 records = levels.block_count(level);
+    for (int i = 0; i < count; ++i) {
+        const qint64 index = firstColumn + i;
+        if (index < 0 || index >= records) {
+            for (int channel = 0; channel < channels; ++channel) {
+                out[qsizetype(channel) * count + i] = EmptyColumn;   // past the end of the source
+            }
+            continue;
+        }
+        const qint16* codes = levels.codes(level, index);
+        for (int channel = 0; channel < channels; ++channel) {
+            const int rms = std::max(int(codes[2 * channels + channel]), 0);
+            out[qsizetype(channel) * count + i] = {TPeakLevels::to_value(codes[2 * channel]), TPeakLevels::to_value(codes[2 * channel + 1]),
+                                                   TPeakLevels::magnitude_value(rms)};
+        }
+    }
+    return true;
 }
 
 TWaveformColumns::Source TWaveformColumns::from_pyramid(const TPeakLevels& levels,

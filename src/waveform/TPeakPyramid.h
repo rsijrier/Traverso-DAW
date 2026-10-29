@@ -180,6 +180,9 @@ public:
         return {codes[2 * channel], codes[2 * channel + 1]};
     }
     qint16 rms(int level, int channel, qint64 index) const { return record(level, index)[2 * m_channelCount + channel]; }
+    // The codes of one block, every channel at once: the min and max code of
+    // every channel, then the RMS code of every channel (record_codes())
+    const qint16* codes(int level, qint64 index) const { return record(level, index); }
     // The frames block index of level covers (the source's last one fewer)
     qint64 block_frames(int level, qint64 index) const
     {
