@@ -53,6 +53,7 @@ static inline float buffer_loop_update_peak(const audio_sample_t* buf, nframes_t
     // cycles for the one before it, four chains keep the unit busy.
     using FloatN = typename TFloatLanes<Lanes>::Vector;
     using FloatNLoad = typename TFloatLanes<Lanes>::Load;
+    static_assert(sizeof(FloatN) == Lanes * sizeof(float) && sizeof(FloatNLoad) == Lanes * sizeof(float));
     const auto absN = [](FloatN x) T_REALTIME_SAFE {
         for (int lane = 0; lane < Lanes; ++lane) {
             x[lane] = fabsf(x[lane]);
