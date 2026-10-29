@@ -328,12 +328,21 @@ void TPeakStream::read(const std::function<void(const TPeakLevels&)>& use) const
     const qint64 tail = blocks - (chunks << Top);
     const qint64 bytes = TPeakFile::HeaderBytes + chunks * TPeakFile::chunk_bytes(Top, m_channelCount) + tail * TPeakFile::record_bytes(m_channelCount);
 
+    // No blocks yet: open() may still be choosing the part file's name on the
+    // writing thread (a build's stream is handed out before its job runs), so
+    // m_partPath is not read. Once there are blocks, the acquire of
+    // written_frames() above orders it: open() set it before the first one.
+    if (blocks == 0) {
+        use(TPeakLevels(m_rate, m_channelCount, 0, Top, nullptr, 0));
+        return;
+    }
+
     // Opened per read, and mapped for this read only, so nothing stays open
     // that keeps Windows from renaming the file. Once renamed, from its name:
     // the records are in the same place.
     QFile file(m_partPath);
-    bool opened = blocks > 0 && file.open(QIODevice::ReadOnly);
-    if (blocks > 0 && !opened && published()) {
+    bool opened = file.open(QIODevice::ReadOnly);
+    if (!opened && published()) {
         file.setFileName(m_peakPath);
         opened = file.open(QIODevice::ReadOnly);
     }

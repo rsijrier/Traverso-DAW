@@ -548,6 +548,22 @@ TAudioDevice review (Remon, 2026-10-28; proposed, Remon ranks):
     sends; removing a track also removes its sends and the sends to it,
     and the same command restores them on undo (a removed track has no
     routing). T64's check then sees every send that can come back.
+- **T68 (done 2026-10-29: `read()` touches `m_partPath` only once there are blocks) `TPeakStream::read()` reads `m_partPath` while `open()` may write
+  it** (proposed medium-high; from the review of the grid-walk work order,
+  traced in the code 2026-10-29). `TPeakBuildService::build()` hands the
+  stream out at once, `TWaveform::start_build()` keeps it as `m_building`
+  (`TWaveform.cpp:160`) and paints from it on every repaint
+  (`TWaveform.cpp:211-213`); the build job calls `open()` later on the
+  DiskIO thread (`TPeakBuildTask.cpp:117`), which assigns `m_partPath` up to
+  a hundred times (`TPeakStream.cpp:80-90`). `read()` constructs
+  `QFile file(m_partPath)` before it checks `blocks > 0`
+  (`TPeakStream.cpp:334`): a `QString` copied while another thread assigns
+  it. Once `blocks > 0` the release store of `written_frames()` orders it.
+  Fix: touch `m_partPath` only after `blocks > 0`.
+- **T69 Stale comments: "from one frame per pixel on"** (proposed low; same
+  review): `TWaveform.h:76` and `TAudioClipView.cpp:815`; the grid starts
+  above 32 frames per pixel (`TWaveformColumns.h:30`, `MinShift`).
+
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
