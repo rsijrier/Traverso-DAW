@@ -31,26 +31,29 @@ Timebox
 Release scope (must have)
 1. Decouple the domains (among others the audio clip and the track from
    the song), only as far as the controllers and the audio runtime need it.
-2. Controllers: one cursor, zoom, scroll and selection on the canvas
-   (branch 3, `input-controllers`; T39). The other commands may move to
+2. Controllers: an unambiguous cursor, zoom, scroll and selection on the
+   canvas (branch 3, `input-controllers`; T39). The other commands may move to
    the new model later, as long as the old route works.
 3. Audio runtime: only what freewheeling and bounce/export need (T34, T41;
    T58 is in progress on `device-ownership`). The room for more outputs
    (live playhead, `multi-transport.md`; "Decisions taken": a second
    output device) stays open, but is not built.
 4. 64-bit file offsets (T71 step 2a, built on `audio-byte-source`): a
-   precondition, because Debian builds on 32-bit ARM.
+   precondition, because Debian builds on 32-bit ARM. Reviewed and merged
+   together with step 1 and 2b (below).
 
 Small finishing touches before the release
-- T71 step 1 of the byte source (`audio-byte-source`): merge after review.
+- The byte source, T71 steps 1, 2a and 2b (`audio-byte-source`, all
+  built): review and merge together. Step 2b (seek generations) is seek
+  correctness already built; leaving it while the branch ages is waste.
 - A platform header (`TPlatform.h`): find hidden wrong code branches. New;
   the header does not exist yet (T71 step 2c names it).
 
 After the release, pulled by a use case
-- Byte source steps 2b (seek generations; built on `audio-byte-source`),
-  2c (a read pool per medium, a decode pool, ioscheduler free of Qt) and
-  2d (the window in time). Trigger: the live playhead, libraries on a NAS
-  or HDD, or a measured seek problem. (T71; T61.)
+- Byte source steps 2c (a read pool per medium, a decode pool,
+  ioscheduler free of Qt) and 2d (the window in time). Trigger: the live
+  playhead, libraries on a NAS or HDD, or a measured seek problem. (T71;
+  T61.)
 - The byte source as a library of its own, and the write direction.
 - Waveform performance through shaders (`gpu-waveform-poc`,
   `curve-gpu-bench`; Foundations: organic interface).
