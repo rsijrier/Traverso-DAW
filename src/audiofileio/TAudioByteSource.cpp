@@ -128,11 +128,16 @@ public:
             return quint64(status.st_dev);
         }
 #endif
+        // Windows: 0, every file looks like one medium. Planning per medium
+        // (T71 step 2c, step 4) needs the volume there:
+        // GetFileInformationByHandle(). Untested on macOS (fstat, as Linux).
         return 0;
     }
 
 protected:
 #if defined(Q_OS_LINUX)
+    // preadv2/RWF_NOWAIT: glibc 2.26 and kernel headers 4.14 or later
+    // (Debian has both); ENOSYS or another error falls back to untold reads
     std::optional<qint64> read_cached(qint64 position, void* data, qint64 bytes) override
     {
         if (!m_canTell) {
@@ -172,6 +177,10 @@ protected:
         return got;
     }
 #else
+    // macOS and Windows: QFile::seek() + read(). Untested on those platforms
+    // (no compiler or CI for them here); its logic was tested on Linux with
+    // the Linux branches switched off (2026-10-30: audio_decoders and
+    // stream_seek pass). No cache probe: every read counts as a medium read.
     qint64 read_medium(qint64 position, void* data, qint64 bytes) override
     {
         if (!m_file.seek(position)) {
