@@ -12,6 +12,7 @@
 #if defined(Q_OS_LINUX)
 #include <cerrno>
 #include <cstring>
+#include <system_error>
 #include <sys/uio.h>
 #include <unistd.h>
 #endif
@@ -72,12 +73,20 @@ qint64 TAudioByteSource::transfer(qint64 position, char* data, qint64 bytes)
     }
 
     if (got < bytes) {
+        const bool erredBefore = m_error.has_value();
         const qint64 waited = read_medium(position + got, data + got, bytes - got);
+        // Every read counts, also one that gave nothing: its wait is the
+        // interesting part on a stalling medium
+        if (stats) {
+            TAudioTransfer& kind = cached ? stats->medium : stats->untold;
+            kind.add(quint64(std::max<qint64>(waited, 0)), now_nanoseconds() - afterCached);
+            // A read that met an error, also one that gave some bytes first
+            if (!erredBefore && m_error) {
+                ++kind.failed;
+            }
+        }
         if (waited > 0) {
             got += waited;
-            if (stats) {
-                (cached ? stats->medium : stats->untold).add(quint64(waited), now_nanoseconds() - afterCached);
-            }
         }
     }
     return got;
@@ -169,7 +178,8 @@ protected:
                 if (errno == EINTR) {
                     continue;
                 }
-                read_failed(QString::fromLocal8Bit(std::strerror(errno)));
+                // Not strerror(): it may share one buffer between threads
+                read_failed(QString::fromStdString(std::generic_category().message(errno)));
                 break;
             }
             got += read;

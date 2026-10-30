@@ -414,29 +414,23 @@ void K3bMad::cleanup()
 //
 bool K3bMad::findNextHeader()
 {
-    if (!fillStreamBuffer()) {
-        return false;
-    }
-
     //
     // MAD_RECOVERABLE == true:  frame was read, decoding failed (about to skip frame)
     // MAD_RECOVERABLE == false: frame was not read, need data
     //
-
-    if (mad_header_decode( &madFrame->header, madStream ) < 0) {
-        if (MAD_RECOVERABLE(madStream->error) ||
-           madStream->error == MAD_ERROR_BUFLEN) {
-            return findNextHeader();
+    // A loop, not a recursion: a large file without audio (zeros, random
+    // bytes: every file no other decoder takes comes here) gives an error or
+    // a refill after the other, more than 12,000 for 256 MiB of zeros
+    while (true) {
+        if (!fillStreamBuffer()) {
+            return false;
         }
-        else
-        //      kdDebug() << "(K3bMad::findNextHeader) error: " << mad_stream_errorstr( madStream ) << endl;
-
-        // FIXME probably we should not do this here since we don't do it
-        // in the frame decoding
-        //     if(!checkFrameHeader(&madFrame->header))
-        //       return findNextHeader();
-
-        return false;
+        if (mad_header_decode( &madFrame->header, madStream ) >= 0) {
+            break;
+        }
+        if (!MAD_RECOVERABLE(madStream->error) && madStream->error != MAD_ERROR_BUFLEN) {
+            return false;
+        }
     }
 
     if (!m_channels) {
@@ -452,17 +446,17 @@ bool K3bMad::findNextHeader()
 
 bool K3bMad::decodeNextFrame()
 {
-    if (!fillStreamBuffer()) {
-        return false;
-    }
-
-    if (mad_frame_decode(madFrame, madStream) < 0) {
-        if (MAD_RECOVERABLE(madStream->error) ||
-            madStream->error == MAD_ERROR_BUFLEN) {
-            return decodeNextFrame();
+    // A loop, not a recursion: see findNextHeader()
+    while (true) {
+        if (!fillStreamBuffer()) {
+            return false;
         }
-
-        return false;
+        if (mad_frame_decode(madFrame, madStream) >= 0) {
+            break;
+        }
+        if (!MAD_RECOVERABLE(madStream->error) && madStream->error != MAD_ERROR_BUFLEN) {
+            return false;
+        }
     }
 
     if (!m_channels) {

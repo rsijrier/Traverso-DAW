@@ -14,6 +14,10 @@ struct TAudioTransfer
     quint64 bytes{0};
     quint64 nanoseconds{0};
     quint64 worstNanoseconds{0};
+    // Of the reads: the ones that met an error (with or without bytes);
+    // every read's time counts, also one that gave nothing: a stalling NAS
+    // shows there
+    quint64 failed{0};
 
     void add(quint64 readBytes, quint64 readNanoseconds)
     {
@@ -29,6 +33,7 @@ struct TAudioTransfer
         bytes += other.bytes;
         nanoseconds += other.nanoseconds;
         worstNanoseconds = std::max(worstNanoseconds, other.worstNanoseconds);
+        failed += other.failed;
     }
 };
 

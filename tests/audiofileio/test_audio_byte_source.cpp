@@ -24,6 +24,8 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 
+#include <random>
+
 #include <sndfile.h>
 
 #include <algorithm>
@@ -131,8 +133,12 @@ static void test_source()
     check(source.read(bytes, 4) == 2 && !std::memcmp(bytes, "89", 2) && source.at_end(), "a read over the end gives what is left");
     check(source.read(bytes, 4) == 0 && !source.take_error(), "a read at the end gives 0, no error");
     check(!source.seek(-1) && source.position() == 10, "a seek below 0 is refused");
-    check(stats.stream.untold.reads == 1 && stats.stream.untold.bytes == 10 && stats.stream.medium.reads == 0 && stats.open.untold.reads == 0,
-          "small reads share a block; without a word on the cache untold, in the current phase");
+    // Three reads of the source: the block, and two at the end that gave
+    // nothing (the rest of the read over the end, the read at the end):
+    // every read counts; none failed, there was no error
+    check(stats.stream.untold.reads == 3 && stats.stream.untold.bytes == 10 && stats.stream.untold.failed == 0 && stats.stream.medium.reads == 0 &&
+              stats.open.untold.reads == 0,
+          "small reads share a block; a read that gives nothing counts too; without a word on the cache untold, in the current phase");
 
     const QByteArray large(3 * TAudioByteSource::BlockBytes, 'x');
     MemorySource big(large, &medium);
@@ -146,9 +152,14 @@ static void test_source()
 
     Medium failing{false, 5};
     MemorySource broken(QByteArray("0123456789"), &failing);
+    TAudioIOStats brokenStats;
+    broken.set_stats(&brokenStats);
+    brokenStats.phase = TAudioIOStats::Phase::Stream;
     check(broken.read(bytes, 8) == 5 && broken.take_error() == QString(Reason), "a read that fails halfway gives what it has, and why");
     check(!broken.take_error(), "why is told once");
     check(broken.read(bytes, 8) == -1 && broken.take_error() == QString(Reason), "a read that gives nothing and fails is -1");
+    check(brokenStats.stream.untold.failed == 2 && brokenStats.stream.untold.reads == 2 && brokenStats.stream.untold.bytes == 5,
+          "failed reads count, the one with bytes and the one without");
 
     check(TAudioByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
 }
@@ -401,6 +412,36 @@ static void test_large_offsets()
     check(source->seek(size) && source->at_end() && source->read(bytes, 4) == 0, "the end of a file past 4 GiB");
 }
 
+// A large file without audio goes through every probe, MAD last: refused,
+// without a crash. Zeros give MAD no sync at all (a buffer refill after the
+// other), random bytes many false syncs: both used to recurse in
+// K3bMad::findNextHeader() and decodeNextFrame(), once per refill or error.
+static void test_large_garbage()
+{
+    QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
+    const QString zeros = dir.filePath(QStringLiteral("zeros.bin"));
+    const QString random = dir.filePath(QStringLiteral("random.bin"));
+    QFile zeroFile(zeros);
+    QFile randomFile(random);
+    if (!dir.isValid() || !zeroFile.open(QIODevice::WriteOnly) || !zeroFile.resize(qint64(256) * 1024 * 1024) ||
+        !randomFile.open(QIODevice::WriteOnly)) {
+        std::printf("no room for the garbage files: not tested\n");
+        return;
+    }
+    zeroFile.close();
+    std::mt19937 generator(71);
+    QByteArray block(1024 * 1024, Qt::Uninitialized);
+    for (int megabyte = 0; megabyte < 32; ++megabyte) {
+        for (char& byte : block) {
+            byte = char(generator());
+        }
+        randomFile.write(block);
+    }
+    randomFile.close();
+    check(!TAudioReader::open(zeros).has_value(), "256 MiB of zeros: no decoder takes it, no crash");
+    check(!TAudioReader::open(random).has_value(), "32 MiB of random bytes: no decoder takes it, no crash");
+}
+
 #if defined(Q_OS_LINUX)
 // The page cache apart from the medium, on a real file system: in the build
 // directory, /tmp can be tmpfs, which cannot tell them apart
@@ -570,6 +611,7 @@ int main()
     }
     test_file_source(dir);
     test_large_offsets();
+    test_large_garbage();
 #if defined(Q_OS_LINUX)
     test_cache_or_medium();
 #endif
