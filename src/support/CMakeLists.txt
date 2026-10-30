@@ -9,6 +9,7 @@
 add_library(traversosupport STATIC
     Debugger.h Debugger.cpp
     TLog.h TLog.cpp
+    TPlatform.h
     TRealTime.h
     Utils.h Utils.cpp
     TTimeRef.h TTimeRef.cpp
@@ -20,4 +21,5 @@ add_library(traversosupport STATIC
 
 target_include_directories(traversosupport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(traversosupport PRIVATE traverso_compiler_settings Qt6::Core)
+# Public: the public headers of this library include Qt headers
+target_link_libraries(traversosupport PRIVATE traverso_compiler_settings PUBLIC Qt6::Core)

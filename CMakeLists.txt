@@ -91,6 +91,14 @@ add_library(traverso_compiler_settings INTERFACE)
 
 target_compile_features(traverso_compiler_settings INTERFACE cxx_std_23)
 
+# The platform macros in every translation unit, before anything else
+set(TRAVERSO_PLATFORM_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/support/TPlatform.h")
+if(MSVC)
+    target_compile_options(traverso_compiler_settings INTERFACE "/FI${TRAVERSO_PLATFORM_HEADER}")
+else()
+    target_compile_options(traverso_compiler_settings INTERFACE "SHELL:-include \"${TRAVERSO_PLATFORM_HEADER}\"")
+endif()
+
 target_compile_definitions(traverso_compiler_settings INTERFACE
     VERSION="${TRAVERSO_FULL_VERSION}"
 )
