@@ -564,6 +564,48 @@ TAudioDevice review (Remon, 2026-10-28; proposed, Remon ranks):
   review): `TWaveform.h:76` and `TAudioClipView.cpp:815`; the grid starts
   above 32 frames per pixel (`TWaveformColumns.h:30`, `MinShift`).
 
+From the GPU waveform test program, clip edges in variant A (branch
+`gpu-waveform-poc`, report `~/Development/Traverso/git/gpu-waveform-poc-results/rapport-clipranden.md`,
+2026-10-29/30):
+- **T70 The part-blocks at clip edges are clip data** (low; Remon,
+  2026-10-30). A clip edge that is not on a 64-frame block boundary lies
+  inside a level-0 block. That block's record also holds up to 63 frames
+  from outside the clip, so the pixel with the edge must come from the
+  samples of the part inside the clip: otherwise it shows a peak up to 63
+  frames (1.3 ms) outside the clip (a cut just before a transient shows the
+  next hit in the clip), or it loses a peak in the first 63 frames inside.
+  Only the first and last pixel of a clip depend on it, but that is the
+  pixel an editor looks at when cutting. The part-block depends only on the
+  edge, not on the zoom or the scroll position.
+  - **Why a task**: the test program reads the part-blocks from the samples
+    at every gather (`TAudioReader::read_file_frames()`), and for compressed
+    sources that is a seek plus decode: measured per edge WAV 2–9 µs, FLAC
+    ~0.3 ms (max 1.8 ms), MP3 ~1.4 ms (max 23 ms). It is a problem of the
+    audio clip domain: every view with exact edges needs it, and moving an
+    edge changes it at every step.
+  - **When the user sees a hitch** (a frame of 30–110 ms instead of 8 ms;
+    measured with 26 lanes, 78 clips of WAV/FLAC/MP3, vsync 120 Hz):
+    (1) zooming, at every change of pyramid level (every doubling of the
+    zoom): 36 ms on average, up to 108 ms a level change; (2) scrolling
+    fast or a jump in the timeline, each time the view leaves the gathered
+    records (19 times in 8 s at one screen a second, up to 72 ms); (3)
+    dragging a clip edge, at every step, in an MP3 up to ~23 ms a step;
+    (4) opening a project, once for all visible clips. Playback with the
+    view following does not hit it (the records reach ~24 s ahead), nor a
+    view that stands still.
+  - **Fix** (not built): keep the min/max/RMS of each edge's part-block
+    with the clip, computed on load, trim or a move in the source, off the
+    GUI thread (the IO thread that serves the peak files); while an edge is
+    dragged, keep a decoded window around it so each step reads memory. Two
+    records per clip.
+  - **Check first**: whether the sheetcanvas has the artifact today.
+    `device_columns()` falls back to `query()` at clip edges, and `query()`
+    gives a block to the column that holds its first frame, without the
+    samples of part-blocks: the last pixel may show up to 63 frames after
+    the clip, the first may lose up to 63 frames inside it. Not tested; the
+    clip edge test of the test program (`clipedges/`) can run through
+    `device_columns()`.
+
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
