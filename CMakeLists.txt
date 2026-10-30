@@ -88,6 +88,12 @@ option(WANT_TRAVERSO_DEBUG "Developer log: debug and trace messages (--log-level
 # ---------------------------------------------------------------------------
 # 3. Centralized Interface Target Configuration (MUST BE BEFORE DEPENDENCIES)
 # ---------------------------------------------------------------------------
+# File offsets of 64 bits for every library, also on 32-bit ARM: pread(),
+# fstat() and everything else that takes an off_t
+if(UNIX)
+    add_compile_definitions(_FILE_OFFSET_BITS=64)
+endif()
+
 add_library(traverso_compiler_settings INTERFACE)
 
 target_compile_features(traverso_compiler_settings INTERFACE cxx_std_23)

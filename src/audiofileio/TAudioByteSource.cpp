@@ -18,6 +18,9 @@
 
 #if defined(Q_OS_UNIX)
 #include <sys/stat.h>
+#include <sys/types.h>
+
+static_assert(sizeof(off_t) == 8, "a file offset of 32 bits cuts positions past 2 GiB off");
 #endif
 
 quint64 TAudioByteSource::now_nanoseconds()

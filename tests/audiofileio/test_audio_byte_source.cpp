@@ -8,7 +8,8 @@
 // the reads in the right kind of work (open, seek, stream), the medium's
 // time apart from the decoding. A read that fails halfway gives ReadFailed
 // with the source's reason in every decoder. WavPack's correction file is
-// read through a source of its own.
+// read through a source of its own. Bytes past 2 and 4 GiB come from where
+// they are.
 
 #include "TAudioBuffer.h"
 #include "TAudioByteSource.h"
@@ -348,6 +349,55 @@ static void test_file_source(const QTemporaryDir& dir)
 #endif
 }
 
+// Bytes past 2 and 4 GiB, read back from where they were written: a sparse
+// file, in the build directory, /tmp can be small. A position cut to 32 bits
+// reads other bytes there.
+static void test_large_offsets()
+{
+    QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
+    const QString path = dir.filePath(QStringLiteral("sparse.bin"));
+    const qint64 two = 2LL * 1024 * 1024 * 1024;
+    const qint64 four = 2 * two;
+    const qint64 size = four + two;
+    const QByteArray below("below ");
+    const QByteArray above("above ");
+    QFile file(path);
+    if (!dir.isValid() || !file.open(QIODevice::WriteOnly) || !file.resize(size)) {
+        std::printf("no sparse file of 6 GiB here: large offsets not tested\n");
+        return;
+    }
+    // Across 2 GiB, across 4 GiB, and at the end
+    const std::vector<qint64> places{two - below.size(), four - below.size(), size - below.size() - above.size()};
+    for (const qint64 place : places) {
+        if (!file.seek(place) || file.write(below + above) != below.size() + above.size()) {
+            check(false, "a sparse file takes bytes past 2 GiB");
+            return;
+        }
+    }
+    file.close();
+
+    std::unique_ptr<TAudioByteSource> source = TAudioByteSource::open_file(path);
+    if (!source) {
+        check(false, "the sparse file opens");
+        return;
+    }
+    check(source->size() == size, "the size of a file past 4 GiB");
+    char bytes[32];
+    const qsizetype length = below.size() + above.size();
+    bool right = true;
+    for (const qint64 place : places) {
+        right = right && source->seek(place) && source->read(bytes, length) == length && QByteArray(bytes, length) == below + above &&
+                source->position() == place + length;
+    }
+    check(right, "the bytes across 2 GiB, across 4 GiB and at the end, small reads");
+
+    std::vector<char> large(size_t(2 * TAudioByteSource::BlockBytes));
+    const qint64 first = two - qint64(large.size()) / 2;
+    const bool whole = source->seek(first) && source->read(large.data(), qint64(large.size())) == qint64(large.size());
+    check(whole && QByteArray(large.data() + large.size() / 2 - below.size(), length) == below + above, "the bytes across 2 GiB, a large read");
+    check(source->seek(size) && source->at_end() && source->read(bytes, 4) == 0, "the end of a file past 4 GiB");
+}
+
 #if defined(Q_OS_LINUX)
 // The page cache apart from the medium, on a real file system: in the build
 // directory, /tmp can be tmpfs, which cannot tell them apart
@@ -474,6 +524,7 @@ int main()
         test_read_failure(dir, format);
     }
     test_file_source(dir);
+    test_large_offsets();
 #if defined(Q_OS_LINUX)
     test_cache_or_medium();
 #endif
