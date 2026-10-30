@@ -28,6 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
 #include "TLog.h"
+#include "TAudioIOStats.h"
+
+#include <chrono>
 
 
 
@@ -118,6 +121,44 @@ void TBufferedAudioStream::prepare_ring_buffers(nframes_t bufferSize)
     // printf("AudioSource::::prepare_ring_buffers: rtBufferSlotsQueue slot count %zu\n", m_rtBufferSlotsQueue->size_approx());
 }
 
+// Where a seek step's time went, from the decoder's counters before and
+// after it: the reads (page cache, medium, untold), the decoding (the calls'
+// time without their reads) and the rest (resampling, the ring), one line per
+// stream (T71: is a slow seek the medium or the decoder)
+static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, quint64 wallNanoseconds)
+{
+    const auto transfer = [](TAudioTransfer TAudioPhaseStats::* kind, const TAudioIOStats& stats) {
+        TAudioTransfer sum = stats.seek.*kind;
+        sum.add(stats.stream.*kind);
+        return sum;
+    };
+    const auto kibibytes = [](quint64 a, quint64 b) { return double(a - b) / 1024.0; };
+    const auto milliseconds = [](quint64 a, quint64 b) { return double(a - b) / 1.0e6; };
+    const TAudioTransfer cachedBefore = transfer(&TAudioPhaseStats::cached, before), cachedAfter = transfer(&TAudioPhaseStats::cached, after);
+    const TAudioTransfer mediumBefore = transfer(&TAudioPhaseStats::medium, before), mediumAfter = transfer(&TAudioPhaseStats::medium, after);
+    const TAudioTransfer untoldBefore = transfer(&TAudioPhaseStats::untold, before), untoldAfter = transfer(&TAudioPhaseStats::untold, after);
+    const quint64 callsBefore = before.seek.nanoseconds + before.stream.nanoseconds;
+    const quint64 callsAfter = after.seek.nanoseconds + after.stream.nanoseconds;
+    const quint64 readsNanoseconds = (cachedAfter.nanoseconds - cachedBefore.nanoseconds) + (mediumAfter.nanoseconds - mediumBefore.nanoseconds)
+                                     + (untoldAfter.nanoseconds - untoldBefore.nanoseconds);
+    const quint64 callsNanoseconds = callsAfter - callsBefore;
+    const quint64 decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
+    const quint64 restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
+    // Nothing decoded (a stream out of its window): nothing to tell
+    if (callsNanoseconds == 0) {
+        return;
+    }
+    // The numbers first: a log line is cut after 256 characters, so only a
+    // long file name can be cut
+    TLOG_I("diskio", "seek {:.1f} ms = reads {:.1f} (cache {:.0f}K {:.1f}, medium {:.0f}K {:.1f}, untold {:.0f}K {:.1f}) + decode {:.1f} (seek {:.1f}) + rest {:.1f}: {}",
+           double(wallNanoseconds) / 1.0e6, double(readsNanoseconds) / 1.0e6,
+           kibibytes(cachedAfter.bytes, cachedBefore.bytes), milliseconds(cachedAfter.nanoseconds, cachedBefore.nanoseconds),
+           kibibytes(mediumAfter.bytes, mediumBefore.bytes), milliseconds(mediumAfter.nanoseconds, mediumBefore.nanoseconds),
+           kibibytes(untoldAfter.bytes, untoldBefore.bytes), milliseconds(untoldAfter.nanoseconds, untoldBefore.nanoseconds),
+           double(decodeNanoseconds) / 1.0e6, milliseconds(after.seek.nanoseconds, before.seek.nanoseconds), double(restNanoseconds) / 1.0e6,
+           name.toStdString());
+}
+
 int TBufferedAudioStream::step(const StepInfo& info)
 {
     // One decode buffer per thread that steps (a worker of the scheduler's
@@ -134,6 +175,9 @@ int TBufferedAudioStream::step(const StepInfo& info)
     }
 
     if (info.seek) {
+        const TAudioIOStats* stats = decoder_stats();
+        const TAudioIOStats before = stats ? *stats : TAudioIOStats{};
+        const auto start = std::chrono::steady_clock::now();
         if (info.sampleRateChanged) {
             set_output_rate_and_resampler(int(info.outputRate), info.resampler);
             prepare_ring_buffers(info.bufferSize);
@@ -143,6 +187,10 @@ int TBufferedAudioStream::step(const StepInfo& info)
         const int seekFill = status.get_fill_status();
         if (!status.out_of_sync() && seekFill <= TIOPlanner::IdleStartThreshold) {
             process_realtime_buffers(fileIOBuffer);
+        }
+        if (stats) {
+            log_seek(get_name(), before, *stats,
+                     quint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()));
         }
         // Out of its window is no failure: nothing to read there yet
         const int syncStatus = status.get_sync_status();

@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <memory>
 
 #include "TAudioFileError.h"
+#include "TAudioReader.h"
 #include "TAudioResampler.h"
 #include "TBufferedAudioStream.h"
 #include "TProcessContext.h"
@@ -120,6 +121,7 @@ private:
     // re-implemented only to be called by DiskIO
     void process_realtime_buffers(TAudioBuffer &fileDecodeBuffer) final;
     void rb_seek_to_transport_location(TAudioBuffer& fileDecodeBuffer, const TTimeRef &transportLocation) final;
+    const TAudioIOStats* decoder_stats() const final { return m_audioReader ? &m_audioReader->io_stats() : nullptr; }
     void set_output_rate_and_resampler(int outputRate, const Resampler& resampler) final;
     // Out of its window, a reader needs work when the transport came close
     // (it seeks then) and its fill does not count; otherwise it needs work

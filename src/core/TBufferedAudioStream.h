@@ -35,6 +35,8 @@ class TQueueBufferSlot;
 
 /// The base class for AudioSources like ReadSource and WriteSource: the
 /// streams TIOScheduler reads and writes
+struct TAudioIOStats;
+
 class TBufferedAudioStream : public QObject, public TIOStream
 {
     Q_OBJECT
@@ -102,6 +104,9 @@ public:
 
 private:
     void delete_queue_buffers();
+    // What the stream's decoder read and decoded since it opened (a reader
+    // with a file); none: nothing to report (a writer, a reader without file)
+    virtual const TAudioIOStats* decoder_stats() const { return nullptr; }
     // What a step does, in the reader or the writer: read or write all there
     // is room for, or seek
     virtual void process_realtime_buffers(TAudioBuffer &fileDecodeBuffer) = 0;
