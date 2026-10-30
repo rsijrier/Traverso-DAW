@@ -739,6 +739,16 @@ From the GPU waveform test program, clip edges in variant A (branch
     index kept next to the peak file (own task).
   - Scenario files are still read through `QFile`: a small text file, no
     audio.
+  - From Remon's review (2026-10-30), not urgent:
+    - Opening reads whole files: MAD's `countFrames()`, and FAAD scans an
+      ADTS file through, byte by byte at a mismatch. The 16 KB block keeps
+      it bearable; the real answer is the seek index next to the peak file
+      (step 4).
+    - The `(off_t)` cast at `SFAudioReader.cpp:141` (`sf_seek` takes
+      `sf_count_t`).
+    - `size()` makes a system call each time, and MAD asks it through
+      `at_end()` at every buffer fill: it can be a variable.
+    - FAAD makes a new `QByteArray` per packet: allocations per decode.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the
