@@ -714,6 +714,22 @@ From the GPU waveform test program, clip edges in variant A (branch
     - `idle_limit_for()` in `TIOScheduler.cpp`, with its `QString` and
       `QFile`, may stay in this step: it belongs to the detection of the
       medium.
+    - Platform details go into one small helper in support, next to
+      `TPlatform.h`; the pools themselves stay pure standard C++. The helper
+      holds only:
+      - The thread's name at OS level. Mind the differences:
+        `pthread_setname_np` has another call on Linux than on macOS, Windows
+        uses `SetThreadDescription`.
+      - The thread's priority.
+      - The IO priority: `ioprio_set` on Linux; on macOS and Windows the
+        equivalent, or a documented no-op.
+      - The number of cores: `std::thread::hardware_concurrency`, with a
+        fallback when it gives 0.
+
+      Plain functions, no class hierarchy or interface per platform. Each
+      function says which platforms it was tested on; macOS and Windows
+      cannot be built here, so those branches are marked untested. No other
+      functions than these four without consulting Remon.
     - Touches waveform: `TPeakCache.cpp:247` uses
       `QThreadPool::globalInstance()` once. Noted, not changed in this step.
   - **Step 3:** two phases in `fill_realtime_buffers()` and the peak build
