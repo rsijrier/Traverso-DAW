@@ -34,7 +34,7 @@ public:
     ~K3bMad();
 
     // From the start of input, which outlives this
-    bool open(TAudioByteSource* input);
+    bool open(TByteSource* input);
 
     /**
      * @return true if the mad stream contains data
@@ -97,7 +97,7 @@ public:
     mad_timer_t*  madTimer;
 
 private:
-    TAudioByteSource* m_input{nullptr};
+    TByteSource* m_input{nullptr};
     bool m_madStructuresInitialized;
     unsigned char* m_inputBuffer;
     bool m_bInputError;
@@ -113,12 +113,12 @@ private:
 class MadAudioReader : public TAudioDecoder
 {
 public:
-    explicit MadAudioReader(const QString& filename, const TAudioSourceOpener& opener = {});
+    explicit MadAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
     ~MadAudioReader() override;
 
     QString decoder_type() const override { return "mad"; }
 
-    static bool can_decode(TAudioByteSource& source);
+    static bool can_decode(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
@@ -148,7 +148,7 @@ protected:
 
     class MadDecoderPrivate;
     MadDecoderPrivate* d;
-    TAudioByteSource* m_source{nullptr};
+    TByteSource* m_source{nullptr};
 };
 
 

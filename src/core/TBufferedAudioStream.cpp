@@ -133,10 +133,10 @@ struct TSeekReads
     quint64 nanoseconds;
 };
 
-static TSeekReads seek_reads(const TAudioPhaseStats& before, const TAudioPhaseStats& after)
+static TSeekReads seek_reads(const TByteStats& before, const TByteStats& after)
 {
-    const auto kibibytes = [](const TAudioTransfer& a, const TAudioTransfer& b) { return double(a.bytes - b.bytes) / 1024.0; };
-    const auto milliseconds = [](const TAudioTransfer& a, const TAudioTransfer& b) { return double(a.nanoseconds - b.nanoseconds) / 1.0e6; };
+    const auto kibibytes = [](const TByteTransfer& a, const TByteTransfer& b) { return double(a.bytes - b.bytes) / 1024.0; };
+    const auto milliseconds = [](const TByteTransfer& a, const TByteTransfer& b) { return double(a.nanoseconds - b.nanoseconds) / 1.0e6; };
     return TSeekReads{kibibytes(after.cached, before.cached), milliseconds(after.cached, before.cached),
                       kibibytes(after.medium, before.medium), milliseconds(after.medium, before.medium),
                       kibibytes(after.untold, before.untold), milliseconds(after.untold, before.untold),
@@ -150,8 +150,8 @@ static void log_seek(const QString& name, const TAudioIOStats& before, const TAu
     if (callsNanoseconds == 0) {
         return;
     }
-    const TSeekReads seek = seek_reads(before.seek, after.seek);
-    const TSeekReads fill = seek_reads(before.stream, after.stream);
+    const TSeekReads seek = seek_reads(before.seek.bytes, after.seek.bytes);
+    const TSeekReads fill = seek_reads(before.stream.bytes, after.stream.bytes);
     const quint64 readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
     const quint64 decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
     const quint64 restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;

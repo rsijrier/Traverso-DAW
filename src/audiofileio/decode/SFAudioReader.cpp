@@ -33,12 +33,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 static sf_count_t source_length(void* source)
 {
-    return static_cast<TAudioByteSource*>(source)->size();
+    return static_cast<TByteSource*>(source)->size();
 }
 
 static sf_count_t source_seek(sf_count_t offset, int whence, void* userData)
 {
-    TAudioByteSource* source = static_cast<TAudioByteSource*>(userData);
+    TByteSource* source = static_cast<TByteSource*>(userData);
     const qint64 position = whence == SEEK_SET ? offset : whence == SEEK_CUR ? source->position() + offset : source->size() + offset;
     return source->seek(position) ? position : -1;
 }
@@ -47,15 +47,15 @@ static sf_count_t source_read(void* data, sf_count_t bytes, void* source)
 {
     // A failure stays with the source, which the decoder asks: to libsndfile
     // it is a short read
-    return std::max<sf_count_t>(static_cast<TAudioByteSource*>(source)->read(data, bytes), 0);
+    return std::max<sf_count_t>(static_cast<TByteSource*>(source)->read(data, bytes), 0);
 }
 
 static sf_count_t source_tell(void* source)
 {
-    return static_cast<TAudioByteSource*>(source)->position();
+    return static_cast<TByteSource*>(source)->position();
 }
 
-static SNDFILE* open_on_source(TAudioByteSource& source, SF_INFO& info)
+static SNDFILE* open_on_source(TByteSource& source, SF_INFO& info)
 {
     static SF_VIRTUAL_IO io{source_length, source_seek, source_read, nullptr, source_tell};
     source.seek(0);
@@ -63,7 +63,7 @@ static SNDFILE* open_on_source(TAudioByteSource& source, SF_INFO& info)
 }
 
 
-SFAudioReader::SFAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+SFAudioReader::SFAudioReader(const QString& filename, const TByteSourceOpener& opener)
     : TAudioDecoder(filename, opener)
 {
     /* although libsndfile says we don't need to set this,
@@ -72,7 +72,7 @@ SFAudioReader::SFAudioReader(const QString& filename, const TAudioSourceOpener& 
 	*/
     memset (&m_sfinfo, 0, sizeof(m_sfinfo));
 
-    TAudioByteSource* source = open_source(m_fileName);
+    TByteSource* source = open_source(m_fileName);
     if (!source) {
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
         return;
@@ -101,7 +101,7 @@ SFAudioReader::~SFAudioReader()
 }
 
 
-int SFAudioReader::major_format(TAudioByteSource& source)
+int SFAudioReader::major_format(TByteSource& source)
 {
     SF_INFO infos;
 

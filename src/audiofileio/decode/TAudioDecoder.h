@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "TAudioByteSource.h"
+#include "TByteSource.h"
 #include "TAudioFileError.h"
 #include "TAudioIOStats.h"
 #include "TTimeRef.h"
@@ -57,7 +57,7 @@ class TAudioBuffer;
  * call failed (TAudioFileError): the error of that call, nothing is logged. A
  * decoder that cannot open its file says why in m_openError.
  *
- * A decoder reaches its file through TAudioByteSource only (open_source()), so
+ * A decoder reaches its file through TByteSource only (open_source()), so
  * what it read and what it decoded can be told apart: stats().
  *
  * Not for the audio thread: file IO, and the buffer may grow.
@@ -113,7 +113,7 @@ public:
     void opened(const TAudioPhaseStats& probes, quint64 nanoseconds);
 
 protected:
-    explicit TAudioDecoder(const QString& fileName, const TAudioSourceOpener& opener = {}) : m_fileName(fileName), m_opener(opener) {}
+    explicit TAudioDecoder(const QString& fileName, const TByteSourceOpener& opener = {}) : m_fileName(fileName), m_opener(opener) {}
 
     // The decoder's seek() and read(), as the contract above says
     [[nodiscard]] virtual TAudioFileStatus seek_frame(nframes_t frame) = 0;
@@ -121,7 +121,9 @@ protected:
 
     // The bytes of fileName, for as long as the decoder lives, counted in
     // stats(); nullptr when they are not there
-    TAudioByteSource* open_source(const QString& fileName);
+    TByteSource* open_source(const QString& fileName);
+    // The kind of work from now on; every source counts into its bytes
+    void set_phase(TAudioIOStats::Phase phase);
 
     // The end of every seek_frame() that landed: at frame, no error
     TAudioFileStatus seek_landed(nframes_t frame);
@@ -151,8 +153,8 @@ private:
     // Why a read of a source failed since the last call, empty when none did
     QString take_source_error();
 
-    TAudioSourceOpener m_opener;
-    std::vector<std::unique_ptr<TAudioByteSource>> m_sources;
+    TByteSourceOpener m_opener;
+    std::vector<std::unique_ptr<TByteSource>> m_sources;
     TAudioIOStats m_stats;
 };
 
@@ -162,7 +164,7 @@ private:
 // known by its name and read by TScenarioDecoder; other files go to the
 // libraries in order of preference (libsndfile, WavPack, FAAD, MAD).
 // opener gives the file's bytes, also to the probes (tests).
-[[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TAudioSourceOpener& opener = {});
+[[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener = {});
 
 // Whether one of the decoders can read fileName. The file is only probed: no
 // decoder is kept, nothing is logged.

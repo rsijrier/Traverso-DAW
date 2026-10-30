@@ -35,7 +35,7 @@ extern "C" {
 
 static int mp4_read_callback(int64_t offset, void *buffer, size_t size, void *token)
 {
-	TAudioByteSource *file = static_cast<TAudioByteSource*>(token);
+	TByteSource *file = static_cast<TByteSource*>(token);
 	if (!file || !file->seek(offset)) {
 		return 1;
 	}
@@ -66,7 +66,7 @@ struct Mp4Box
 	qint64 end{0};
 };
 
-static bool read_box(TAudioByteSource& file, qint64 at, qint64 limit, Mp4Box& box)
+static bool read_box(TByteSource& file, qint64 at, qint64 limit, Mp4Box& box)
 {
 	unsigned char header[16];
 	if (!file.seek(at) || file.read(reinterpret_cast<char*>(header), 8) != 8) {
@@ -92,7 +92,7 @@ static bool read_box(TAudioByteSource& file, qint64 at, qint64 limit, Mp4Box& bo
 	return true;
 }
 
-static bool find_box(TAudioByteSource& file, qint64 from, qint64 to, quint32 type, Mp4Box& found)
+static bool find_box(TByteSource& file, qint64 from, qint64 to, quint32 type, Mp4Box& found)
 {
 	for (qint64 at = from; at < to;) {
 		Mp4Box box;
@@ -109,7 +109,7 @@ static bool find_box(TAudioByteSource& file, qint64 from, qint64 to, quint32 typ
 }
 
 // The timescale of an mvhd or mdhd box (version 0 or 1)
-static quint32 header_timescale(TAudioByteSource& file, const Mp4Box& box)
+static quint32 header_timescale(TByteSource& file, const Mp4Box& box)
 {
 	unsigned char data[24];
 	if (!file.seek(box.content) || file.read(reinterpret_cast<char*>(data), 24) != 24) {
@@ -129,7 +129,7 @@ struct Mp4Edit
 	quint32 mediaTimescale{0};
 };
 
-static bool read_audio_edit(TAudioByteSource& file, Mp4Edit& edit)
+static bool read_audio_edit(TByteSource& file, Mp4Edit& edit)
 {
 	Mp4Box moov;
 	if (!find_box(file, 0, file.size(), box_type("moov"), moov)) {
@@ -268,7 +268,7 @@ public:
 		return data;
 	}
 
-	TAudioByteSource* source{nullptr};
+	TByteSource* source{nullptr};
 	NeAACDecHandle hDecoder{nullptr};
 	bool isMp4{false};
 	bool demuxOpen{false};
@@ -300,7 +300,7 @@ public:
 	nframes_t pendingCount{0};
 };
 
-FaadAudioReader::FaadAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+FaadAudioReader::FaadAudioReader(const QString& filename, const TByteSourceOpener& opener)
 	: TAudioDecoder(filename, opener)
 	, d(new FaadDecoderPrivate())
 {
@@ -320,7 +320,7 @@ FaadAudioReader::~FaadAudioReader()
 	delete d;
 }
 
-bool FaadAudioReader::can_decode(TAudioByteSource& f)
+bool FaadAudioReader::can_decode(TByteSource& f)
 {
 	char header[12];
 	f.seek(0);

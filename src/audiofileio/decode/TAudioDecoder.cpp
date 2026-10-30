@@ -23,20 +23,20 @@ TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
     if (m_stats.phase == TAudioIOStats::Phase::Open) {
         return seek_frame(frame);
     }
-    m_stats.phase = TAudioIOStats::Phase::Seek;
-    const quint64 start = TAudioByteSource::now_nanoseconds();
+    set_phase(TAudioIOStats::Phase::Seek);
+    const quint64 start = TByteSource::now_nanoseconds();
     TAudioFileStatus status = seek_frame(frame);
-    m_stats.seek.nanoseconds += TAudioByteSource::now_nanoseconds() - start;
+    m_stats.seek.nanoseconds += TByteSource::now_nanoseconds() - start;
     ++m_stats.seek.calls;
-    m_stats.phase = TAudioIOStats::Phase::Stream;
+    set_phase(TAudioIOStats::Phase::Stream);
     return status;
 }
 
 TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 {
-    const quint64 start = TAudioByteSource::now_nanoseconds();
+    const quint64 start = TByteSource::now_nanoseconds();
     TAudioFileResult result = read_frames(buffer, count);
-    m_stats.stream.nanoseconds += TAudioByteSource::now_nanoseconds() - start;
+    m_stats.stream.nanoseconds += TByteSource::now_nanoseconds() - start;
     ++m_stats.stream.calls;
     m_stats.stream.frames += result.frames;
     return result;
@@ -45,19 +45,28 @@ TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 void TAudioDecoder::opened(const TAudioPhaseStats& probes, quint64 nanoseconds)
 {
     m_stats.open.nanoseconds = nanoseconds;
-    m_stats.open.cached.add(probes.cached);
-    m_stats.open.medium.add(probes.medium);
-    m_stats.open.untold.add(probes.untold);
-    m_stats.phase = TAudioIOStats::Phase::Stream;
+    m_stats.open.bytes.add(probes.bytes);
+    set_phase(TAudioIOStats::Phase::Stream);
 }
 
-TAudioByteSource* TAudioDecoder::open_source(const QString& fileName)
+// The one place the phase changes: every source of this decoder (WavPack
+// has two, the .wv and its .wvc) counts into the new phase's bytes, so none
+// can be forgotten
+void TAudioDecoder::set_phase(TAudioIOStats::Phase phase)
 {
-    std::unique_ptr<TAudioByteSource> source = m_opener ? m_opener(fileName) : TAudioByteSource::open_file(fileName);
+    m_stats.phase = phase;
+    for (const std::unique_ptr<TByteSource>& source : m_sources) {
+        source->set_stats(&m_stats.current().bytes);
+    }
+}
+
+TByteSource* TAudioDecoder::open_source(const QString& fileName)
+{
+    std::unique_ptr<TByteSource> source = m_opener ? m_opener(fileName) : TByteSource::open_file(fileName);
     if (!source) {
         return nullptr;
     }
-    source->set_stats(&m_stats);
+    source->set_stats(&m_stats.current().bytes);
     m_stats.mediumId = source->medium_id();
     m_sources.push_back(std::move(source));
     return m_sources.back().get();
@@ -66,7 +75,7 @@ TAudioByteSource* TAudioDecoder::open_source(const QString& fileName)
 QString TAudioDecoder::take_source_error()
 {
     QString reason;
-    for (const std::unique_ptr<TAudioByteSource>& source : m_sources) {
+    for (const std::unique_ptr<TByteSource>& source : m_sources) {
         const std::optional<QString> error = source->take_error();
         if (error && reason.isEmpty()) {
             reason = *error;
@@ -145,7 +154,7 @@ enum class DecoderLibrary {
 
 // The library that can read fileName, tried in order of preference; the
 // probes' reads go into stats
-static DecoderLibrary find_decoder(const QString& fileName, const TAudioSourceOpener& opener, TAudioIOStats& stats)
+static DecoderLibrary find_decoder(const QString& fileName, const TByteSourceOpener& opener, TAudioIOStats& stats)
 {
     // A scenario (a test signal described, TScenarioDecoder) by its name,
     // before any library probes it; one that does not parse is no audio file.
@@ -156,11 +165,11 @@ static DecoderLibrary find_decoder(const QString& fileName, const TAudioSourceOp
     if (TScenarioDecoder::is_scenario_file(fileName)) {
         return TScenarioDecoder::check(fileName) ? DecoderLibrary::Scenario : DecoderLibrary::None;
     }
-    const std::unique_ptr<TAudioByteSource> source = opener ? opener(fileName) : TAudioByteSource::open_file(fileName);
+    const std::unique_ptr<TByteSource> source = opener ? opener(fileName) : TByteSource::open_file(fileName);
     if (!source) {
         return DecoderLibrary::None;
     }
-    source->set_stats(&stats);
+    source->set_stats(&stats.open.bytes);
     if (const int format = SFAudioReader::major_format(*source)) {
         // MP3 through MAD, whose seeks are sample accurate; libsndfile's are
         // not (1.2.2, mpg123 lands some hundreds of frames off)
@@ -208,10 +217,10 @@ static TAudioFileError no_decoder(const QString& fileName)
     return {TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")};
 }
 
-std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TAudioSourceOpener& opener)
+std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
 {
     std::unique_ptr<TAudioDecoder> decoder;
-    const quint64 start = TAudioByteSource::now_nanoseconds();
+    const quint64 start = TByteSource::now_nanoseconds();
     TAudioIOStats probes;
 
     switch (find_decoder(fileName, opener, probes)) {
@@ -251,6 +260,6 @@ std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decode
                                                        : QStringLiteral("no decoder reads this format")});
     }
 
-    decoder->opened(probes.open, TAudioByteSource::now_nanoseconds() - start);
+    decoder->opened(probes.open, TByteSource::now_nanoseconds() - start);
     return decoder;
 }

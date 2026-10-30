@@ -29,9 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // WavPack's stream reader on a byte source. id: the file, or its correction
 // file
 
-static TAudioByteSource* source_of(void* id)
+static TByteSource* source_of(void* id)
 {
-    return static_cast<TAudioByteSource*>(id);
+    return static_cast<TByteSource*>(id);
 }
 
 static int32_t source_read(void* id, void* data, int32_t bytes)
@@ -53,7 +53,7 @@ static int source_seek_absolute(void* id, int64_t position)
 
 static int source_seek_relative(void* id, int64_t delta, int mode)
 {
-    TAudioByteSource* source = source_of(id);
+    TByteSource* source = source_of(id);
     const qint64 position = mode == SEEK_SET ? delta : mode == SEEK_CUR ? source->position() + delta : source->size() + delta;
     return source->seek(position) ? 0 : -1;
 }
@@ -74,7 +74,7 @@ static int source_can_seek(void*)
     return 1;
 }
 
-static WavpackContext* open_on_source(TAudioByteSource& source, TAudioByteSource* correction, char* error)
+static WavpackContext* open_on_source(TByteSource& source, TByteSource* correction, char* error)
 {
     static WavpackStreamReader64 reader{source_read,          nullptr,          source_position, source_seek_absolute, source_seek_relative,
                                         source_push_back,     source_length,    source_can_seek, nullptr,              nullptr};
@@ -83,18 +83,18 @@ static WavpackContext* open_on_source(TAudioByteSource& source, TAudioByteSource
 }
 
 
-WPAudioReader::WPAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+WPAudioReader::WPAudioReader(const QString& filename, const TByteSourceOpener& opener)
     : TAudioDecoder(filename, opener)
 {
     char error[80];
 
-    TAudioByteSource* source = open_source(m_fileName);
+    TByteSource* source = open_source(m_fileName);
     if (!source) {
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
         return;
     }
     // The correction file of a hybrid file, when there is one beside it
-    TAudioByteSource* correction = open_source(m_fileName + QLatin1Char('c'));
+    TByteSource* correction = open_source(m_fileName + QLatin1Char('c'));
 
     m_wp = open_on_source(*source, correction, error);
 
@@ -120,7 +120,7 @@ WPAudioReader::~WPAudioReader()
 }
 
 
-bool WPAudioReader::can_decode(TAudioByteSource& source)
+bool WPAudioReader::can_decode(TByteSource& source)
 {
     char error[80];
 

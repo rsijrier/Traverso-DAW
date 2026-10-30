@@ -27,12 +27,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class WPAudioReader : public TAudioDecoder
 {
 public:
-    explicit WPAudioReader(const QString& filename, const TAudioSourceOpener& opener = {});
+    explicit WPAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
     ~WPAudioReader() override;
 
     QString decoder_type() const override { return "wavpack"; }
 
-    static bool can_decode(TAudioByteSource& source);
+    static bool can_decode(TByteSource& source);
 
     static void print_libwavpack_version();
 

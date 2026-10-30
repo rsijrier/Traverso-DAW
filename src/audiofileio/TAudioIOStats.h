@@ -3,59 +3,22 @@
 
 #pragma once
 
+#include "TByteStats.h"
+
 #include <QtTypes>
-
-#include <algorithm>
-
-// Reads of one kind: how many, their bytes and their time
-struct TAudioTransfer
-{
-    quint64 reads{0};
-    quint64 bytes{0};
-    quint64 nanoseconds{0};
-    quint64 worstNanoseconds{0};
-    // Of the reads: the ones that met an error (with or without bytes);
-    // every read's time counts, also one that gave nothing: a stalling NAS
-    // shows there
-    quint64 failed{0};
-
-    void add(quint64 readBytes, quint64 readNanoseconds)
-    {
-        ++reads;
-        bytes += readBytes;
-        nanoseconds += readNanoseconds;
-        worstNanoseconds = std::max(worstNanoseconds, readNanoseconds);
-    }
-
-    void add(const TAudioTransfer& other)
-    {
-        reads += other.reads;
-        bytes += other.bytes;
-        nanoseconds += other.nanoseconds;
-        worstNanoseconds = std::max(worstNanoseconds, other.worstNanoseconds);
-        failed += other.failed;
-    }
-};
 
 /**
  * @brief What one kind of decoder work cost: its calls and time, and the bytes
- * that went through TAudioByteSource during it.
- *
- * A read from the page cache shows only the copy of the memory, not the
- * medium, so the two are kept apart: cached is what came without waiting,
- * medium what had to wait for the disk or the network. Where the platform or
- * the file system cannot tell them apart the bytes are untold.
+ * that went through its TByteSource during it.
  */
 struct TAudioPhaseStats
 {
     quint64 calls{0};
     quint64 frames{0};
     quint64 nanoseconds{0};
-    TAudioTransfer cached;
-    TAudioTransfer medium;
-    TAudioTransfer untold;
+    TByteStats bytes;
 
-    quint64 read_nanoseconds() const { return cached.nanoseconds + medium.nanoseconds + untold.nanoseconds; }
+    quint64 read_nanoseconds() const { return bytes.read_nanoseconds(); }
     // The rest of the calls' time: the library's decoding and the copies
     quint64 decode_nanoseconds() const
     {
@@ -72,7 +35,9 @@ struct TAudioPhaseStats
  * seek's reads are not sequential, and a seek can decode, so it stays out of
  * the medium's latency) and stream (the reads a scheduler can plan).
  *
- * Plain counters of one decoder, for the thread that uses the decoder.
+ * Plain counters of one decoder, for the thread that uses the decoder. The
+ * decoder points its sources at the bytes of the current phase
+ * (TAudioDecoder::set_phase()).
  */
 struct TAudioIOStats
 {

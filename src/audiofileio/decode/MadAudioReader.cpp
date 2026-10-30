@@ -84,7 +84,7 @@ void K3bMad::clearInputBuffer()
 }
 
 
-bool K3bMad::open(TAudioByteSource* input)
+bool K3bMad::open(TByteSource* input)
 {
     cleanup();
 
@@ -520,7 +520,7 @@ public:
 
 
 
-MadAudioReader::MadAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+MadAudioReader::MadAudioReader(const QString& filename, const TByteSourceOpener& opener)
  : TAudioDecoder(filename, opener)
 {
     d = new MadDecoderPrivate();
@@ -599,7 +599,7 @@ MadAudioReader::~MadAudioReader()
     }
 }
 
-bool MadAudioReader::can_decode(TAudioByteSource& source)
+bool MadAudioReader::can_decode(TByteSource& source)
 {
     //
     // HACK:

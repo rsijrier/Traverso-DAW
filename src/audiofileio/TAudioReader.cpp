@@ -31,7 +31,7 @@ bool TAudioReader::can_read(const QString& fileName)
     return can_decode_audio(fileName);
 }
 
-std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TAudioSourceOpener& opener)
+std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TByteSourceOpener& opener)
 {
     std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName, opener);
     if (!decoder) {

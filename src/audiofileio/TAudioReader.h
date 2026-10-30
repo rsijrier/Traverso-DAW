@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #pragma once
 
-#include "TAudioByteSource.h"
+#include "TByteSource.h"
 #include "TAudioFileError.h"
 #include "TAudioBuffer.h"
 #include "TAudioIOStats.h"
@@ -82,7 +82,7 @@ public:
     // A reader of fileName, at the file's own rate until
     // set_output_rate_and_resampler(); or why there is none (NotFound,
     // CannotOpen). opener gives the file's bytes (tests).
-    [[nodiscard]] static std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> open(const QString& fileName, const TAudioSourceOpener& opener = {});
+    [[nodiscard]] static std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> open(const QString& fileName, const TByteSourceOpener& opener = {});
 
     ~TAudioReader();
 

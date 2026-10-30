@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Remon Sijrier
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// Headless test of TAudioByteSource, the only way a decoder reaches its file.
+// Headless test of TByteSource, the only way a decoder reaches its file.
 // The source itself on bytes in memory: what a read gives, how it is counted.
 // Then every format through a source in memory that waits a known time:
 // the same samples as libsndfile reads from the file directly (sf_open), and
@@ -12,7 +12,7 @@
 // they are.
 
 #include "TAudioBuffer.h"
-#include "TAudioByteSource.h"
+#include "TByteSource.h"
 #include "TAudioReader.h"
 #include "TAudioWriter.h"
 #include "TResamplerChoice.h"
@@ -67,7 +67,7 @@ struct Medium
 };
 
 // A file's bytes in memory
-class MemorySource : public TAudioByteSource
+class MemorySource : public TByteSource
 {
 public:
     MemorySource(QByteArray bytes, const Medium* medium) : m_bytes(std::move(bytes)), m_medium(medium) {}
@@ -108,9 +108,9 @@ private:
     const Medium* m_medium;
 };
 
-static TAudioSourceOpener memory_opener(const Medium* medium)
+static TByteSourceOpener memory_opener(const Medium* medium)
 {
-    return [medium](const QString& fileName) -> std::unique_ptr<TAudioByteSource> {
+    return [medium](const QString& fileName) -> std::unique_ptr<TByteSource> {
         QFile file(fileName);
         if (!file.open(QIODevice::ReadOnly)) {
             return nullptr;
@@ -123,9 +123,8 @@ static void test_source()
 {
     const Medium medium;
     MemorySource source(QByteArray("0123456789"), &medium);
-    TAudioIOStats stats;
+    TByteStats stats;
     source.set_stats(&stats);
-    stats.phase = TAudioIOStats::Phase::Stream;
 
     char bytes[10];
     check(source.read(bytes, 4) == 4 && !std::memcmp(bytes, "0123", 4) && source.position() == 4, "a read gives its bytes and moves on");
@@ -136,32 +135,30 @@ static void test_source()
     // Three reads of the source: the block, and two at the end that gave
     // nothing (the rest of the read over the end, the read at the end):
     // every read counts; none failed, there was no error
-    check(stats.stream.untold.reads == 3 && stats.stream.untold.bytes == 10 && stats.stream.untold.failed == 0 && stats.stream.medium.reads == 0 &&
-              stats.open.untold.reads == 0,
-          "small reads share a block; a read that gives nothing counts too; without a word on the cache untold, in the current phase");
+    check(stats.untold.reads == 3 && stats.untold.bytes == 10 && stats.untold.failed == 0 && stats.medium.reads == 0 && stats.cached.reads == 0,
+          "small reads share a block; a read that gives nothing counts too; without a word on the cache untold");
 
-    const QByteArray large(3 * TAudioByteSource::BlockBytes, 'x');
+    const QByteArray large(3 * TByteSource::BlockBytes, 'x');
     MemorySource big(large, &medium);
-    TAudioIOStats bigStats;
+    TByteStats bigStats;
     big.set_stats(&bigStats);
     std::vector<char> into(size_t(large.size()));
     check(big.read(into.data(), 2) == 2 && big.read(into.data() + 2, large.size() - 2) == large.size() - 2 && !std::memcmp(into.data(), large.constData(), size_t(large.size())),
           "a large read after a small one gives the block's bytes and the rest");
-    check(bigStats.open.untold.bytes == quint64(large.size()), "no byte is read twice");
-    check(big.seek(1) && big.read(into.data(), 4) == 4 && bigStats.open.untold.bytes == quint64(large.size()), "a seek back inside the block reads nothing");
+    check(bigStats.untold.bytes == quint64(large.size()), "no byte is read twice");
+    check(big.seek(1) && big.read(into.data(), 4) == 4 && bigStats.untold.bytes == quint64(large.size()), "a seek back inside the block reads nothing");
 
     Medium failing{false, 5};
     MemorySource broken(QByteArray("0123456789"), &failing);
-    TAudioIOStats brokenStats;
+    TByteStats brokenStats;
     broken.set_stats(&brokenStats);
-    brokenStats.phase = TAudioIOStats::Phase::Stream;
     check(broken.read(bytes, 8) == 5 && broken.take_error() == QString(Reason), "a read that fails halfway gives what it has, and why");
     check(!broken.take_error(), "why is told once");
     check(broken.read(bytes, 8) == -1 && broken.take_error() == QString(Reason), "a read that gives nothing and fails is -1");
-    check(brokenStats.stream.untold.failed == 2 && brokenStats.stream.untold.reads == 2 && brokenStats.stream.untold.bytes == 5,
+    check(brokenStats.untold.failed == 2 && brokenStats.untold.reads == 2 && brokenStats.untold.bytes == 5,
           "failed reads count, the one with bytes and the one without");
 
-    check(TAudioByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
+    check(TByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
 }
 
 static std::vector<float> test_samples()
@@ -292,7 +289,7 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     const TAudioIOStats& stats = (*reader)->io_stats();
 
     std::snprintf(what, sizeof(what), "%s: opening reads, counted as the open", format.name);
-    check(stats.open.medium.bytes > 0 && stats.seek.medium.reads == 0 && stats.stream.medium.reads == 0 && stats.open.nanoseconds >= stats.open.medium.nanoseconds, what);
+    check(stats.open.bytes.medium.bytes > 0 && stats.seek.bytes.medium.reads == 0 && stats.stream.bytes.medium.reads == 0 && stats.open.nanoseconds >= stats.open.bytes.medium.nanoseconds, what);
 
     const quint64 fileBytes = quint64(QFile(path).size());
     TAudioBuffer buffer;
@@ -303,9 +300,9 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     }
     const TAudioPhaseStats stream = stats.stream;
     std::snprintf(what, sizeof(what), "%s: a read to the end counts every frame and goes through the source", format.name);
-    check(read == (*reader)->file_frame_count() && stream.frames == read && stream.calls > 0 && stream.medium.reads > 0 && stream.medium.bytes <= fileBytes, what);
+    check(read == (*reader)->file_frame_count() && stream.frames == read && stream.calls > 0 && stream.bytes.medium.reads > 0 && stream.bytes.medium.bytes <= fileBytes, what);
     std::snprintf(what, sizeof(what), "%s: the medium's time is what its reads waited, the decoding the rest", format.name);
-    check(stream.medium.nanoseconds >= stream.medium.reads * Wait && stream.medium.worstNanoseconds >= Wait &&
+    check(stream.bytes.medium.nanoseconds >= stream.bytes.medium.reads * Wait && stream.bytes.medium.worstNanoseconds >= Wait &&
               stream.nanoseconds >= stream.read_nanoseconds() && stream.decode_nanoseconds() == stream.nanoseconds - stream.read_nanoseconds(),
           what);
 
@@ -356,7 +353,7 @@ static void test_file_source(const QTemporaryDir& dir)
     const TAudioIOStats& stats = (*reader)->io_stats();
     check(all == read_with_sndfile(path), "the file source gives the file's samples");
     // The block of the open's last read holds the first of the audio
-    const auto bytes = [](const TAudioPhaseStats& phase) { return phase.cached.bytes + phase.medium.bytes + phase.untold.bytes; };
+    const auto bytes = [](const TAudioPhaseStats& phase) { return phase.bytes.cached.bytes + phase.bytes.medium.bytes + phase.bytes.untold.bytes; };
     check(bytes(stats.open) + bytes(stats.stream) >= quint64(Frames) * Channels * 2, "the file source counts its reads");
 #if defined(Q_OS_UNIX)
     check(stats.mediumId != 0, "the file source knows its medium");
@@ -390,7 +387,7 @@ static void test_large_offsets()
     }
     file.close();
 
-    std::unique_ptr<TAudioByteSource> source = TAudioByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
     if (!source) {
         check(false, "the sparse file opens");
         return;
@@ -405,7 +402,7 @@ static void test_large_offsets()
     }
     check(right, "the bytes across 2 GiB, across 4 GiB and at the end, small reads");
 
-    std::vector<char> large(size_t(2 * TAudioByteSource::BlockBytes));
+    std::vector<char> large(size_t(2 * TByteSource::BlockBytes));
     const qint64 first = two - qint64(large.size()) / 2;
     const bool whole = source->seek(first) && source->read(large.data(), qint64(large.size())) == qint64(large.size());
     check(whole && QByteArray(large.data() + large.size() / 2 - below.size(), length) == below + above, "the bytes across 2 GiB, a large read");
@@ -458,26 +455,26 @@ static void test_cache_or_medium()
     }
     file.close();
 
-    std::unique_ptr<TAudioByteSource> source = TAudioByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
     if (!source) {
         check(false, "the file opens");
         return;
     }
-    TAudioIOStats stats;
+    TByteStats stats;
     source->set_stats(&stats);
     std::vector<char> into(size_t(bytes.size()));
 
     const bool read = source->read(into.data(), bytes.size()) == bytes.size();
-    if (stats.open.untold.bytes > 0) {
+    if (stats.untold.bytes > 0) {
         std::printf("this file system cannot tell the cache from the medium: not tested\n");
         return;
     }
-    check(read && stats.open.medium.reads > 0 && stats.open.medium.bytes > 0, "a file out of the page cache waits for the medium");
-    const TAudioTransfer medium = stats.open.medium;
-    check(source->seek(0) && source->read(into.data(), bytes.size()) == bytes.size() && stats.open.medium.bytes == medium.bytes &&
-              stats.open.cached.bytes >= quint64(bytes.size()),
+    check(read && stats.medium.reads > 0 && stats.medium.bytes > 0, "a file out of the page cache waits for the medium");
+    const TByteTransfer medium = stats.medium;
+    check(source->seek(0) && source->read(into.data(), bytes.size()) == bytes.size() && stats.medium.bytes == medium.bytes &&
+              stats.cached.bytes >= quint64(bytes.size()),
           "the same bytes again come from the page cache, no medium");
-    check(stats.open.untold.bytes == 0, "nothing is untold");
+    check(stats.untold.bytes == 0, "nothing is untold");
 }
 #endif
 
@@ -501,13 +498,48 @@ static void test_correction_file(const QTemporaryDir& dir)
 
     auto corrected = TAudioReader::open(hybrid);
     check(corrected && read_all(**corrected, 4099) == original, "a hybrid file with its correction file is exact");
-    check(corrected && (*corrected)->io_stats().stream.cached.bytes + (*corrected)->io_stats().stream.medium.bytes + (*corrected)->io_stats().stream.untold.bytes >
+    check(corrected && (*corrected)->io_stats().stream.bytes.cached.bytes + (*corrected)->io_stats().stream.bytes.medium.bytes + (*corrected)->io_stats().stream.bytes.untold.bytes >
                            quint64(QFile(hybrid).size()) * 9 / 10,
           "the correction file's reads count too");
+
+    // Each phase's reads land in that phase, for both sources: the decoder
+    // points them at the phase (TAudioDecoder::set_phase()). A source left
+    // behind would count its bytes in another phase, silently: with the
+    // correction file the open and a seek read more than without it
+    const auto total = [](const TByteStats& bytes) { return bytes.cached.bytes + bytes.medium.bytes + bytes.untold.bytes; };
+    struct PhaseBytes
+    {
+        quint64 open, seek, openAfter, streamAfterSeek;
+    };
+    const auto phases = [&](const QString& path) {
+        PhaseBytes result{};
+        auto reader = TAudioReader::open(path);
+        if (!reader) {
+            return result;
+        }
+        const TAudioIOStats& stats = (*reader)->io_stats();
+        result.open = total(stats.open.bytes);
+        TAudioBuffer buffer;
+        (void)(*reader)->read_file_frames(buffer, (*reader)->file_frame_count() / 2, 4096);
+        result.seek = stats.seek.calls > 0 ? total(stats.seek.bytes) : 0;
+        // On past the block the seek read: the stream reads both files again
+        const nframes_t after = (*reader)->file_frame_count() / 2 + 4096;
+        (void)(*reader)->read_file_frames(buffer, after, std::min<nframes_t>(65536, (*reader)->file_frame_count() - after));
+        result.openAfter = total(stats.open.bytes);
+        result.streamAfterSeek = total(stats.stream.bytes);
+        return result;
+    };
+    const PhaseBytes with = phases(hybrid);
 
     QFile::remove(hybrid + QLatin1Char('c'));
     auto lossy = TAudioReader::open(hybrid);
     check(lossy && read_all(**lossy, 4099) != original, "without it the file reads, lossy");
+
+    const PhaseBytes without = phases(hybrid);
+    check(with.open > without.open && without.open > 0, "the correction file's open reads count for the open");
+    check(with.seek > without.seek && without.seek > 0, "the correction file's seek reads count for the seek");
+    check(with.openAfter == with.open && without.openAfter == without.open, "a seek and a read add nothing to the open");
+    check(with.streamAfterSeek > without.streamAfterSeek, "the correction file's reads after the seek count for the stream");
 }
 
 // After forget_position() the next read seeks, also to where the reader is,

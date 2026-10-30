@@ -29,14 +29,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class SFAudioReader : public TAudioDecoder
 {
 public:
-    explicit SFAudioReader(const QString& filename, const TAudioSourceOpener& opener = {});
+    explicit SFAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
     ~SFAudioReader() override;
 
     QString decoder_type() const override { return "sndfile"; }
 
     // libsndfile's major format of the file (SF_FORMAT_WAV, ...), 0 when it
     // cannot read it
-    static int major_format(TAudioByteSource& source);
+    static int major_format(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;

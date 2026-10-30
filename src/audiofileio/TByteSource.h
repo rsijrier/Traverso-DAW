@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "TAudioIOStats.h"
+#include "TByteStats.h"
 
 #include <QString>
 
@@ -13,29 +13,30 @@
 #include <vector>
 
 /**
- * @brief The bytes of one audio file: the only way a decoder reaches the
- * medium.
+ * @brief The bytes of one file: the only way a decoder reaches the medium.
+ * It knows bytes, positions, time and the medium, nothing of audio.
  *
  * The libraries pull their bytes themselves, in the middle of a decode, so the
  * line between reading and decoding runs here, below the decoders: libsndfile
  * and WavPack through their virtual IO, MAD and FAAD directly. Every read is
- * counted and timed into the decoder's TAudioIOStats.
+ * counted and timed into a TByteStats, which its user (a decoder) points at
+ * the kind of work going on.
  *
  * Small reads go through a block of BlockBytes: the parsers of MP4 and ADTS
  * read a few bytes at a time, tens of thousands of times when a file opens.
  *
  * A subclass gives the bytes; a test can give them from anywhere, with any
- * failure (TAudioSourceOpener).
+ * failure (TByteSourceOpener).
  *
  * One owner at a time, not for the audio thread: file IO.
  */
-class TAudioByteSource
+class TByteSource
 {
 public:
-    virtual ~TAudioByteSource() = default;
+    virtual ~TByteSource() = default;
 
     // fileName for reading, nullptr when it does not open
-    static std::unique_ptr<TAudioByteSource> open_file(const QString& fileName);
+    static std::unique_ptr<TByteSource> open_file(const QString& fileName);
 
     static constexpr qint64 BlockBytes = 16 * 1024;
 
@@ -59,8 +60,8 @@ public:
     // Why a read failed since the last call
     std::optional<QString> take_error();
 
-    // Where the reads are counted, in its current phase; it outlives this
-    void set_stats(TAudioIOStats* stats) { m_stats = stats; }
+    // Where the reads are counted; it outlives this, nullptr: not counted
+    void set_stats(TByteStats* stats) { m_stats = stats; }
 
 protected:
     // What is there without waiting for the medium: up to bytes from position
@@ -76,7 +77,7 @@ private:
     qint64 transfer(qint64 position, char* data, qint64 bytes);
 
     qint64 m_position{0};
-    TAudioIOStats* m_stats{nullptr};
+    TByteStats* m_stats{nullptr};
     std::optional<QString> m_error;
     // The bytes of the last small read, from m_blockStart on
     std::vector<char> m_block;
@@ -85,6 +86,6 @@ private:
 };
 
 // Opens the bytes of a file for a decoder, nullptr when they are not there. An
-// empty one opens the file (TAudioByteSource::open_file()); tests give their
+// empty one opens the file (TByteSource::open_file()); tests give their
 // own.
-using TAudioSourceOpener = std::function<std::unique_ptr<TAudioByteSource>(const QString& fileName)>;
+using TByteSourceOpener = std::function<std::unique_ptr<TByteSource>(const QString& fileName)>;

@@ -686,7 +686,7 @@ From the GPU waveform test program, clip edges in variant A (branch
     the clip, the first may lose up to 63 frames inside it. Not tested; the
     clip edge test of the test program (`clipedges/`) can run through
     `device_columns()`.
-- **T71 Reading and decoding apart: `TAudioByteSource`** (Remon, 2026-10-30;
+- **T71 Reading and decoding apart: `TAudioByteSource` (now `TByteSource`)** (Remon, 2026-10-30;
   branch `audio-byte-source`). Rule: no disk access the scheduler does not
   know about.
   - **Step 1, built:** every decoder reaches its file through one byte

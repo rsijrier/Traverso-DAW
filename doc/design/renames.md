@@ -10,6 +10,10 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-10-30 | `TAudioByteSource` (`TAudioByteSource.h/.cpp`) | `TByteSource` (`TByteSource.h/.cpp`) | bytes, positions, time and the medium; nothing of audio (T71) |
+| 2026-10-30 | `TAudioTransfer` | `TByteTransfer` (`TByteStats.h`) | |
+| 2026-10-30 | `cached`, `medium`, `untold` in `TAudioPhaseStats` | `TByteStats` (`TAudioPhaseStats::bytes`) | what the source measures; the source counts into a `TByteStats*`, the decoder points it at the phase (`TAudioDecoder::set_phase()`) |
+| 2026-10-30 | `TAudioSourceOpener`, `TAudioFileSource` | `TByteSourceOpener`, `TFileByteSource` | |
 | 2026-10-28 | `Mixer` (`src/dsp/Mixer.h`) | `TBufferOperations` (peak, gain, mix on a buffer's samples) and `TFaderLaw` (the fader position mapping and its limits) | split (T52); not "kernels": in DSP a kernel is a filter kernel, and not all four mix (`update_peak` measures, `apply_gain` mixes nothing); not "sample": in a DAW a sample is also a sound snippet (as with `TSampleBuffer`) |
 | 2026-10-28 | `Mixer::compute_peak`, `apply_gain_to_buffer`, `mix_buffers_with_gain`, `mix_buffers_no_gain` | `TBufferOperations::update_peak`, `apply_gain`, `mix_with_gain`, `mix` | |
 | 2026-10-28 | `default_compute_peak` etc. | `portable_update_peak`, `portable_apply_gain`, `portable_mix_with_gain`, `portable_mix` | `x86_sse_*` and `accel_*` kept |

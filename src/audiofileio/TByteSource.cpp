@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Remon Sijrier
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "TAudioByteSource.h"
+#include "TByteSource.h"
 
 #include <QFile>
 
@@ -24,12 +24,12 @@
 static_assert(sizeof(off_t) == 8, "a file offset of 32 bits cuts positions past 2 GiB off");
 #endif
 
-quint64 TAudioByteSource::now_nanoseconds()
+quint64 TByteSource::now_nanoseconds()
 {
     return quint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
-qint64 TAudioByteSource::read(void* data, qint64 bytes)
+qint64 TByteSource::read(void* data, qint64 bytes)
 {
     if (bytes <= 0) {
         return 0;
@@ -60,9 +60,9 @@ qint64 TAudioByteSource::read(void* data, qint64 bytes)
     return got > 0 || !m_error ? got : -1;
 }
 
-qint64 TAudioByteSource::transfer(qint64 position, char* data, qint64 bytes)
+qint64 TByteSource::transfer(qint64 position, char* data, qint64 bytes)
 {
-    TAudioPhaseStats* stats = m_stats ? &m_stats->current() : nullptr;
+    TByteStats* stats = m_stats;
 
     const quint64 start = now_nanoseconds();
     const std::optional<qint64> cached = read_cached(position, data, bytes);
@@ -78,7 +78,7 @@ qint64 TAudioByteSource::transfer(qint64 position, char* data, qint64 bytes)
         // Every read counts, also one that gave nothing: its wait is the
         // interesting part on a stalling medium
         if (stats) {
-            TAudioTransfer& kind = cached ? stats->medium : stats->untold;
+            TByteTransfer& kind = cached ? stats->medium : stats->untold;
             kind.add(quint64(std::max<qint64>(waited, 0)), now_nanoseconds() - afterCached);
             // A read that met an error, also one that gave some bytes first
             if (!erredBefore && m_error) {
@@ -92,7 +92,7 @@ qint64 TAudioByteSource::transfer(qint64 position, char* data, qint64 bytes)
     return got;
 }
 
-bool TAudioByteSource::seek(qint64 position)
+bool TByteSource::seek(qint64 position)
 {
     if (position < 0) {
         return false;
@@ -101,23 +101,23 @@ bool TAudioByteSource::seek(qint64 position)
     return true;
 }
 
-std::optional<QString> TAudioByteSource::take_error()
+std::optional<QString> TByteSource::take_error()
 {
     return std::exchange(m_error, std::nullopt);
 }
 
-std::optional<qint64> TAudioByteSource::read_cached(qint64, void*, qint64)
+std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
 {
     return std::nullopt;
 }
 
-void TAudioByteSource::read_failed(const QString& reason)
+void TByteSource::read_failed(const QString& reason)
 {
     m_error = reason;
 }
 
 // The bytes of a file on a disk or a network
-class TAudioFileSource : public TAudioByteSource
+class TFileByteSource : public TByteSource
 {
 public:
     bool open(const QString& fileName)
@@ -213,9 +213,9 @@ private:
 #endif
 };
 
-std::unique_ptr<TAudioByteSource> TAudioByteSource::open_file(const QString& fileName)
+std::unique_ptr<TByteSource> TByteSource::open_file(const QString& fileName)
 {
-    auto source = std::make_unique<TAudioFileSource>();
+    auto source = std::make_unique<TFileByteSource>();
     if (!source->open(fileName)) {
         return nullptr;
     }
