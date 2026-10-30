@@ -749,6 +749,13 @@ From the GPU waveform test program, clip edges in variant A (branch
     - `size()` makes a system call each time, and MAD asks it through
       `at_end()` at every buffer fill: it can be a variable.
     - FAAD makes a new `QByteArray` per packet: allocations per decode.
+    - MP3 seek pre-roll by bitrate (candidate once scrubbing or many seeks
+      weigh in the measurements; since step 2b every reset is a real seek):
+      `MadAudioReader` decodes `PreRollFrames` (16) before the target
+      whatever the bitrate, about 4 ms per seek (measured, 2026-10-30).
+      The bit reservoir reaches back at most 511 bytes (`main_data_begin`,
+      9 bits), plus one frame for the filterbank's overlap: at 128 kbps
+      (frames of about 418 bytes) about 3 frames, at 32 kbps about 6.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the
