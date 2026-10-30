@@ -688,7 +688,7 @@ From the GPU waveform test program, clip edges in variant A (branch
     `device_columns()`.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
-- **T72 *BSD: allow it or not** (Remon, 2026-10-30). `TPlatform.h` stops the
+- **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the
   build unless `Q_OS_LINUX`, `Q_OS_MACOS` or `Q_OS_WIN` is defined, so FreeBSD,
   OpenBSD and NetBSD are a build error now. Qt gives them `Q_OS_FREEBSD` and
   so on plus `Q_OS_UNIX`, not `Q_OS_LINUX`. Not checked: whether Traverso ever
