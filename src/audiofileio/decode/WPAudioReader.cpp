@@ -21,15 +21,82 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "WPAudioReader.h"
 #include <QString>
+#include <algorithm>
+#include <cstdio>
 #include "TAudioBuffer.h"
 #include "TLog.h"
 
-WPAudioReader::WPAudioReader(const QString& filename)
-    : TAudioDecoder(filename)
+// WavPack's stream reader on a byte source. id: the file, or its correction
+// file
+
+static TAudioByteSource* source_of(void* id)
+{
+    return static_cast<TAudioByteSource*>(id);
+}
+
+static int32_t source_read(void* id, void* data, int32_t bytes)
+{
+    // A failure stays with the source, which the decoder asks: to WavPack it
+    // is a short read
+    return int32_t(std::max<qint64>(source_of(id)->read(data, bytes), 0));
+}
+
+static int64_t source_position(void* id)
+{
+    return source_of(id)->position();
+}
+
+static int source_seek_absolute(void* id, int64_t position)
+{
+    return source_of(id)->seek(position) ? 0 : -1;
+}
+
+static int source_seek_relative(void* id, int64_t delta, int mode)
+{
+    TAudioByteSource* source = source_of(id);
+    const qint64 position = mode == SEEK_SET ? delta : mode == SEEK_CUR ? source->position() + delta : source->size() + delta;
+    return source->seek(position) ? 0 : -1;
+}
+
+// The byte WavPack read last goes back: the next read gives it again
+static int source_push_back(void* id, int byte)
+{
+    return source_of(id)->seek(source_of(id)->position() - 1) ? byte : EOF;
+}
+
+static int64_t source_length(void* id)
+{
+    return source_of(id)->size();
+}
+
+static int source_can_seek(void*)
+{
+    return 1;
+}
+
+static WavpackContext* open_on_source(TAudioByteSource& source, TAudioByteSource* correction, char* error)
+{
+    static WavpackStreamReader64 reader{source_read,          nullptr,          source_position, source_seek_absolute, source_seek_relative,
+                                        source_push_back,     source_length,    source_can_seek, nullptr,              nullptr};
+    source.seek(0);
+    return WavpackOpenFileInputEx64(&reader, &source, correction, error, OPEN_NORMALIZE | OPEN_WVC, 0);
+}
+
+
+WPAudioReader::WPAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+    : TAudioDecoder(filename, opener)
 {
     char error[80];
 
-    m_wp = WavpackOpenFileInput(m_fileName.toUtf8().data(), error, OPEN_NORMALIZE | OPEN_WVC, 0);
+    TAudioByteSource* source = open_source(m_fileName);
+    if (!source) {
+        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
+        return;
+    }
+    // The correction file of a hybrid file, when there is one beside it
+    TAudioByteSource* correction = open_source(m_fileName + QLatin1Char('c'));
+
+    m_wp = open_on_source(*source, correction, error);
 
     if (m_wp == nullptr) {
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(error)};
@@ -53,11 +120,11 @@ WPAudioReader::~WPAudioReader()
 }
 
 
-bool WPAudioReader::can_decode(const QString& filename)
+bool WPAudioReader::can_decode(TAudioByteSource& source)
 {
     char error[80];
 
-    WavpackContext *wp = WavpackOpenFileInput(filename.toUtf8().data(), error, OPEN_NORMALIZE | OPEN_WVC, 0);
+    WavpackContext *wp = open_on_source(source, nullptr, error);
 
     if (wp == nullptr) {
         return false;
@@ -74,7 +141,7 @@ void WPAudioReader::print_libwavpack_version()
 }
 
 
-TAudioFileStatus WPAudioReader::seek(nframes_t frame)
+TAudioFileStatus WPAudioReader::seek_frame(nframes_t frame)
 {
     Q_ASSERT(frame < m_frames);
     if (!m_wp) {
@@ -90,7 +157,7 @@ TAudioFileStatus WPAudioReader::seek(nframes_t frame)
 }
 
 
-TAudioFileResult WPAudioReader::read(TAudioBuffer& fileIOBuffer, nframes_t count)
+TAudioFileResult WPAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
 {
     if (count == 0) {
         return {};

@@ -63,8 +63,8 @@ public:
     // The file parses as a scenario, or why not
     [[nodiscard]] static std::expected<void, QString> check(const QString& fileName);
 
-    TAudioFileStatus seek(nframes_t frame) override;
-    TAudioFileResult read(TAudioBuffer& buffer, nframes_t count) override;
+    TAudioFileStatus seek_frame(nframes_t frame) override;
+    TAudioFileResult read_frames(TAudioBuffer& buffer, nframes_t count) override;
 
 private:
     struct Signal

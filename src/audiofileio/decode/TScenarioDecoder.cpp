@@ -253,7 +253,7 @@ float TScenarioDecoder::sample(const Signal& signal, nframes_t frame) const
     return 0.0f;
 }
 
-TAudioFileStatus TScenarioDecoder::seek(nframes_t frame)
+TAudioFileStatus TScenarioDecoder::seek_frame(nframes_t frame)
 {
     Q_ASSERT(frame < m_frames);
     for (const Fault& fault : m_faults) {
@@ -264,7 +264,7 @@ TAudioFileStatus TScenarioDecoder::seek(nframes_t frame)
     return seek_landed(frame);
 }
 
-TAudioFileResult TScenarioDecoder::read(TAudioBuffer& buffer, nframes_t count)
+TAudioFileResult TScenarioDecoder::read_frames(TAudioBuffer& buffer, nframes_t count)
 {
     if (count == 0) {
         return {};

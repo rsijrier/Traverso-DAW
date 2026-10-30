@@ -31,9 +31,9 @@ bool TAudioReader::can_read(const QString& fileName)
     return can_decode_audio(fileName);
 }
 
-std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName)
+std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TAudioSourceOpener& opener)
 {
-    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName);
+    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName, opener);
     if (!decoder) {
         return std::unexpected(std::move(decoder.error()));
     }
@@ -67,6 +67,11 @@ nframes_t TAudioReader::file_frame_count() const
 TTimeRef TAudioReader::length() const
 {
     return m_decoder->length();
+}
+
+const TAudioIOStats& TAudioReader::io_stats() const
+{
+    return m_decoder->stats();
 }
 
 QString TAudioReader::decoder_type() const

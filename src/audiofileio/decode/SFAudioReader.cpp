@@ -29,8 +29,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TLog.h"
 
 
-SFAudioReader::SFAudioReader(const QString& filename)
-    : TAudioDecoder(filename)
+// libsndfile's virtual IO on a byte source
+
+static sf_count_t source_length(void* source)
+{
+    return static_cast<TAudioByteSource*>(source)->size();
+}
+
+static sf_count_t source_seek(sf_count_t offset, int whence, void* userData)
+{
+    TAudioByteSource* source = static_cast<TAudioByteSource*>(userData);
+    const qint64 position = whence == SEEK_SET ? offset : whence == SEEK_CUR ? source->position() + offset : source->size() + offset;
+    return source->seek(position) ? position : -1;
+}
+
+static sf_count_t source_read(void* data, sf_count_t bytes, void* source)
+{
+    // A failure stays with the source, which the decoder asks: to libsndfile
+    // it is a short read
+    return std::max<sf_count_t>(static_cast<TAudioByteSource*>(source)->read(data, bytes), 0);
+}
+
+static sf_count_t source_tell(void* source)
+{
+    return static_cast<TAudioByteSource*>(source)->position();
+}
+
+static SNDFILE* open_on_source(TAudioByteSource& source, SF_INFO& info)
+{
+    static SF_VIRTUAL_IO io{source_length, source_seek, source_read, nullptr, source_tell};
+    source.seek(0);
+    return sf_open_virtual(&io, SFM_READ, &info, &source);
+}
+
+
+SFAudioReader::SFAudioReader(const QString& filename, const TAudioSourceOpener& opener)
+    : TAudioDecoder(filename, opener)
 {
     /* although libsndfile says we don't need to set this,
 	valgrind and source code shows us that we do.
@@ -38,14 +72,13 @@ SFAudioReader::SFAudioReader(const QString& filename)
 	*/
     memset (&m_sfinfo, 0, sizeof(m_sfinfo));
 
-    m_file.setFileName(m_fileName);
-
-    if (!m_file.open(QIODevice::ReadOnly)) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, m_file.errorString()};
+    TAudioByteSource* source = open_source(m_fileName);
+    if (!source) {
+        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
         return;
     }
 
-    if ((m_sf = sf_open_fd (m_file.handle(), SFM_READ, &m_sfinfo, false)) == nullptr) {
+    if ((m_sf = open_on_source(*source, m_sfinfo)) == nullptr) {
         // libsndfile's last open error is global: with files opened at the
         // same time on other threads it may be theirs (task T26)
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(sf_strerror(nullptr))};
@@ -68,7 +101,7 @@ SFAudioReader::~SFAudioReader()
 }
 
 
-int SFAudioReader::major_format(const QString& filename)
+int SFAudioReader::major_format(TAudioByteSource& source)
 {
     SF_INFO infos;
 
@@ -77,14 +110,7 @@ int SFAudioReader::major_format(const QString& filename)
 	*/
     memset (&infos, 0, sizeof(infos));
 
-    QFile file(filename);
-
-    // A probe: a file that does not open is one libsndfile cannot read
-    if (!file.open(QIODevice::ReadOnly)) {
-        return 0;
-    }
-
-    SNDFILE* sndfile = sf_open_fd(file.handle(), SFM_READ, &infos, false);
+    SNDFILE* sndfile = open_on_source(source, infos);
 
     //is it supported by libsndfile?
     if (!sndfile) {
@@ -97,7 +123,7 @@ int SFAudioReader::major_format(const QString& filename)
 }
 
 
-TAudioFileStatus SFAudioReader::seek(nframes_t frame)
+TAudioFileStatus SFAudioReader::seek_frame(nframes_t frame)
 {
     Q_ASSERT(frame < m_frames);
     if (!m_sf) {
@@ -132,7 +158,7 @@ static float* interleaved_scratch(size_t samples)
     return scratch.data();
 }
 
-TAudioFileResult SFAudioReader::read(TAudioBuffer& fileIOBuffer, nframes_t count)
+TAudioFileResult SFAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
 {
     if (count == 0) {
         return {};

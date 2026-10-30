@@ -22,8 +22,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #pragma once
 
+#include "TAudioByteSource.h"
 #include "TAudioFileError.h"
 #include "TAudioBuffer.h"
+#include "TAudioIOStats.h"
 #include "TResamplerChoice.h"
 #include "TTimeRef.h"
 #include "TTypes.h"
@@ -79,8 +81,8 @@ public:
     static bool can_read(const QString& fileName);
     // A reader of fileName, at the file's own rate until
     // set_output_rate_and_resampler(); or why there is none (NotFound,
-    // CannotOpen)
-    [[nodiscard]] static std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> open(const QString& fileName);
+    // CannotOpen). opener gives the file's bytes (tests).
+    [[nodiscard]] static std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> open(const QString& fileName, const TAudioSourceOpener& opener = {});
 
     ~TAudioReader();
 
@@ -90,6 +92,9 @@ public:
     nframes_t file_frame_count() const;
     TTimeRef length() const;
     QString decoder_type() const;
+    // What the decoder read and decoded since it opened: for this reader's
+    // thread
+    const TAudioIOStats& io_stats() const;
 
     // The output rate of read(), and the resampler for it when it is not the
     // file's rate (a backend and one of its qualities). The reader has no

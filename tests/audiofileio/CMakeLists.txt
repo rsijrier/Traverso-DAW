@@ -50,3 +50,11 @@ add_test(NAME audio_round_trip COMMAND traverso_audio_round_trip_test)
 add_executable(traverso_reader_buffer_reuse_test test_reader_buffer_reuse.cpp)
 target_link_libraries(traverso_reader_buffer_reuse_test PRIVATE traverso_compiler_settings traversoaudiofileio traversodsp traversosupport Qt6::Core)
 add_test(NAME reader_buffer_reuse COMMAND traverso_reader_buffer_reuse_test)
+
+# Headless test of TAudioByteSource: what a read gives and how it is counted,
+# every format through a source in memory (the same samples, open, seek and
+# stream apart, a read that fails), WavPack's correction file
+add_executable(traverso_audio_byte_source_test test_audio_byte_source.cpp)
+target_link_libraries(traverso_audio_byte_source_test PRIVATE traverso_compiler_settings traversoaudiofileio traversodsp traversosupport Qt6::Core
+                      PkgConfig::SNDFILE)
+add_test(NAME audio_byte_source COMMAND traverso_audio_byte_source_test)

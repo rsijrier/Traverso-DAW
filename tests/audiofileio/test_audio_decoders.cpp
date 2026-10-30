@@ -11,7 +11,7 @@
 // then, zeros and 0 after (the error state of TAudioDecoder's contract).
 //
 // The files are made here: a scenario (the signal described, no samples),
-// WAV, FLAC, Ogg Vorbis and MP3 with libsndfile, WavPack and AAC (ADTS) with
+// WAV, AIFF, W64, RF64, CAF, FLAC, Ogg Vorbis, Opus and MP3 with libsndfile, WavPack and AAC (ADTS) with
 // Traverso's own writers, and when ffmpeg is installed AAC (ADTS and M4A)
 // and an MP3 without gapless information with ffmpeg. Each channel holds a sweep of its own, so channels that are
 // swapped or silent show, and audio that is shifted shows too (a sweep
@@ -582,7 +582,12 @@ int main()
         {"Scenario (test signals)", "tscenario", stereo, write_scenario, true, 1e-6f},
         {"WAV 16 bit (sndfile)", "16.wav", stereo, sndfile(SF_FORMAT_WAV | SF_FORMAT_PCM_16), true, 1.0f / 32768},
         {"FLAC 24 bit (sndfile)", "flac", stereo, sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
+        {"AIFF 24 bit (sndfile)", "aiff", stereo, sndfile(SF_FORMAT_AIFF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
+        {"W64 24 bit (sndfile)", "w64", stereo, sndfile(SF_FORMAT_W64 | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
+        {"RF64 float (sndfile)", "rf64", stereo, sndfile(SF_FORMAT_RF64 | SF_FORMAT_FLOAT), true, 0.0f},
+        {"CAF 24 bit (sndfile)", "caf", stereo, sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
         {"Ogg Vorbis (sndfile)", "ogg", stereo, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), false, 0.0f},
+        {"Ogg Opus (sndfile)", "opus", Source{48000, 2}, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), false, 0.0f},
         {"MP3 with a LAME tag", "mp3", stereo, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
         {"MP3 MPEG-2 mono 22.05 kHz", "22.mp3", mono22, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
         // The tag's padding is a lie here: the file holds more frames than

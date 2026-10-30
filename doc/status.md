@@ -686,6 +686,27 @@ From the GPU waveform test program, clip edges in variant A (branch
     the clip, the first may lose up to 63 frames inside it. Not tested; the
     clip edge test of the test program (`clipedges/`) can run through
     `device_columns()`.
+- **T71 Reading and decoding apart: `TAudioByteSource`** (Remon, 2026-10-30;
+  branch `audio-byte-source`). Rule: no disk access the scheduler does not
+  know about.
+  - **Step 1, built:** every decoder reaches its file through one byte
+    source; open, seek and stream counted apart, page cache apart from the
+    medium, decode time = call time − read time. No scheduler change.
+  - **Step 2:** `prefetch()` into a window in own memory, with a floor of
+    16 KB and a margin that grows after a miss; exact byte ranges for PCM,
+    MAD and FAAD; the counter "unplanned reads", target zero.
+    The kernel's readahead hides the medium in step 1 (a slow decoder finds
+    its pages read already): the prefetch must be the only reader, for
+    instance `posix_fadvise(POSIX_FADV_RANDOM)` on the stream's file, only
+    with the prefetch in place (without it the library's small reads lose
+    their readahead). Measure both.
+  - **Step 3:** two phases in `fill_realtime_buffers()` and the peak build
+    (meets T4 and T6).
+  - **Step 4 (after T58, T60):** disk slots and a decode pool (T61); a miss
+    asks the scheduler; opening and scanning as an idle task; the MP3 seek
+    index kept next to the peak file (own task).
+  - Scenario files are still read through `QFile`: a small text file, no
+    audio.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the

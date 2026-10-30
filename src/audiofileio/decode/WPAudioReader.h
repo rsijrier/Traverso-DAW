@@ -27,17 +27,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class WPAudioReader : public TAudioDecoder
 {
 public:
-    explicit WPAudioReader(const QString& filename);
+    explicit WPAudioReader(const QString& filename, const TAudioSourceOpener& opener = {});
     ~WPAudioReader() override;
 
     QString decoder_type() const override { return "wavpack"; }
 
-    static bool can_decode(const QString& filename);
+    static bool can_decode(TAudioByteSource& source);
 
     static void print_libwavpack_version();
 
-    TAudioFileStatus seek(nframes_t frame) override;
-    TAudioFileResult read(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+    TAudioFileStatus seek_frame(nframes_t frame) override;
+    TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
     // readFrames frames WavPack unpacked into the channel buffers, as float

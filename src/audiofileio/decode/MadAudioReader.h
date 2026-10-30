@@ -27,15 +27,14 @@ extern "C" {
 #include <mad.h>
 }
 
-#include <QFile>
-
 class K3bMad
 {
 public:
     K3bMad();
     ~K3bMad();
 
-    bool open(const QString& filename);
+    // From the start of input, which outlives this
+    bool open(TAudioByteSource* input);
 
     /**
      * @return true if the mad stream contains data
@@ -98,7 +97,7 @@ public:
     mad_timer_t*  madTimer;
 
 private:
-    QFile m_inputFile;
+    TAudioByteSource* m_input{nullptr};
     bool m_madStructuresInitialized;
     unsigned char* m_inputBuffer;
     bool m_bInputError;
@@ -114,15 +113,15 @@ private:
 class MadAudioReader : public TAudioDecoder
 {
 public:
-    explicit MadAudioReader(const QString& filename);
+    explicit MadAudioReader(const QString& filename, const TAudioSourceOpener& opener = {});
     ~MadAudioReader() override;
 
     QString decoder_type() const override { return "mad"; }
 
-    static bool can_decode(const QString& filename);
+    static bool can_decode(TAudioByteSource& source);
 
-    TAudioFileStatus seek(nframes_t frame) override;
-    TAudioFileResult read(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+    TAudioFileStatus seek_frame(nframes_t frame) override;
+    TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 protected:
     // The decoder's delay in samples (the synthesis filter), as mpg123 and
@@ -149,6 +148,7 @@ protected:
 
     class MadDecoderPrivate;
     MadDecoderPrivate* d;
+    TAudioByteSource* m_source{nullptr};
 };
 
 
