@@ -162,16 +162,24 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   change: Remon confirms.
 - **T12 (medium): TTimeRef frame-conversion cleanup.** One symmetric style
   (`from_frames` ↔ `frame_at_or_before/after`), one call for rate-to-rate
-  counts, one call for `to_nframes(frame_*(...))` (8 sites). Text/QTime family
-  later.
+  counts, one call for `to_nframes(frame_*(...))` (8 sites). The text/QTime
+  family moves to core in the Qt-free step below.
+  Order (Remon, 2026-10-30): first the frame-conversion cleanup above, then
+  Qt-free (the revision goal below), with the higher universal rate in the
+  same opening, so TTimeRef is not broken open twice.
   Revision goal (Remon, 2026-10-30): TTimeRef becomes fully independent of
   Qt, a bare arithmetic type in support, plain C++. Everything that needs
   Qt moves to core.
   - In support (plain C++):
-    - `qint64` to `int64_t`. Careful: `qint64` is `long long`, `int64_t`
-      is `long` on Linux x86-64; the overloads on `qint64`, `int` and
-      `uint64_t` can become ambiguous. Solve it together with the private
-      raw constructor and the named factories, not as a rename on its own.
+    - `qint64` to `int64_t`. Careful: `qint64` is always `long long`;
+      `int64_t` is `long` on Linux x86-64 but `long long` on macOS and
+      Windows, the same type as `qint64` there. Overloads on `qint64`,
+      `int` and `uint64_t` that compile on Linux collide on macOS and
+      Windows (and the reverse). The rule that solves it: one integer type
+      in the API, no overloads on several integer types, the meaning in
+      the name (the private raw constructor and named factories, e.g. one
+      for universal units and one for frames at a rate). Not as a rename
+      on its own.
     - `Q_ASSERT` out (9 `Q_ASSERT` + 3 `Q_ASSERT_X` in `TTimeRef.h`/`.cpp`,
       partly in `T_REALTIME_SAFE` functions), replaced by an assert macro
       of support's own.
@@ -188,6 +196,12 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   - Gain: `TTimeRef.h` now pulls Qt headers into every library that uses
     it (among others through `TIOStream.h`); a Qt-free TTimeRef removes
     that.
+  - With it, the timebase: the universal rate from 28,224,000 to
+    112,896,000 for rates above 192 kHz, and the upgrade of old projects
+    (by the project file converter, T42; no load code for old files). It
+    touches the same raw constructor and factories (Foundations: "TimeRef
+    enforcement and timebase"; T27; "Decisions waiting": the upgrade path
+    before a release).
 - **T13 (medium): clocks.** One function per domain: monotonic for intervals
   (driver cycles, scheduler, rings, autorepeat, profiling), wall time only
   where stored; stored times in UTC (backup file name, session log header).
