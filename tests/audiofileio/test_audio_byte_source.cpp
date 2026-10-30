@@ -299,7 +299,7 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
           what);
 
     // A seek back, to a place that has to be found again
-    (*reader)->read_file_frames(buffer, (*reader)->file_frame_count() / 3, step);
+    (void)(*reader)->read_file_frames(buffer, (*reader)->file_frame_count() / 3, step);
     std::snprintf(what, sizeof(what), "%s: a seek counts apart, the read after it as stream", format.name);
     check(stats.seek.calls == 1 && stats.seek.nanoseconds >= stats.seek.read_nanoseconds() && stats.stream.calls == stream.calls + 1, what);
 }
@@ -527,7 +527,7 @@ static void test_scenario(const QTemporaryDir& dir)
         return;
     }
     TAudioBuffer buffer;
-    (*reader)->read_file_frames(buffer, 0, 4800);
+    (void)(*reader)->read_file_frames(buffer, 0, 4800);
     const TAudioPhaseStats& stream = (*reader)->io_stats().stream;
     check(stream.calls == 1 && stream.frames == 4800 && stream.read_nanoseconds() == 0, "a scenario reads no bytes: all its time is decoding");
 }
