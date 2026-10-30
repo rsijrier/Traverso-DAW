@@ -125,6 +125,14 @@ int TBufferedAudioStream::step(const StepInfo& info)
     static thread_local TAudioBuffer fileIOBuffer;
     TBufferedAudioStreamStatus& status = get_buffer_status();
 
+    // A refill from before a seek that came while it waited for a thread: the
+    // seek step comes next. A seek step is never stale: a song seeks once
+    // at a time, and this stream's own seeks run in its steps.
+    m_stepGeneration = info.generation;
+    if (!info.seek && stale()) {
+        return -1;
+    }
+
     if (info.seek) {
         if (info.sampleRateChanged) {
             set_output_rate_and_resampler(int(info.outputRate), info.resampler);
@@ -148,6 +156,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
     // Out of sync: seek to where the transport is (a reader whose window the
     // transport entered); otherwise read or write all there is room for
     if (status.out_of_sync()) {
+        m_stepGeneration = next_generation();
         rb_seek_to_transport_location(fileIOBuffer, info.transportLocation);
     } else {
         process_realtime_buffers(fileIOBuffer);

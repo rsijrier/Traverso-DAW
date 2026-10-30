@@ -127,11 +127,8 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
     // Where a seek fails the decoder may be anywhere: no position then
     m_frame.reset();
     if (!m_resampler) {
-        // A decoder that reads from there already does not seek
-        if (!m_decoder->reads_from(frame)) {
-            if (TAudioFileStatus sought = m_decoder->seek(frame); !sought) {
-                return std::unexpected(std::move(sought.error()));
-            }
+        if (TAudioFileStatus sought = m_decoder->seek(frame); !sought) {
+            return std::unexpected(std::move(sought.error()));
         }
         m_frame = frame;
         return true;
@@ -158,14 +155,18 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
     if (fileFrame >= file_frame_count()) {
         return false;
     }
-    if (!m_decoder->reads_from(fileFrame)) {
-        if (TAudioFileStatus sought = m_decoder->seek(fileFrame); !sought) {
-            return std::unexpected(std::move(sought.error()));
-        }
+    if (TAudioFileStatus sought = m_decoder->seek(fileFrame); !sought) {
+        return std::unexpected(std::move(sought.error()));
     }
     m_dropFrames = TTimeRef::to_nframes(TTimeRef::frame_at_or_before(position - common, m_outputRate));
     m_frame = frame;
     return true;
+}
+
+void TAudioReader::forget_position()
+{
+    m_frame.reset();
+    reset();
 }
 
 TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& location, nframes_t count)

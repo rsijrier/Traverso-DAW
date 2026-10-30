@@ -15,6 +15,8 @@
 #include "TAudioByteSource.h"
 #include "TAudioReader.h"
 #include "TAudioWriter.h"
+#include "TResamplerChoice.h"
+#include "TTimeRef.h"
 
 #include <QDir>
 #include <QFile>
@@ -24,6 +26,7 @@
 
 #include <sndfile.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -466,6 +469,48 @@ static void test_correction_file(const QTemporaryDir& dir)
     check(lossy && read_all(**lossy, 4099) != original, "without it the file reads, lossy");
 }
 
+// After forget_position() the next read seeks, also to where the reader is,
+// and gives what a fresh reader gives there, with a resampler too
+static void test_forget_position(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.wav"));
+    const TTimeRef start(TTimeRef::UNIVERSAL_SAMPLE_RATE);
+    for (const uint rate : {Rate, 44100u}) {
+        char what[120];
+        auto reader = TAudioReader::open(path);
+        auto fresh = TAudioReader::open(path);
+        if (!reader || !fresh || !(*reader)->set_output_rate_and_resampler(rate, TResamplerChoice{}) ||
+            !(*fresh)->set_output_rate_and_resampler(rate, TResamplerChoice{})) {
+            check(false, "the readers open at the rate");
+            return;
+        }
+        TAudioBuffer first;
+        TAudioBuffer again;
+        (void)(*fresh)->read(first, start, 4096);
+        const TTimeRef next = start + TTimeRef(nframes_t(4096), rate);
+        (void)(*reader)->read(again, start, 4096);
+        (void)(*reader)->read(again, next, 4096);
+        const quint64 seeks = (*reader)->io_stats().seek.calls;
+        (void)(*reader)->read(again, next + TTimeRef(nframes_t(4096), rate), 16);
+        std::snprintf(what, sizeof(what), "at %u Hz a read that goes on does not seek", rate);
+        check((*reader)->io_stats().seek.calls == seeks, what);
+
+        (*reader)->forget_position();
+        (void)(*reader)->read(again, start, 4096);
+        std::snprintf(what, sizeof(what), "at %u Hz forget_position() seeks", rate);
+        check((*reader)->io_stats().seek.calls == seeks + 1, what);
+        std::snprintf(what, sizeof(what), "at %u Hz it reads as a fresh reader", rate);
+        check(std::equal(first.get_channel_buffer(0).get_data(4096), first.get_channel_buffer(0).get_data(4096) + 4096, again.get_channel_buffer(0).get_data(4096)), what);
+
+        // To the very frame the decoder is at: a seek all the same
+        const TTimeRef end = start + TTimeRef(nframes_t(4096), rate);
+        (*reader)->forget_position();
+        (void)(*reader)->read(again, end, 16);
+        std::snprintf(what, sizeof(what), "at %u Hz also to the frame the reader is at", rate);
+        check((*reader)->io_stats().seek.calls == seeks + 2, what);
+    }
+}
+
 static void test_scenario(const QTemporaryDir& dir)
 {
     const QString path = dir.filePath(QStringLiteral("signal.tscenario"));
@@ -529,6 +574,7 @@ int main()
     test_cache_or_medium();
 #endif
     test_correction_file(dir);
+    test_forget_position(dir);
     test_scenario(dir);
 
     if (failures) {

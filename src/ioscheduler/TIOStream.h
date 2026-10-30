@@ -57,6 +57,9 @@ public:
         bool seek{false};
         TTimeRef seekLocation;
         TTimeRef transportLocation;
+        // The stream's generation when the step was made: a step of an older
+        // one is not wanted any more
+        quint64 generation{0};
         bool sampleRateChanged{false};
         uint outputRate{0};
         Resampler resampler;
@@ -64,6 +67,13 @@ public:
     };
 
     virtual ~TIOStream() = default;
+
+    // Raised for every seek of the stream, not per song: a stream also seeks
+    // on its own, to get back in sync. Work of an older generation is thrown
+    // away where it arrives; it is not stopped. Any thread.
+    quint64 next_generation() { return m_generation.fetch_add(1) + 1; }
+    quint64 generation() const { return m_generation.load(); }
+
 
     // What the scheduler needs to know, the transport being at
     // transportLocation: whether it has work, whether its fill decides about
@@ -86,6 +96,9 @@ public:
     // thread, when no step of it runs: the ring buffers go. Its owner deletes
     // it once remove_stream() returned.
     virtual void retire() = 0;
+
+private:
+    std::atomic<quint64> m_generation{0};
 };
 
 // 8 bytes: the scheduler keeps it in a lock-free std::atomic (after the

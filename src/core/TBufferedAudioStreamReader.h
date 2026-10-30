@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 class TAudioReader;
+struct TAudioIOStats;
 class AudioBus;
 class TLocation;
 
@@ -67,6 +68,9 @@ public :
     // and zeros past its end (TAudioReader).
     TAudioFileResult file_read(TAudioBuffer &buffer, const TTimeRef& fileLocation, nframes_t count) const;
     TAudioFileResult file_read_frames(TAudioBuffer &buffer, nframes_t firstFrame, nframes_t count) const;
+
+    // What the file's reader read and decoded: for the thread that steps
+    const TAudioIOStats& io_stats() const;
 
 	int init();
 	int get_error() const {return m_error;}

@@ -121,6 +121,9 @@ public:
     // firstFrame: the frames that came from the file, and the error of this
     // read when it failed
     TAudioFileResult read_file_frames(TAudioBuffer& buffer, nframes_t firstFrame, nframes_t count);
+    // A seek starts from nothing: no position, the next read() seeks the
+    // decoder, also to the frame it is at, and the resampler keeps nothing
+    void forget_position();
 
 private:
     explicit TAudioReader(std::unique_ptr<TAudioDecoder> decoder);

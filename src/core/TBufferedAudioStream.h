@@ -63,6 +63,12 @@ public :
 
 
 protected:
+    // A seek came after this step's generation: what it read is not wanted
+    bool stale() const { return generation() != m_stepGeneration; }
+
+    // The generation of the step that runs
+    quint64 m_stepGeneration{0};
+
     TBufferedAudioStreamStatus		m_bufferstatus;
 
     moodycamel::BlockingReaderWriterCircularBuffer<TQueueBufferSlot*> *m_rtBufferSlotsQueue;
