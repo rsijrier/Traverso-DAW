@@ -15,6 +15,7 @@
 #include "TAudioReader.h"
 #include "TAudioWriter.h"
 
+#include <QDir>
 #include <QFile>
 #include <QProcess>
 #include <QStandardPaths>
@@ -30,6 +31,9 @@
 #include <memory>
 #include <thread>
 #include <vector>
+
+#include <fcntl.h>
+#include <unistd.h>
 
 static int failures = 0;
 
@@ -344,6 +348,45 @@ static void test_file_source(const QTemporaryDir& dir)
 #endif
 }
 
+#if defined(Q_OS_LINUX)
+// The page cache apart from the medium, on a real file system: in the build
+// directory, /tmp can be tmpfs, which cannot tell them apart
+static void test_cache_or_medium()
+{
+    QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
+    const QString path = dir.filePath(QStringLiteral("cold.bin"));
+    const QByteArray bytes(1024 * 1024, 'x');
+    QFile file(path);
+    if (!dir.isValid() || !file.open(QIODevice::WriteOnly) || file.write(bytes) != bytes.size() || !file.flush() || fsync(file.handle()) != 0 ||
+        posix_fadvise(file.handle(), 0, 0, POSIX_FADV_DONTNEED) != 0) {
+        check(false, "a file is written and leaves the page cache");
+        return;
+    }
+    file.close();
+
+    std::unique_ptr<TAudioByteSource> source = TAudioByteSource::open_file(path);
+    if (!source) {
+        check(false, "the file opens");
+        return;
+    }
+    TAudioIOStats stats;
+    source->set_stats(&stats);
+    std::vector<char> into(size_t(bytes.size()));
+
+    const bool read = source->read(into.data(), bytes.size()) == bytes.size();
+    if (stats.open.untold.bytes > 0) {
+        std::printf("this file system cannot tell the cache from the medium: not tested\n");
+        return;
+    }
+    check(read && stats.open.medium.reads > 0 && stats.open.medium.bytes > 0, "a file out of the page cache waits for the medium");
+    const TAudioTransfer medium = stats.open.medium;
+    check(source->seek(0) && source->read(into.data(), bytes.size()) == bytes.size() && stats.open.medium.bytes == medium.bytes &&
+              stats.open.cached.bytes >= quint64(bytes.size()),
+          "the same bytes again come from the page cache, no medium");
+    check(stats.open.untold.bytes == 0, "nothing is untold");
+}
+#endif
+
 // A hybrid WavPack file reads exact with its correction file beside it, through
 // a source of its own, and lossy without it
 static void test_correction_file(const QTemporaryDir& dir)
@@ -431,6 +474,9 @@ int main()
         test_read_failure(dir, format);
     }
     test_file_source(dir);
+#if defined(Q_OS_LINUX)
+    test_cache_or_medium();
+#endif
     test_correction_file(dir);
     test_scenario(dir);
 
