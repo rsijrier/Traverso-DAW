@@ -700,6 +700,22 @@ From the GPU waveform test program, clip edges in variant A (branch
     instance `posix_fadvise(POSIX_FADV_RANDOM)` on the stream's file, only
     with the prefetch in place (without it the library's small reads lose
     their readahead). Measure both.
+  - **Step 2c (read pool per medium, decode pool):** ioscheduler becomes free
+    of Qt, as part of the redesign of the pools.
+    - `QThread`, `QThreadPool` and `QRunnable` become `std::thread` with
+      pools of our own. No new pools on top of Qt.
+    - `QObject` and the signal `seekFinished` become a plain callback. Core
+      itself sees to it that the message arrives on the GUI thread (now
+      through `Qt::QueuedConnection`, `TSheet.cpp:145`).
+    - `s_handOverFence` (`TIOScheduler.h:274-278`) exists only because TSan
+      does not see `QThreadPool`'s lock. With pools of our own it can go;
+      then verify the hand-over contract (`TIOScheduler.h:78-80`) with TSan
+      again.
+    - `idle_limit_for()` in `TIOScheduler.cpp`, with its `QString` and
+      `QFile`, may stay in this step: it belongs to the detection of the
+      medium.
+    - Touches waveform: `TPeakCache.cpp:247` uses
+      `QThreadPool::globalInstance()` once. Noted, not changed in this step.
   - **Step 3:** two phases in `fill_realtime_buffers()` and the peak build
     (meets T4 and T6).
   - **Step 4 (after T58, T60):** disk slots and a decode pool (T61); a miss
