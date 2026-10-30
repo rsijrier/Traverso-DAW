@@ -13,7 +13,6 @@
 #include "TIOStream.h"
 #include "TIOIdleTask.h"
 
-#include <QCoreApplication>
 
 #include <atomic>
 #include <chrono>
@@ -143,9 +142,8 @@ public:
     qint64 m_weight;
 };
 
-int main(int argc, char** argv)
+int main()
 {
-    QCoreApplication app(argc, argv);
 
     // dispatch() without a scheduler thread and without a driver: the streams that need
     // work get one step per dispatch, an idle task runs to its end and is

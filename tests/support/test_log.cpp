@@ -7,7 +7,6 @@
 
 #include "TLog.h"
 
-#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
@@ -36,9 +35,8 @@ static QStringList lines_of(const QString& fileName)
     return QString::fromUtf8(file.readAll()).split('\n', Qt::SkipEmptyParts);
 }
 
-int main(int argc, char** argv)
+int main()
 {
-    QCoreApplication app(argc, argv);
     QTemporaryDir directory;
 
     // Deferred formatting, without the drain
