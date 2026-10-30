@@ -687,6 +687,19 @@ From the GPU waveform test program, clip edges in variant A (branch
     clip edge test of the test program (`clipedges/`) can run through
     `device_columns()`.
 
+From the platform header (`src/support/TPlatform.h`, 2026-10-30):
+- **T72 *BSD: allow it or not** (Remon, 2026-10-30). `TPlatform.h` stops the
+  build unless `Q_OS_LINUX`, `Q_OS_MACOS` or `Q_OS_WIN` is defined, so FreeBSD,
+  OpenBSD and NetBSD are a build error now. Qt gives them `Q_OS_FREEBSD` and
+  so on plus `Q_OS_UNIX`, not `Q_OS_LINUX`. Not checked: whether Traverso ever
+  built or worked there.
+  - **To decide**: keep the three platforms, or test
+    `!Q_OS_UNIX && !Q_OS_WIN` (macOS is `Q_OS_UNIX` too), which still catches
+    a missing platform detection.
+  - **If allowed**: the `Q_OS_LINUX` branches fall away there without a word
+    (`TAudioDeviceThread.cpp`, `TProject.cpp`, `Main.cpp`, among others), and
+    ALSA does not belong there; none of it can be built on this machine.
+
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
