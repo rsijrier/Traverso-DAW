@@ -73,7 +73,9 @@ qint64 TByteSource::transfer(qint64 position, char* data, qint64 bytes)
     }
 
     if (got < bytes) {
-        const bool erredBefore = m_error.has_value();
+        // Per read: the error stays until take_error(), a decoder takes it
+        // only at the end of its call, after several reads
+        m_readFailed = false;
         const qint64 waited = read_medium(position + got, data + got, bytes - got);
         // Every read counts, also one that gave nothing: its wait is the
         // interesting part on a stalling medium
@@ -81,7 +83,7 @@ qint64 TByteSource::transfer(qint64 position, char* data, qint64 bytes)
             TByteTransfer& kind = cached ? stats->medium : stats->untold;
             kind.add(quint64(std::max<qint64>(waited, 0)), now_nanoseconds() - afterCached);
             // A read that met an error, also one that gave some bytes first
-            if (!erredBefore && m_error) {
+            if (m_readFailed) {
                 ++kind.failed;
             }
         }
@@ -114,6 +116,7 @@ std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
 void TByteSource::read_failed(const QString& reason)
 {
     m_error = reason;
+    m_readFailed = true;
 }
 
 // The bytes of a file on a disk or a network

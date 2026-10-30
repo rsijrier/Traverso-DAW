@@ -157,6 +157,14 @@ static void test_source()
     check(broken.read(bytes, 8) == -1 && broken.take_error() == QString(Reason), "a read that gives nothing and fails is -1");
     check(brokenStats.untold.failed == 2 && brokenStats.untold.reads == 2 && brokenStats.untold.bytes == 5,
           "failed reads count, the one with bytes and the one without");
+    // Without take_error() between them (a decoder takes the error only at
+    // the end of its call): each failed read counts
+    MemorySource again(QByteArray("0123456789"), &failing);
+    TByteStats againStats;
+    again.set_stats(&againStats);
+    (void)again.read(bytes, 8);
+    (void)again.read(bytes, 8);
+    check(againStats.untold.failed == 2, "every failed read counts, also before the error is taken");
 
     check(TByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
 }
@@ -310,6 +318,51 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     (void)(*reader)->read_file_frames(buffer, (*reader)->file_frame_count() / 3, step);
     std::snprintf(what, sizeof(what), "%s: a seek counts apart, the read after it as stream", format.name);
     check(stats.seek.calls == 1 && stats.seek.nanoseconds >= stats.seek.read_nanoseconds() && stats.stream.calls == stream.calls + 1, what);
+}
+
+// A medium that fails from the first byte on: every probe and the open fail,
+// and the open says why, it does not hang. MAD's search for its first header
+// used to loop forever on a read that failed at the start (a large ID3 tag,
+// then a NAS that answers EIO)
+static void test_open_failure(const QTemporaryDir& dir, const Format& format)
+{
+    const QString path = dir.filePath(QStringLiteral("file.") + QLatin1String(format.suffix));
+    if (!QFile::exists(path)) {
+        return;
+    }
+    Medium medium;
+    medium.failFrom = 0;
+    char what[160];
+    std::snprintf(what, sizeof(what), "%s: a medium that fails at once: no decoder, no hang", format.name);
+    check(!TAudioReader::open(path, memory_opener(&medium)).has_value(), what);
+
+    // An MP3 behind an ID3v2 tag larger than the source's block (album art):
+    // the tag reads, the first audio byte after it fails
+    if (std::strcmp(format.suffix, "mp3") != 0) {
+        return;
+    }
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    const int tagBytes = 20 * 1024;
+    QByteArray tagged("ID3\x04\x00\x00", 6);
+    for (const int shift : {21, 14, 7, 0}) {
+        tagged.append(char((tagBytes >> shift) & 0x7f));
+    }
+    tagged.append(QByteArray(tagBytes, '\0'));
+    tagged.append(file.readAll());
+    const QString taggedPath = dir.filePath(QStringLiteral("tagged.mp3"));
+    QFile out(taggedPath);
+    if (!out.open(QIODevice::WriteOnly) || out.write(tagged) != tagged.size()) {
+        check(false, "the tagged MP3 is written");
+        return;
+    }
+    out.close();
+    Medium whole;
+    check(TAudioReader::open(taggedPath, memory_opener(&whole)).has_value(), "MP3: an MP3 behind a 20 KiB tag opens");
+    medium.failFrom = 10 + tagBytes;
+    check(!TAudioReader::open(taggedPath, memory_opener(&medium)).has_value(), "MP3: the tag reads, the first audio byte fails: no decoder, no hang");
 }
 
 // A read of the medium that fails in the middle of the file: whatever the
@@ -640,6 +693,7 @@ int main()
     }
     for (const Format& format : formats) {
         test_read_failure(dir, format);
+        test_open_failure(dir, format);
     }
     test_file_source(dir);
     test_large_offsets();

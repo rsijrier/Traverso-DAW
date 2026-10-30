@@ -79,6 +79,8 @@ private:
     qint64 m_position{0};
     TByteStats* m_stats{nullptr};
     std::optional<QString> m_error;
+    // Set by read_failed() during the read transfer() makes: that read failed
+    bool m_readFailed{false};
     // The bytes of the last small read, from m_blockStart on
     std::vector<char> m_block;
     qint64 m_blockStart{0};

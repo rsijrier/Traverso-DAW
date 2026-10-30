@@ -67,7 +67,10 @@ TByteSource* TAudioDecoder::open_source(const QString& fileName)
         return nullptr;
     }
     source->set_stats(&m_stats.current().bytes);
-    m_stats.mediumId = source->medium_id();
+    // The audio file's medium: the first source (WavPack's .wvc comes second)
+    if (m_stats.mediumId == 0) {
+        m_stats.mediumId = source->medium_id();
+    }
     m_sources.push_back(std::move(source));
     return m_sources.back().get();
 }

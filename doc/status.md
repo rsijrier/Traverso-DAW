@@ -692,6 +692,21 @@ From the GPU waveform test program, clip edges in variant A (branch
   - **Step 1, built:** every decoder reaches its file through one byte
     source; open, seek and stream counted apart, page cache apart from the
     medium, decode time = call time − read time. No scheduler change.
+  - **Step 2a, built:** file offsets of 64 bits, also on 32-bit ARM
+    (`_FILE_OFFSET_BITS=64` for every library in `CMakeLists.txt`, a
+    `static_assert` on `off_t` in `TByteSource.cpp`).
+  - **Step 2b, built:** a seek of a stream is a full reset with a
+    generation (`TIOStream::next_generation()`, `stale()`,
+    `forget_position()`, the scheduler's bump in `TIOScheduler.cpp`): a
+    refill in flight across a seek stops at its next `stale()`.
+  - **At the merge with `device-ownership` (T58):** both fixed the seek's
+    read of the device's buffer size on the IO thread
+    (`TBufferedAudioStreamReader.cpp:367`). Keep `device-ownership`'s
+    `m_bufferSlotFrames` (initialised, no pointer); drop this branch's
+    `m_lastQueuedRTBufferSlot->get_buffer_size()` there, and use
+    `m_bufferSlotFrames` at `:466` too. Drop `#include "TAudioDevice.h"`
+    only if nothing in the file uses `audiodevice()` after the merge
+    (Fable's review, 2026-10-30).
   - **Step 2:** `prefetch()` into a window in own memory, with a floor of
     16 KB and a margin that grows after a miss; exact byte ranges for PCM,
     MAD and FAAD; the counter "unplanned reads", target zero.

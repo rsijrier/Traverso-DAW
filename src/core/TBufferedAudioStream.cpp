@@ -155,13 +155,16 @@ static void log_seek(const QString& name, const TAudioIOStats& before, const TAu
     const quint64 readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
     const quint64 decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
     const quint64 restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
+    // The decoder's seek without its reads: its share of decode
+    const quint64 seekCallNanoseconds = after.seek.nanoseconds - before.seek.nanoseconds;
+    const quint64 seekDecodeNanoseconds = seekCallNanoseconds > seek.nanoseconds ? seekCallNanoseconds - seek.nanoseconds : 0;
     // The numbers first: a log line is cut after 256 characters, so only a
     // long file name can be cut. c, m, u: cache, medium, untold (KiB, ms)
-    TLOG_I("diskio", "seek {:.1f} ms: seek reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, fill reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, decode {:.1f} (seek {:.1f}), rest {:.1f}: {}",
+    TLOG_I("diskio", "seek {:.1f} ms: seek reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, fill reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, decode {:.1f} (in seek {:.1f}), rest {:.1f}: {}",
            double(wallNanoseconds) / 1.0e6,
            seek.cachedKiB, seek.cachedMs, seek.mediumKiB, seek.mediumMs, seek.untoldKiB, seek.untoldMs,
            fill.cachedKiB, fill.cachedMs, fill.mediumKiB, fill.mediumMs, fill.untoldKiB, fill.untoldMs,
-           double(decodeNanoseconds) / 1.0e6, double(after.seek.nanoseconds - before.seek.nanoseconds) / 1.0e6, double(restNanoseconds) / 1.0e6,
+           double(decodeNanoseconds) / 1.0e6, double(seekDecodeNanoseconds) / 1.0e6, double(restNanoseconds) / 1.0e6,
            name.toStdString());
 }
 

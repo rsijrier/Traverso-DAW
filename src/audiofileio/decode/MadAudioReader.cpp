@@ -321,7 +321,11 @@ bool K3bMad::seekFirstHeader()
     //
     bool headerFound = findNextHeader();
     qint64 startInputPos = streamPos();
+    // A read that failed ends the search: the position does not move then,
+    // and every further read fails too (the source keeps its error until it
+    // is taken), so the loop would run forever
     while (!headerFound &&
+       !m_bInputError &&
        !m_input->at_end() &&
        streamPos() <= startInputPos+1024) {
         headerFound = findNextHeader();
@@ -377,6 +381,8 @@ bool K3bMad::inputSeek(qint64 pos)
     mad_stream_init(madStream);
     m_eofPadded = false;
     m_guardBytes = 0;
+    // A new position: a failure before it is not this read's
+    m_bInputError = false;
     return m_input->seek(pos);
 }
 
@@ -526,6 +532,10 @@ MadAudioReader::MadAudioReader(const QString& filename, const TByteSourceOpener&
     d = new MadDecoderPrivate();
     d->handle = new K3bMad();
     m_source = open_source(m_fileName);
+    if (!m_source) {
+        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
+        return;
+    }
 
     if (!initDecoderInternal()) {
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("MAD finds no MPEG audio header in it")};
