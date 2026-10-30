@@ -164,6 +164,30 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   (`from_frames` ↔ `frame_at_or_before/after`), one call for rate-to-rate
   counts, one call for `to_nframes(frame_*(...))` (8 sites). Text/QTime family
   later.
+  Revision goal (Remon, 2026-10-30): TTimeRef becomes fully independent of
+  Qt, a bare arithmetic type in support, plain C++. Everything that needs
+  Qt moves to core.
+  - In support (plain C++):
+    - `qint64` to `int64_t`. Careful: `qint64` is `long long`, `int64_t`
+      is `long` on Linux x86-64; the overloads on `qint64`, `int` and
+      `uint64_t` can become ambiguous. Solve it together with the private
+      raw constructor and the named factories, not as a rename on its own.
+    - `Q_ASSERT` out (9 `Q_ASSERT` + 3 `Q_ASSERT_X` in `TTimeRef.h`/`.cpp`,
+      partly in `T_REALTIME_SAFE` functions), replaced by an assert macro
+      of support's own.
+    - No `QString`, `QLocale` or `QRegularExpression` in TTimeRef any more.
+  - To core (the Qt side):
+    - Text and parsing: `TTimeRef.cpp` from line 143 to the end
+      (`timeref_to_*`, `*_to_timeref`) becomes a formatting helper of its
+      own; outside TTimeRef 57 lines in 20 files use it (counted
+      2026-10-30).
+    - `Q_DECLARE_METATYPE(TTimeRef)`: now `TTimeRef.h:304`, used in
+      `PCommand.cpp`, `TFadeRangeCommand.cpp` and `Traverso.cpp`.
+    - Open: whether QML needs a value type for TTimeRef (`Q_GADGET`)
+      depends on how much QML the timeline gets. Not designed now.
+  - Gain: `TTimeRef.h` now pulls Qt headers into every library that uses
+    it (among others through `TIOStream.h`); a Qt-free TTimeRef removes
+    that.
 - **T13 (medium): clocks.** One function per domain: monotonic for intervals
   (driver cycles, scheduler, rings, autorepeat, profiling), wall time only
   where stored; stored times in UTC (backup file name, session log header).
