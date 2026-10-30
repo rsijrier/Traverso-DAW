@@ -72,6 +72,7 @@ option(WANT_M4A_ENCODE "Include M4A/AAC encoding support (faac)" ON)
 option(WANT_DEBUG "Debug build" OFF)
 option(AUTOPACKAGE_BUILD "Build traverso with autopackage tools" OFF)
 option(BUILD_TESTING "Build the automated tests (run them with ctest)" ON)
+option(BUILD_PEAK_BENCHMARK "Build traverso_peak_benchmark (needs Qt Gui)" OFF)
 option(WANT_THREAD_CHECK "Enable runtime thread checks for debugging" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer for memory debugging (Development only)" OFF)
 

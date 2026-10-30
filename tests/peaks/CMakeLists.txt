@@ -32,9 +32,11 @@ target_link_libraries(traverso_waveform_grid_test PRIVATE traverso_compiler_sett
 add_test(NAME waveform_grid COMMAND traverso_waveform_grid_test)
 
 # Benchmark of the column query and the envelope painting, not part of ctest.
-# Build it in Release.
-add_executable(traverso_peak_benchmark benchmark_peaks.cpp)
-target_link_libraries(traverso_peak_benchmark PRIVATE traverso_compiler_settings traversowaveform traversosupport Qt6::Core Qt6::Gui)
+# Build it in Release, with -DBUILD_PEAK_BENCHMARK=ON.
+if(BUILD_PEAK_BENCHMARK)
+    add_executable(traverso_peak_benchmark benchmark_peaks.cpp)
+    target_link_libraries(traverso_peak_benchmark PRIVATE traverso_compiler_settings traversowaveform traversosupport Qt6::Core Qt6::Gui)
+endif()
 
 # Measurements on real audio files (doc/design/peaks-v6-report.md), not part
 # of ctest. Build it in Release.
