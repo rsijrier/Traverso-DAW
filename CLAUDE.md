@@ -56,6 +56,11 @@ Anything a task, a decision or a design note refers to lives in doc/
 and is committed. reports/ holds measurements, logs and working
 reports only; nothing in doc/ may depend on a file in reports/.
 
+## Preconditions and failures
+
+A precondition is an assert. A failure that can happen in normal use is
+returned or reported. Never a silent early return from a void function.
+
 ## CMake linking
 
 Every target links PRIVATE, and links every library it uses itself,
