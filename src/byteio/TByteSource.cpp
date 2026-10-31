@@ -30,6 +30,9 @@ qint64 TByteSource::read(void* data, qint64 bytes)
     if (bytes <= 0) {
         return 0;
     }
+    // Of this read only; the reason waits in m_pendingError for take_error(),
+    // which its user asks at the end of its call, after several reads
+    m_readFailed = false;
     char* destination = static_cast<char*>(data);
     qint64 got = 0;
 
@@ -53,7 +56,7 @@ qint64 TByteSource::read(void* data, qint64 bytes)
     }
 
     m_position += got;
-    return got > 0 || !m_inErrorState ? got : -1;
+    return got > 0 || !m_readFailed ? got : -1;
 }
 
 qint64 TByteSource::read_and_count(qint64 position, char* data, qint64 bytes)
@@ -69,9 +72,6 @@ qint64 TByteSource::read_and_count(qint64 position, char* data, qint64 bytes)
     }
 
     if (got < bytes) {
-        // Per read: the error stays until take_error(), its user takes it
-        // only at the end of its call, after several reads
-        m_readFailed = false;
         const qint64 waited = read_medium(position + got, data + got, bytes - got);
         // Every read counts, also one that gave nothing: its wait is the
         // interesting part on a stalling medium
@@ -101,7 +101,7 @@ bool TByteSource::seek(qint64 position)
 
 std::optional<QString> TByteSource::take_error()
 {
-    return std::exchange(m_inErrorState, std::nullopt);
+    return std::exchange(m_pendingError, std::nullopt);
 }
 
 std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
@@ -111,7 +111,7 @@ std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
 
 void TByteSource::record_read_failure(const QString& reason)
 {
-    m_inErrorState = reason;
+    m_pendingError = reason;
     m_readFailed = true;
 }
 

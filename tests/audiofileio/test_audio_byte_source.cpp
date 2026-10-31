@@ -160,6 +160,13 @@ static void test_source()
     check(broken.read(bytes, 8) == -1 && broken.take_error() == QString(Reason), "a read that gives nothing and fails is -1");
     check(brokenStats.unclassified.failed == 2 && brokenStats.unclassified.reads == 2 && brokenStats.unclassified.bytes == 5,
           "failed reads count, the one with bytes and the one without");
+    // -1 is of this read only: an error that waits for take_error() does not
+    // make a later read at the end of the file a failure
+    MemorySource halfway(QByteArray("0123456789"), &failing);
+    check(halfway.read(bytes, 8) == 5, "a read fails halfway and gives its bytes");
+    check(halfway.seek(10) && halfway.read(bytes, 4) == 0, "the next read, at the end of the file, gives 0, not -1, without take_error() between them");
+    check(halfway.take_error() == QString(Reason), "take_error() then gives the reason of the first read");
+
     // Without take_error() between them (a decoder takes the error only at
     // the end of its call): each failed read counts
     MemorySource again(QByteArray("0123456789"), &failing);

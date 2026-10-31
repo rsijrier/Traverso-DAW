@@ -88,7 +88,7 @@ private:
 
     qint64 m_position{0};
     TReadsByOrigin* m_reads{nullptr};
-    std::optional<QString> m_inErrorState;
+    std::optional<QString> m_pendingError;
     // Set by record_read_failure() during the read read_and_count() makes: that read failed
     bool m_readFailed{false};
     // The bytes of the last small read, from m_blockStart on
