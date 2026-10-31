@@ -12,6 +12,7 @@ pkg_check_modules(FFTW3 REQUIRED IMPORTED_TARGET fftw3>=3.0.0)
 # Locate mandatory audio decoders and processing libraries via pkg-config
 pkg_check_modules(SAMPLERATE REQUIRED IMPORTED_TARGET samplerate)
 pkg_check_modules(MAD REQUIRED IMPORTED_TARGET mad)
+pkg_check_modules(MPG123 REQUIRED IMPORTED_TARGET libmpg123>=1.33)
 
 # Locate optional decoders and encoders
 if(WANT_M4A_DECODE)

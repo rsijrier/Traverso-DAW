@@ -50,6 +50,7 @@ target_link_libraries(traversoaudiofileio
         PkgConfig::SNDFILE
         PkgConfig::WAVPACK
         PkgConfig::MAD
+        PkgConfig::MPG123
 )
 
 if(TARGET PkgConfig::FAAD2)
