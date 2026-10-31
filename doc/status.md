@@ -203,7 +203,7 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
 - **T11 (medium): MP3 without libmad goes to libsndfile, whose seeks are not
   exact.** Proposal: refuse MP3 without MAD and tell the user. Behaviour
   change: Remon confirms.
-  Falls away with T73 (`reports/mp3-decoder-research.md`): MP3 no longer goes
+  Falls away with T73 (`doc/design/mp3-decoder.md`): MP3 no longer goes
   through MAD or libsndfile. To be marked as dropped when T73 is done.
 - **T12 (medium): TTimeRef frame-conversion cleanup.** One symmetric style
   (`from_frames` ↔ `frame_at_or_before/after`), one call for rate-to-rate
@@ -773,14 +773,15 @@ From the GPU waveform test program, clip edges in variant A (branch
       9 bits), plus one frame for the filterbank's overlap: at 128 kbps
       (frames of about 418 bytes) about 3 frames, at 32 kbps about 6.
     - The MAD points above and `countFrames()` fall away with T73
-      (`reports/mp3-decoder-research.md`). To be marked as dropped when T73
+      (`doc/design/mp3-decoder.md`). To be marked as dropped when T73
       is done.
 
 - **T73 `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
-  Build it as §5 of `reports/mp3-decoder-research.md` says, with the new tests
-  listed there; the decisions are in §1 and in `doc/decisions.md`. After the
-  open merges; Remon gives the order separately. Two reports for mpg123 are
-  drafted in `reports/mpg123-upstream-drafts.md`; Remon sends them.
+  Build it as `doc/design/mp3-decoder.md` says, with the new tests listed
+  there; the decisions are in that document and in `doc/decisions.md`. After
+  the open merges; Remon gives the order separately.
+  - Two reports for mpg123 exist as drafts, in
+    `reports/mpg123-upstream-drafts.md`; Remon sends them himself.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the

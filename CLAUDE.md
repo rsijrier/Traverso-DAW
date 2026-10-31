@@ -50,6 +50,12 @@ decision log with a one-line reason.
 - Before a merge, Remon reads the decision log of the branch. List the
   new entries in the merge report.
 
+## doc/ and reports/
+
+Anything a task, a decision or a design note refers to lives in doc/
+and is committed. reports/ holds measurements, logs and working
+reports only; nothing in doc/ may depend on a file in reports/.
+
 ## CMake linking
 
 Every target links PRIVATE, and links every library it uses itself,
