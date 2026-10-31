@@ -104,7 +104,7 @@ SFAudioReader::~SFAudioReader()
 }
 
 
-int SFAudioReader::format(TByteSource& source)
+std::expected<int, QString> SFAudioReader::format(TByteSource& source)
 {
     SF_INFO infos;
 
@@ -117,7 +117,7 @@ int SFAudioReader::format(TByteSource& source)
 
     //is it supported by libsndfile?
     if (!sndfile) {
-        return 0;
+        return std::unexpected(QString::fromUtf8(sf_strerror(nullptr)));
     }
 
     sf_close(sndfile);

@@ -62,8 +62,9 @@ public:
     QString decoder_type() const override { return "mpg123"; }
 
     // The strict probe: whether the source holds MPEG audio. Opening alone
-    // gives false hits on random bytes, so it walks the frames
-    static bool can_decode(TByteSource& source);
+    // gives false hits on random bytes, so it walks the frames. Why not when it
+    // found a frame, empty when it found none
+    static std::expected<void, QString> can_decode(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;

@@ -36,8 +36,9 @@ public:
     QString decoder_type() const override { return "sndfile"; }
 
     // libsndfile's format of the file, major format and subtype (SF_FORMAT_WAV
-    // | SF_FORMAT_PCM_16, ...), 0 when it cannot read it
-    static int format(TByteSource& source);
+    // | SF_FORMAT_PCM_16, ...), or its words why it cannot read it (global, task
+    // T26)
+    static std::expected<int, QString> format(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;

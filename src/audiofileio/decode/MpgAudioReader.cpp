@@ -164,24 +164,24 @@ TAudioFileStatus MpgAudioReader::open_failed(const QString& detail)
     return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, sourceError.value_or(detail)});
 }
 
-bool MpgAudioReader::can_decode(TByteSource& source)
+std::expected<void, QString> MpgAudioReader::can_decode(TByteSource& source)
 {
     MpgInput input{&source};
     int error = MPG123_OK;
     const std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle(open_handle(input, &error), mpg123_delete);
     if (!handle) {
-        return false;
+        return std::unexpected(QString());
     }
 
     long rate = 0;
     int channels = 0;
     int encoding = 0;
     if (mpg123_getformat(handle.get(), &rate, &channels, &encoding) != MPG123_OK) {
-        return false;
+        return std::unexpected(QString());
     }
     mpg123_frameinfo2 first{};
     if (mpg123_info(handle.get(), &first) != MPG123_OK) {
-        return false;
+        return std::unexpected(QString());
     }
 
     // The open read a frame already, so n frames walked is n + 1 frames. On
@@ -194,18 +194,21 @@ bool MpgAudioReader::can_decode(TByteSource& source)
             long delay = -1;
             double unused = 0.0;
             mpg123_getstate(handle.get(), MPG123_ENC_DELAY, &delay, &unused);
-            return walked >= 2 || (walked == 1 && delay >= 0);
+            if (walked >= 2 || (walked == 1 && delay >= 0)) {
+                return {};
+            }
+            return std::unexpected(QStringLiteral("too few MPEG frames: %1").arg(walked + 1));
         }
         if (result != MPG123_OK && result != MPG123_NEW_FORMAT) {
-            return false;
+            return std::unexpected(QStringLiteral("no MPEG frame after frame %1").arg(walked + 1));
         }
         mpg123_frameinfo2 info{};
         if (mpg123_info(handle.get(), &info) != MPG123_OK || info.layer != first.layer || info.version != first.version || info.rate != first.rate) {
-            return false;
+            return std::unexpected(QStringLiteral("MPEG frame %1 differs from the first").arg(walked + 2));
         }
         ++walked;
     }
-    return true;
+    return {};
 }
 
 TAudioFileStatus MpgAudioReader::scan()

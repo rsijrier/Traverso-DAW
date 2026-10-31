@@ -192,7 +192,6 @@ TAudioFileResult TAudioDecoder::read_done(TAudioBuffer& buffer, nframes_t read, 
 }
 
 enum class DecoderLibrary {
-    None,
     Scenario,
     SndFile,
     WavPack,
@@ -225,7 +224,7 @@ static constexpr DecoderSignature DecoderSignatures[] = {
     {"ftyp", 4, DecoderLibrary::Faad},
 };
 
-static DecoderLibrary library_of_signature(TByteSource& source)
+static std::optional<DecoderLibrary> library_of_signature(TByteSource& source)
 {
     char head[8]{};
     source.seek(0);
@@ -235,53 +234,57 @@ static DecoderLibrary library_of_signature(TByteSource& source)
             return signature.library;
         }
     }
-    return DecoderLibrary::None;
+    return std::nullopt;
 }
 
-// What libsndfile found: its MPEG goes nowhere (a file the strict probe
-// refused), MP3 in a WAV to mpg123, which reads it whole where libsndfile takes
-// the length from the file size
+// What libsndfile found: MP3 in a WAV goes to mpg123, which reads it whole where
+// libsndfile takes the length from the file size
 static DecoderLibrary library_of_sndfile_format(int format)
 {
-    const int major = format & SF_FORMAT_TYPEMASK;
-    if (major == SF_FORMAT_WAV && (format & SF_FORMAT_SUBMASK) == SF_FORMAT_MPEG_LAYER_III) {
-        return DecoderLibrary::Mpg;
-    }
-    return major == 0 || major == SF_FORMAT_MPEG ? DecoderLibrary::None : DecoderLibrary::SndFile;
+    const bool mp3InWav = (format & SF_FORMAT_TYPEMASK) == SF_FORMAT_WAV && (format & SF_FORMAT_SUBMASK) == SF_FORMAT_MPEG_LAYER_III;
+    return mp3InWav ? DecoderLibrary::Mpg : DecoderLibrary::SndFile;
 }
 
-// The library that can read the file, by its content; the probes' reads count
-// where source counts. A match really opens the file, a signature alone proves
-// nothing; a scenario is the one that does not here: its open says why it is
-// none, and can_decode_audio() checks it.
-static DecoderLibrary find_decoder(TByteSource& source)
+// Why no decoder reads the file its source holds: a failed read goes first
+static TAudioFileError why_no_decoder(TByteSource& source, const QString& detail)
 {
-    switch (library_of_signature(source)) {
-    case DecoderLibrary::Scenario:
-        return DecoderLibrary::Scenario;
-    case DecoderLibrary::SndFile:
-        // A RIFF libsndfile does not know (RMP3) can still hold MP3
-        if (const int format = SFAudioReader::format(source)) {
-            return library_of_sndfile_format(format);
+    return {TAudioFileError::Code::CannotOpen, source.take_error().value_or(detail)};
+}
+
+// The library for the file, by its content, or why there is none; the probes'
+// reads count where source counts. With a signature that library's open decides
+// and says why not; libsndfile's route looks first, for MP3 in a WAV.
+static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& source)
+{
+    const std::optional<DecoderLibrary> signature = library_of_signature(source);
+    if (signature == DecoderLibrary::SndFile) {
+        const std::expected<int, QString> format = SFAudioReader::format(source);
+        if (format) {
+            return library_of_sndfile_format(*format);
         }
-        return MpgAudioReader::can_decode(source) ? DecoderLibrary::Mpg : DecoderLibrary::None;
-    case DecoderLibrary::WavPack:
-        return WPAudioReader::can_decode(source) ? DecoderLibrary::WavPack : DecoderLibrary::None;
-    case DecoderLibrary::Faad:
-#if defined M4A_DECODE_SUPPORT
-        return FaadAudioReader::can_decode(source) ? DecoderLibrary::Faad : DecoderLibrary::None;
-#else
-        return DecoderLibrary::None;
-#endif
-    default:
-        break;
+        // A RIFF libsndfile does not know (RMP3) can still hold MP3
+        if (MpgAudioReader::can_decode(source)) {
+            return DecoderLibrary::Mpg;
+        }
+        return std::unexpected(why_no_decoder(source, format.error()));
+    }
+    if (signature) {
+        return *signature;
     }
 
-    if (MpgAudioReader::can_decode(source)) {
+    const std::expected<void, QString> mpeg = MpgAudioReader::can_decode(source);
+    if (mpeg) {
         return DecoderLibrary::Mpg;
     }
-    if (const int format = SFAudioReader::format(source)) {
-        return library_of_sndfile_format(format);
+    // Only when it looked like MPEG audio: the other probes' refusals are noise
+    const QString none = mpeg.error().isEmpty() ? QStringLiteral("no decoder reads this format") : QStringLiteral("no decoder reads this format (%1)").arg(mpeg.error());
+
+    // libsndfile's MPEG goes nowhere: a file the strict probe refused
+    if (const std::expected<int, QString> format = SFAudioReader::format(source)) {
+        if ((*format & SF_FORMAT_TYPEMASK) == SF_FORMAT_MPEG) {
+            return std::unexpected(why_no_decoder(source, none));
+        }
+        return library_of_sndfile_format(*format);
     }
     // ADTS and WavPack behind an ID3 tag have no signature, and libsndfile
     // does not read them
@@ -293,7 +296,7 @@ static DecoderLibrary find_decoder(TByteSource& source)
         return DecoderLibrary::Faad;
     }
 #endif
-    return DecoderLibrary::None;
+    return std::unexpected(why_no_decoder(source, none));
 }
 
 bool can_decode_audio(const QString& fileName)
@@ -302,19 +305,28 @@ bool can_decode_audio(const QString& fileName)
     if (!source) {
         return false;
     }
-    const DecoderLibrary library = find_decoder(**source);
-    // The signature alone: the scenario must really parse
-    return library == DecoderLibrary::Scenario ? TScenarioDecoder::check(**source).has_value() : library != DecoderLibrary::None;
-}
-
-// Why no decoder reads the file its source holds. Asked after the probes
-// failed, not before.
-static TAudioFileError why_no_decoder(TByteSource& source)
-{
-    if (std::optional<QString> reason = source.take_error()) {
-        return {TAudioFileError::Code::CannotOpen, *reason};
+    const std::expected<DecoderLibrary, TAudioFileError> library = find_decoder(**source);
+    if (!library) {
+        return false;
     }
-    return {TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")};
+    // A signature alone proves nothing, and opening is too much for a probe (an
+    // MP3 scans the whole file). libsndfile and the MP3 probe looked already
+    switch (*library) {
+    case DecoderLibrary::Scenario:
+        return TScenarioDecoder::check(**source).has_value();
+    case DecoderLibrary::WavPack:
+        return WPAudioReader::can_decode(**source);
+    case DecoderLibrary::Faad:
+#if defined M4A_DECODE_SUPPORT
+        return FaadAudioReader::can_decode(**source);
+#else
+        return false;
+#endif
+    case DecoderLibrary::SndFile:
+    case DecoderLibrary::Mpg:
+        return true;
+    }
+    Q_UNREACHABLE();
 }
 
 using TDecoderResult = std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError>;
@@ -347,7 +359,11 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     }
     (*source)->count_reads_into(&openStats.open.reads);
 
-    switch (find_decoder(**source)) {
+    const std::expected<DecoderLibrary, TAudioFileError> library = find_decoder(**source);
+    if (!library) {
+        return std::unexpected(library.error());
+    }
+    switch (*library) {
     case DecoderLibrary::Scenario:
         return as_decoder(TScenarioDecoder::open(fileName, std::move(*source), opener));
     case DecoderLibrary::SndFile:
@@ -358,8 +374,6 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
         return open_faad(fileName, std::move(*source), opener);
     case DecoderLibrary::Mpg:
         return as_decoder(MpgAudioReader::open(fileName, std::move(*source), opener));
-    case DecoderLibrary::None:
-        return std::unexpected(why_no_decoder(**source));
     }
     Q_UNREACHABLE();
 }

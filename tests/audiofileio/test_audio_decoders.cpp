@@ -1027,9 +1027,9 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         const QString path = dir.filePath(QStringLiteral("t73-short.mp3"));
         const auto probed = [&](const QByteArray& file) { return write_bytes(path, file) ? refusal(path) : QStringLiteral("not written"); };
         const auto opened = [&](const QByteArray& file) { return probed(file).isEmpty(); };
-        const auto refused = [&](const QByteArray& file) { return probed(file) == NoDecoder; };
+        const auto refused = [&](const QByteArray& file) { return probed(file).startsWith(NoDecoder); };
         check(refused(first_frames(bare, 0).left(frames[1].size)), "One frame, no tag: refused");
-        check(refused(without_tag(first_frames(bytes, 2))), "Two frames, no tag: refused");
+        check(probed(without_tag(first_frames(bytes, 2))) == QLatin1String("no decoder reads this format (too few MPEG frames: 2)"), "Two frames, no tag: refused, and why");
         check(opened(without_tag(first_frames(bytes, 3))), "Three frames, no tag: a clean end after 2 walked");
         check(opened(without_tag(first_frames(bytes, 7))), "Seven frames, no tag: 4 walked");
         check(refused(first_frames(bytes, 1)), "One frame and a tag: refused");
