@@ -16,5 +16,5 @@ add_executable(traverso_stream_seek_test test_stream_seek.cpp
                ${CMAKE_SOURCE_DIR}/src/core/TBufferedAudioStreamReader.h ${CMAKE_SOURCE_DIR}/src/core/TBufferedAudioStreamReader.cpp)
 get_target_property(TRAVERSO_CORE_INCLUDES traversocore INCLUDE_DIRECTORIES)
 target_include_directories(traverso_stream_seek_test PRIVATE ${TRAVERSO_CORE_INCLUDES})
-target_link_libraries(traverso_stream_seek_test PRIVATE traverso_compiler_settings traversoioscheduler traversoaudiofileio traversoaudioruntime traversowaveform traversodsp traversosupport Qt6::Core Qt6::Gui Qt6::Xml)
+target_link_libraries(traverso_stream_seek_test PRIVATE traverso_compiler_settings traversoioscheduler traversoaudiofileio traversobyteio traversoaudioruntime traversowaveform traversodsp traversosupport Qt6::Core Qt6::Gui Qt6::Xml)
 add_test(NAME stream_seek COMMAND traverso_stream_seek_test)

@@ -46,6 +46,7 @@ target_include_directories(traversocommands
         ${CMAKE_SOURCE_DIR}/src/dsp
         ${CMAKE_SOURCE_DIR}/src/audioruntime
         ${CMAKE_SOURCE_DIR}/src/audiofileio
+        ${CMAKE_SOURCE_DIR}/src/byteio
 )
 
 # Link essential runtime libraries and external application frameworks

@@ -2,6 +2,7 @@
 # Library layers are processed first so that executable layers can link against them.
 add_subdirectory(support)
 add_subdirectory(dsp)
+add_subdirectory(byteio)
 add_subdirectory(core)
 add_subdirectory(audiofileio)
 add_subdirectory(waveform)

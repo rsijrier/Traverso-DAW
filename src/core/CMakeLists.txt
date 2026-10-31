@@ -79,6 +79,7 @@ target_link_libraries(traversocore
         traversodsp
         traversoaudioruntime
         traversoaudiofileio
+        traversobyteio
         traversowaveform
         traversoioscheduler
         Qt6::Widgets

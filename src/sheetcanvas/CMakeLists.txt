@@ -65,6 +65,7 @@ target_include_directories(traversosheetcanvas
         ${CMAKE_SOURCE_DIR}/src/plugins/native
         ${CMAKE_SOURCE_DIR}/src/commands
         ${CMAKE_SOURCE_DIR}/src/audiofileio
+        ${CMAKE_SOURCE_DIR}/src/byteio
         ${CMAKE_SOURCE_DIR}/src/audioruntime
 )
 

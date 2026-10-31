@@ -3,8 +3,6 @@ add_library(traversoaudiofileio STATIC
     decode/TAudioDecoder.h decode/TAudioDecoder.cpp
     decode/SFAudioReader.cpp
     TAudioFileError.h
-    TByteSource.h TByteSource.cpp
-    TByteStats.h
     TAudioIOStats.h
     TAudioReader.h TAudioReader.cpp
     decode/WPAudioReader.cpp
@@ -47,6 +45,7 @@ target_link_libraries(traversoaudiofileio
     PRIVATE
         traversosupport
         traversodsp
+        traversobyteio
         Qt6::Core
         PkgConfig::SNDFILE
         PkgConfig::WAVPACK

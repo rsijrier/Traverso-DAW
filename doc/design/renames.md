@@ -10,6 +10,7 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-10-31 | `src/audiofileio/TByteSource.h`, `TByteSource.cpp`, `TByteStats.h` (in `traversoaudiofileio`) | `src/byteio/` (library `traversobyteio`) | moved, unchanged: all disk access goes through it (`src/byteio/README.md`); audiofileio links it |
 | 2026-10-30 | `TAudioByteSource` (`TAudioByteSource.h/.cpp`) | `TByteSource` (`TByteSource.h/.cpp`) | bytes, positions, time and the medium; nothing of audio (T71) |
 | 2026-10-30 | `TAudioTransfer` | `TByteTransfer` (`TByteStats.h`) | |
 | 2026-10-30 | `cached`, `medium`, `untold` in `TAudioPhaseStats` | `TByteStats` (`TAudioPhaseStats::bytes`) | what the source measures; the source counts into a `TByteStats*`, the decoder points it at the phase (`TAudioDecoder::set_phase()`) |
