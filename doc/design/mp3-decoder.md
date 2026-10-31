@@ -136,7 +136,9 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 ## 3. `find_decoder()`
 
 1. `.tscenario`, by file name (decision 11).
-2. The table below. A match goes to that decoder directly.
+2. The table below. A match goes to that decoder directly. When libsndfile
+   refuses a file of its table entries, the strict probe of step 3 still gets
+   it (`RIFF....RMP3`); no entries are added for that.
 3. `MpgAudioReader::can_decode()`, the strict probe.
 4. `SFAudioReader::major_format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on
@@ -305,6 +307,7 @@ T11 and the MAD points of T71 fall away when this is done.
   place.
 - A read that fails during the scan: `CannotOpen`, with and without a tag.
 - A WAV with MP3 in it.
+- A `RIFF....RMP3` file, which libsndfile refuses.
 - Concatenated files: both parts.
 - Everything MP3 again with the generic decoder.
 - A change of format inside a file: mono, and another rate.

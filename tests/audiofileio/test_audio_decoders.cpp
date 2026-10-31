@@ -1006,6 +1006,20 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         check(back.frames() >= source.frames() && back.frames() < source.frames() + 3 * 1152 && !back.error, what);
     }
 
+    // MP3 in a RIFF libsndfile does not know: the probe gets it after all
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-rmp3.mp3"));
+        QByteArray riff = wav_with_mp3(bare, source.rate, source.channels, source.frames());
+        riff.replace(8, 4, "RMP3");
+        write_bytes(path, riff);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        std::snprintf(what, sizeof(what), "RIFF....RMP3: opens (%s)", reader ? qPrintable(reader->decoder_type()) : "no decoder");
+        check(reader && reader->decoder_type() == QLatin1String("mpg123"), what);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "RIFF....RMP3: whole (%u frames of %u)", back.frames(), source.frames());
+        check(back.frames() >= source.frames() && back.frames() < source.frames() + 3 * 1152 && !back.error, what);
+    }
+
     // Two files one after the other, the second tag in the middle
     {
         const QString path = dir.filePath(QStringLiteral("t73-joined.mp3"));

@@ -226,7 +226,11 @@ static DecoderLibrary find_decoder(const QString& fileName, const TByteSourceOpe
 
     switch (library_of_signature(*source)) {
     case DecoderLibrary::SndFile:
-        return library_of_sndfile_format(SFAudioReader::format(*source));
+        // A RIFF libsndfile does not know (RMP3) can still hold MP3
+        if (const int format = SFAudioReader::format(*source)) {
+            return library_of_sndfile_format(format);
+        }
+        return MpgAudioReader::can_decode(*source) ? DecoderLibrary::Mpg : DecoderLibrary::None;
     case DecoderLibrary::WavPack:
         return WPAudioReader::can_decode(*source) ? DecoderLibrary::WavPack : DecoderLibrary::None;
     case DecoderLibrary::Faad:
