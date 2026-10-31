@@ -13,7 +13,7 @@
  * @brief The decoder of a scenario file (.tscenario): a description of a
  * signal instead of its samples, for headless tests of what reads audio
  * files. It keeps the TAudioDecoder contract like every decoder and is
- * chosen by the factory like them, by the file (its extension, first).
+ * chosen by the factory like them, by the file's content.
  *
  * The first line is exactly "# tscenario <version>", ended by \n or \r\n; the
  * version says what follows. In version 1 that is JSON:
@@ -58,9 +58,6 @@ public:
 
     QString decoder_type() const override { return QStringLiteral("scenario"); }
 
-    // A scenario by its name: the factory asks it before any library probes
-    // the file
-    static bool is_scenario_file(const QString& fileName);
     // The source parses as a scenario, or why not
     [[nodiscard]] static std::expected<void, QString> check(TByteSource& source);
 

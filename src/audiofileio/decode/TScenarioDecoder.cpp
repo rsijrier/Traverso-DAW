@@ -43,11 +43,6 @@ static std::optional<double> number_of(const QJsonObject& object, const char* ke
     return value.toDouble();
 }
 
-bool TScenarioDecoder::is_scenario_file(const QString& fileName)
-{
-    return fileName.endsWith(QLatin1String(".tscenario"), Qt::CaseInsensitive);
-}
-
 std::expected<void, QString> TScenarioDecoder::check(TByteSource& source)
 {
     if (std::expected<Scenario, QString> scenario = parse(source); !scenario) {

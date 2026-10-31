@@ -20,9 +20,8 @@ class TAudioDecoder;
 
 // The decoder for fileName, open, or why there is none: NotFound
 // when the file is not there, else CannotOpen (no permission, no decoder for
-// its format, the decoder's own reason). A scenario file (.tscenario) is
-// known by its name and read by TScenarioDecoder; other files go by their
-// content, see find_decoder().
+// its format, the decoder's own reason). Every file goes by its content, see
+// find_decoder().
 // opener gives the file's bytes, also to the probes (tests).
 [[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener = {});
 

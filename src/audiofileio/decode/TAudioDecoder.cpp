@@ -212,6 +212,7 @@ struct DecoderSignature
 };
 
 static constexpr DecoderSignature DecoderSignatures[] = {
+    {"# ts", 0, DecoderLibrary::Scenario},
     {"RIFF", 0, DecoderLibrary::SndFile},
     {"RF64", 0, DecoderLibrary::SndFile},
     {"riff", 0, DecoderLibrary::SndFile},
@@ -252,16 +253,11 @@ static DecoderLibrary library_of_sndfile_format(int format)
 // The library that can read the file, by its content; the probes' reads count
 // where source counts. A match really opens the file: can_decode_audio() has no
 // other check, a signature alone proves nothing.
-static DecoderLibrary find_decoder(const QString& fileName, TByteSource& source)
+static DecoderLibrary find_decoder(TByteSource& source)
 {
-    // A scenario (a test signal described, TScenarioDecoder) by its name, the
-    // one exception to "by content": a test facility, no audio format; one
-    // that does not parse is no audio file.
-    if (TScenarioDecoder::is_scenario_file(fileName)) {
-        return TScenarioDecoder::check(source) ? DecoderLibrary::Scenario : DecoderLibrary::None;
-    }
-
     switch (library_of_signature(source)) {
+    case DecoderLibrary::Scenario:
+        return TScenarioDecoder::check(source) ? DecoderLibrary::Scenario : DecoderLibrary::None;
     case DecoderLibrary::SndFile:
         // A RIFF libsndfile does not know (RMP3) can still hold MP3
         if (const int format = SFAudioReader::format(source)) {
@@ -302,17 +298,17 @@ static DecoderLibrary find_decoder(const QString& fileName, TByteSource& source)
 bool can_decode_audio(const QString& fileName)
 {
     TByteSourceResult source = TByteSource::open_file(fileName);
-    return source && find_decoder(fileName, **source) != DecoderLibrary::None;
+    return source && find_decoder(**source) != DecoderLibrary::None;
 }
 
 // Why no decoder reads the file its source holds. Asked after the probes
 // failed, not before.
-static TAudioFileError why_no_decoder(const QString& fileName, TByteSource& source)
+static TAudioFileError why_no_decoder(TByteSource& source)
 {
     if (std::optional<QString> reason = source.take_error()) {
         return {TAudioFileError::Code::CannotOpen, *reason};
     }
-    if (TScenarioDecoder::is_scenario_file(fileName)) {
+    if (library_of_signature(source) == DecoderLibrary::Scenario) {
         if (std::expected<void, QString> scenario = TScenarioDecoder::check(source); !scenario) {
             return {TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())};
         }
@@ -350,7 +346,7 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     }
     (*source)->count_reads_into(&openStats.open.reads);
 
-    switch (find_decoder(fileName, **source)) {
+    switch (find_decoder(**source)) {
     case DecoderLibrary::Scenario:
         return as_decoder(TScenarioDecoder::open(fileName, std::move(*source), opener));
     case DecoderLibrary::SndFile:
@@ -362,7 +358,7 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     case DecoderLibrary::Mpg:
         return as_decoder(MpgAudioReader::open(fileName, std::move(*source), opener));
     case DecoderLibrary::None:
-        return std::unexpected(why_no_decoder(fileName, **source));
+        return std::unexpected(why_no_decoder(**source));
     }
     Q_UNREACHABLE();
 }
