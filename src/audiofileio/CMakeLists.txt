@@ -1,6 +1,8 @@
 # Define the static library for managing audio file input and output processes
 add_library(traversoaudiofileio STATIC
     decode/TAudioDecoder.h decode/TAudioDecoder.cpp
+    decode/TAudioDecoderFactory.h decode/TAudioDecoderFactory.cpp
+    decode/TAudioIOScope.h
     decode/SFAudioReader.cpp
     TAudioFileError.h
     TAudioIOStats.h

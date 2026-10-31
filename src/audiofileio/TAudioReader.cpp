@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "TAudioReader.h"
-#include "TAudioDecoder.h"
+#include "TAudioDecoderFactory.h"
 #include "TAudioResampler.h"
 
 #include <algorithm>
