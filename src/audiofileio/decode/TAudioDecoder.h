@@ -30,7 +30,13 @@ class TAudioIOScope;
  * reads from it (read()). The file's channels, rate and frames are set once,
  * when it is opened.
  *
- * The contract, which every decoder keeps and test_audio_decoders checks:
+ * The contract answers three questions:
+ * - Opening: does it open? Yes, or no with the reason.
+ * - Seeking: did the seek work? It landed, or not with the reason.
+ * - After an error: go on with a new seek, or stop, because going on would
+ *   give wrong audio.
+ *
+ * In full, which every decoder keeps and test_audio_decoders checks:
  * 1. read(buffer, count) fills count frames of every channel, from frame 0 of
  *    the buffer's channel buffers: what the file gives, zeros for the rest.
  *    It gives fewer frames than asked only at the end of the file or on an
