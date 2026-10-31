@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TDenormals.h"
 #include "TAudioDeviceThread.h"
 #include "TAudioThreadMessageQueue.h"
-#include "Utils.h"
 
 #if defined (ALSA_SUPPORT)
 #include "TAlsaDriver.h"
@@ -49,7 +48,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioDriver.h"
 #include "TAudioDeviceClient.h"
 #include "TRtTransaction.h"
-#include "TRtTransportPosition.h"
+#include "TClock.h"
 #include "AudioChannel.h"
 #include "TAudioThreadMessageQueue.h"
 
@@ -294,7 +293,7 @@ int TAudioDevice::run_cycle( nframes_t nframes, float delayed_usecs ) T_REALTIME
     tsmp().process_posted_gui_events();
 
     // The sheets publish their transport position with this time
-    m_processCallBackData.set_cycle_start_nanoseconds(TRtTransportPosition::now_nanoseconds());
+    m_processCallBackData.set_cycle_start_nanoseconds(TClock::now_nanoseconds());
 
     /* run as many cycles as it takes to consume nframes (Should be 1 cycle!!)*/
     for (left = nframes; left >= m_bufferSize; left -= m_bufferSize) {

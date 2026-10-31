@@ -62,8 +62,8 @@ public:
 
     struct Record
     {
-        qint64      timeNs{0};
-        quint64     cycle{0};
+        uint64_t    timeNs{0};
+        uint64_t    cycle{0};
         quint32     sequence{0};
         TLogLevel   level{TLogLevel::Info};
         quint8      argCount{0};

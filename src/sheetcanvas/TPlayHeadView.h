@@ -83,7 +83,7 @@ private slots:
 
 public slots:
     // nowNanoseconds: the frame time, see TSession::get_heard_transport_location()
-    void update_position(qint64 nowNanoseconds);
+    void update_position(uint64_t nowNanoseconds);
     void enable_follow();  // enable/disable follow only do anything if following is
     void disable_follow(); // enabled in the config
 };

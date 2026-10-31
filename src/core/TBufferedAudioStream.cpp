@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TBufferedAudioStream.h"
 
 #include <utility>
-#include "TSheet.h"
+#include "TClock.h"
 #include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
@@ -143,7 +143,7 @@ static TSeekReads seek_reads(const TReadsByOrigin& before, const TReadsByOrigin&
                       after.read_nanoseconds() - before.read_nanoseconds()};
 }
 
-static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, quint64 wallNanoseconds)
+static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, uint64_t wallNanoseconds)
 {
     const quint64 callsNanoseconds = (after.seek.nanoseconds - before.seek.nanoseconds) + (after.stream.nanoseconds - before.stream.nanoseconds);
     // Nothing decoded (a stream out of its window): nothing to tell
@@ -186,7 +186,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
     if (info.seek) {
         const TAudioIOStats* stats = decoder_stats();
         const TAudioIOStats before = stats ? *stats : TAudioIOStats{};
-        const uint64_t start = now_nanoseconds();
+        const uint64_t start = TClock::now_nanoseconds();
         if (info.sampleRateChanged) {
             set_output_rate_and_resampler(int(info.outputRate), info.resampler);
             prepare_ring_buffers(info.bufferSize);
@@ -198,7 +198,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
             process_realtime_buffers(fileIOBuffer);
         }
         if (stats) {
-            log_seek(get_name(), before, *stats, now_nanoseconds() - start);
+            log_seek(get_name(), before, *stats, TClock::now_nanoseconds() - start);
         }
         // Out of its window is no failure: nothing to read there yet
         const int syncStatus = status.get_sync_status();

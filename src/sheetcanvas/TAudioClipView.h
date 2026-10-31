@@ -144,7 +144,7 @@ private slots:
     void peak_creation_finished();
     void start_recording();
     void finish_recording();
-    void update_recording(qint64 nowNanoseconds);
+    void update_recording(uint64_t nowNanoseconds);
     void active_context_changed();
     void clip_state_changed();
 };

@@ -28,7 +28,7 @@ class TAudioIOScope
 public:
     explicit TAudioIOScope(TAudioIOCost& cost)
         : m_cost(cost)
-        , m_start(now_nanoseconds())
+        , m_start(TClock::now_nanoseconds())
     {
     }
 
@@ -36,14 +36,14 @@ public:
         : m_cost(decoder.m_stats.cost_of(activity))
         , m_decoder(&decoder)
         , m_previous(decoder.m_stats.activity)
-        , m_start(now_nanoseconds())
+        , m_start(TClock::now_nanoseconds())
     {
         decoder.set_activity(activity);
     }
 
     ~TAudioIOScope()
     {
-        m_cost.nanoseconds += now_nanoseconds() - m_start;
+        m_cost.nanoseconds += TClock::now_nanoseconds() - m_start;
         ++m_cost.calls;
         if (m_decoder) {
             m_decoder->set_activity(m_previous);

@@ -3,23 +3,23 @@
 
 #pragma once
 
-#include <QtTypes>
+#include <cstdint>
 
 #include <algorithm>
 
 // Reads of one kind: how many, their bytes and their time
 struct TReadTotals
 {
-    quint64 reads{0};
-    quint64 bytes{0};
-    quint64 nanoseconds{0};
-    quint64 worstNanoseconds{0};
+    uint64_t reads{0};
+    uint64_t bytes{0};
+    uint64_t nanoseconds{0};
+    uint64_t worstNanoseconds{0};
     // Of the reads: the ones that met an error (with or without bytes);
     // every read's time counts, also one that gave nothing: a stalling NAS
     // shows there
-    quint64 failed{0};
+    uint64_t failed{0};
 
-    void add(quint64 readBytes, quint64 readNanoseconds)
+    void add(uint64_t readBytes, uint64_t readNanoseconds)
     {
         ++reads;
         bytes += readBytes;
@@ -52,7 +52,7 @@ struct TReadsByOrigin
     TReadTotals medium;
     TReadTotals unclassified;
 
-    quint64 read_nanoseconds() const { return cached.nanoseconds + medium.nanoseconds + unclassified.nanoseconds; }
+    uint64_t read_nanoseconds() const { return cached.nanoseconds + medium.nanoseconds + unclassified.nanoseconds; }
 
     void add(const TReadsByOrigin& other)
     {

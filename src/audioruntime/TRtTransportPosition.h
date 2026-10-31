@@ -4,9 +4,7 @@
 #pragma once
 
 #include <QtGlobal>
-#include "TRealTime.h"
 #include <atomic>
-#include <chrono>
 
 /**
  * @brief Where the transport was in the last processed buffer.
@@ -15,13 +13,13 @@
  * in that cycle, frames its length at sampleRate. runStartUniversalFrame is
  * where the transport started rolling for the current run (a seek starts a
  * new run). cycleTimeNanoseconds is when the cycle started, on the clock of
- * TRtTransportPosition::now_nanoseconds().
+ * TClock::now_nanoseconds().
  */
 struct TTransportPosition
 {
     qint64  universalFrame{0};
     qint64  runStartUniversalFrame{0};
-    qint64  cycleTimeNanoseconds{0};
+    uint64_t cycleTimeNanoseconds{0};
     quint32 frames{0};
     quint32 sampleRate{0};
 };
@@ -39,15 +37,6 @@ class TRtTransportPosition
 public:
     static_assert(std::atomic<qint64>::is_always_lock_free && std::atomic<quint32>::is_always_lock_free,
                   "the transport position must be published without locks");
-
-    // The clock of TTransportPosition::cycleTimeNanoseconds: monotonic, any thread
-    static qint64 now_nanoseconds() T_REALTIME_SAFE
-    {
-        // The steady clock reads the vDSO: real-time safe by contract
-        std::chrono::steady_clock::time_point now;
-        T_REALTIME_SAFE_BY_CONTRACT(now = std::chrono::steady_clock::now();)
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-    }
 
     // Audio thread only
     void publish(const TTransportPosition& position)
@@ -100,7 +89,7 @@ private:
     std::atomic<quint64> m_sequence{0};
     std::atomic<qint64>  m_universalFrame{0};
     std::atomic<qint64>  m_runStartUniversalFrame{0};
-    std::atomic<qint64>  m_cycleTimeNanoseconds{0};
+    std::atomic<uint64_t> m_cycleTimeNanoseconds{0};
     std::atomic<quint32> m_frames{0};
     std::atomic<quint32> m_sampleRate{0};
 };

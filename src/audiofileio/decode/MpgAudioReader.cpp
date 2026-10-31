@@ -22,7 +22,7 @@
 static constexpr long ResyncLimit = 1024 * 1024;
 // Without a tag: what may follow the last frame the scan found (tags at the
 // end). More is damage, not an end
-static constexpr qint64 ScanEndSlack = 64 * 1024;
+static constexpr int64_t ScanEndSlack = 64 * 1024;
 // Entries of the seek index, at most 80 KB per handle. The default of 1000
 // reads about 94 KB per seek on an hour of audio, 10000 about 14 KB
 static constexpr long IndexSize = 10000;
@@ -36,8 +36,8 @@ static constexpr int64_t DecoderDelay = 529;
 static int source_read(void* handle, void* data, size_t bytes, size_t* got)
 {
     MpgInput* input = static_cast<MpgInput*>(handle);
-    const qint64 read = input->source->read(data, qint64(bytes));
-    *got = size_t(std::max<qint64>(read, 0));
+    const int64_t read = input->source->read(data, int64_t(bytes));
+    *got = size_t(std::max<int64_t>(read, 0));
     input->furthest = std::max(input->furthest, input->source->position());
     // The failure stays with the source, which the decoder asks
     return read < 0 ? -1 : 0;
@@ -46,7 +46,7 @@ static int source_read(void* handle, void* data, size_t bytes, size_t* got)
 static int64_t source_seek(void* handle, int64_t offset, int whence)
 {
     TByteSource* source = static_cast<MpgInput*>(handle)->source;
-    const qint64 position = whence == SEEK_SET ? offset : whence == SEEK_CUR ? source->position() + offset : source->size() + offset;
+    const int64_t position = whence == SEEK_SET ? offset : whence == SEEK_CUR ? source->position() + offset : source->size() + offset;
     return source->seek(position) ? position : -1;
 }
 
@@ -232,7 +232,7 @@ TAudioFileStatus MpgAudioReader::scan()
         if (m_tagSamples > m_scannedSamples + m_frameSamples) {
             frames = m_tagSamples;
         }
-    } else if (const qint64 size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
+    } else if (const int64_t size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
         return open_failed(QStringLiteral("the audio stops at byte %1 of %2").arg(m_input.furthest).arg(size));
     }
     // Also without a frame count: delay and padding place the audio

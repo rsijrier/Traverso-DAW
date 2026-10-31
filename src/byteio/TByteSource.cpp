@@ -25,72 +25,88 @@
 static_assert(sizeof(off_t) == 8, "a file offset of 32 bits cuts positions past 2 GiB off");
 #endif
 
-qint64 TByteSource::read(void* data, qint64 bytes)
+int64_t TByteSource::read(void* data, int64_t bytes)
 {
     if (bytes <= 0) {
         return 0;
     }
-    // Of this read only; the reason waits in m_pendingError for take_error(),
-    // which its user asks at the end of its call, after several reads
-    m_readFailed = false;
     char* destination = static_cast<char*>(data);
-    qint64 got = 0;
 
-    const auto from_block = [&] {
-        const qint64 inBlock = m_position + got - m_blockStart;
-        if (inBlock >= 0 && inBlock < m_blockBytes) {
-            const qint64 count = std::min(bytes - got, m_blockBytes - inBlock);
-            std::copy_n(m_block.data() + inBlock, count, destination + got);
-            got += count;
-        }
-    };
-
-    from_block();
-    if (got < bytes && bytes - got >= BlockBytes) {
-        got += read_and_count(m_position + got, destination + got, bytes - got);
-    } else if (got < bytes) {
-        m_block.resize(BlockBytes);
-        m_blockStart = m_position + got;
-        m_blockBytes = read_and_count(m_blockStart, m_block.data(), BlockBytes);
-        from_block();
+    int64_t filled = copy_from_block(m_position, destination, bytes);
+    const int64_t rest = bytes - filled;
+    bool failed = false;
+    if (rest >= BlockBytes) {
+        const TMediumRead direct = read_and_count(m_position + filled, destination + filled, rest);
+        filled += direct.bytes;
+        failed = direct.reason.has_value();
+    } else if (rest > 0) {
+        failed = !fill_block(m_position + filled);
+        filled += copy_from_block(m_position + filled, destination + filled, rest);
     }
 
-    m_position += got;
-    return got > 0 || !m_readFailed ? got : -1;
+    m_position += filled;
+    return (filled > 0 || !failed) ? filled : -1;
 }
 
-qint64 TByteSource::read_and_count(qint64 position, char* data, qint64 bytes)
+// The block is the file as it was when it was read: a file that grows reads
+// on past it, one that shrinks still gives the block's bytes
+int64_t TByteSource::copy_from_block(int64_t position, char* destination, int64_t bytes) const
+{
+    const int64_t inBlock = position - m_blockStart;
+    if (inBlock < 0 || inBlock >= m_blockBytes) {
+        return 0;
+    }
+    const int64_t count = std::min(bytes, m_blockBytes - inBlock);
+    std::copy_n(m_block.data() + inBlock, count, destination);
+    return count;
+}
+
+bool TByteSource::fill_block(int64_t position)
+{
+    m_block.resize(BlockBytes);
+    m_blockStart = position;
+    const TMediumRead read = read_and_count(position, m_block.data(), BlockBytes);
+    m_blockBytes = read.bytes;
+    return !read.reason;
+}
+
+TMediumRead TByteSource::read_and_count(int64_t position, char* data, int64_t bytes)
 {
     TReadsByOrigin* reads = m_reads;
 
-    const quint64 start = now_nanoseconds();
-    const std::optional<qint64> cached = read_cached(position, data, bytes);
-    const quint64 afterCached = now_nanoseconds();
-    qint64 got = cached.value_or(0);
-    if (reads && got > 0) {
-        reads->cached.add(quint64(got), afterCached - start);
+    const uint64_t start = TClock::now_nanoseconds();
+    const std::optional<int64_t> cached = read_cached(position, data, bytes);
+    const uint64_t afterCached = TClock::now_nanoseconds();
+    TMediumRead result{cached.value_or(0), std::nullopt};
+    if (reads && result.bytes > 0) {
+        reads->cached.add(uint64_t(result.bytes), afterCached - start);
     }
 
-    if (got < bytes) {
-        const qint64 waited = read_medium(position + got, data + got, bytes - got);
+    if (result.bytes < bytes) {
+        TMediumRead medium = read_medium(position + result.bytes, data + result.bytes, bytes - result.bytes);
         // Every read counts, also one that gave nothing: its wait is the
         // interesting part on a stalling medium
         if (reads) {
             TReadTotals& kind = cached ? reads->medium : reads->unclassified;
-            kind.add(quint64(std::max<qint64>(waited, 0)), now_nanoseconds() - afterCached);
+            kind.add(uint64_t(medium.bytes), TClock::now_nanoseconds() - afterCached);
             // A read that met an error, also one that gave some bytes first
-            if (m_readFailed) {
+            if (medium.reason) {
                 ++kind.failed;
             }
         }
-        if (waited > 0) {
-            got += waited;
-        }
+        result.bytes += medium.bytes;
+        result.reason = std::move(medium.reason);
     }
-    return got;
+
+    // The first reason waits for take_error(): its user asks at the end of its
+    // call, after several reads, and the first failure is the cause
+    if (result.reason && !m_pendingError) {
+        m_pendingError = result.reason;
+    }
+    return result;
 }
 
-bool TByteSource::seek(qint64 position)
+bool TByteSource::seek(int64_t position)
 {
     if (position < 0) {
         return false;
@@ -104,15 +120,9 @@ std::optional<QString> TByteSource::take_error()
     return std::exchange(m_pendingError, std::nullopt);
 }
 
-std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
+std::optional<int64_t> TByteSource::read_cached(int64_t, void*, int64_t)
 {
     return std::nullopt;
-}
-
-void TByteSource::record_read_failure(const QString& reason)
-{
-    m_pendingError = reason;
-    m_readFailed = true;
 }
 
 // The bytes of a file on a disk or a network
@@ -128,14 +138,14 @@ public:
 
     QString open_error() const { return m_file.errorString(); }
 
-    qint64 size() const override { return m_file.size(); }
+    int64_t size() const override { return m_file.size(); }
 
-    quint64 medium_id() const override
+    uint64_t medium_id() const override
     {
 #if defined(Q_OS_UNIX)
         struct stat status;
         if (fstat(m_file.handle(), &status) == 0) {
-            return quint64(status.st_dev);
+            return uint64_t(status.st_dev);
         }
 #endif
         // Windows: 0, every file looks like one medium. Planning per medium
@@ -148,7 +158,7 @@ protected:
 #if defined(Q_OS_LINUX)
     // preadv2/RWF_NOWAIT: glibc 2.26 and kernel headers 4.14 or later
     // (Debian has both); ENOSYS or another error falls back to unclassified reads
-    std::optional<qint64> read_cached(qint64 position, void* data, qint64 bytes) override
+    std::optional<int64_t> read_cached(int64_t position, void* data, int64_t bytes) override
     {
         if (!m_canTell) {
             return std::nullopt;
@@ -166,12 +176,12 @@ protected:
         return std::nullopt;
     }
 
-    qint64 read_medium(qint64 position, void* data, qint64 bytes) override
+    TMediumRead read_medium(int64_t position, void* data, int64_t bytes) override
     {
         char* destination = static_cast<char*>(data);
-        qint64 got = 0;
-        while (got < bytes) {
-            const ssize_t read = pread(m_file.handle(), destination + got, size_t(bytes - got), position + got);
+        int64_t filled = 0;
+        while (filled < bytes) {
+            const ssize_t read = pread(m_file.handle(), destination + filled, size_t(bytes - filled), position + filled);
             if (read == 0) {
                 break;
             }
@@ -180,29 +190,26 @@ protected:
                     continue;
                 }
                 // Not strerror(): it may share one buffer between threads
-                record_read_failure(QString::fromStdString(std::generic_category().message(errno)));
-                break;
+                return {filled, QString::fromStdString(std::generic_category().message(errno))};
             }
-            got += read;
+            filled += read;
         }
-        return got;
+        return {filled, std::nullopt};
     }
 #else
     // macOS and Windows: QFile::seek() + read(). Untested on those platforms
     // (no compiler or CI for them here); its logic was tested on Linux with
     // the Linux branches switched off (2026-10-30). No cache probe: every read counts as a medium read.
-    qint64 read_medium(qint64 position, void* data, qint64 bytes) override
+    TMediumRead read_medium(int64_t position, void* data, int64_t bytes) override
     {
         if (!m_file.seek(position)) {
-            record_read_failure(m_file.errorString());
-            return 0;
+            return {0, m_file.errorString()};
         }
-        const qint64 read = m_file.read(static_cast<char*>(data), bytes);
+        const int64_t read = m_file.read(static_cast<char*>(data), bytes);
         if (read < 0) {
-            record_read_failure(m_file.errorString());
-            return 0;
+            return {0, m_file.errorString()};
         }
-        return read;
+        return {read, std::nullopt};
     }
 #endif
 

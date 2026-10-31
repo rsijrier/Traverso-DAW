@@ -13,16 +13,16 @@
  */
 struct TAudioIOCost
 {
-    quint64 calls{0};
-    quint64 frames{0};
-    quint64 nanoseconds{0};
+    uint64_t calls{0};
+    uint64_t frames{0};
+    uint64_t nanoseconds{0};
     TReadsByOrigin reads;
 
-    quint64 read_nanoseconds() const { return reads.read_nanoseconds(); }
+    uint64_t read_nanoseconds() const { return reads.read_nanoseconds(); }
     // The rest of the calls' time: the library's decoding and the copies
-    quint64 decode_nanoseconds() const
+    uint64_t decode_nanoseconds() const
     {
-        const quint64 read = read_nanoseconds();
+        const uint64_t read = read_nanoseconds();
         return nanoseconds > read ? nanoseconds - read : 0;
     }
 };

@@ -565,7 +565,7 @@ void TAudioClipView::finish_recording()
     update();
 }
 
-void TAudioClipView::update_recording(qint64 nowNanoseconds)
+void TAudioClipView::update_recording(uint64_t nowNanoseconds)
 {
     if (m_clip->recording_state() != TAudioClip::RECORDING) {
         return;

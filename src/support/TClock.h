@@ -3,11 +3,17 @@
 
 #pragma once
 
+#include "TRealTime.h"
 #include <chrono>
 #include <cstdint>
 
-// Now on the monotonic clock, in nanoseconds: for what a piece of work took
-inline uint64_t now_nanoseconds()
+struct TClock
 {
-    return uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
-}
+    // A monotonic clock for measuring durations, not a time of day, any thread
+    static uint64_t now_nanoseconds() T_REALTIME_SAFE
+    {
+        // The steady clock reads the vDSO: real-time safe by contract
+        T_REALTIME_SAFE_BY_CONTRACT(std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();)
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+    }
+};

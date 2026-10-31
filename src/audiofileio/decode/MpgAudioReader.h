@@ -11,7 +11,7 @@ typedef struct mpg123_handle_struct mpg123_handle;
 struct MpgInput
 {
     TByteSource* source{nullptr};
-    qint64 furthest{0};
+    int64_t furthest{0};
 };
 
 /**

@@ -3,6 +3,7 @@
 #include "TClipsViewPort.h"
 #include "TSheetView.h"
 #include "TFrameClock.h"
+#include "TClock.h"
 
 #include <TSheet.h>
 #include <TThemer.h>
@@ -35,7 +36,7 @@ TPlayHeadView::TPlayHeadView(TSheetView* sv, TSession* session, TClipsViewPort* 
 	// Every frame while the transport rolls
 	// Only while this view holds the clock: another follower (the time
 	// label) keeps it running while the playhead is grabbed (PlayHeadMove)
-	connect(m_frameClock, &TFrameClock::frame, this, [this](qint64 nowNanoseconds) {
+	connect(m_frameClock, &TFrameClock::frame, this, [this](uint64_t nowNanoseconds) {
 		if (m_frameClock->is_held_by(this)) {
 			update_position(nowNanoseconds);
 		}
@@ -116,7 +117,7 @@ void TPlayHeadView::play_stop()
 	// Stopped: show where the transport is instead of where it was heard,
 	// a latency behind. During the page flip it still rolls
 	if (!m_session->is_transport_rolling()) {
-		update_position(TFrameClock::now_nanoseconds());
+        update_position(TClock::now_nanoseconds());
 	}
 
 }
@@ -136,7 +137,7 @@ void TPlayHeadView::enable_follow()
 	}
 }
 
-void TPlayHeadView::update_position(qint64 nowNanoseconds)
+void TPlayHeadView::update_position(uint64_t nowNanoseconds)
 {
 	// What is heard now: the output latency is accounted for
 	QPointF newPos(m_session->get_heard_transport_location(nowNanoseconds) / m_sv->timeref_scalefactor, 1);
@@ -212,7 +213,7 @@ void TPlayHeadView::set_animation_value(int /*value*/)
 		return;
 	}
 
-	QPointF newPos(m_session->get_heard_transport_location(TFrameClock::now_nanoseconds()) / m_sv->timeref_scalefactor, 0);
+    QPointF newPos(m_session->get_heard_transport_location(TClock::now_nanoseconds()) / m_sv->timeref_scalefactor, 0);
 	
 	// calculate the animation x diff.
     qreal diff = m_animation.currentValue() * m_animFrameRange;

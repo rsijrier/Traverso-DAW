@@ -26,9 +26,9 @@ static void check(bool ok, const char* what)
 
 static const quint32 rate = 48000;
 static const quint32 frames = 512;
-static const qint64 period = 1000000000LL * frames / rate;   // nanoseconds
+static const uint64_t period = 1000000000ULL * frames / rate;   // nanoseconds
 
-static TTransportPosition cycle(qint64 bufferStartFrame, qint64 runStartFrame, qint64 cycleTime)
+static TTransportPosition cycle(qint64 bufferStartFrame, qint64 runStartFrame, uint64_t cycleTime)
 {
     return TTransportPosition{
         .universalFrame = TTimeRef(nframes_t(bufferStartFrame), rate).universal_frame(),
@@ -70,7 +70,7 @@ static void test_publish_read()
             published.publish(TTransportPosition{
                 .universalFrame = i,
                 .runStartUniversalFrame = i * 2,
-                .cycleTimeNanoseconds = i * 3,
+                .cycleTimeNanoseconds = uint64_t(i * 3),
                 .frames = quint32(i % 1000),
                 .sampleRate = quint32(i % 7 + 1)
             });
@@ -131,6 +131,15 @@ static void test_estimator()
         const TTimeRef later = estimator.heard_position(p, 10 * period + period / 2, latency);
         const TTimeRef earlier = estimator.heard_position(p, 10 * period + period / 4, latency);
         check(earlier == later, "an earlier tick time does not move the position backwards");
+    }
+
+    // A frame time before a cycle just published: a negative elapsed time, no
+    // jump
+    {
+        TTransportPositionEstimator estimator;
+        const TTransportPosition p = cycle(10 * frames, 0, 10 * period);
+        const TTimeRef early = estimator.heard_position(p, 10 * period - period / 2, latency);
+        check(frame_of(early) == 8 * frames - frames / 2, "a frame time before the cycle start gives half a buffer earlier");
     }
 
     // A late audio thread: the position stops at the end of the published buffer

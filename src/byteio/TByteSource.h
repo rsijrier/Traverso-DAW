@@ -10,6 +10,8 @@
 
 #include <QString>
 
+#include <cstdint>
+
 #include <expected>
 #include <functional>
 #include <memory>
@@ -17,6 +19,15 @@
 #include <vector>
 
 class TByteSource;
+
+// What one read of the medium did: the bytes, and why it stopped when it failed.
+// Both at once: a read can give its first bytes and then fail. Fewer bytes than
+// asked and no reason: the end of the file.
+struct [[nodiscard]] TMediumRead
+{
+    int64_t bytes{0};
+    std::optional<QString> reason;
+};
 
 // Why a file's bytes are not there
 struct TByteSourceError
@@ -51,21 +62,21 @@ public:
     // fileName for reading, or why it does not open
     static TByteSourceResult open_file(const QString& fileName);
 
-    static constexpr qint64 BlockBytes = 16 * 1024;
+    static constexpr int64_t BlockBytes = 16 * 1024;
 
     // bytes from position() on, which moves on by what was read: fewer at the
     // end of the file or on a failure (take_error()), -1 when a failure gave
     // nothing
-    qint64 read(void* data, qint64 bytes);
+    int64_t read(void* data, int64_t bytes);
     // Moves position() only, the next read goes there; false below 0
-    bool seek(qint64 position);
-    qint64 position() const { return m_position; }
+    bool seek(int64_t position);
+    int64_t position() const { return m_position; }
     bool at_end() const { return m_position >= size(); }
 
     // As the file is now: it can shrink while it is read
-    virtual qint64 size() const = 0;
+    virtual int64_t size() const = 0;
     // The medium the file is on, 0 where unknown
-    virtual quint64 medium_id() const { return 0; }
+    virtual uint64_t medium_id() const { return 0; }
 
     // Why a read failed since the last call
     std::optional<QString> take_error();
@@ -76,25 +87,27 @@ public:
 protected:
     // What is there without waiting for the medium: up to bytes from position
     // into data, 0 for nothing. No value: the platform cannot tell.
-    virtual std::optional<qint64> read_cached(qint64 position, void* data, qint64 bytes);
+    virtual std::optional<int64_t> read_cached(int64_t position, void* data, int64_t bytes);
     // Up to bytes from position into data, waiting for the medium: fewer only
-    // at the end of the file or on a failure, which goes to record_read_failure()
-    virtual qint64 read_medium(qint64 position, void* data, qint64 bytes) = 0;
-    void record_read_failure(const QString& reason);
+    // at the end of the file or on a failure, which says why
+    [[nodiscard]] virtual TMediumRead read_medium(int64_t position, void* data, int64_t bytes) = 0;
 
 private:
     // Up to bytes from position, from the medium, counted
-    qint64 read_and_count(qint64 position, char* data, qint64 bytes);
+    TMediumRead read_and_count(int64_t position, char* data, int64_t bytes);
+    // What the block holds of bytes from position on, copied to destination
+    int64_t copy_from_block(int64_t position, char* destination, int64_t bytes) const;
+    // The block from position on; false when the read failed
+    bool fill_block(int64_t position);
 
-    qint64 m_position{0};
+    int64_t m_position{0};
     TReadsByOrigin* m_reads{nullptr};
+    // Why a read failed, the first since take_error()
     std::optional<QString> m_pendingError;
-    // Set by record_read_failure() during the read read_and_count() makes: that read failed
-    bool m_readFailed{false};
     // The bytes of the last small read, from m_blockStart on
     std::vector<char> m_block;
-    qint64 m_blockStart{0};
-    qint64 m_blockBytes{0};
+    int64_t m_blockStart{0};
+    int64_t m_blockBytes{0};
 };
 
 // Opens the bytes of a file for its user, or says why they are not there. An
