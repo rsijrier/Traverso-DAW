@@ -29,6 +29,9 @@
 
 #include <sndfile.h>
 
+#define MPG123_PORTABLE_API
+#include <mpg123.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -658,6 +661,36 @@ static QByteArray without_frame_count(const QByteArray& bytes)
     return changed;
 }
 
+// The Info frame's count extraFrames higher: iTunes writes one too many
+static QByteArray with_frame_count_over(const QByteArray& bytes, uint extraFrames)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64 || !(changed[tag + 7] & 1)) {
+        return QByteArray();
+    }
+    uint count = 0;
+    for (int i = 0; i < 4; ++i) {
+        count = (count << 8) | uchar(changed[tag + 8 + i]);
+    }
+    count += extraFrames;
+    for (int i = 0; i < 4; ++i) {
+        changed[tag + 8 + i] = char((count >> (24 - 8 * i)) & 0xff);
+    }
+    return changed;
+}
+
+// An ID3v1 tag behind the audio, which mpg123 leaves out of the stream
+static QByteArray with_id3v1(const QByteArray& bytes)
+{
+    QByteArray tag("TAG");
+    tag.append(QByteArray(125, ' '));
+    return bytes + tag;
+}
+
 // The Info frame and the first count frames of audio
 static QByteArray first_frames(const QByteArray& bytes, size_t count)
 {
@@ -784,6 +817,56 @@ static float seek_error(TAudioReader& reader, nframes_t first, nframes_t count, 
     return worst;
 }
 
+// How far a reader's seeks over the whole file lie from a handle of our own,
+// with the reader's settings but without its detour over the file size.
+// counted: the file has a tag, so its frame 0 lies behind delay and decoder delay
+static float worst_against_plain_handle(TAudioReader& reader, const QString& path, bool counted)
+{
+    const QByteArray decoder = qgetenv("TRAVERSO_MPG123_DECODER");
+    int error = MPG123_OK;
+    mpg123_handle* handle = mpg123_new(decoder.isEmpty() ? nullptr : decoder.constData(), &error);
+    if (!handle) {
+        return 1.0f;
+    }
+    mpg123_param(handle, MPG123_REMOVE_FLAGS, MPG123_AUTO_RESAMPLE | MPG123_GAPLESS, 0.0);
+    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_FORCE_FLOAT | MPG123_QUIET | MPG123_NO_RESYNC | MPG123_SKIP_ID3V2, 0.0);
+    mpg123_param(handle, MPG123_RESYNC_LIMIT, 1024 * 1024, 0.0);
+    mpg123_param(handle, MPG123_INDEX_SIZE, 10000, 0.0);
+    mpg123_param(handle, MPG123_PREFRAMES, 12, 0.0);
+    long rate = 0;
+    int channels = 0;
+    int encoding = 0;
+    float worst = 1.0f;
+    if (mpg123_open64(handle, path.toLocal8Bit().constData()) == MPG123_OK && mpg123_getformat(handle, &rate, &channels, &encoding) == MPG123_OK) {
+        long delay = 0;
+        double unused = 0.0;
+        mpg123_getstate(handle, MPG123_ENC_DELAY, &delay, &unused);
+        mpg123_scan(handle);
+        const int64_t skip = counted ? delay + 529 : 0;
+        const nframes_t frames = reader.file_frame_count();
+        const nframes_t count = 2000;
+        TAudioBuffer buffer;
+        std::vector<float> plain(size_t(count) * size_t(channels));
+        worst = 0.0f;
+        for (int place = 7; place >= 0; --place) {
+            const nframes_t first = (frames - count - 1) / 7 * nframes_t(place);
+            size_t done = 0;
+            const bool landed = mpg123_seek64(handle, first + skip, SEEK_SET) == first + skip && mpg123_read(handle, plain.data(), plain.size() * sizeof(float), &done) == MPG123_OK;
+            const TAudioFileResult read = reader.read_file_frames(buffer, first, count);
+            if (!landed || done != plain.size() * sizeof(float) || read.frames != count) {
+                worst = 1.0f;
+                break;
+            }
+            const float* data = buffer.get_channel_buffer(0).get_data(count);
+            for (nframes_t i = 0; i < count; ++i) {
+                worst = std::max(worst, std::fabs(data[i] - plain[size_t(i) * size_t(channels)]));
+            }
+        }
+    }
+    mpg123_delete(handle);
+    return worst;
+}
+
 // Why path does not open, nothing when it does
 static QString refusal(const QString& path)
 {
@@ -838,20 +921,64 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
     }
 
-    // A tag with an encoder's name and no frame count: the length is an
-    // estimate from the file size, which only the scan can correct. Bytes
-    // behind the audio make the estimate say more than the scan.
+    // iTunes counts its Info frame: one frame over the scan is no cut file,
+    // two are
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-itunes.mp3"));
+        write_bytes(path, with_frame_count_over(bytes, 1));
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag one frame over the scan: the scan's length, no error (%u frames of %u, %u read, %s)", reader ? reader->file_frame_count() : 0, source.frames(), back.frames(),
+                      back.error ? qPrintable(back.error->detail) : "no error");
+        check(reader && reader->file_frame_count() == source.frames() && back.frames() == source.frames() && !back.error, what);
+
+        write_bytes(path, with_frame_count_over(bytes, 2));
+        const std::unique_ptr<TAudioReader> over = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack overBack = over ? read_back(*over) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag two frames over the scan: the tag's length, an error at the end (%u frames, %u read)", over ? over->file_frame_count() : 0, overBack.frames());
+        check(over && over->file_frame_count() == source.frames() + 2 * 1152 && overBack.error && overBack.frames() < over->file_frame_count(), what);
+    }
+
+    // A tag with an encoder's name and no frame count is no tag: all that says
+    // how long the file is, is the scan
     {
         const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
         const QString path = dir.filePath(QStringLiteral("t73-no-count.mp3"));
-        const QByteArray changed = write_mp3(vbrPath, source, SF_BITRATE_MODE_VARIABLE, 0.3) ? without_frame_count(file_bytes(vbrPath)) + QByteArray(2048 * 1024, '\0') : QByteArray();
-        check(changed.size() > 2048 * 1024 && write_bytes(path, changed), "A tag without a frame count: the file made");
+        const QByteArray changed = write_mp3(vbrPath, source, SF_BITRATE_MODE_VARIABLE, 0.3) ? without_frame_count(file_bytes(vbrPath)) : QByteArray();
+        check(!changed.isEmpty() && write_bytes(path, changed), "A tag without a frame count: the file made");
         const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
         const nframes_t count = reader ? reader->file_frame_count() : 0;
         const ReadBack back = reader ? read_back(*reader) : ReadBack{};
-        std::snprintf(what, sizeof(what), "A tag without a frame count: the scan's length, read to its end (%u frames of %u, %u read, %s)", count, source.frames(), back.frames(),
+        std::snprintf(what, sizeof(what), "A tag without a frame count: the scan's length, read to its end (%u frames, %u read, %s)", count, back.frames(),
                       back.error ? qPrintable(back.error->detail) : "no error");
-        check(count == source.frames() && back.frames() == count && !back.error, what);
+        check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
+
+        // Damage in the middle: refused, not opened short
+        QByteArray damaged = changed;
+        const std::vector<MpegFrame> changedFrames = mpeg_frames(changed);
+        const qsizetype place = changedFrames[changedFrames.size() / 2].offset;
+        damaged.replace(place, 3000, QByteArray(3000, '\0'));
+        write_bytes(path, damaged);
+        const QString why = refusal(path);
+        std::snprintf(what, sizeof(what), "A tag without a frame count, damage in the middle: CannotOpen with the byte position (%s, damage at %lld)", why.isEmpty() ? "it opened" : qPrintable(why), static_cast<long long>(place));
+        check(why.contains(QString::number(place + 4)), what);
+    }
+
+    // The detour that tells a real frame count from an estimate changes the
+    // handle's file size for a moment: seeks over the whole file give what a
+    // handle gives that made no detour, also with an ID3v1 tag behind the audio
+    {
+        const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-detour.mp3"));
+        for (const QByteArray& file : {bytes, with_id3v1(bytes), without_frame_count(file_bytes(vbrPath)), with_id3v1(without_frame_count(file_bytes(vbrPath)))}) {
+            write_bytes(path, file);
+            const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+            const bool counted = !without_frame_count(file).isEmpty();
+            const float worst = reader ? worst_against_plain_handle(*reader, path, counted) : 1.0f;
+            const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+            std::snprintf(what, sizeof(what), "The detour: seeks equal a plain handle (%s, worst %.2g), read to the end (%u of %u)", counted ? "a frame count" : "no frame count", double(worst), back.frames(), reader ? reader->file_frame_count() : 0);
+            check(reader && worst <= MpgSeekTolerance && back.frames() == reader->file_frame_count() && !back.error, what);
+        }
     }
 
     // A bit reservoir that reaches further than 16 frames
