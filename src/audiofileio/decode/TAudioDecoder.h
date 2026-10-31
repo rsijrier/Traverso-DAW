@@ -16,7 +16,6 @@
 #include <vector>
 
 class TAudioBuffer;
-class TAudioIOScope;
 
 /**
  * @brief Reads the audio of one file at the file's own rate. One class per
@@ -113,11 +112,9 @@ public:
 
     // What it read and decoded since it opened
     const TAudioIOStats& io_stats() const { return m_stats; }
-    // The open is over: the reads of the probes before the decoder are added,
-    // and from now on seeks and reads
-    void finish_open(const TReadsByOrigin& probeReads);
-    // The rest of the open's measurement ends on this decoder
-    void measure_open_on_stats(TAudioIOScope& scope);
+    // The open is over, what it cost is the decoder's: time, calls and reads,
+    // the probes' included. From now on it counts its own seeks and reads
+    void adopt_open_cost(const TAudioIOCost& cost);
 
 protected:
     TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);

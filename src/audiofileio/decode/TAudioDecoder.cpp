@@ -35,23 +35,20 @@ TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
     return result;
 }
 
-void TAudioDecoder::finish_open(const TReadsByOrigin& probeReads)
+void TAudioDecoder::adopt_open_cost(const TAudioIOCost& cost)
 {
-    m_stats.open.reads.add(probeReads);
+    m_stats.open.calls += cost.calls;
+    m_stats.open.nanoseconds += cost.nanoseconds;
+    m_stats.open.reads.add(cost.reads);
     m_stats.set_activity(TAudioIOStats::Activity::Stream);
-}
-
-void TAudioDecoder::measure_open_on_stats(TAudioIOScope& scope)
-{
-    scope.move_to(m_stats);
 }
 
 TAudioDecoder::TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     : m_fileName(fileName)
     , m_opener(opener)
 {
-    // It goes on counting where the probes count until finish_open(), so a failed
-    // open keeps what it read
+    // It goes on counting where the open is measured until adopt_open_cost(),
+    // so a failed open keeps what it read
     m_stats.mediumId = source->medium_id();
     m_stats.sources.push_back(source.get());
     m_sources.push_back(std::move(source));
@@ -298,15 +295,15 @@ static TDecoderResult open_faad(const QString& fileName, std::unique_ptr<TByteSo
 #endif
 }
 
-// The decoder for fileName, its open measured by scope, into probes until there
-// is a decoder to go on with
-static TDecoderResult open_measured(const QString& fileName, const TByteSourceOpener& opener, TAudioIOStats& probes, TAudioIOScope& scope)
+// The decoder for fileName; all the reads of the open, the probes' and the
+// decoder's own, count into openStats
+static TDecoderResult open_measured(const QString& fileName, const TByteSourceOpener& opener, TAudioIOStats& openStats)
 {
     TByteSourceResult source = opener ? opener(fileName) : TByteSource::open_file(fileName);
     if (!source) {
         return std::unexpected(TAudioFileError{source.error().notFound ? TAudioFileError::Code::NotFound : TAudioFileError::Code::CannotOpen, source.error().reason});
     }
-    (*source)->count_reads_into(&probes.open.reads);
+    (*source)->count_reads_into(&openStats.open.reads);
 
     TDecoderResult decoder = std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QString()});
     switch (find_decoder(fileName, **source)) {
@@ -329,23 +326,21 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
         return std::unexpected(why_no_decoder(fileName, **source));
     }
 
-    if (decoder) {
-        (*decoder)->finish_open(probes.open.reads);
-        (*decoder)->measure_open_on_stats(scope);
-    }
     return decoder;
 }
 
 std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
 {
-    TAudioIOStats probes;
+    TAudioIOStats openStats;
     TDecoderResult decoder = [&] {
-        TAudioIOScope scope(probes, TAudioIOStats::Activity::Open);
-        return open_measured(fileName, opener, probes, scope);
+        TAudioIOScope scope(openStats, TAudioIOStats::Activity::Open);
+        return open_measured(fileName, opener, openStats);
     }();
-    // No decoder keeps the measurement: it goes with the error
-    if (!decoder) {
-        decoder.error().openCost = std::make_shared<const TAudioIOCost>(probes.open);
+    if (decoder) {
+        (*decoder)->adopt_open_cost(openStats.open);
+    } else {
+        // No decoder keeps the measurement: it goes with the error
+        decoder.error().openCost = std::make_shared<const TAudioIOCost>(openStats.open);
     }
     return decoder;
 }

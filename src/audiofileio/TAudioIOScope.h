@@ -34,14 +34,6 @@ public:
     TAudioIOScope(const TAudioIOScope&) = delete;
     TAudioIOScope& operator=(const TAudioIOScope&) = delete;
 
-    // An open starts before there is a decoder: its measurement ends on the
-    // decoder's stats, which go on from where they are
-    void move_to(TAudioIOStats& stats)
-    {
-        m_stats = &stats;
-        m_previous = stats.activity;
-    }
-
 private:
     TAudioIOStats* m_stats;
     TAudioIOStats::Activity m_activity;
