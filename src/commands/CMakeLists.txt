@@ -46,7 +46,6 @@ target_include_directories(traversocommands
         ${CMAKE_SOURCE_DIR}/src/dsp
         ${CMAKE_SOURCE_DIR}/src/audioruntime
         ${CMAKE_SOURCE_DIR}/src/audiofileio
-        ${CMAKE_SOURCE_DIR}/src/byteio
 )
 
 # Link essential runtime libraries and external application frameworks
@@ -61,3 +60,5 @@ target_link_libraries(traversocommands
 
 add_subdirectory(plugins)
 
+# byteio's types reach it through core's and audiofileio's headers
+target_link_libraries(traversocommands PRIVATE traversobyteio)

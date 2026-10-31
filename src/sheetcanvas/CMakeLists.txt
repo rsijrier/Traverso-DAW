@@ -65,7 +65,6 @@ target_include_directories(traversosheetcanvas
         ${CMAKE_SOURCE_DIR}/src/plugins/native
         ${CMAKE_SOURCE_DIR}/src/commands
         ${CMAKE_SOURCE_DIR}/src/audiofileio
-        ${CMAKE_SOURCE_DIR}/src/byteio
         ${CMAKE_SOURCE_DIR}/src/audioruntime
 )
 
@@ -78,3 +77,6 @@ target_link_libraries(traversosheetcanvas
         Qt6::Core
         Qt6::Concurrent
 )
+
+# byteio's types reach it through core's and audiofileio's headers
+target_link_libraries(traversosheetcanvas PRIVATE traversobyteio)

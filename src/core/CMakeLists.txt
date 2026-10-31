@@ -79,7 +79,6 @@ target_link_libraries(traversocore
         traversodsp
         traversoaudioruntime
         traversoaudiofileio
-        traversobyteio
         traversowaveform
         traversoioscheduler
         Qt6::Widgets
@@ -88,3 +87,5 @@ target_link_libraries(traversocore
         Qt6::Core
         Qt6::Concurrent
 )
+# Its stream readers use byteio's types through audiofileio's headers
+target_link_libraries(traversocore PRIVATE traversobyteio)
