@@ -251,13 +251,14 @@ static DecoderLibrary library_of_sndfile_format(int format)
 }
 
 // The library that can read the file, by its content; the probes' reads count
-// where source counts. A match really opens the file: can_decode_audio() has no
-// other check, a signature alone proves nothing.
+// where source counts. A match really opens the file, a signature alone proves
+// nothing; a scenario is the one that does not here: its open says why it is
+// none, and can_decode_audio() checks it.
 static DecoderLibrary find_decoder(TByteSource& source)
 {
     switch (library_of_signature(source)) {
     case DecoderLibrary::Scenario:
-        return TScenarioDecoder::check(source) ? DecoderLibrary::Scenario : DecoderLibrary::None;
+        return DecoderLibrary::Scenario;
     case DecoderLibrary::SndFile:
         // A RIFF libsndfile does not know (RMP3) can still hold MP3
         if (const int format = SFAudioReader::format(source)) {
@@ -298,7 +299,12 @@ static DecoderLibrary find_decoder(TByteSource& source)
 bool can_decode_audio(const QString& fileName)
 {
     TByteSourceResult source = TByteSource::open_file(fileName);
-    return source && find_decoder(**source) != DecoderLibrary::None;
+    if (!source) {
+        return false;
+    }
+    const DecoderLibrary library = find_decoder(**source);
+    // The signature alone: the scenario must really parse
+    return library == DecoderLibrary::Scenario ? TScenarioDecoder::check(**source).has_value() : library != DecoderLibrary::None;
 }
 
 // Why no decoder reads the file its source holds. Asked after the probes
@@ -307,11 +313,6 @@ static TAudioFileError why_no_decoder(TByteSource& source)
 {
     if (std::optional<QString> reason = source.take_error()) {
         return {TAudioFileError::Code::CannotOpen, *reason};
-    }
-    if (library_of_signature(source) == DecoderLibrary::Scenario) {
-        if (std::expected<void, QString> scenario = TScenarioDecoder::check(source); !scenario) {
-            return {TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())};
-        }
     }
     return {TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")};
 }
