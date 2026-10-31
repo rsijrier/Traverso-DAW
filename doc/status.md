@@ -699,14 +699,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     generation (`TIOStream::next_generation()`, `stale()`,
     `forget_position()`, the scheduler's bump in `TIOScheduler.cpp`): a
     refill in flight across a seek stops at its next `stale()`.
-  - **At the merge with `device-ownership` (T58):** both fixed the seek's
-    read of the device's buffer size on the IO thread
-    (`TBufferedAudioStreamReader.cpp:367`). Keep `device-ownership`'s
-    `m_bufferSlotFrames` (initialised, no pointer); drop this branch's
-    `m_lastQueuedRTBufferSlot->get_buffer_size()` there, and use
-    `m_bufferSlotFrames` at `:466` too. Drop `#include "TAudioDevice.h"`
-    only if nothing in the file uses `audiodevice()` after the merge
-    (Fable's review, 2026-10-30).
+  - **The slot size (T58):** `device-ownership` was merged first
+    (2026-10-31); this branch was rebased onto it and keeps its
+    `m_bufferSlotFrames` in the seek and in the refill (one source).
   - **Step 2:** `prefetch()` into a window in own memory, with a floor of
     16 KB and a margin that grows after a miss; exact byte ranges for PCM,
     MAD and FAAD; the counter "unplanned reads", target zero.
@@ -764,6 +759,8 @@ From the GPU waveform test program, clip edges in variant A (branch
     - `size()` makes a system call each time, and MAD asks it through
       `at_end()` at every buffer fill: it can be a variable.
     - FAAD makes a new `QByteArray` per packet: allocations per decode.
+    - `K3bMad::decodeNextFrame()` is dead code (no callers; Fable's review):
+      goes at the next clean-up, not now.
     - MP3 seek pre-roll by bitrate (candidate once scrubbing or many seeks
       weigh in the measurements; since step 2b every reset is a real seek):
       `MadAudioReader` decodes `PreRollFrames` (16) before the target

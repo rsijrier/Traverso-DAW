@@ -465,7 +465,8 @@ void TBufferedAudioStreamReader::process_realtime_buffers(TAudioBuffer& fileDeco
 
     TTimeRef slotFileLocation = m_lastQueuedRTBufferSlot->get_file_location();
     TTimeRef transportLocation = m_lastQueuedRTBufferSlot->get_transport_location();
-    auto bufferSize = m_lastQueuedRTBufferSlot->get_buffer_size();
+    // The slot size the ring was made for, as in the seek
+    const nframes_t bufferSize = m_bufferSlotFrames;
 
     // We need the next slot so add buffer size length to the last slot transport location
     // except when we are seeking, then the rt queueu actually is empty and we need to
