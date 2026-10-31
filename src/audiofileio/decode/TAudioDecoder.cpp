@@ -4,7 +4,7 @@
 #include "TAudioDecoder.h"
 
 #include "TAudioBuffer.h"
-#include "TAudioIOScope.h"
+#include "TClock.h"
 
 #include "SFAudioReader.h"
 #include "WPAudioReader.h"
@@ -17,19 +17,62 @@
 
 #include <cstring>
 
+/**
+ * @brief Measures one seek, read or open: when it ends, also by an early return
+ * or an error, the time and the call go to the cost. For a decoder it sets the
+ * activity at the start, so its sources count there, and puts the one before it
+ * back. An open has no decoder yet: its sources were pointed at the cost once.
+ */
+class TAudioIOScope
+{
+public:
+    explicit TAudioIOScope(TAudioIOCost& cost)
+        : m_cost(cost)
+        , m_start(now_nanoseconds())
+    {
+    }
+
+    TAudioIOScope(TAudioDecoder& decoder, TAudioIOStats::Activity activity)
+        : m_cost(decoder.m_stats.cost_of(activity))
+        , m_decoder(&decoder)
+        , m_previous(decoder.m_stats.activity)
+        , m_start(now_nanoseconds())
+    {
+        decoder.set_activity(activity);
+    }
+
+    ~TAudioIOScope()
+    {
+        m_cost.nanoseconds += now_nanoseconds() - m_start;
+        ++m_cost.calls;
+        if (m_decoder) {
+            m_decoder->set_activity(m_previous);
+        }
+    }
+
+    TAudioIOScope(const TAudioIOScope&) = delete;
+    TAudioIOScope& operator=(const TAudioIOScope&) = delete;
+
+private:
+    TAudioIOCost& m_cost;
+    TAudioDecoder* m_decoder{nullptr};
+    TAudioIOStats::Activity m_previous{};
+    uint64_t m_start;
+};
+
 TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 {
     // A seek of the open itself (mpg123, FAAD) counts for the open
     if (m_stats.activity == TAudioIOStats::Activity::Open) {
         return seek_frame(frame);
     }
-    TAudioIOScope scope(m_stats, TAudioIOStats::Activity::Seek);
+    TAudioIOScope scope(*this, TAudioIOStats::Activity::Seek);
     return seek_frame(frame);
 }
 
 TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 {
-    TAudioIOScope scope(m_stats, TAudioIOStats::Activity::Stream);
+    TAudioIOScope scope(*this, TAudioIOStats::Activity::Stream);
     TAudioFileResult result = read_frames(buffer, count);
     m_stats.stream.frames += result.frames;
     return result;
@@ -40,7 +83,15 @@ void TAudioDecoder::adopt_open_cost(const TAudioIOCost& cost)
     m_stats.open.calls += cost.calls;
     m_stats.open.nanoseconds += cost.nanoseconds;
     m_stats.open.reads.add(cost.reads);
-    m_stats.set_activity(TAudioIOStats::Activity::Stream);
+    set_activity(TAudioIOStats::Activity::Stream);
+}
+
+void TAudioDecoder::set_activity(TAudioIOStats::Activity activity)
+{
+    m_stats.activity = activity;
+    for (const std::unique_ptr<TByteSource>& source : m_sources) {
+        source->count_reads_into(&m_stats.current_cost().reads);
+    }
 }
 
 TAudioDecoder::TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
@@ -50,7 +101,6 @@ TAudioDecoder::TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSourc
     // It goes on counting where the open is measured until adopt_open_cost(),
     // so a failed open keeps what it read
     m_stats.mediumId = source->medium_id();
-    m_stats.sources.push_back(source.get());
     m_sources.push_back(std::move(source));
 }
 
@@ -61,7 +111,6 @@ TByteSource* TAudioDecoder::open_extra_source(const QString& fileName)
         return nullptr;
     }
     (*source)->count_reads_into(&m_stats.current_cost().reads);
-    m_stats.sources.push_back(source->get());
     m_sources.push_back(std::move(*source));
     return m_sources.back().get();
 }
@@ -333,7 +382,7 @@ std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decode
 {
     TAudioIOStats openStats;
     TDecoderResult decoder = [&] {
-        TAudioIOScope scope(openStats, TAudioIOStats::Activity::Open);
+        TAudioIOScope scope(openStats.open);
         return open_measured(fileName, opener, openStats);
     }();
     if (decoder) {

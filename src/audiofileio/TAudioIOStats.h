@@ -3,12 +3,9 @@
 
 #pragma once
 
-#include "TByteSource.h"
 #include "TReadsByOrigin.h"
 
 #include <QtTypes>
-
-#include <vector>
 
 /**
  * @brief What one kind of decoder work cost: its calls and time, and the bytes
@@ -38,9 +35,8 @@ struct TAudioIOCost
  * seek's reads are not sequential, and a seek can decode, so it stays out of
  * the medium's latency) and stream (the reads a scheduler can plan).
  *
- * Plain counters of one decoder, for the thread that uses the decoder.
- * set_activity() points its sources at the bytes of the activity, so none can be
- * forgotten (WavPack has two, the .wv and its .wvc).
+ * Plain counters of one decoder, for the thread that uses the decoder. The
+ * decoder points its sources at the reads of the current activity.
  */
 struct TAudioIOStats
 {
@@ -57,8 +53,6 @@ struct TAudioIOStats
     // The medium the file is on (st_dev), 0 where unknown: files on the same
     // medium wait for each other
     quint64 mediumId{0};
-    // The sources that count into this; they outlive it or leave with it
-    std::vector<TByteSource*> sources;
 
     TAudioIOCost& cost_of(Activity of)
     {
@@ -74,12 +68,4 @@ struct TAudioIOStats
     }
 
     TAudioIOCost& current_cost() { return cost_of(activity); }
-
-    void set_activity(Activity to)
-    {
-        activity = to;
-        for (TByteSource* source : sources) {
-            source->count_reads_into(&current_cost().reads);
-        }
-    }
 };

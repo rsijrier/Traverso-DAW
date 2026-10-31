@@ -155,6 +155,11 @@ protected:
     bool m_inErrorState{false};
 
 private:
+    friend class TAudioIOScope;
+
+    // The kind of work from now on; every source counts into its cost, so none
+    // can be forgotten (WavPack has two, the .wv and its .wvc)
+    void set_activity(TAudioIOStats::Activity activity);
     // Why a read of a source failed since the last call, empty when none did
     QString take_source_error();
 

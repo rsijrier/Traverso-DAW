@@ -21,7 +21,7 @@ forks and agents: a name in an older text means what it meant then.
 | 2026-10-31 | `TAudioPhaseStats::bytes` | `TAudioIOCost::reads` |  |
 | 2026-10-31 | `TAudioIOStats::current()` | `current_cost()` |  |
 | 2026-10-31 | `TAudioDecoder::stats()` | `io_stats()` |  |
-| 2026-10-31 | `set_phase()` | `set_activity()` | on `TAudioIOStats` |
+| 2026-10-31 | `set_phase()` | `set_activity()` | |
 | 2026-10-31 | `TAudioDecoder::opened()` | `adopt_open_cost()` | takes the whole cost of the open |
 | 2026-10-31 | `TAudioDecoder::frame()`, `m_frame` | `next_frame()`, `m_nextFrame` |  |
 | 2026-10-31 | `TAudioDecoder::reads_from()` | `next_read_is_at()` |  |
