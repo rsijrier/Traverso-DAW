@@ -122,6 +122,8 @@ public:
     // 0, no error; where the decoder cannot seek to, zeros, 0 and the seek's
     // error.
     TAudioFileResult read_from(TAudioBuffer& buffer, nframes_t first, nframes_t count);
+    // Nothing to read: zeros, as read() gives past the end, 0 and error
+    static TAudioFileResult nothing_read(TAudioBuffer& buffer, nframes_t count, uint channels, std::optional<TAudioFileError> error);
 
     // What it read and decoded since it opened
     const TAudioIOStats& io_stats() const { return m_stats; }

@@ -177,12 +177,6 @@ TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& locati
     // The reader writes into the buffer, so it makes room in it
     buffer.check_capacity(count, channel_count());
 
-    // Nothing to read: zeros, as past the end of the file
-    const auto nothing = [&](std::optional<TAudioFileError> error) -> TAudioFileResult {
-        buffer.silence(0, count, channel_count());
-        return {0, std::move(error)};
-    };
-
     // The output frame nearest to location; before the file: frame 0. The
     // one rounding of a read: it moves with the location, so a read at the
     // location where the last one ended goes on from there, no seek
@@ -191,7 +185,7 @@ TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& locati
     // frame count), no error. No position: the next read seeks.
     if (first >= m_outputFrames) {
         m_nextOutputFrame.reset();
-        return nothing(std::nullopt);
+        return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::nullopt);
     }
     // Elsewhere, no position at all, or a decoder in its error state (after
     // a read that failed, the reader's position may still be right): a seek
@@ -199,10 +193,10 @@ TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& locati
     if (!readsFromFirst) {
         std::expected<bool, TAudioFileError> positioned = reposition(first);
         if (!positioned) {
-            return nothing(std::move(positioned.error()));
+            return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::move(positioned.error()));
         }
         if (!*positioned) {
-            return nothing(std::nullopt);
+            return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::nullopt);
         }
     }
 

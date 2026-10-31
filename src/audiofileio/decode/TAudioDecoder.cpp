@@ -132,25 +132,25 @@ QString TAudioDecoder::take_source_error()
     return reason;
 }
 
+TAudioFileResult TAudioDecoder::nothing_read(TAudioBuffer& buffer, nframes_t count, uint channels, std::optional<TAudioFileError> error)
+{
+    if (count > 0) {
+        buffer.check_capacity(count, channels);
+        buffer.silence(0, count, channels);
+    }
+    return {0, std::move(error)};
+}
+
 TAudioFileResult TAudioDecoder::read_from(TAudioBuffer& buffer, nframes_t first, nframes_t count)
 {
-    // Nothing to read: zeros, as read() gives past the end
-    const auto nothing = [&](std::optional<TAudioFileError> error) -> TAudioFileResult {
-        if (count > 0) {
-            buffer.check_capacity(count, m_channels);
-            buffer.silence(0, count, m_channels);
-        }
-        return {0, std::move(error)};
-    };
-
     // At or past the end: no seek, no error (contract point 2)
     if (first >= m_frames) {
-        return nothing(std::nullopt);
+        return nothing_read(buffer, count, m_channels, std::nullopt);
     }
     // A seek only when the decoder does not read from first already
     if (!next_read_is_at(first)) {
         if (TAudioFileStatus sought = seek(first); !sought) {
-            return nothing(std::move(sought.error()));
+            return nothing_read(buffer, count, m_channels, std::move(sought.error()));
         }
     }
     return read(buffer, count);
