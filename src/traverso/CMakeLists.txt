@@ -65,6 +65,7 @@ target_link_libraries(traverso
         Qt6::Widgets
         Qt6::Xml
         Qt6::Svg
+        Qt6::Core
 )
 
 # System-level dependencies required for building on particular OS environments

@@ -21,5 +21,6 @@ add_library(traversosupport STATIC
 
 target_include_directories(traversosupport PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Public: the public headers of this library include Qt headers
-target_link_libraries(traversosupport PRIVATE traverso_compiler_settings PUBLIC Qt6::Core)
+# Private, as every link (CLAUDE.md): a target that uses this library's
+# headers links Qt6::Core itself
+target_link_libraries(traversosupport PRIVATE traverso_compiler_settings Qt6::Core)

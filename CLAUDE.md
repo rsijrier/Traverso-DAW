@@ -46,3 +46,10 @@ decision log with a one-line reason.
   entry against the recorded design rules.
 - Before a merge, Remon reads the decision log of the branch. List the
   new entries in the merge report.
+
+## CMake linking
+
+Every target links PRIVATE, and links every library it uses itself,
+also when it only reaches that library through another library's
+headers. No PUBLIC links, no exceptions. The purpose: each target's
+CMakeLists.txt shows all its dependencies within Traverso.
