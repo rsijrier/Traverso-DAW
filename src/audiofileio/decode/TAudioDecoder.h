@@ -16,6 +16,15 @@
 #include <vector>
 
 class TAudioBuffer;
+class TAudioDecoder;
+
+// The decoder for fileName, open, or why there is none: NotFound
+// when the file is not there, else CannotOpen (no permission, no decoder for
+// its format, the decoder's own reason). A scenario file (.tscenario) is
+// known by its name and read by TScenarioDecoder; other files go by their
+// content, see find_decoder().
+// opener gives the file's bytes, also to the probes (tests).
+[[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener = {});
 
 /**
  * @brief Reads the audio of one file at the file's own rate. One class per
@@ -67,7 +76,12 @@ class TAudioBuffer;
  * source from the probes, which is opened once.
  *
  * A decoder reaches its file through TByteSource only (source()), so
- * what it read and what it decoded can be told apart: io_stats().
+ * what it read and what it decoded can be told apart: io_stats(). The libraries
+ * pull their bytes themselves, in the middle of a decode, so the line between
+ * reading and decoding runs below the decoders: libsndfile, libmpg123 and
+ * WavPack through their virtual IO, FAAD directly. Small reads share the
+ * source's block: the parsers of MP4 and ADTS read a few bytes at a time, tens
+ * of thousands of times when a file opens.
  *
  * Not for the audio thread: file IO, and the buffer may grow.
  */
@@ -112,9 +126,6 @@ public:
 
     // What it read and decoded since it opened
     const TAudioIOStats& io_stats() const { return m_stats; }
-    // The open is over, what it cost is the decoder's: time, calls and reads,
-    // the probes' included. From now on it counts its own seeks and reads
-    void adopt_open_cost(const TAudioIOCost& cost);
 
 protected:
     TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
@@ -128,7 +139,9 @@ protected:
     // The bytes of the file, for as long as the decoder lives
     TByteSource& source() { return *m_sources.front(); }
     // A second file of this one (WavPack's correction file), for as long as
-    // the decoder lives, counted in io_stats(); nullptr when it is not there
+    // the decoder lives, counted in io_stats(); nullptr when it is not there.
+    // During the open its reads count directly in m_stats.open, the main source
+    // in the local openStats of open_audio_decoder(); adopt_open_cost() joins them
     TByteSource* open_extra_source(const QString& fileName);
     // The end of every decoder's open: channels, a rate and frames, or why
     // not (a decoder without one of them reads nothing, and a rate of 0 would
@@ -158,7 +171,12 @@ protected:
 
 private:
     friend class TAudioIOScope;
+    friend std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener);
 
+    // The open is over, what it cost is the decoder's: time, calls and reads,
+    // the probes' included. From now on it counts its own seeks and reads. To
+    // be called before the open's local stats go: the source counts into them
+    void adopt_open_cost(const TAudioIOCost& cost);
     // The kind of work from now on; every source counts into its cost, so none
     // can be forgotten (WavPack has two, the .wv and its .wvc)
     void set_activity(TAudioIOStats::Activity activity);
@@ -188,13 +206,6 @@ struct TAudioDecoderFactory
     }
 };
 
-// The decoder for fileName, open, or why there is none: NotFound
-// when the file is not there, else CannotOpen (no permission, no decoder for
-// its format, the decoder's own reason). A scenario file (.tscenario) is
-// known by its name and read by TScenarioDecoder; other files go by their
-// content, see find_decoder().
-// opener gives the file's bytes, also to the probes (tests).
-[[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener = {});
 
 // Whether one of the decoders can read fileName. The file is only probed: no
 // decoder is kept, nothing is logged.
