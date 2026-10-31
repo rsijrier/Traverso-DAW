@@ -4,6 +4,7 @@
 #include "TAudioDecoder.h"
 
 #include "TAudioBuffer.h"
+#include "TClock.h"
 
 #include "SFAudioReader.h"
 #include "WPAudioReader.h"
@@ -26,9 +27,9 @@ TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
         return seek_frame(frame);
     }
     set_phase(TAudioIOStats::Phase::Seek);
-    const quint64 start = TByteSource::now_nanoseconds();
+    const quint64 start = now_nanoseconds();
     TAudioFileStatus status = seek_frame(frame);
-    m_stats.seek.nanoseconds += TByteSource::now_nanoseconds() - start;
+    m_stats.seek.nanoseconds += now_nanoseconds() - start;
     ++m_stats.seek.calls;
     set_phase(TAudioIOStats::Phase::Stream);
     return status;
@@ -36,9 +37,9 @@ TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 
 TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 {
-    const quint64 start = TByteSource::now_nanoseconds();
+    const quint64 start = now_nanoseconds();
     TAudioFileResult result = read_frames(buffer, count);
-    m_stats.stream.nanoseconds += TByteSource::now_nanoseconds() - start;
+    m_stats.stream.nanoseconds += now_nanoseconds() - start;
     ++m_stats.stream.calls;
     m_stats.stream.frames += result.frames;
     return result;
@@ -290,7 +291,7 @@ static TAudioFileError no_decoder(const QString& fileName)
 std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
 {
     std::unique_ptr<TAudioDecoder> decoder;
-    const quint64 start = TByteSource::now_nanoseconds();
+    const quint64 start = now_nanoseconds();
     TAudioIOStats probes;
 
     switch (find_decoder(fileName, opener, probes)) {
@@ -333,6 +334,6 @@ std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decode
                                                        : QStringLiteral("no decoder reads this format")});
     }
 
-    decoder->opened(probes.open, TByteSource::now_nanoseconds() - start);
+    decoder->opened(probes.open, now_nanoseconds() - start);
     return decoder;
 }

@@ -48,9 +48,6 @@ public:
 
     static constexpr qint64 BlockBytes = 16 * 1024;
 
-    // The clock of the statistics
-    static quint64 now_nanoseconds();
-
     // bytes from position() on, which moves on by what was read: fewer at the
     // end of the file or on a failure (take_error()), -1 when a failure gave
     // nothing

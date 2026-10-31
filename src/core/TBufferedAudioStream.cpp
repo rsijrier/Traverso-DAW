@@ -27,10 +27,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
+#include "TClock.h"
 #include "TLog.h"
 #include "TAudioIOStats.h"
 
-#include <chrono>
 
 
 
@@ -186,7 +186,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
     if (info.seek) {
         const TAudioIOStats* stats = decoder_stats();
         const TAudioIOStats before = stats ? *stats : TAudioIOStats{};
-        const auto start = std::chrono::steady_clock::now();
+        const uint64_t start = now_nanoseconds();
         if (info.sampleRateChanged) {
             set_output_rate_and_resampler(int(info.outputRate), info.resampler);
             prepare_ring_buffers(info.bufferSize);
@@ -198,8 +198,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
             process_realtime_buffers(fileIOBuffer);
         }
         if (stats) {
-            log_seek(get_name(), before, *stats,
-                     quint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()));
+            log_seek(get_name(), before, *stats, now_nanoseconds() - start);
         }
         // Out of its window is no failure: nothing to read there yet
         const int syncStatus = status.get_sync_status();

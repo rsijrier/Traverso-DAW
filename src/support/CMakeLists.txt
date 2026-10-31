@@ -8,6 +8,7 @@
 
 add_library(traversosupport STATIC
     Debugger.h Debugger.cpp
+    TClock.h
     TLog.h TLog.cpp
     TPlatform.h
     TRealTime.h

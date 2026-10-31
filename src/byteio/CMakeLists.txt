@@ -15,5 +15,6 @@ target_include_directories(traversobyteio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(traversobyteio
     PRIVATE
         traverso_compiler_settings
+        traversosupport
         Qt6::Core
 )

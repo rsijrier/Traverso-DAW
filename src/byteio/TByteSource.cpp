@@ -3,10 +3,11 @@
 
 #include "TByteSource.h"
 
+#include "TClock.h"
+
 #include <QFile>
 
 #include <algorithm>
-#include <chrono>
 #include <utility>
 
 #if defined(Q_OS_LINUX)
@@ -23,11 +24,6 @@
 
 static_assert(sizeof(off_t) == 8, "a file offset of 32 bits cuts positions past 2 GiB off");
 #endif
-
-quint64 TByteSource::now_nanoseconds()
-{
-    return quint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
-}
 
 qint64 TByteSource::read(void* data, qint64 bytes)
 {
