@@ -32,6 +32,9 @@ unless section 7 says otherwise.
    stays bounded, never -1.
 6. A file cut short before it is opened: the end is an error (contract
    point 4), and this goes before MAD's behaviour. No shift of the audio.
+   Sharpened: the tag only wins with a real frame count, and with more than one
+   MPEG frame over the scan; one frame over is iTunes, which counts its Info
+   frame.
    The reader works out the audio's place from delay and padding as MAD
    does.
 7. Threads: one process-wide mutex around our own `mpg123_new()`, and no
@@ -223,14 +226,15 @@ on the scan, and a later open without one needs them too.
 7. The length, as below.
 
 **The length.** Without a tag: the scanned samples. A scan that stops more than
-64 KiB before the end gives `CannotOpen` with the byte position (decision 5).
+64 KiB before the end gives `CannotOpen` with the byte position (decision 5). A
+tag without a real frame count is no tag, also with an encoder's name in it, so
+its delay and padding are not used.
 
-With a tag (delay and padding >= 0):
-- the source of the samples is the tag's length when it says more than the
-  scan found, a file cut short; otherwise the scan, so a tag that says less
-  (concatenated files) does not cut anything. Only a real frame count counts:
-  a tag without one (an encoder's name only) gives a length estimated from the
-  file size, and then the scan decides;
+With a tag (a real frame count, delay and padding >= 0):
+- the source of the samples is the tag's length when it says more than one
+  MPEG frame over what the scan found, a file cut short; otherwise the scan, so
+  iTunes' extra frame and a tag that says less (concatenated files) do not cut
+  anything;
 - `m_frames` = samples - delay - max(padding, 529);
 - skip = delay + 529, the decoder's delay being 529.
 

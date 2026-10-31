@@ -89,13 +89,19 @@ static mpg123_handle* open_handle(MpgInput& input, int* error)
 
 // What the tag's frame count says, 0 without one. mpg123_length64() gives an
 // estimate from the file size then, and no call tells the two apart: only the
-// estimate moves with the file size.
+// estimate moves with the file size. mpg123 ends a stream at that size and
+// leaves an ID3v1 tag out of it, so that is what goes back.
 static int64_t tag_samples(mpg123_handle* handle, int64_t fileSize)
 {
+    mpg123_id3v1* id3v1 = nullptr;
+    mpg123_id3(handle, &id3v1, nullptr);
+    const int64_t streamSize = id3v1 ? fileSize - 128 : fileSize;
+
     const int64_t samples = mpg123_length64(handle);
-    mpg123_set_filesize64(handle, 2 * fileSize);
+    mpg123_set_filesize64(handle, 2 * streamSize);
     const bool counted = mpg123_length64(handle) == samples;
-    mpg123_set_filesize64(handle, fileSize);
+    mpg123_set_filesize64(handle, streamSize);
+    Q_ASSERT(mpg123_length64(handle) == samples);
     return counted ? samples : 0;
 }
 
@@ -131,6 +137,7 @@ MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener&
     mpg123_getstate(m_handle, MPG123_ENC_DELAY, &m_delay, &unused);
     mpg123_getstate(m_handle, MPG123_ENC_PADDING, &m_padding, &unused);
     m_tagSamples = tag_samples(m_handle, m_input.source->size());
+    m_frameSamples = mpg123_spf(m_handle);
 
     mpg123_frameinfo2 info{};
     mpg123_param(m_handle, MPG123_INDEX_SIZE, IndexSize, 0.0);
@@ -220,11 +227,12 @@ void MpgAudioReader::scan()
     m_scannedSamples = mpg123_length64(m_handle);
 
     int64_t frames = m_scannedSamples;
-    if (m_delay >= 0 && m_padding >= 0) {
-        // The tag goes first when it says more than the scan found, a file cut
-        // short: the audio stays in place and the end is an error. When it
-        // says less (concatenated files) nothing is cut
-        const int64_t samples = std::max(m_tagSamples, m_scannedSamples);
+    if (m_tagSamples > 0 && m_delay >= 0 && m_padding >= 0) {
+        // The tag goes first when it says more than a frame over what the scan
+        // found, a file cut short: the audio stays in place and the end is an
+        // error. One frame over is iTunes, which counts its Info frame. When
+        // the tag says less (concatenated files) nothing is cut
+        const int64_t samples = m_tagSamples > m_scannedSamples + m_frameSamples ? m_tagSamples : m_scannedSamples;
         m_skip = m_delay + DecoderDelay;
         frames = samples - m_delay - std::max<int64_t>(m_padding, DecoderDelay);
     } else if (const qint64 size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
