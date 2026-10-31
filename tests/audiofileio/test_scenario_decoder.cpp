@@ -56,6 +56,13 @@ static QByteArray scenario(uint rate, nframes_t frames, const char* channels, co
         .toUtf8();
 }
 
+// path does not open, as a scenario that says why
+static bool refused_with(const QString& path, const char* reason)
+{
+    const auto reader = TAudioReader::open(path);
+    return !reader && reader.error().detail == QStringLiteral("not a scenario: %1").arg(QLatin1String(reason));
+}
+
 // All frames of a reader at the file's rate, per channel, in reads of 4096
 static std::vector<std::vector<float>> read_all(TAudioReader& reader)
 {
@@ -148,7 +155,28 @@ static void test_refused(const QTemporaryDir& dir)
     const char* sine = R"([{"signal": "sine", "frequency": 440, "amplitude": 0.5}])";
 
     const QString version = write_file(dir, "version.tscenario", scenario(48000, 1000, sine, "[]", 2));
-    check(!TAudioReader::can_read(version) && !TAudioReader::open(version), "an unknown version does not open");
+    check(!TAudioReader::can_read(version), "an unknown version does not open");
+    check(refused_with(version, "tscenario version 2, this Traverso reads 1"), "an unknown version says so");
+
+    // By its first line, whatever its name
+    QByteArray body = scenario(48000, 1000, sine);
+    const QString named = write_file(dir, "named.wav", body);
+    const auto opened = TAudioReader::open(named);
+    check(opened && (*opened)->decoder_type() == QLatin1String("scenario"), "a scenario named .wav opens as a scenario");
+
+    const QString crlf = write_file(dir, "crlf.tscenario", QByteArray(body).replace("\n", "\r\n"));
+    check(TAudioReader::open(crlf).has_value(), "the first line with \\r\\n opens");
+
+    // Without the line the name decides nothing: no library knows the file
+    const QString noLine = write_file(dir, "noline.tscenario", body.mid(body.indexOf('\n') + 1));
+    const auto noLineOpen = TAudioReader::open(noLine);
+    check(!noLineOpen && noLineOpen.error().detail == QLatin1String("no decoder reads this format"), "a .tscenario without the line does not open");
+
+    // The signature's bytes without a valid line
+    const QString badLine = write_file(dir, "badline.tscenario", QByteArray("# tscenario one\n") + body.mid(body.indexOf('\n') + 1));
+    check(refused_with(badLine, "no tscenario line"), "a line that is no tscenario line says so");
+    const QString noEnd = write_file(dir, "noend.tscenario", QByteArray("# tscenario 1"));
+    check(refused_with(noEnd, "no tscenario line"), "the line without its end says so");
 
     const QString empty = write_file(dir, "empty.tscenario", scenario(48000, 0, sine));
     check(!TAudioReader::open(empty), "a scenario of no frames is refused");
@@ -162,9 +190,9 @@ static void test_refused(const QTemporaryDir& dir)
     const QString fault = write_file(dir, "fault.tscenario", scenario(48000, 1000, sine, R"([{"kind": "read-error", "frame": 1000}])"));
     check(!TAudioReader::can_read(fault) && !TAudioReader::open(fault), "a fault outside the file does not open");
 
-    // A WAV file named .tscenario is not passed on to the libraries
+    // A name decides nothing: a broken WAV named .tscenario is a broken WAV
     const QString wav = write_file(dir, "riff.tscenario", QByteArray("RIFF\x24\0\0\0WAVEfmt ", 16));
-    check(!TAudioReader::can_read(wav), "a file named .tscenario is a scenario or nothing");
+    check(!TAudioReader::can_read(wav), "a broken WAV named .tscenario does not open");
 }
 
 // Q9: one frame, rates that do and do not divide the universal rate, mono
