@@ -20,6 +20,10 @@ Makefile
 .cmake
 .qt
 
+# reports and measurement results (Remon, 2026-10-31): local, not versioned;
+# build directories stay outside the repository
+/reports/
+
 # build products
 /bin
 /lib
