@@ -350,28 +350,21 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     }
     (*source)->count_reads_into(&openStats.open.reads);
 
-    TDecoderResult decoder = std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QString()});
     switch (find_decoder(fileName, **source)) {
     case DecoderLibrary::Scenario:
-        decoder = as_decoder(TScenarioDecoder::open(fileName, std::move(*source), opener));
-        break;
+        return as_decoder(TScenarioDecoder::open(fileName, std::move(*source), opener));
     case DecoderLibrary::SndFile:
-        decoder = as_decoder(SFAudioReader::open(fileName, std::move(*source), opener));
-        break;
+        return as_decoder(SFAudioReader::open(fileName, std::move(*source), opener));
     case DecoderLibrary::WavPack:
-        decoder = as_decoder(WPAudioReader::open(fileName, std::move(*source), opener));
-        break;
+        return as_decoder(WPAudioReader::open(fileName, std::move(*source), opener));
     case DecoderLibrary::Faad:
-        decoder = open_faad(fileName, std::move(*source), opener);
-        break;
+        return open_faad(fileName, std::move(*source), opener);
     case DecoderLibrary::Mpg:
-        decoder = as_decoder(MpgAudioReader::open(fileName, std::move(*source), opener));
-        break;
+        return as_decoder(MpgAudioReader::open(fileName, std::move(*source), opener));
     case DecoderLibrary::None:
         return std::unexpected(why_no_decoder(fileName, **source));
     }
-
-    return decoder;
+    Q_UNREACHABLE();
 }
 
 std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
