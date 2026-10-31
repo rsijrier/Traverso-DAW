@@ -3,12 +3,13 @@
 
 #pragma once
 
-// byteio (README.md): all disk access of Traverso goes through this library,
-// so every read and write is known, timed and counted per medium. Users now:
-// audio file decoding (audiofileio). Intended users later: peak files, the
-// write direction (recording, bounce) and video, on this library, with no
-// second byte layer. It knows bytes, positions and the medium only: no
-// frames, no audio types, no decoder phases.
+// byteio (README.md). The goal: all disk access of Traverso goes through this
+// library, so every read and write is known, timed and counted per medium.
+// Today: reading audio files (audiofileio); writing audio, peak files and
+// project files do not go through it yet. Next users: peak files, the write
+// direction (recording, bounce) and video, on this library, with no second
+// byte layer. It knows bytes, positions and the medium only: no frames, no
+// audio types, no decoder phases.
 
 #include "TByteStats.h"
 
