@@ -1,0 +1,304 @@
+// SPDX-FileCopyrightText: 2026 Remon Sijrier
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#include "MpgAudioReader.h"
+
+#include "TAudioBuffer.h"
+
+#include <QByteArray>
+
+#include <algorithm>
+#include <cstdio>
+#include <limits>
+#include <mutex>
+#include <vector>
+
+// off_t stays out of our code; this asks for mpg123_info2() and the 64 calls
+#define MPG123_PORTABLE_API
+#include <mpg123.h>
+
+// The junk mpg123 searches through before the first frame. With NO_RESYNC it
+// sets the search at the start only
+static constexpr long ResyncLimit = 1024 * 1024;
+// Without a tag: what may follow the last frame the scan found (tags at the
+// end). More is damage, not an end
+static constexpr qint64 ScanEndSlack = 64 * 1024;
+// Entries of the seek index, at most 80 KB per handle. The default of 1000
+// reads about 94 KB per seek on an hour of audio, 10000 about 14 KB
+static constexpr long IndexSize = 10000;
+static constexpr long PreframesMpeg1 = 12;
+static constexpr long PreframesMpeg2 = 90;
+// The synthesis filter's delay in samples
+static constexpr int64_t DecoderDelay = 529;
+
+// libmpg123's IO on a byte source
+
+static int source_read(void* handle, void* data, size_t bytes, size_t* got)
+{
+    MpgInput* input = static_cast<MpgInput*>(handle);
+    const qint64 read = input->source->read(data, qint64(bytes));
+    *got = size_t(std::max<qint64>(read, 0));
+    input->furthest = std::max(input->furthest, input->source->position());
+    // The failure stays with the source, which the decoder asks
+    return read < 0 ? -1 : 0;
+}
+
+static int64_t source_seek(void* handle, int64_t offset, int whence)
+{
+    TByteSource* source = static_cast<MpgInput*>(handle)->source;
+    const qint64 position = whence == SEEK_SET ? offset : whence == SEEK_CUR ? source->position() + offset : source->size() + offset;
+    return source->seek(position) ? position : -1;
+}
+
+// A handle open on input, nullptr when there is none; the probe and the reader
+// differ in extraFlags only
+static mpg123_handle* open_handle(MpgInput& input, long extraFlags, int* error)
+{
+    const QByteArray decoder = qgetenv("TRAVERSO_MPG123_DECODER");
+    mpg123_handle* handle = nullptr;
+    {
+        // Finding the CPU's features is not thread safe on ARM (see the header)
+        static std::mutex newMutex;
+        const std::lock_guard<std::mutex> lock(newMutex);
+        handle = mpg123_new(decoder.isEmpty() ? nullptr : decoder.constData(), error);
+    }
+    if (!handle) {
+        return nullptr;
+    }
+
+    // Not MPG123_NO_FRANKENSTEIN: it cuts off files that are concatenated.
+    // MPG123_SKIP_ID3V2 skips a tag of any size instead of reading album art
+    // into every handle.
+    mpg123_param(handle, MPG123_REMOVE_FLAGS, MPG123_AUTO_RESAMPLE | MPG123_GAPLESS, 0.0);
+    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_FORCE_FLOAT | MPG123_QUIET | MPG123_NO_RESYNC | MPG123_SKIP_ID3V2 | extraFlags, 0.0);
+    mpg123_param(handle, MPG123_RESYNC_LIMIT, ResyncLimit, 0.0);
+
+    input.source->seek(0);
+    *error = mpg123_reader64(handle, source_read, source_seek, nullptr);
+    if (*error == MPG123_OK) {
+        *error = mpg123_open_handle64(handle, &input);
+    }
+    if (*error != MPG123_OK) {
+        mpg123_delete(handle);
+        return nullptr;
+    }
+    return handle;
+}
+
+MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener& opener)
+    : TAudioDecoder(filename, opener)
+{
+    m_input.source = open_source(m_fileName);
+    if (!m_input.source) {
+        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
+        return;
+    }
+
+    int error = MPG123_OK;
+    m_handle = open_handle(m_input, 0, &error);
+    if (!m_handle) {
+        open_failed(QString::fromUtf8(mpg123_plain_strerror(error)));
+        return;
+    }
+
+    long rate = 0;
+    int channels = 0;
+    int encoding = 0;
+    if (mpg123_getformat(m_handle, &rate, &channels, &encoding) != MPG123_OK) {
+        open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
+        return;
+    }
+    if (encoding != MPG123_ENC_FLOAT_32) {
+        open_failed(QStringLiteral("this libmpg123 does not decode to 32 bit float"));
+        return;
+    }
+
+    double unused = 0.0;
+    mpg123_getstate(m_handle, MPG123_ENC_DELAY, &m_delay, &unused);
+    mpg123_getstate(m_handle, MPG123_ENC_PADDING, &m_padding, &unused);
+    m_tagSamples = mpg123_length64(m_handle);
+
+    mpg123_frameinfo2 info{};
+    mpg123_param(m_handle, MPG123_INDEX_SIZE, IndexSize, 0.0);
+    mpg123_info(m_handle, &info);
+    mpg123_param(m_handle, MPG123_PREFRAMES, info.version == MPG123_1_0 ? PreframesMpeg1 : PreframesMpeg2, 0.0);
+
+    m_channels = uint(channels);
+    m_rate = uint(rate);
+}
+
+MpgAudioReader::~MpgAudioReader()
+{
+    if (m_handle) {
+        mpg123_delete(m_handle);
+    }
+}
+
+void MpgAudioReader::open_failed(const QString& detail)
+{
+    m_frames = 0;
+    std::optional<QString> sourceError = m_input.source ? m_input.source->take_error() : std::nullopt;
+    m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, sourceError.value_or(detail)};
+}
+
+bool MpgAudioReader::can_decode(TByteSource& source)
+{
+    MpgInput input{&source};
+    int error = MPG123_OK;
+    const std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle(open_handle(input, MPG123_NO_PEEK_END, &error), mpg123_delete);
+    if (!handle) {
+        return false;
+    }
+
+    long rate = 0;
+    int channels = 0;
+    int encoding = 0;
+    if (mpg123_getformat(handle.get(), &rate, &channels, &encoding) != MPG123_OK) {
+        return false;
+    }
+    mpg123_frameinfo2 first{};
+    if (mpg123_info(handle.get(), &first) != MPG123_OK) {
+        return false;
+    }
+
+    // The open read a frame already, so n frames walked is n + 1 frames. On
+    // random bytes an open alone hits about 1 in 600 to 2500 files of 70 KB;
+    // none was seen at 2 frames walked, one at 1 frame and a clean end
+    int walked = 0;
+    while (walked < 4) {
+        const int result = mpg123_framebyframe_next(handle.get());
+        if (result == MPG123_DONE) {
+            long delay = -1;
+            double unused = 0.0;
+            mpg123_getstate(handle.get(), MPG123_ENC_DELAY, &delay, &unused);
+            return walked >= 2 || (walked == 1 && delay >= 0);
+        }
+        if (result != MPG123_OK && result != MPG123_NEW_FORMAT) {
+            return false;
+        }
+        mpg123_frameinfo2 info{};
+        if (mpg123_info(handle.get(), &info) != MPG123_OK || info.layer != first.layer || info.version != first.version || info.rate != first.rate) {
+            return false;
+        }
+        ++walked;
+    }
+    return true;
+}
+
+void MpgAudioReader::scan()
+{
+    if (!m_handle) {
+        return;
+    }
+
+    m_input.furthest = 0;
+    const int scanned = mpg123_scan(m_handle);
+    // mpg123_scan() takes a failed read for the end of the file: never a
+    // silently short length
+    if (std::optional<QString> sourceError = m_input.source->take_error()) {
+        open_failed(*sourceError);
+        return;
+    }
+    if (scanned != MPG123_OK) {
+        open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
+        return;
+    }
+    m_scannedSamples = mpg123_length64(m_handle);
+
+    int64_t frames = m_scannedSamples;
+    if (m_delay >= 0 && m_padding >= 0) {
+        // The tag goes first when it says more than the scan found, a file cut
+        // short: the audio stays in place and the end is an error. When it
+        // says less (concatenated files) nothing is cut
+        const int64_t samples = std::max(m_tagSamples, m_scannedSamples);
+        m_skip = m_delay + DecoderDelay;
+        frames = samples - m_delay - std::max<int64_t>(m_padding, DecoderDelay);
+    } else if (const qint64 size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
+        open_failed(QStringLiteral("the audio stops at byte %1 of %2").arg(m_input.furthest).arg(size));
+        return;
+    }
+
+    if (frames <= 0 || frames > std::numeric_limits<nframes_t>::max()) {
+        open_failed(QStringLiteral("%1 frames of audio").arg(frames));
+        return;
+    }
+    m_frames = nframes_t(frames);
+
+    if (TAudioFileStatus sought = seek(0); !sought) {
+        open_failed(sought.error().detail);
+    }
+}
+
+TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
+{
+    Q_ASSERT(frame < m_frames);
+    const int64_t position = int64_t(frame) + m_skip;
+    if (!m_handle || position >= m_scannedSamples) {
+        return seek_failed(frame, QStringLiteral("frame %1 lies past the audio in the file").arg(frame));
+    }
+    if (mpg123_seek64(m_handle, position, SEEK_SET) != position) {
+        return seek_failed(frame, QString::fromUtf8(mpg123_strerror(m_handle)));
+    }
+    return seek_landed(frame);
+}
+
+bool MpgAudioReader::same_format()
+{
+    long rate = 0;
+    int channels = 0;
+    int encoding = 0;
+    return mpg123_getformat(m_handle, &rate, &channels, &encoding) == MPG123_OK && uint(rate) == m_rate && uint(channels) == m_channels;
+}
+
+// libmpg123's interleaved frames before they go to the channels: one per
+// thread, used within one read only, grown to the largest read on the thread
+static float* interleaved_scratch(size_t samples)
+{
+    static thread_local std::vector<float> scratch;
+    if (scratch.size() < samples) {
+        scratch.resize(samples);
+    }
+    return scratch.data();
+}
+
+TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
+{
+    if (count == 0) {
+        return {};
+    }
+    fileIOBuffer.check_capacity(count, m_channels);
+
+    const nframes_t wanted = (m_handle && !m_error) ? std::min(count, m_frames - m_frame) : 0;
+    float* readBuffer = interleaved_scratch(size_t(wanted) * m_channels);
+
+    const size_t frameBytes = m_channels * sizeof(float);
+    const size_t bytes = wanted * frameBytes;
+    size_t have = 0;
+    int result = MPG123_OK;
+    while (have < bytes && result == MPG123_OK) {
+        size_t done = 0;
+        result = mpg123_read(m_handle, reinterpret_cast<char*>(readBuffer) + have, bytes - have, &done);
+        have += done;
+        // Also after a seek back over a change of format: the first format
+        // again goes on, another one is damage
+        if (result == MPG123_NEW_FORMAT && same_format()) {
+            result = MPG123_OK;
+        }
+    }
+    const nframes_t readFrames = nframes_t(have / frameBytes);
+
+    for (uint channel = 0; channel < m_channels; channel++) {
+        audio_sample_t* destination = fileIOBuffer.get_channel_buffer(channel).get_data(readFrames);
+        for (nframes_t frame = 0; frame < readFrames; frame++) {
+            destination[frame] = readBuffer[frame * m_channels + channel];
+        }
+    }
+
+    QString detail;
+    if (result == MPG123_NEW_FORMAT) {
+        detail = QStringLiteral("the format changes at frame %1").arg(m_frame + readFrames);
+    } else if (result != MPG123_OK && result != MPG123_DONE) {
+        detail = QString::fromUtf8(mpg123_strerror(m_handle));
+    }
+    return read_done(fileIOBuffer, readFrames, count, detail);
+}
