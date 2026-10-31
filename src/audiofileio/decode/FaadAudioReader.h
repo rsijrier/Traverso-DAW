@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class FaadAudioReader : public TAudioDecoder
 {
 public:
-	explicit FaadAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
+    static std::expected<std::unique_ptr<FaadAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
 	~FaadAudioReader() override;
 
     QString decoder_type() const final { return "faad"; }
@@ -38,6 +38,12 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 protected:
+    FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+
+    // Why the open failed, where known
+    QString m_openFailure;
+
     // The packets decoded before the one a seek goes to (with a fresh
     // decoder), so it gives what a read from the start gives there
     static constexpr int PreRollPackets = 2;

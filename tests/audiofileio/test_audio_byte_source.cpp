@@ -113,10 +113,10 @@ private:
 
 static TByteSourceOpener memory_opener(const Medium* medium)
 {
-    return [medium](const QString& fileName) -> std::unique_ptr<TByteSource> {
+    return [medium](const QString& fileName) -> TByteSourceResult {
         QFile file(fileName);
         if (!file.open(QIODevice::ReadOnly)) {
-            return nullptr;
+            return std::unexpected(TByteSourceError{!file.exists(), file.errorString()});
         }
         return std::make_unique<MemorySource>(file.readAll(), medium);
     };
@@ -169,7 +169,8 @@ static void test_source()
     (void)again.read(bytes, 8);
     check(againStats.untold.failed == 2, "every failed read counts, also before the error is taken");
 
-    check(TByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
+    const TByteSourceResult missing = TByteSource::open_file(QStringLiteral("/no/such/file"));
+    check(!missing && missing.error().notFound && !missing.error().reason.isEmpty(), "a file that is not there: not found, with a reason");
 }
 
 static std::vector<float> test_samples()
@@ -523,6 +524,28 @@ static void test_seek_failure(const QTemporaryDir& dir)
     check(result.frames == 0 && result.error && result.error->code == TAudioFileError::Code::SeekFailed && result.error->detail == QString(Reason), what);
 }
 
+// The probes' source goes on to the decoder: the file is opened once. Where no
+// decoder is found, the reason is the source's
+static void test_one_source(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.mp3"));
+    Medium medium;
+    int opens = 0;
+    const TByteSourceOpener counting = [&](const QString& fileName) {
+        ++opens;
+        return memory_opener(&medium)(fileName);
+    };
+    check(TAudioReader::open(path, counting).has_value() && opens == 1, "one open of a file, for the probes and the decoder");
+
+    medium.failFrom = 0;
+    const auto refused = TAudioReader::open(path, memory_opener(&medium));
+    check(!refused && refused.error().code == TAudioFileError::Code::CannotOpen && refused.error().detail == QString(Reason), "no decoder: the reason of the source");
+    medium.failFrom = -1;
+
+    const auto missing = TAudioReader::open(dir.filePath(QStringLiteral("not-there.mp3")), memory_opener(&medium));
+    check(!missing && missing.error().code == TAudioFileError::Code::NotFound, "an opener that finds nothing: NotFound");
+}
+
 // The real file: the sources are QFile's, counted and on a medium
 static void test_file_source(const QTemporaryDir& dir)
 {
@@ -570,7 +593,7 @@ static void test_large_offsets()
     }
     file.close();
 
-    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path).value_or(nullptr);
     if (!source) {
         check(false, "the sparse file opens");
         return;
@@ -636,7 +659,7 @@ static void test_cache_or_medium()
     }
     file.close();
 
-    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path).value_or(nullptr);
     if (!source) {
         check(false, "the file opens");
         return;
@@ -826,6 +849,7 @@ int main()
     test_large_tag(dir);
     test_scan_failure(dir);
     test_seek_failure(dir);
+    test_one_source(dir);
     test_file_source(dir);
     test_large_offsets();
     test_large_garbage();

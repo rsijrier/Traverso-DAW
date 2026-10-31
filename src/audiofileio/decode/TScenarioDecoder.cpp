@@ -5,7 +5,7 @@
 
 #include "TAudioBuffer.h"
 
-#include <QFile>
+#include <QByteArray>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -47,29 +47,29 @@ bool TScenarioDecoder::is_scenario_file(const QString& fileName)
     return fileName.endsWith(QLatin1String(".tscenario"), Qt::CaseInsensitive);
 }
 
-std::expected<void, QString> TScenarioDecoder::check(const QString& fileName)
+std::expected<void, QString> TScenarioDecoder::check(TByteSource& source)
 {
-    if (std::expected<Scenario, QString> scenario = parse(fileName); !scenario) {
+    if (std::expected<Scenario, QString> scenario = parse(source); !scenario) {
         return std::unexpected(scenario.error());
     }
     return {};
 }
 
-std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(const QString& fileName)
+std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(TByteSource& source)
 {
     const auto fail = [](const QString& reason) -> std::expected<Scenario, QString> {
         return std::unexpected(reason);
     };
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return fail(QStringLiteral("cannot open it"));
-    }
-    if (file.size() > MaxScenarioBytes) {
+    if (source.size() > MaxScenarioBytes) {
         return fail(QStringLiteral("too large for a scenario"));
     }
+    QByteArray bytes(source.size(), '\0');
+    if (!source.seek(0) || source.read(bytes.data(), bytes.size()) != bytes.size()) {
+        return fail(QStringLiteral("cannot read it"));
+    }
     QJsonParseError error;
-    const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
+    const QJsonDocument document = QJsonDocument::fromJson(bytes, &error);
     if (!document.isObject()) {
         return fail(QStringLiteral("no JSON object (%1)").arg(error.errorString()));
     }
@@ -208,22 +208,32 @@ std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(const
     return scenario;
 }
 
-TScenarioDecoder::TScenarioDecoder(const QString& fileName)
-    : TAudioDecoder(fileName)
+TScenarioDecoder::TScenarioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
 {
-    // Parsed again here, as every decoder opens its file again after the
-    // factory's probe; nothing set when it no longer parses (is_valid()
-    // false), with the reason
-    std::expected<Scenario, QString> scenario = parse(fileName);
+}
+
+std::expected<std::unique_ptr<TScenarioDecoder>, TAudioFileError> TScenarioDecoder::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+{
+    std::unique_ptr<TScenarioDecoder> decoder(new TScenarioDecoder(fileName, std::move(source), opener));
+    if (TAudioFileStatus started = decoder->start(); !started) {
+        return std::unexpected(std::move(started.error()));
+    }
+    return decoder;
+}
+
+TAudioFileStatus TScenarioDecoder::start()
+{
+    std::expected<Scenario, QString> scenario = parse(source());
     if (!scenario) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())};
-        return;
+        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())});
     }
     m_rate = scenario->rate;
     m_frames = scenario->frames;
     m_channels = uint(scenario->channels.size());
     m_signals = std::move(scenario->channels);
     m_faults = std::move(scenario->faults);
+    return has_audio();
 }
 
 float TScenarioDecoder::sample(const Signal& signal, nframes_t frame) const

@@ -53,20 +53,23 @@
 class TScenarioDecoder : public TAudioDecoder
 {
 public:
-    explicit TScenarioDecoder(const QString& fileName);
+    static std::expected<std::unique_ptr<TScenarioDecoder>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
 
     QString decoder_type() const override { return QStringLiteral("scenario"); }
 
     // A scenario by its name: the factory asks it before any library probes
     // the file
     static bool is_scenario_file(const QString& fileName);
-    // The file parses as a scenario, or why not
-    [[nodiscard]] static std::expected<void, QString> check(const QString& fileName);
+    // The source parses as a scenario, or why not
+    [[nodiscard]] static std::expected<void, QString> check(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& buffer, nframes_t count) override;
 
 private:
+    TScenarioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+
     struct Signal
     {
         enum class Kind { Silence, Sine, Impulse, Ramp, RampHigh, SweepExponential, SweepLinear };
@@ -97,7 +100,7 @@ private:
         std::vector<Fault> faults;
     };
 
-    static std::expected<Scenario, QString> parse(const QString& fileName);
+    static std::expected<Scenario, QString> parse(TByteSource& source);
     float sample(const Signal& signal, nframes_t frame) const;
 
     std::vector<Signal> m_signals;

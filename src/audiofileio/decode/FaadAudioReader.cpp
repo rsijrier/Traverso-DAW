@@ -300,19 +300,29 @@ public:
 	nframes_t pendingCount{0};
 };
 
-FaadAudioReader::FaadAudioReader(const QString& filename, const TByteSourceOpener& opener)
-	: TAudioDecoder(filename, opener)
+FaadAudioReader::FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+	: TAudioDecoder(fileName, std::move(source), opener)
 	, d(new FaadDecoderPrivate())
 {
-	d->source = open_source(m_fileName);
-	if (!d->source || !initDecoderInternal()) {
-		// Not opened: no frames (is_valid() false), and why where known
-		if (!m_openError) {
-			m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("FAAD cannot read it")};
-		}
-		m_frames = 0;
+}
+
+std::expected<std::unique_ptr<FaadAudioReader>, TAudioFileError> FaadAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+{
+    std::unique_ptr<FaadAudioReader> decoder(new FaadAudioReader(fileName, std::move(source), opener));
+    if (TAudioFileStatus started = decoder->start(); !started) {
+        return std::unexpected(std::move(started.error()));
+    }
+    return decoder;
+}
+
+TAudioFileStatus FaadAudioReader::start()
+{
+	d->source = &source();
+	if (!initDecoderInternal()) {
 		d->cleanup();
+		return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, m_openFailure.isEmpty() ? QStringLiteral("FAAD cannot read it") : m_openFailure});
 	}
+	return has_audio();
 }
 
 FaadAudioReader::~FaadAudioReader()
@@ -548,11 +558,11 @@ bool FaadAudioReader::initDecoderInternal()
 bool FaadAudioReader::start_at_frame_0()
 {
 	if (m_frames == 0) {
-		m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("no AAC frames in it")};
+		m_openFailure = QStringLiteral("no AAC frames in it");
 		return false;
 	}
 	if (TAudioFileStatus atStart = seek(0); !atStart) {
-		m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, atStart.error().detail};
+		m_openFailure = atStart.error().detail;
 		return false;
 	}
 	return true;

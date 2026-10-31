@@ -126,6 +126,8 @@ public:
         return m_file.open(QIODevice::ReadOnly | QIODevice::Unbuffered);
     }
 
+    QString open_error() const { return m_file.errorString(); }
+
     qint64 size() const override { return m_file.size(); }
 
     quint64 medium_id() const override
@@ -212,11 +214,16 @@ private:
 #endif
 };
 
-std::unique_ptr<TByteSource> TByteSource::open_file(const QString& fileName)
+TByteSourceResult TByteSource::open_file(const QString& fileName)
 {
     auto source = std::make_unique<TFileByteSource>();
     if (!source->open(fileName)) {
-        return nullptr;
+        // Asked after the failed open, not before: a check before is a race
+        // and costs a system call on every open
+        if (!QFile::exists(fileName)) {
+            return std::unexpected(TByteSourceError{true, QStringLiteral("no such file")});
+        }
+        return std::unexpected(TByteSourceError{false, source->open_error()});
     }
     return source;
 }

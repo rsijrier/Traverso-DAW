@@ -105,32 +105,38 @@ static int64_t tag_samples(mpg123_handle* handle, int64_t fileSize)
     return counted ? samples : 0;
 }
 
-MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener& opener)
-    : TAudioDecoder(filename, opener)
+MpgAudioReader::MpgAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
 {
-    m_input.source = open_source(m_fileName);
-    if (!m_input.source) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
-        return;
+}
+
+std::expected<std::unique_ptr<MpgAudioReader>, TAudioFileError> MpgAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+{
+    std::unique_ptr<MpgAudioReader> decoder(new MpgAudioReader(fileName, std::move(source), opener));
+    if (TAudioFileStatus started = decoder->start().and_then([&] { return decoder->scan(); }); !started) {
+        return std::unexpected(std::move(started.error()));
     }
+    return decoder;
+}
+
+TAudioFileStatus MpgAudioReader::start()
+{
+    m_input.source = &source();
 
     int error = MPG123_OK;
     m_handle = open_handle(m_input, &error);
     if (!m_handle) {
-        open_failed(QString::fromUtf8(mpg123_plain_strerror(error)));
-        return;
+        return open_failed(QString::fromUtf8(mpg123_plain_strerror(error)));
     }
 
     long rate = 0;
     int channels = 0;
     int encoding = 0;
     if (mpg123_getformat(m_handle, &rate, &channels, &encoding) != MPG123_OK) {
-        open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
-        return;
+        return open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
     }
     if (encoding != MPG123_ENC_FLOAT_32) {
-        open_failed(QStringLiteral("this libmpg123 does not decode to 32 bit float"));
-        return;
+        return open_failed(QStringLiteral("this libmpg123 does not decode to 32 bit float"));
     }
 
     double unused = 0.0;
@@ -146,6 +152,7 @@ MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener&
 
     m_channels = uint(channels);
     m_rate = uint(rate);
+    return {};
 }
 
 MpgAudioReader::~MpgAudioReader()
@@ -155,11 +162,10 @@ MpgAudioReader::~MpgAudioReader()
     }
 }
 
-void MpgAudioReader::open_failed(const QString& detail)
+TAudioFileStatus MpgAudioReader::open_failed(const QString& detail)
 {
-    m_frames = 0;
-    std::optional<QString> sourceError = m_input.source ? m_input.source->take_error() : std::nullopt;
-    m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, sourceError.value_or(detail)};
+    std::optional<QString> sourceError = m_input.source->take_error();
+    return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, sourceError.value_or(detail)});
 }
 
 bool MpgAudioReader::can_decode(TByteSource& source)
@@ -206,23 +212,17 @@ bool MpgAudioReader::can_decode(TByteSource& source)
     return true;
 }
 
-void MpgAudioReader::scan()
+TAudioFileStatus MpgAudioReader::scan()
 {
-    if (!m_handle) {
-        return;
-    }
-
     m_input.furthest = 0;
     const int scanned = mpg123_scan(m_handle);
     // mpg123_scan() takes a failed read for the end of the file: never a
     // silently short length
     if (std::optional<QString> sourceError = m_input.source->take_error()) {
-        open_failed(*sourceError);
-        return;
+        return open_failed(*sourceError);
     }
     if (scanned != MPG123_OK) {
-        open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
-        return;
+        return open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
     }
     m_scannedSamples = mpg123_length64(m_handle);
 
@@ -237,8 +237,7 @@ void MpgAudioReader::scan()
             frames = m_tagSamples;
         }
     } else if (const qint64 size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
-        open_failed(QStringLiteral("the audio stops at byte %1 of %2").arg(m_input.furthest).arg(size));
-        return;
+        return open_failed(QStringLiteral("the audio stops at byte %1 of %2").arg(m_input.furthest).arg(size));
     }
     // Also without a frame count: delay and padding place the audio
     if (gapless) {
@@ -247,14 +246,14 @@ void MpgAudioReader::scan()
     }
 
     if (frames <= 0 || frames > std::numeric_limits<nframes_t>::max()) {
-        open_failed(QStringLiteral("%1 frames of audio").arg(frames));
-        return;
+        return open_failed(QStringLiteral("%1 frames of audio").arg(frames));
     }
     m_frames = nframes_t(frames);
 
     if (TAudioFileStatus sought = seek(0); !sought) {
-        open_failed(sought.error().detail);
+        return open_failed(sought.error().detail);
     }
+    return has_audio();
 }
 
 TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
@@ -266,7 +265,7 @@ TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
         return seek_failed(frame, QStringLiteral("the format changes inside the file: no seek until it is opened again"));
     }
     const int64_t position = int64_t(frame) + m_skip;
-    if (!m_handle || position >= m_scannedSamples) {
+    if (position >= m_scannedSamples) {
         return seek_failed(frame, QStringLiteral("frame %1 lies past the audio in the file").arg(frame));
     }
     if (mpg123_seek64(m_handle, position, SEEK_SET) != position) {
@@ -305,7 +304,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
     }
     fileIOBuffer.check_capacity(count, m_channels);
 
-    const nframes_t wanted = (m_handle && !m_error) ? std::min(count, m_frames - m_frame) : 0;
+    const nframes_t wanted = !m_error ? std::min(count, m_frames - m_frame) : 0;
     float* readBuffer = interleaved_scratch(size_t(wanted) * m_channels);
 
     const size_t frameBytes = m_channels * sizeof(float);

@@ -63,8 +63,21 @@ static SNDFILE* open_on_source(TByteSource& source, SF_INFO& info)
 }
 
 
-SFAudioReader::SFAudioReader(const QString& filename, const TByteSourceOpener& opener)
-    : TAudioDecoder(filename, opener)
+SFAudioReader::SFAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
+{
+}
+
+std::expected<std::unique_ptr<SFAudioReader>, TAudioFileError> SFAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+{
+    std::unique_ptr<SFAudioReader> decoder(new SFAudioReader(fileName, std::move(source), opener));
+    if (TAudioFileStatus started = decoder->start(); !started) {
+        return std::unexpected(std::move(started.error()));
+    }
+    return decoder;
+}
+
+TAudioFileStatus SFAudioReader::start()
 {
     /* although libsndfile says we don't need to set this,
 	valgrind and source code shows us that we do.
@@ -72,22 +85,16 @@ SFAudioReader::SFAudioReader(const QString& filename, const TByteSourceOpener& o
 	*/
     memset (&m_sfinfo, 0, sizeof(m_sfinfo));
 
-    TByteSource* source = open_source(m_fileName);
-    if (!source) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
-        return;
-    }
-
-    if ((m_sf = open_on_source(*source, m_sfinfo)) == nullptr) {
+    if ((m_sf = open_on_source(source(), m_sfinfo)) == nullptr) {
         // libsndfile's last open error is global: with files opened at the
         // same time on other threads it may be theirs (task T26)
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(sf_strerror(nullptr))};
-        return;
+        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(sf_strerror(nullptr))});
     }
 
     m_channels = m_sfinfo.channels;
     m_frames = m_sfinfo.frames;
     m_rate = m_sfinfo.samplerate;
+    return has_audio();
 }
 
 

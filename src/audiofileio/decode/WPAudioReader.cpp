@@ -83,24 +83,31 @@ static WavpackContext* open_on_source(TByteSource& source, TByteSource* correcti
 }
 
 
-WPAudioReader::WPAudioReader(const QString& filename, const TByteSourceOpener& opener)
-    : TAudioDecoder(filename, opener)
+WPAudioReader::WPAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
+{
+}
+
+std::expected<std::unique_ptr<WPAudioReader>, TAudioFileError> WPAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+{
+    std::unique_ptr<WPAudioReader> decoder(new WPAudioReader(fileName, std::move(source), opener));
+    if (TAudioFileStatus started = decoder->start(); !started) {
+        return std::unexpected(std::move(started.error()));
+    }
+    return decoder;
+}
+
+TAudioFileStatus WPAudioReader::start()
 {
     char error[80];
 
-    TByteSource* source = open_source(m_fileName);
-    if (!source) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
-        return;
-    }
     // The correction file of a hybrid file, when there is one beside it
-    TByteSource* correction = open_source(m_fileName + QLatin1Char('c'));
+    TByteSource* correction = open_extra_source(m_fileName + QLatin1Char('c'));
 
-    m_wp = open_on_source(*source, correction, error);
+    m_wp = open_on_source(source(), correction, error);
 
     if (m_wp == nullptr) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(error)};
-        return;
+        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(error)});
     }
 
     m_isFloat = ((WavpackGetMode(m_wp) & MODE_FLOAT) != 0);
@@ -109,6 +116,7 @@ WPAudioReader::WPAudioReader(const QString& filename, const TByteSourceOpener& o
     m_channels = WavpackGetReducedChannels(m_wp);
     m_frames = WavpackGetNumSamples(m_wp);
     m_rate = WavpackGetSampleRate(m_wp);
+    return has_audio();
 }
 
 

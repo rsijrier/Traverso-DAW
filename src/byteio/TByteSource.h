@@ -15,10 +15,23 @@
 
 #include <QString>
 
+#include <expected>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
+
+class TByteSource;
+
+// Why a file's bytes are not there
+struct TByteSourceError
+{
+    // The file does not exist; otherwise it is there and does not open
+    bool notFound;
+    QString reason;
+};
+
+using TByteSourceResult = std::expected<std::unique_ptr<TByteSource>, TByteSourceError>;
 
 /**
  * @brief The bytes of one file: the only way a decoder reaches the medium.
@@ -43,8 +56,8 @@ class TByteSource
 public:
     virtual ~TByteSource() = default;
 
-    // fileName for reading, nullptr when it does not open
-    static std::unique_ptr<TByteSource> open_file(const QString& fileName);
+    // fileName for reading, or why it does not open
+    static TByteSourceResult open_file(const QString& fileName);
 
     static constexpr qint64 BlockBytes = 16 * 1024;
 
@@ -92,7 +105,6 @@ private:
     qint64 m_blockBytes{0};
 };
 
-// Opens the bytes of a file for a decoder, nullptr when they are not there. An
-// empty one opens the file (TByteSource::open_file()); tests give their
-// own.
-using TByteSourceOpener = std::function<std::unique_ptr<TByteSource>(const QString& fileName)>;
+// Opens the bytes of a file for a decoder, or says why they are not there. An
+// empty one opens the file (TByteSource::open_file()); tests give their own.
+using TByteSourceOpener = std::function<TByteSourceResult(const QString& fileName)>;

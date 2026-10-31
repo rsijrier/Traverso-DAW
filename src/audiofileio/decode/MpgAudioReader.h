@@ -18,8 +18,8 @@ struct MpgInput
  * @brief MPEG audio (Layer I, II and III) through libmpg123, also inside a WAV
  * file (the format of doc/design/mp3-decoder.md).
  *
- * The constructor opens the file; scan() is a step of its own and gives the
- * length, so a later open can take the scan's results from a saved index
+ * open() opens the file in two steps: start(), then scan(), which gives the
+ * length. So a later open can take the scan's results from a saved index
  * (mpg123_set_index64()) instead. That saved data must hold the scanned
  * samples as well: they are the seek limit, and without a LAME tag
  * mpg123_length64() stays an estimate.
@@ -56,7 +56,7 @@ struct MpgInput
 class MpgAudioReader : public TAudioDecoder
 {
 public:
-    explicit MpgAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
+    static std::expected<std::unique_ptr<MpgAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     ~MpgAudioReader() override;
 
     QString decoder_type() const override { return "mpg123"; }
@@ -65,15 +65,17 @@ public:
     // gives false hits on random bytes, so it walks the frames
     static bool can_decode(TByteSource& source);
 
-    // Reads through the whole file: the frames, the seek limit and an index
-    // for the seeks. Why not in open_error()
-    void scan();
-
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
-    void open_failed(const QString& detail);
+    MpgAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+    // Reads through the whole file: the frames, the seek limit and an index
+    // for the seeks
+    TAudioFileStatus scan();
+    // Why the open failed: the source's words where a read failed
+    TAudioFileStatus open_failed(const QString& detail);
     // The file's format is still the one it opened with
     bool same_format();
 

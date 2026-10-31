@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class SFAudioReader : public TAudioDecoder
 {
 public:
-    explicit SFAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
+    static std::expected<std::unique_ptr<SFAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     ~SFAudioReader() override;
 
     QString decoder_type() const override { return "sndfile"; }
@@ -43,6 +43,9 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
+    SFAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+
     SNDFILE*	m_sf{nullptr};
     SF_INFO		m_sfinfo{};
 };

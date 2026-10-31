@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class WPAudioReader : public TAudioDecoder
 {
 public:
-    explicit WPAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
+    static std::expected<std::unique_ptr<WPAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     ~WPAudioReader() override;
 
     QString decoder_type() const override { return "wavpack"; }
@@ -40,6 +40,9 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
+    WPAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+
     // readFrames frames WavPack unpacked into the channel buffers, as float
     void unpack(TAudioBuffer& fileIOBuffer, const int32_t* unpackBuffer, nframes_t readFrames);
 
