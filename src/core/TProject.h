@@ -82,6 +82,11 @@ public :
     qint64 get_current_sheet_id() const;
     int get_num_sheets() const;
     uint get_rate() const;
+    // The project's rate: the user's wish, which recordings and exports are
+    // written at. Until the project rate work (doc/status.md, decisions
+    // 2026-10-28) it is the rate the device was granted, as before; that
+    // work changes this function only.
+    uint project_rate() const;
     uint get_bitdepth() const;
     TTimeRef get_last_location() const;
     TTimeRef get_transport_location() const T_REALTIME_SAFE;
@@ -166,7 +171,7 @@ public slots:
     TCommand* remove_child_session();
 
 private:
-    TProject(const QString& title);
+    TProject(TAudioDevice& device, const QString& title);
 
 
     TResourcesManager*       m_resourcesManager;

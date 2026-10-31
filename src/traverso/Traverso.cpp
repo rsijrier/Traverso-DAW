@@ -47,6 +47,7 @@ Traverso::Traverso(int &argc, char **argv )
     qRegisterMetaType<QList<QObject*>>("QList<QObject*>");
 
     tsmp();
+    m_audioDevice = std::make_unique<TAudioDevice>();
     config().check_and_load_configuration();
     srand ( time(nullptr) );
 

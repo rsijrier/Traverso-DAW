@@ -50,7 +50,9 @@ public :
     // The file a recording, an import or a merge writes into (not an export
     // of the project: TExportSpecification::prepare_export()); -1 when it
     // cannot be opened
-    int prepare_file(TExportSpecification* specification);
+    // inputRate: the rate the written frames come in at (the device's for a
+    // recording); the file is written at the specification's rate
+    int prepare_file(TExportSpecification* specification, uint inputRate);
     // All written: the file closed (the resampler's rest, the final header),
     // its peaks finished; fileFinished() follows
     void finish_file();

@@ -42,7 +42,8 @@ $Id: AudioBus.cpp,v 1.11 2008/01/21 16:22:15 r_sijrier Exp $
  * @param channels The number of AudioChannels to add to this AudioBus
  * @return a new AudioBus instance
  */
-AudioBus::AudioBus(const TAudioBusConfiguration& config)
+AudioBus::AudioBus(TAudioDevice& device, const TAudioBusConfiguration& config)
+    : m_device(device)
 {
         m_isMonitoring = true;
 
@@ -74,7 +75,7 @@ AudioBus::AudioBus(const TAudioBusConfiguration& config)
         // so we have to create AudioChannel's to make the Bus useful for internal routing.
         if (m_isInternalBus) {
                 for(uint channelNumber=0; channelNumber < uint(config.channelcount); ++channelNumber) {
-                        AudioChannel* chan = audiodevice().create_channel(m_name, channelNumber, m_type);
+                        AudioChannel* chan = m_device.create_channel(m_name, channelNumber, m_type);
                         add_channel(chan);
                 }
         }
@@ -139,9 +140,9 @@ void AudioBus::audiodevice_params_changed()
 
         foreach(QString channelName, m_channelNames) {
                 if (is_input()) {
-                        channel = audiodevice().get_capture_channel_by_name(channelName);
+                        channel = m_device.get_capture_channel_by_name(channelName);
                 } else {
-                        channel = audiodevice().get_playback_channel_by_name(channelName);
+                        channel = m_device.get_playback_channel_by_name(channelName);
                 }
 
                 if (channel) {

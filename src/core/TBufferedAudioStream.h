@@ -70,6 +70,9 @@ protected:
     TQueueBufferSlot*    m_lastQueuedRTBufferSlot;
 
     TTimeRef            m_bufferSlotDuration;
+    // A slot's frames at the output rate (prepare_ring_buffers()); the IO
+    // steps use it, never the device's current buffer size
+    nframes_t           m_bufferSlotFrames{0};
     uint                m_outputRate;
     size_t              m_slotcount;
 

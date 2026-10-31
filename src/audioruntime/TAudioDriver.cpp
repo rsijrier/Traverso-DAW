@@ -120,7 +120,7 @@ int TAudioDriver::attach( )
 AudioChannel* TAudioDriver::add_capture_channel(const QString& chanName)
 {
         PENTER;
-    AudioChannel* chan = audiodevice().create_channel(chanName, m_captureChannels.size(), AudioChannel::ChannelIsInput);
+    AudioChannel* chan = m_device->create_channel(chanName, m_captureChannels.size(), AudioChannel::ChannelIsInput);
         m_captureChannels.append(chan);
         return chan;
 }
@@ -128,7 +128,7 @@ AudioChannel* TAudioDriver::add_capture_channel(const QString& chanName)
 AudioChannel* TAudioDriver::add_playback_channel(const QString& chanName)
 {
         PENTER;
-        AudioChannel* chan = audiodevice().create_channel(chanName, m_playbackChannels.size(), AudioChannel::ChannelIsOutput);
+        AudioChannel* chan = m_device->create_channel(chanName, m_playbackChannels.size(), AudioChannel::ChannelIsOutput);
         m_playbackChannels.append(chan);
         return chan;
 }

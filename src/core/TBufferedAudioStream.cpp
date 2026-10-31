@@ -100,6 +100,7 @@ void TBufferedAudioStream::prepare_ring_buffers(nframes_t bufferSize)
 
 
     m_bufferSlotDuration = TTimeRef(bufferSize, m_outputRate);
+    m_bufferSlotFrames = bufferSize;
 
     for (size_t i=0; i<m_slotcount;++i) {
         slot = new TQueueBufferSlot(i, m_channelCount, bufferSize);

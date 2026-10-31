@@ -385,7 +385,7 @@ void HDDSpaceInfo::update_status( )
             }
         }
 
-		uint rate = audiodevice().get_sample_rate();
+		uint rate = m_project->project_rate();
 		double availabletime = (double(TTimeRef::UNIVERSAL_SAMPLE_RATE) / rate) * space * 1048576.0;
 		availabletime /= double(sizeof(float) * recChannelCount);
  		

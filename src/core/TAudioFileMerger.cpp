@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TAudioFileMerger.h"
+#include "TAudioDevice.h"
 #include <QFile>
 #include <QMutexLocker>
 
@@ -90,7 +91,8 @@ void TAudioFileMerger::process_task(MergeTask task)
     spec.set_export_file_name(task.outFileName);
 
     TBufferedAudioStreamWriter writesource(spec.get_export_dir(), spec.get_export_file_name());
-    if (writesource.prepare_file(&spec) == -1) {
+    // The frames come at the device's rate (T5)
+    if (writesource.prepare_file(&spec, audiodevice().get_sample_rate()) == -1) {
         return;
     }
 

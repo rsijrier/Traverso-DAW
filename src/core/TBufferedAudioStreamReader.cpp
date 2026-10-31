@@ -355,7 +355,9 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
     // accordingly
     TTimeRef timeDiff = seekTransportLocation - transportLocation;
     TTimeRef modulus = TTimeRef(timeDiff.universal_frame() % m_bufferSlotDuration.universal_frame());
-    nframes_t bufferSize = audiodevice().get_buffer_size();
+    // The slot's size, not the device's: this runs on an IO thread, and the
+    // ring was made for this size
+    nframes_t bufferSize = m_bufferSlotFrames;
     // if modules != 0 then the seek transport location is not a multiple of transport location + x * buffer slot duration
     if (modulus != TTimeRef()) {
         // The file location of the slot's start: before the source start,

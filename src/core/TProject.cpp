@@ -72,8 +72,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 
-TProject::TProject(const QString& title)
-    : TSession()
+TProject::TProject(TAudioDevice& device, const QString& title)
+    : TSession(device)
 {
     PENTERCONS;
     m_name = title;
@@ -90,8 +90,8 @@ TProject::TProject(const QString& title)
     m_useResampling = config().get_property("Conversion", "DynamicResampling", true).toBool();
     m_rootDir = config().get_property("Project", "directory", "/directory/unknown/").toString() + "/" + m_name;
     m_sourcesDir = m_rootDir + "/audiosources";
-    m_rate = audiodevice().get_sample_rate();
-    m_bitDepth = audiodevice().get_bit_depth();
+    m_rate = audio_device().get_sample_rate();
+    m_bitDepth = audio_device().get_bit_depth();
 
     m_resourcesManager = new TResourcesManager(this);
     m_peakBuilds = std::make_unique<TPeakBuildService>();
@@ -120,15 +120,15 @@ TProject::TProject(const QString& title)
     AudioBus* bus = m_masterOutBusTrack->get_process_bus();
     for(uint i=0; i<bus->get_channel_count(); i++) {
         if (AudioChannel* chan = bus->get_channel(i)) {
-            chan->set_buffer_size(audiodevice().get_buffer_size());
+            chan->set_buffer_size(audio_device().get_buffer_size());
         }
     }
 
     cpointer().add_contextitem(this);
 
     connect(this, &TProject::exportFinished, this, &TProject::export_finished, Qt::QueuedConnection);
-    connect(&audiodevice(), &TAudioDevice::driverParamsChanged, this, &TProject::audiodevice_params_changed, Qt::DirectConnection);
-    connect(&audiodevice(), &TAudioDevice::audioDeviceClientRemoved, this, &TProject::audio_device_removed_client);
+    connect(&audio_device(), &TAudioDevice::driverParamsChanged, this, &TProject::audiodevice_params_changed, Qt::DirectConnection);
+    connect(&audio_device(), &TAudioDevice::audioDeviceClientRemoved, this, &TProject::audio_device_removed_client);
 }
 
 
@@ -327,7 +327,7 @@ int TProject::load(const QString& projectfile)
         conf.id = e.attribute("id", "-1").toLongLong();
         QStringList channelIds = e.attribute("channelids", "").split(";", Qt::SkipEmptyParts);
 
-        AudioBus* bus = new AudioBus(conf);
+        AudioBus* bus = new AudioBus(audio_device(), conf);
 
         switch(bus->get_bus_type()) {
         case AudioBus::BusIsSoftware:
@@ -361,7 +361,7 @@ int TProject::load(const QString& projectfile)
 
 
     read_audio_device_setup(doc);
-    audiodevice().set_parameters(m_audioDeviceSetup);
+    audio_device().set_parameters(m_audioDeviceSetup);
 
     QDomNode masterOutNode = docElem.firstChildElement("MasterOut");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
@@ -372,7 +372,7 @@ int TProject::load(const QString& projectfile)
     // add the first logical 'hardware' output channels as post send if the
     // driver != Jack, the Jack driver case is handled seperately.
     if (!m_masterOutBusTrack->get_post_sends().size()) {
-        if (audiodevice().get_driver_type() != "Jack") {
+        if (audio_device().get_driver_type() != "Jack") {
             AudioBus* bus = get_playback_bus("Playback 1-2");
             if (bus) {
                 m_masterOutBusTrack->add_post_send(bus);
@@ -382,7 +382,7 @@ int TProject::load(const QString& projectfile)
 
     // Lets see if there is already a Project Master out jack bus:
     // if not, create one, the user expects at least that Master shows up in the patchbay!
-    if (audiodevice().get_driver_type() == "Jack") {
+    if (audio_device().get_driver_type() == "Jack") {
         AudioBus* bus = m_softwareAudioBuses.value(MASTER_OUT_SOFTWARE_BUS_ID);
         if (!bus) {
             TAudioBusConfiguration conf;
@@ -729,7 +729,7 @@ void TProject::set_project_closed()
     // Closing a project could mean Traverso falls back to the Dummy driver
     // Loading Dummy driver causes driverParamsChanged to fire but we're closing
     // so definitely don't want to act on this signal anymore!
-    disconnect(&audiodevice(), &TAudioDevice::driverParamsChanged, this, &TProject::audiodevice_params_changed);
+    disconnect(&audio_device(), &TAudioDevice::driverParamsChanged, this, &TProject::audiodevice_params_changed);
 
     disconnect_from_audio_device();
 }
@@ -737,14 +737,14 @@ void TProject::set_project_closed()
 void TProject::connect_to_audio_device()
 {
     PENTER;
-    audiodevice().add_client(m_audiodeviceClient);
+    audio_device().add_client(m_audiodeviceClient);
 }
 
 // 'Blocking' call till we are disconnected from the AudioDevice
 int TProject::disconnect_from_audio_device()
 {
     PENTER;
-    audiodevice().remove_client(m_audiodeviceClient);
+    audio_device().remove_client(m_audiodeviceClient);
 
     // Wait maximum 1 second
     int counter = 200;
@@ -867,13 +867,13 @@ AudioBus* TProject::get_audio_bus(qint64 id)
 
 AudioBus* TProject::create_software_audio_bus(const TAudioBusConfiguration& conf)
 {
-    AudioBus* bus = new AudioBus(conf);
+    AudioBus* bus = new AudioBus(audio_device(), conf);
 
     AudioChannel* channel;
     for (int i=0; i< conf.channelNames.size(); ++i) {
-        channel = new AudioChannel(conf.channelNames.at(i), uint(i), bus->get_type(), audiodevice().get_buffer_size());
+        channel = new AudioChannel(conf.channelNames.at(i), uint(i), bus->get_type(), audio_device().get_buffer_size());
 
-        audiodevice().add_jack_channel(channel);
+        audio_device().add_jack_channel(channel);
         bus->add_channel(channel);
 
         m_softwareAudioChannels.insert(channel->get_id(), channel);
@@ -889,7 +889,7 @@ void TProject::remove_software_audio_bus(AudioBus *bus)
 {
     for(uint i=0; i<bus->get_channel_count(); ++i) {
         AudioChannel* chan = bus->get_channel(i);
-        audiodevice().remove_jack_channel(chan);
+        audio_device().remove_jack_channel(chan);
     }
 }
 
@@ -1242,7 +1242,7 @@ int TProject::export_project()
             nframes_t nframes = std::min(diff, m_exportSpecification->get_block_size());
 
             // sheet->process(nframes);
-            m_exportSpecification->add_exported_range(TTimeRef(nframes, audiodevice().get_sample_rate()));
+            m_exportSpecification->add_exported_range(TTimeRef(nframes, audio_device().get_sample_rate()));
         } while(!m_exportSpecification->cancel_export_requested() && m_exportSpecification->get_remaining_export_frames() > 0);
 
         sheet->start_transport();
@@ -1287,17 +1287,22 @@ TExportSpecification *TProject::get_export_specification()
     if (!m_exportSpecification) {
         m_exportSpecification = new TExportSpecification();
         m_exportSpecification->set_export_dir(get_root_dir() + "/Export/");
-        m_exportSpecification->set_block_size(audiodevice().get_buffer_size());
+        m_exportSpecification->set_block_size(audio_device().get_buffer_size());
     }
 
     return m_exportSpecification;
+}
+
+uint TProject::project_rate() const
+{
+    return audio_device().get_sample_rate();
 }
 
 uint TProject::get_rate( ) const
 {
     // FIXME: Projects should eventually just use the universal samplerate
     if (m_useResampling) {
-        return audiodevice().get_sample_rate();
+        return audio_device().get_sample_rate();
     }
 
     return m_rate;
@@ -1442,7 +1447,7 @@ void TProject::audiodevice_params_changed()
 
     // What the device runs now is what the project saves, e.g. after a
     // driver change in the settings or a fallback to the Dummy driver
-    m_audioDeviceSetup = audiodevice().get_device_setup();
+    m_audioDeviceSetup = audio_device().get_device_setup();
 
     setup_default_hardware_buses();
 
@@ -1454,7 +1459,7 @@ void TProject::audiodevice_params_changed()
         bus->audiodevice_params_changed();
     }
 
-    uint bufferSize = audiodevice().get_buffer_size();
+    uint bufferSize = audio_device().get_buffer_size();
     for(AudioChannel* channel : std::as_const(m_softwareAudioChannels)) {
         channel->set_buffer_size(bufferSize);
     }
@@ -1468,7 +1473,7 @@ void TProject::setup_default_hardware_buses()
     config.type = "input";
     config.bustype = "hardware";
 
-    QList<AudioChannel*> channels = audiodevice().get_capture_channels();
+    QList<AudioChannel*> channels = audio_device().get_capture_channels();
     for (int i=0; i < channels.size();) {
         config.name = "Capture " + QByteArray::number(number) + "-" + QByteArray::number(number + 1);
         number += 2;
@@ -1478,7 +1483,7 @@ void TProject::setup_default_hardware_buses()
             i+=2;
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audio_device(), config);
         bus->add_channel("capture_"+QByteArray::number(1 + i++));
         bus->add_channel("capture_"+QByteArray::number(1 + i++));
 
@@ -1492,14 +1497,14 @@ void TProject::setup_default_hardware_buses()
             // don't add a hardware bus with the same name, so continue:
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audio_device(), config);
         bus->add_channel("capture_"+QByteArray::number(i + 1));
         m_hardwareAudioBuses.append(bus);
     }
 
     number = 1;
 
-    channels = audiodevice().get_playback_channels();
+    channels = audio_device().get_playback_channels();
     config.type = "output";
 
     for (int i=0; i < channels.size();) {
@@ -1511,7 +1516,7 @@ void TProject::setup_default_hardware_buses()
             i+=2;
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audio_device(), config);
         bus->add_channel("playback_"+QByteArray::number(1 + i++));
         bus->add_channel("playback_"+QByteArray::number(1 + i++));
         m_hardwareAudioBuses.append(bus);
@@ -1524,7 +1529,7 @@ void TProject::setup_default_hardware_buses()
             // don't add a hardware bus with the same name, so continue:
             continue;
         }
-        AudioBus* bus = new AudioBus(config);
+        AudioBus* bus = new AudioBus(audio_device(), config);
         bus->add_channel("playback_"+QByteArray::number(i + 1));
         m_hardwareAudioBuses.append(bus);
     }

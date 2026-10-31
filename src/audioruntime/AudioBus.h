@@ -30,12 +30,16 @@ $Id: AudioBus.h,v 1.7 2007/06/04 20:47:16 r_sijrier Exp $
 #include "TTypes.h"
 #include "AudioChannel.h"
 
+class TAudioDevice;
+
 class AudioBus : public QObject
 {
     Q_OBJECT
 
 public:
-    AudioBus(const TAudioBusConfiguration& config);
+    // device: makes the channels of an internal bus, holds the hardware
+    // channels a bus wraps
+    AudioBus(TAudioDevice& device, const TAudioBusConfiguration& config);
     ~AudioBus();
 
     enum AudioBusFlags {
@@ -112,6 +116,7 @@ public:
     AudioBus*               next;
 
 private:
+    TAudioDevice&           m_device;
     QList<AudioChannel* >	m_channels;
     QStringList             m_channelNames;
     QString			m_name;

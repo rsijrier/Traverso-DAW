@@ -97,7 +97,7 @@ void TBusTrack::create_process_bus()
         busConfig.type = "output";
         busConfig.isInternalBus = true;
         busConfig.id = get_id();
-        m_processBus = new AudioBus(busConfig);
+        m_processBus = new AudioBus(m_session->audio_device(), busConfig);
 }
 
 void TBusTrack::set_name( const QString & name )

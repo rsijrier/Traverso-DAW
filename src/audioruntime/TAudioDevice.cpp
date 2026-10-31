@@ -62,7 +62,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 /*! 	\class AudioDevice
     \brief An Interface to the 'real' audio device, and the hearth of the libtraversoaudiobackend
 
-    AudioDevice is accessed by the audiodevice() function. You need to first initialize the 'device' by
+    The application owns one device (Traverso.cpp; a test its own); audiodevice() reaches it while
+    callers move to a reference (T58). You need to first initialize the 'device' by
     calling AudioDevice::set_parameters(int rate, nframes_t bufferSize, QString driverType);
     This will initialize the real audiodevice in case of the Alsa driver, or connect to the jack deamon.
     In the latter case, the rate and bufferSize don't do anything, since they are provided by the jack itself
@@ -138,30 +139,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
     */
 
-/**
- * A global function, used to get the TAudioDevice instance. Due the nature of singletons, the
-   TAudioDevice intance will be created automatically!
- * @return The TAudioDevice instance, it will be automatically created on first call
- */
-// The device, made by the first call
-TAudioDevice& TAudioDevice::make_instance()
-{
-    static TAudioDevice device;
-    return device;
-}
+TAudioDevice* TAudioDevice::s_bridge = nullptr;
 
-TAudioDevice& audiodevice() T_REALTIME_SAFE
+TAudioDevice& audiodevice()
 {
-    // The first call makes the device, in the GUI thread at start-up, before
-    // the audio thread it starts; later calls only find it made. Made once:
-    // a deliberate exception (realtime-audio-path.md §5)
-    TAudioDevice* device = nullptr;
-    T_BLOCKING_BY_DESIGN(device = &TAudioDevice::make_instance();)
-    return *device;
+    Q_ASSERT_X(TAudioDevice::s_bridge, "audiodevice()", "no device made yet, or already gone");
+    return *TAudioDevice::s_bridge;
 }
 
 TAudioDevice::TAudioDevice()
 {
+    Q_ASSERT_X(!s_bridge, "TAudioDevice", "one device at a time");
+    s_bridge = this;
+
     m_runAudioThread.store(false);
     m_driver = nullptr;
     m_audioThread = nullptr;
@@ -221,6 +211,10 @@ TAudioDevice::~TAudioDevice()
     delete m_audioThread;
     for (AudioChannel* audioChannel : m_audioChannels) {
         delete audioChannel;
+    }
+
+    if (s_bridge == this) {
+        s_bridge = nullptr;
     }
 }
 
