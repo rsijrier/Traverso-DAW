@@ -19,9 +19,10 @@ class TAudioBuffer;
 
 /**
  * @brief Reads the audio of one file at the file's own rate. One class per
- * library (SFAudioReader: libsndfile, WPAudioReader: WavPack, MadAudioReader:
- * MP3 through MAD, FaadAudioReader: AAC), and TScenarioDecoder for a test
- * signal described in a scenario file; opened by open_audio_decoder().
+ * library (SFAudioReader: libsndfile, WPAudioReader: WavPack, MpgAudioReader:
+ * MPEG audio through libmpg123, FaadAudioReader: AAC), and TScenarioDecoder
+ * for a test signal described in a scenario file; opened by
+ * open_audio_decoder().
  *
  * What a decoder does, and nothing else does for it: it keeps its position
  * in the file (frame(), in frames at the file's rate), moves it (seek()) and
@@ -38,16 +39,15 @@ class TAudioBuffer;
  *    TAudioReader::read()): zeros and 0, no decoder call, no error. A seek
  *    that succeeds lands exactly: frame() is frame and the next read starts
  *    there, its samples equal to a read from the start (within the format's
- *    seek tolerance, AAC). A seek that cannot go there says why (SeekFailed),
+ *    seek tolerance, MP3 and AAC). A seek that cannot go there says why (SeekFailed),
  *    leaves frame() unchanged and is an error.
  * 3. On an error (a failed seek, a failed read) the decoder is in its error
  *    state (error()): reads give zeros and 0 until a seek succeeds, which
  *    clears it, so a damaged part of a file can be skipped. A caller seeks
  *    again when the decoder is in its error state, also to frame().
  * 4. Audio that ends before frame_count() (a header that says more, a file
- *    cut short) is an error, where the decoder does not repair it itself
- *    (MAD and the LAME padding). A packet that does not decode (MAD, FAAD)
- *    stays silence, as the decoder decides: not an error.
+ *    cut short) is an error. A packet that does not decode (FAAD) stays
+ *    silence, as the decoder decides: not an error.
  * 5. No stale audio: a caller never silences a buffer before a read, and
  *    never sees what the buffer held before; none reaches a ring buffer or
  *    a file.
@@ -100,7 +100,7 @@ public:
     TAudioFileResult read(TAudioBuffer& buffer, nframes_t count);
 
     // count frames from first: a seek only when frame() is elsewhere or the
-    // decoder is in its error state (a seek costs: MAD and FAAD decode
+    // decoder is in its error state (a seek costs: mpg123 and FAAD decode
     // frames before the target), then read(). At or past the end zeros and
     // 0, no error; where the decoder cannot seek to, zeros, 0 and the seek's
     // error.
@@ -161,8 +161,8 @@ private:
 // The decoder for fileName, open and valid, or why there is none: NotFound
 // when the file is not there, else CannotOpen (no permission, no decoder for
 // its format, the decoder's own reason). A scenario file (.tscenario) is
-// known by its name and read by TScenarioDecoder; other files go to the
-// libraries in order of preference (libsndfile, WavPack, FAAD, MAD).
+// known by its name and read by TScenarioDecoder; other files go by their
+// content, see find_decoder().
 // opener gives the file's bytes, also to the probes (tests).
 [[nodiscard]] std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener = {});
 

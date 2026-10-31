@@ -26,7 +26,7 @@
  *
  * The libraries pull their bytes themselves, in the middle of a decode, so the
  * line between reading and decoding runs here, below the decoders: libsndfile
- * and WavPack through their virtual IO, MAD and FAAD directly. Every read is
+ * libmpg123 and WavPack through their virtual IO, FAAD directly. Every read is
  * counted and timed into a TByteStats, which its user (a decoder) points at
  * the kind of work going on.
  *

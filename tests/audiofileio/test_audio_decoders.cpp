@@ -189,8 +189,8 @@ static bool write_mp3_with_padding(const QString& path, const Source& source, in
     if (lame < 0 || lame + 24 > head.size()) {
         return false;
     }
-    // The tag's CRC (its last two bytes) is not made again: Traverso's
-    // parser does not check it (mpg123 does)
+    // The tag's CRC (its last two bytes) is not made again: mpg123
+    // takes the tag without it
     head[lame + 22] = char((uchar(head[lame + 22]) & 0xf0) | ((padding >> 8) & 0x0f));
     head[lame + 23] = char(padding & 0xff);
     return file.seek(0) && file.write(head) == head.size();
@@ -423,7 +423,7 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
 #if !defined(Q_OS_WIN)
 // A file cut short while a reader has it open (a file on a disk that went
 // away, a copy that did not finish): contract points 3 and 4. Buffers and
-// blocks (WavPack blocks, MAD's input buffer, AAC packets) may end the audio
+// blocks (WavPack blocks, AAC packets) may end the audio
 // before the cut, so: a read comes short before the frame count; the frames
 // before it are the file's; after it zeros and 0. A seek back into the part
 // still there clears the error where it can land (WAV): that part reads
@@ -464,8 +464,8 @@ static void test_cut_file(const QTemporaryDir& dir, const Format& format, SeekBa
         }
     }
 
-    // A decoder may hold all of a small file in its buffers from the start
-    // (MAD reads 40 KB at a time): the cut is no cut for it then
+    // A decoder may hold all of a small file in its buffers from the start:
+    // the cut is no cut for it then
     // The reference must be whole (test_format() reports a short one)
     if (reference[0].size() != frames) {
         std::printf("%s: a cut file: the whole file reads short, skipped\n", format.name);
@@ -516,7 +516,7 @@ static void test_cut_file(const QTemporaryDir& dir, const Format& format, SeekBa
 
     // A decoder whose seek failed is read again at the frame it is still at:
     // it must seek, not read from where its library was left (contract point
-    // 3, task R8: MAD and FAAD move their input before the seek can fail).
+    // 3, task R8: a library can move its input before the seek can fail).
     // A seek into the part still there (it lands, the error clears), a seek
     // past the cut (it fails, frame() stays), then the frames right after
     // the first read: a decoder that skipped the seek there reads nothing.
@@ -815,7 +815,7 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
     }
 
-    // A bit reservoir that reaches further than MAD's 16 frames of pre-roll
+    // A bit reservoir that reaches further than 16 frames
     {
         Source low{24000, 2, 19};
         const QString path = dir.filePath(QStringLiteral("t73-reservoir.mp3"));

@@ -6,7 +6,6 @@ add_library(traversoaudiofileio STATIC
     TAudioIOStats.h
     TAudioReader.h TAudioReader.cpp
     decode/WPAudioReader.cpp
-    decode/MadAudioReader.cpp
     decode/MpgAudioReader.cpp
     decode/TScenarioDecoder.h decode/TScenarioDecoder.cpp
     encode/TAudioEncoder.h encode/TAudioEncoder.cpp
@@ -50,7 +49,6 @@ target_link_libraries(traversoaudiofileio
         Qt6::Core
         PkgConfig::SNDFILE
         PkgConfig::WAVPACK
-        PkgConfig::MAD
         PkgConfig::MPG123
 )
 

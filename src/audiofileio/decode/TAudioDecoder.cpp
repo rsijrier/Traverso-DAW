@@ -21,7 +21,7 @@
 
 TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 {
-    // A seek of the open itself (MAD, FAAD) counts for the open
+    // A seek of the open itself (mpg123, FAAD) counts for the open
     if (m_stats.phase == TAudioIOStats::Phase::Open) {
         return seek_frame(frame);
     }

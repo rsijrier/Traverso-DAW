@@ -336,9 +336,8 @@ static QByteArray with_id3_tag(const QByteArray& bytes, int tagBytes)
 }
 
 // A medium that fails from the first byte on: every probe and the open fail,
-// and the open says why, it does not hang. MAD's search for its first header
-// used to loop forever on a read that failed at the start (a large ID3 tag,
-// then a NAS that answers EIO)
+// and the open says why, it does not hang, also after a large ID3 tag on a NAS
+// that then answers EIO
 static void test_open_failure(const QTemporaryDir& dir, const Format& format)
 {
     const QString path = dir.filePath(QStringLiteral("file.") + QLatin1String(format.suffix));
@@ -565,10 +564,8 @@ static void test_large_offsets()
     check(source->seek(size) && source->at_end() && source->read(bytes, 4) == 0, "the end of a file past 4 GiB");
 }
 
-// A large file without audio goes through every probe, MAD last: refused,
-// without a crash. Zeros give MAD no sync at all (a buffer refill after the
-// other), random bytes many false syncs: both used to recurse in
-// K3bMad::findNextHeader() and decodeNextFrame(), once per refill or error.
+// A large file without audio goes through every probe: refused, without a
+// crash. Zeros give the MP3 probe no sync at all, random bytes many false ones.
 static void test_large_garbage()
 {
     QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
@@ -783,7 +780,7 @@ int main()
         {"FLAC 24 bit", "flac", SF_FORMAT_FLAC | SF_FORMAT_PCM_24, sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24)},
         {"Ogg Vorbis", "ogg", SF_FORMAT_OGG | SF_FORMAT_VORBIS, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS)},
         {"Ogg Opus", "opus", SF_FORMAT_OGG | SF_FORMAT_OPUS, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS)},
-        // Through MAD, not libsndfile: not compared with sf_open
+        // Through mpg123, not libsndfile: not compared with sf_open
         {"MP3", "mp3", 0, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III)},
         {"WavPack float", "wv", 0, write_wavpack},
 #if defined(M4A_DECODE_SUPPORT)
