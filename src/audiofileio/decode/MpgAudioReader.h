@@ -79,7 +79,7 @@ private:
     // The encoder's delay and padding of the LAME tag, -1 without one
     long m_delay{-1};
     long m_padding{-1};
-    // What the tag says, an estimate from the file size without one
+    // What the tag's frame count says, 0 without one
     int64_t m_tagSamples{0};
     // What the scan found: no seek goes at or past it
     int64_t m_scannedSamples{0};

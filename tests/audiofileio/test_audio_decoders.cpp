@@ -639,6 +639,25 @@ static QByteArray without_tag(const QByteArray& bytes)
     return frames.empty() ? QByteArray() : bytes.mid(frames[0].size);
 }
 
+// The Info frame without its frame count, the encoder's name and the rest of
+// the tag in place: the fields behind the count move up four bytes
+static QByteArray without_frame_count(const QByteArray& bytes)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64 || !(changed[tag + 7] & 1)) {
+        return QByteArray();
+    }
+    const qsizetype count = tag + 8;
+    const qsizetype frameEnd = mpeg_frames(bytes)[0].size;
+    changed[tag + 7] = char(changed[tag + 7] & ~1);
+    changed.replace(count, frameEnd - count, bytes.mid(count + 4, frameEnd - count - 4) + QByteArray(4, '\0'));
+    return changed;
+}
+
 // The Info frame and the first count frames of audio
 static QByteArray first_frames(const QByteArray& bytes, size_t count)
 {
@@ -813,6 +832,22 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         const ReadBack back = reader ? read_back(*reader) : ReadBack{};
         std::snprintf(what, sizeof(what), "VBR without a tag: the whole length (%u frames of %u, %u read)", count, source.frames(), back.frames());
         check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
+    }
+
+    // A tag with an encoder's name and no frame count: the length is an
+    // estimate from the file size, which only the scan can correct. Bytes
+    // behind the audio make the estimate say more than the scan.
+    {
+        const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-no-count.mp3"));
+        const QByteArray changed = write_mp3(vbrPath, source, SF_BITRATE_MODE_VARIABLE, 0.3) ? without_frame_count(file_bytes(vbrPath)) + QByteArray(2048 * 1024, '\0') : QByteArray();
+        check(changed.size() > 2048 * 1024 && write_bytes(path, changed), "A tag without a frame count: the file made");
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag without a frame count: the scan's length, read to its end (%u frames of %u, %u read, %s)", count, source.frames(), back.frames(),
+                      back.error ? qPrintable(back.error->detail) : "no error");
+        check(count == source.frames() && back.frames() == count && !back.error, what);
     }
 
     // A bit reservoir that reaches further than 16 frames

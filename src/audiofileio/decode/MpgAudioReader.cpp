@@ -86,6 +86,18 @@ static mpg123_handle* open_handle(MpgInput& input, int* error)
     return handle;
 }
 
+// What the tag's frame count says, 0 without one. mpg123_length64() gives an
+// estimate from the file size then, and no call tells the two apart: only the
+// estimate moves with the file size.
+static int64_t tag_samples(mpg123_handle* handle, int64_t fileSize)
+{
+    const int64_t samples = mpg123_length64(handle);
+    mpg123_set_filesize64(handle, 2 * fileSize);
+    const bool counted = mpg123_length64(handle) == samples;
+    mpg123_set_filesize64(handle, fileSize);
+    return counted ? samples : 0;
+}
+
 MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener& opener)
     : TAudioDecoder(filename, opener)
 {
@@ -117,7 +129,7 @@ MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener&
     double unused = 0.0;
     mpg123_getstate(m_handle, MPG123_ENC_DELAY, &m_delay, &unused);
     mpg123_getstate(m_handle, MPG123_ENC_PADDING, &m_padding, &unused);
-    m_tagSamples = mpg123_length64(m_handle);
+    m_tagSamples = tag_samples(m_handle, m_input.source->size());
 
     mpg123_frameinfo2 info{};
     mpg123_param(m_handle, MPG123_INDEX_SIZE, IndexSize, 0.0);
