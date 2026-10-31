@@ -3,7 +3,7 @@
 
 # Byte IO: the bytes of files, their positions and the medium they are on,
 # every read timed and counted (README.md). It knows nothing of what the
-# bytes are; audiofileio builds on it, never the other way.
+# bytes are; other libraries build on it, never the other way.
 add_library(traversobyteio STATIC
     TByteSource.h TByteSource.cpp
     TReadsByOrigin.h

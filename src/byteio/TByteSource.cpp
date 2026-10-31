@@ -69,7 +69,7 @@ qint64 TByteSource::read_and_count(qint64 position, char* data, qint64 bytes)
     }
 
     if (got < bytes) {
-        // Per read: the error stays until take_error(), a decoder takes it
+        // Per read: the error stays until take_error(), its user takes it
         // only at the end of its call, after several reads
         m_readFailed = false;
         const qint64 waited = read_medium(position + got, data + got, bytes - got);
@@ -190,8 +190,7 @@ protected:
 #else
     // macOS and Windows: QFile::seek() + read(). Untested on those platforms
     // (no compiler or CI for them here); its logic was tested on Linux with
-    // the Linux branches switched off (2026-10-30: audio_decoders and
-    // stream_seek pass). No cache probe: every read counts as a medium read.
+    // the Linux branches switched off (2026-10-30). No cache probe: every read counts as a medium read.
     qint64 read_medium(qint64 position, void* data, qint64 bytes) override
     {
         if (!m_file.seek(position)) {

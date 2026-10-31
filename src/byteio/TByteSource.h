@@ -3,13 +3,8 @@
 
 #pragma once
 
-// byteio (README.md). The goal: all disk access of Traverso goes through this
-// library, so every read and write is known, timed and counted per medium.
-// Today: reading audio files (audiofileio); writing audio, peak files and
-// project files do not go through it yet. Next users: peak files, the write
-// direction (recording, bounce) and video, on this library, with no second
-// byte layer. It knows bytes, positions and the medium only: no frames, no
-// audio types, no decoder activities.
+// byteio (README.md): all disk access of Traverso goes through this library, so
+// every read and write is known, timed and counted per medium.
 
 #include "TReadsByOrigin.h"
 
@@ -34,22 +29,19 @@ struct TByteSourceError
 using TByteSourceResult = std::expected<std::unique_ptr<TByteSource>, TByteSourceError>;
 
 /**
- * @brief The bytes of one file: the only way a decoder reaches the medium.
- * It knows bytes, positions, time and the medium, nothing of audio.
+ * @brief The bytes of one file: the only way its user reaches the medium. It
+ * knows bytes, positions, time and the medium.
  *
- * The libraries pull their bytes themselves, in the middle of a decode, so the
- * line between reading and decoding runs here, below the decoders: libsndfile
- * libmpg123 and WavPack through their virtual IO, FAAD directly. Every read is
- * counted and timed into a TReadsByOrigin, which its user (a decoder) points at
- * the kind of work going on.
+ * Every read is counted and timed into a TReadsByOrigin, which its user points
+ * at the kind of work going on.
  *
- * Small reads go through a block of BlockBytes: the parsers of MP4 and ADTS
- * read a few bytes at a time, tens of thousands of times when a file opens.
+ * Small reads go through a block of BlockBytes, for callers that read a few
+ * bytes at a time, tens of thousands of times.
  *
  * A subclass gives the bytes; a test can give them from anywhere, with any
  * failure (TByteSourceOpener).
  *
- * One owner at a time, not for the audio thread: file IO.
+ * One owner at a time, not for a real-time thread: file IO.
  */
 class TByteSource
 {
@@ -105,6 +97,6 @@ private:
     qint64 m_blockBytes{0};
 };
 
-// Opens the bytes of a file for a decoder, or says why they are not there. An
+// Opens the bytes of a file for its user, or says why they are not there. An
 // empty one opens the file (TByteSource::open_file()); tests give their own.
 using TByteSourceOpener = std::function<TByteSourceResult(const QString& fileName)>;
