@@ -3,9 +3,12 @@
 
 #pragma once
 
+#include "TByteSource.h"
 #include "TByteStats.h"
 
 #include <QtTypes>
+
+#include <vector>
 
 /**
  * @brief What one kind of decoder work cost: its calls and time, and the bytes
@@ -35,9 +38,9 @@ struct TAudioPhaseStats
  * seek's reads are not sequential, and a seek can decode, so it stays out of
  * the medium's latency) and stream (the reads a scheduler can plan).
  *
- * Plain counters of one decoder, for the thread that uses the decoder. The
- * decoder points its sources at the bytes of the current phase
- * (TAudioDecoder::set_phase()).
+ * Plain counters of one decoder, for the thread that uses the decoder.
+ * set_phase() points its sources at the bytes of the phase, so none can be
+ * forgotten (WavPack has two, the .wv and its .wvc).
  */
 struct TAudioIOStats
 {
@@ -54,10 +57,12 @@ struct TAudioIOStats
     // The medium the file is on (st_dev), 0 where unknown: files on the same
     // medium wait for each other
     quint64 mediumId{0};
+    // The sources that count into this; they outlive it or leave with it
+    std::vector<TByteSource*> sources;
 
-    TAudioPhaseStats& current()
+    TAudioPhaseStats& cost_of(Phase of)
     {
-        switch (phase) {
+        switch (of) {
         case Phase::Open:
             return open;
         case Phase::Seek:
@@ -66,5 +71,15 @@ struct TAudioIOStats
             break;
         }
         return stream;
+    }
+
+    TAudioPhaseStats& current() { return cost_of(phase); }
+
+    void set_phase(Phase to)
+    {
+        phase = to;
+        for (TByteSource* source : sources) {
+            source->set_stats(&current().bytes);
+        }
     }
 };

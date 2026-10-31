@@ -16,6 +16,7 @@
 #include <vector>
 
 class TAudioBuffer;
+class TAudioIOScope;
 
 /**
  * @brief Reads the audio of one file at the file's own rate. One class per
@@ -108,9 +109,11 @@ public:
 
     // What it read and decoded since it opened
     const TAudioIOStats& stats() const { return m_stats; }
-    // The open is over: what opening cost, the probes before the decoder
-    // included, and from now on seeks and reads
-    void opened(const TAudioPhaseStats& probes, quint64 nanoseconds);
+    // The open is over: the reads of the probes before the decoder are added,
+    // and from now on seeks and reads
+    void opened(const TByteStats& probeBytes);
+    // The rest of the open's measurement ends on this decoder
+    void measure_open_on_stats(TAudioIOScope& scope);
 
 protected:
     explicit TAudioDecoder(const QString& fileName, const TByteSourceOpener& opener = {}) : m_fileName(fileName), m_opener(opener) {}
@@ -122,9 +125,6 @@ protected:
     // The bytes of fileName, for as long as the decoder lives, counted in
     // stats(); nullptr when they are not there
     TByteSource* open_source(const QString& fileName);
-    // The kind of work from now on; every source counts into its bytes
-    void set_phase(TAudioIOStats::Phase phase);
-
     // The end of every seek_frame() that landed: at frame, no error
     TAudioFileStatus seek_landed(nframes_t frame);
     // The end of every seek_frame() that did not: the error state, frame()

@@ -348,7 +348,10 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
     medium.failFrom = 0;
     char what[160];
     std::snprintf(what, sizeof(what), "%s: a medium that fails at once: no decoder, no hang", format.name);
-    check(!TAudioReader::open(path, memory_opener(&medium)).has_value(), what);
+    const auto refused = TAudioReader::open(path, memory_opener(&medium));
+    check(!refused.has_value(), what);
+    std::snprintf(what, sizeof(what), "%s: a failed open keeps its measurement", format.name);
+    check(!refused && refused.error().openCost && refused.error().openCost->calls == 1 && refused.error().openCost->nanoseconds > 0 && refused.error().openCost->bytes.untold.failed > 0, what);
 
     // An MP3 behind an ID3v2 tag larger than the source's block (album art):
     // the tag reads, the first audio byte after it fails

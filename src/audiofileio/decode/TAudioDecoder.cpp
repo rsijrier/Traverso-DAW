@@ -4,7 +4,7 @@
 #include "TAudioDecoder.h"
 
 #include "TAudioBuffer.h"
-#include "TClock.h"
+#include "TAudioIOScope.h"
 
 #include "SFAudioReader.h"
 #include "WPAudioReader.h"
@@ -26,41 +26,27 @@ TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
     if (m_stats.phase == TAudioIOStats::Phase::Open) {
         return seek_frame(frame);
     }
-    set_phase(TAudioIOStats::Phase::Seek);
-    const quint64 start = now_nanoseconds();
-    TAudioFileStatus status = seek_frame(frame);
-    m_stats.seek.nanoseconds += now_nanoseconds() - start;
-    ++m_stats.seek.calls;
-    set_phase(TAudioIOStats::Phase::Stream);
-    return status;
+    TAudioIOScope scope(m_stats, TAudioIOStats::Phase::Seek);
+    return seek_frame(frame);
 }
 
 TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 {
-    const quint64 start = now_nanoseconds();
+    TAudioIOScope scope(m_stats, TAudioIOStats::Phase::Stream);
     TAudioFileResult result = read_frames(buffer, count);
-    m_stats.stream.nanoseconds += now_nanoseconds() - start;
-    ++m_stats.stream.calls;
     m_stats.stream.frames += result.frames;
     return result;
 }
 
-void TAudioDecoder::opened(const TAudioPhaseStats& probes, quint64 nanoseconds)
+void TAudioDecoder::opened(const TByteStats& probeBytes)
 {
-    m_stats.open.nanoseconds = nanoseconds;
-    m_stats.open.bytes.add(probes.bytes);
-    set_phase(TAudioIOStats::Phase::Stream);
+    m_stats.open.bytes.add(probeBytes);
+    m_stats.set_phase(TAudioIOStats::Phase::Stream);
 }
 
-// The one place the phase changes: every source of this decoder (WavPack
-// has two, the .wv and its .wvc) counts into the new phase's bytes, so none
-// can be forgotten
-void TAudioDecoder::set_phase(TAudioIOStats::Phase phase)
+void TAudioDecoder::measure_open_on_stats(TAudioIOScope& scope)
 {
-    m_stats.phase = phase;
-    for (const std::unique_ptr<TByteSource>& source : m_sources) {
-        source->set_stats(&m_stats.current().bytes);
-    }
+    scope.move_to(m_stats);
 }
 
 TByteSource* TAudioDecoder::open_source(const QString& fileName)
@@ -70,6 +56,7 @@ TByteSource* TAudioDecoder::open_source(const QString& fileName)
         return nullptr;
     }
     source->set_stats(&m_stats.current().bytes);
+    m_stats.sources.push_back(source.get());
     // The audio file's medium: the first source (WavPack's .wvc comes second)
     if (m_stats.mediumId == 0) {
         m_stats.mediumId = source->medium_id();
@@ -288,11 +275,12 @@ static TAudioFileError no_decoder(const QString& fileName)
     return {TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")};
 }
 
-std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
+// The decoder for fileName, its open measured by scope into probes until there
+// is a decoder to go on with
+static std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_measured(const QString& fileName, const TByteSourceOpener& opener, TAudioIOStats& probes,
+                                                                                    TAudioIOScope& scope)
 {
     std::unique_ptr<TAudioDecoder> decoder;
-    const quint64 start = now_nanoseconds();
-    TAudioIOStats probes;
 
     switch (find_decoder(fileName, opener, probes)) {
     case DecoderLibrary::Scenario:
@@ -334,6 +322,21 @@ std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decode
                                                        : QStringLiteral("no decoder reads this format")});
     }
 
-    decoder->opened(probes.open, now_nanoseconds() - start);
+    decoder->opened(probes.open.bytes);
+    decoder->measure_open_on_stats(scope);
+    return decoder;
+}
+
+std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
+{
+    TAudioIOStats probes;
+    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = [&] {
+        TAudioIOScope scope(probes, TAudioIOStats::Phase::Open);
+        return open_measured(fileName, opener, probes, scope);
+    }();
+    // No decoder keeps the measurement: it goes with the error
+    if (!decoder) {
+        decoder.error().openCost = std::make_shared<const TAudioPhaseStats>(probes.open);
+    }
     return decoder;
 }

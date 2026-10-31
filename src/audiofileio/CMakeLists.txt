@@ -4,6 +4,7 @@ add_library(traversoaudiofileio STATIC
     decode/SFAudioReader.cpp
     TAudioFileError.h
     TAudioIOStats.h
+    TAudioIOScope.h
     TAudioReader.h TAudioReader.cpp
     decode/WPAudioReader.cpp
     decode/MpgAudioReader.cpp
