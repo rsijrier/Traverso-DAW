@@ -36,7 +36,7 @@ unless section 7 says otherwise.
    does.
 7. Threads: one process-wide mutex around our own `mpg123_new()`, and no
    mutex around `sf_open_virtual()`.
-8. Probe step 3 with the result `SF_FORMAT_MPEG` gives no decoder.
+8. Probe step 4 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
 9. A WAV with MP3 in it (`WAV|MPEG_LAYER_III` according to libsndfile) goes
    to `MpgAudioReader`.
 10. The probe goes by content, never by file name: a table of fixed

@@ -344,8 +344,8 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   `QString*` + sticky `error()`, `TPeakStream.h:55-70`) follows T9, so one
   style remains.
 - **T24 (low): an MP3 whose last frame is cut** is now an error at its tail,
-  and every read there costs a seek with pre-roll (MAD counts the header,
-  the decode fails).
+  and every read there costs a seek with preframes (the tag says more than
+  the scan found, the read fails where the audio ends).
 - **T25 (low): FAAD's seek pre-roll assumes AAC-LC**: HE-AAC may decode
   wrongly after a seek; needs a test file, or document the limit.
 - **T26 (low): `sf_strerror(nullptr)`** reads libsndfile's global last-open
@@ -772,8 +772,7 @@ From the GPU waveform test program, clip edges in variant A (branch
   `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
   Built as `doc/design/mp3-decoder.md` says, with the new tests listed there;
   the decisions are in that document and in `doc/decisions.md`.
-  - Two reports for mpg123 exist as drafts, in
-    `reports/mpg123-upstream-drafts.md`; Remon sends them himself.
+  - Two reports for mpg123 exist as drafts; Remon sends them himself.
 - **T74 `transport_position` fails now and then under load** (low; Remon,
   2026-10-31). Seen once, Clang, `ctest -j4`: "the reader is not starved by the
   writer". A timing test, apart from T73; the cause is not looked into.

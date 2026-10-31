@@ -784,10 +784,14 @@ static float seek_error(TAudioReader& reader, nframes_t first, nframes_t count, 
     return worst;
 }
 
-static bool opens(const QString& path)
+// Why path does not open, nothing when it does
+static QString refusal(const QString& path)
 {
-    return TAudioReader::open(path).has_value();
+    const auto reader = TAudioReader::open(path);
+    return reader ? QString() : reader.error().detail;
 }
+
+static const QLatin1String NoDecoder("no decoder reads this format");
 
 // Every case of doc/design/mp3-decoder.md section 6 that goes through a file.
 // The audio is the sweeps, so a shift shows; the files are made from one MP3
@@ -881,19 +885,21 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         std::snprintf(what, sizeof(what), "Junk of 512 KiB in front: read whole (%u frames)", back.frames());
         check(back.frames() == whole.frames() && !back.channels.empty() && back.channels[0] == whole.channels[0], what);
         write_bytes(path, junk(2 * 1024 * 1024) + bytes);
-        check(!opens(path), "Junk of 2 MiB in front: refused");
+        check(refusal(path) == NoDecoder, "Junk of 2 MiB in front: refused, no decoder");
     }
 
     // The rules of the strict probe. The open reads one frame, then it walks
     {
         const QString path = dir.filePath(QStringLiteral("t73-short.mp3"));
-        const auto probed = [&](const QByteArray& file) { return write_bytes(path, file) && opens(path); };
-        check(!probed(first_frames(bare, 0).left(frames[1].size)), "One frame, no tag: refused");
-        check(!probed(without_tag(first_frames(bytes, 2))), "Two frames, no tag: refused");
-        check(probed(without_tag(first_frames(bytes, 3))), "Three frames, no tag: a clean end after 2 walked");
-        check(probed(without_tag(first_frames(bytes, 7))), "Seven frames, no tag: 4 walked");
-        check(!probed(first_frames(bytes, 1)), "One frame and a tag: refused");
-        check(probed(first_frames(bytes, 2)), "Two frames and a tag: a clean end after 1 walked");
+        const auto probed = [&](const QByteArray& file) { return write_bytes(path, file) ? refusal(path) : QStringLiteral("not written"); };
+        const auto opened = [&](const QByteArray& file) { return probed(file).isEmpty(); };
+        const auto refused = [&](const QByteArray& file) { return probed(file) == NoDecoder; };
+        check(refused(first_frames(bare, 0).left(frames[1].size)), "One frame, no tag: refused");
+        check(refused(without_tag(first_frames(bytes, 2))), "Two frames, no tag: refused");
+        check(opened(without_tag(first_frames(bytes, 3))), "Three frames, no tag: a clean end after 2 walked");
+        check(opened(without_tag(first_frames(bytes, 7))), "Seven frames, no tag: 4 walked");
+        check(refused(first_frames(bytes, 1)), "One frame and a tag: refused");
+        check(opened(first_frames(bytes, 2)), "Two frames and a tag: a clean end after 1 walked");
 
         // Random bytes are no audio, also the ones that start with a frame
         // sync. Fixed seed: a false hit shows every time
@@ -909,7 +915,7 @@ static void test_mpeg_files(const QTemporaryDir& dir)
                 noise[1] = char(0xfb);
                 noise[2] = char(0x90);
             }
-            hits += probed(noise) ? 1 : 0;
+            hits += opened(noise) ? 1 : 0;
         }
         std::snprintf(what, sizeof(what), "300 files of random bytes: %d read as audio", hits);
         check(hits == 0, what);

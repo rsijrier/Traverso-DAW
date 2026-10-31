@@ -76,8 +76,9 @@ static mpg123_handle* open_handle(MpgInput& input, int* error)
 
     input.source->seek(0);
     *error = mpg123_reader64(handle, source_read, source_seek, nullptr);
-    if (*error == MPG123_OK) {
-        *error = mpg123_open_handle64(handle, &input);
+    if (*error == MPG123_OK && mpg123_open_handle64(handle, &input) != MPG123_OK) {
+        // The call only says MPG123_ERR; the handle knows why
+        *error = mpg123_errcode(handle);
     }
     if (*error != MPG123_OK) {
         mpg123_delete(handle);
@@ -256,6 +257,10 @@ TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
     }
     if (mpg123_seek64(m_handle, position, SEEK_SET) != position) {
         return seek_failed(frame, QString::fromUtf8(mpg123_strerror(m_handle)));
+    }
+    // mpg123's seek takes a failed read for the end of the stream and lands
+    if (std::optional<QString> sourceError = m_input.source->take_error()) {
+        return seek_failed(frame, *sourceError);
     }
     return seek_landed(frame);
 }

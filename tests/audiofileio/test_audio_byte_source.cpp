@@ -395,6 +395,7 @@ static void test_large_tag(const QTemporaryDir& dir)
     const QString plain = dir.filePath(QStringLiteral("file.mp3"));
     QFile file(plain);
     if (!file.open(QIODevice::ReadOnly)) {
+        check(false, "a tag of 1 MiB: the MP3 is there");
         return;
     }
     const QByteArray audio = file.readAll();
@@ -447,6 +448,7 @@ static void test_scan_failure(const QTemporaryDir& dir)
     const QString tagged = dir.filePath(QStringLiteral("file.mp3"));
     QFile file(tagged);
     if (!file.open(QIODevice::ReadOnly)) {
+        check(false, "a failed scan: the MP3 is there");
         return;
     }
     const QByteArray bytes = file.readAll();
@@ -497,6 +499,25 @@ static void test_read_failure(const QTemporaryDir& dir, const Format& format)
     std::snprintf(what, sizeof(what), "%s: a read that fails is ReadFailed, with the reason of the source (%s)", format.name,
                   error ? qPrintable(error->detail) : "no error");
     check(error && error->code == TAudioFileError::Code::ReadFailed && error->detail == QString(Reason), what);
+}
+
+// A read that fails during a seek: mpg123's seek takes it for the end of the
+// stream and lands, the reason must reach the caller all the same
+static void test_seek_failure(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.mp3"));
+    Medium medium;
+    auto reader = TAudioReader::open(path, memory_opener(&medium));
+    if (!reader) {
+        check(false, "a failed seek: the MP3 opens");
+        return;
+    }
+    medium.failFrom = 0;
+    TAudioBuffer buffer;
+    const TAudioFileResult result = (*reader)->read_file_frames(buffer, (*reader)->file_frame_count() * 3 / 5, 4800);
+    char what[200];
+    std::snprintf(what, sizeof(what), "a read that fails during a seek: the source's reason (%s)", result.error ? qPrintable(result.error->detail) : "no error");
+    check(result.frames == 0 && result.error && result.error->code == TAudioFileError::Code::SeekFailed && result.error->detail == QString(Reason), what);
 }
 
 // The real file: the sources are QFile's, counted and on a medium
@@ -801,6 +822,7 @@ int main()
     }
     test_large_tag(dir);
     test_scan_failure(dir);
+    test_seek_failure(dir);
     test_file_source(dir);
     test_large_offsets();
     test_large_garbage();
