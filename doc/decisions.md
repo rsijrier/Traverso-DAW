@@ -60,3 +60,7 @@ Entries for `audio-byte-source` up to 2026-10-31 were written afterwards
 | 2026-10-31 | mp3-mpg123 | Not `mpg123_init()` | a no-op since 1.27 (mpg123.h), the lower bound is 1.33 | `MpgAudioReader.cpp` |
 | 2026-10-31 | mp3-mpg123 | More frames than `nframes_t` holds is `CannotOpen` | a length cut to 32 bits would be silently wrong | `MpgAudioReader.cpp` |
 | 2026-10-31 | mp3-mpg123 | A build where `mpg123_getformat()` is not 32 bit float is `CannotOpen` | the reader hands the bytes on as floats; a fixed-point libmpg123 would give noise | `MpgAudioReader.cpp` |
+| 2026-10-31 | mp3-mpg123 | `seekTolerance` 1e-6 goes in with step 3 instead of step 4 | with the probe in place the MP3 lines read through mpg123, and each step must be green | `tests/audiofileio/test_audio_decoders.cpp` |
+| 2026-10-31 | mp3-mpg123 | A signature match whose library refuses the file gives no decoder; it does not fall through to the probes | the spec: a match goes to that decoder directly | `TAudioDecoder.cpp` |
+| 2026-10-31 | mp3-mpg123 | `SFAudioReader::major_format()` becomes `format()`, with the subtype; `find_decoder()` splits it | `WAV\|MPEG_LAYER_III` needs the subtype; it has one caller | `SFAudioReader.h/.cpp`, `TAudioDecoder.cpp` |
+| 2026-10-31 | mp3-mpg123 | `scan()` is called in `open_audio_decoder()`, right after the constructor | a step of its own (decision 3), one caller, and a later saved index replaces this one line | `TAudioDecoder.cpp` |

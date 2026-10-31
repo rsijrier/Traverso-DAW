@@ -101,7 +101,7 @@ SFAudioReader::~SFAudioReader()
 }
 
 
-int SFAudioReader::major_format(TByteSource& source)
+int SFAudioReader::format(TByteSource& source)
 {
     SF_INFO infos;
 
@@ -119,7 +119,7 @@ int SFAudioReader::major_format(TByteSource& source)
 
     sf_close(sndfile);
 
-    return infos.format & SF_FORMAT_TYPEMASK;
+    return infos.format;
 }
 
 

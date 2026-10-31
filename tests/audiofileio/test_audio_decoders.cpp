@@ -49,6 +49,10 @@ static void check(bool ok, const char* what)
 
 constexpr float Garbage = 0.7f;
 
+// After a seek mpg123's synthesis phase differs from a read from the start, so
+// the last bits do (up to 3e-7 at peak 1.13); the position is exact
+constexpr float MpgSeekTolerance = 1e-6f;
+
 // The audio of a test file: an odd length (no codec block ends there),
 // channel 0 sweeping up from 200 Hz (exponentially) at 0.5, channel 1 down
 // from 3 kHz to 300 Hz (linearly) at 0.3
@@ -234,8 +238,8 @@ struct Format
     // tag does not: the encoder's delay stays in)
     bool placement = true;
     // How far a read after a seek may differ from the read from the start:
-    // nothing, bit for bit, but for AAC with noise substitution (PNS, on in
-    // ffmpeg's encoder): FAAD fills those bands from a random generator,
+    // nothing, bit for bit, but for MP3 (MpgSeekTolerance) and for AAC with
+    // noise substitution (PNS, on in ffmpeg's encoder): FAAD fills those bands from a random generator,
     // which a seek starts anew (with -aac_pns 0 those seeks are bit exact
     // too, measured 2026-10-25)
     float seekTolerance = 0.0f;
@@ -588,16 +592,16 @@ int main()
         {"CAF 24 bit (sndfile)", "caf", stereo, sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
         {"Ogg Vorbis (sndfile)", "ogg", stereo, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), false, 0.0f},
         {"Ogg Opus (sndfile)", "opus", Source{48000, 2}, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), false, 0.0f},
-        {"MP3 with a LAME tag", "mp3", stereo, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
-        {"MP3 MPEG-2 mono 22.05 kHz", "22.mp3", mono22, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
+        {"MP3 with a LAME tag", "mp3", stereo, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f, 0, true, MpgSeekTolerance},
+        {"MP3 MPEG-2 mono 22.05 kHz", "22.mp3", mono22, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f, 0, true, MpgSeekTolerance},
         // The tag's padding is a lie here: the file holds more frames than
         // were written, the last of them silence
         {"MP3 with a LAME padding below 529", "pad.mp3", stereo,
-         [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); }, false, 0.0f, 2304},
+         [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); }, false, 0.0f, 2304, true, MpgSeekTolerance},
         {"MP3 without gapless information (ffmpeg)", "nolame.mp3", stereo,
          ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
                  QStringLiteral("0")}),
-         false, 0.0f, 3000, false},
+         false, 0.0f, 3000, false, MpgSeekTolerance},
         {"WavPack float", "wv", stereo,
          [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::WAVPACK, TraversoDAW::FileFormat::WAVPACK);
