@@ -304,7 +304,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
     }
     fileIOBuffer.check_capacity(count, m_channels);
 
-    const nframes_t wanted = !m_error ? std::min(count, m_frames - m_frame) : 0;
+    const nframes_t wanted = !m_inErrorState ? std::min(count, m_frames - m_nextFrame) : 0;
     float* readBuffer = interleaved_scratch(size_t(wanted) * m_channels);
 
     const size_t frameBytes = m_channels * sizeof(float);
@@ -332,7 +332,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
     QString detail;
     if (result == MPG123_NEW_FORMAT) {
         m_formatChanged = true;
-        detail = QStringLiteral("the format changes at frame %1").arg(m_frame + readFrames);
+        detail = QStringLiteral("the format changes at frame %1").arg(m_nextFrame + readFrames);
     } else if (result != MPG123_OK && result != MPG123_DONE) {
         detail = QString::fromUtf8(mpg123_strerror(m_handle));
     }

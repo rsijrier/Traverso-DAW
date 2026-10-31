@@ -6,7 +6,7 @@
 # bytes are; audiofileio builds on it, never the other way.
 add_library(traversobyteio STATIC
     TByteSource.h TByteSource.cpp
-    TByteStats.h
+    TReadsByOrigin.h
 )
 
 target_include_directories(traversobyteio PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

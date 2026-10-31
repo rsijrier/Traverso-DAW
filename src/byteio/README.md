@@ -13,4 +13,4 @@ every read and write is known, timed and counted per medium.
 - Next users: peak files, the write direction (recording, bounce) and
   video. They build on this library; there is no second byte layer.
 - It knows bytes, positions and the medium only: no frames, no audio
-  types, no decoder phases.
+  types, no decoder activities.

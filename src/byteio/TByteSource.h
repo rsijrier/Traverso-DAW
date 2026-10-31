@@ -9,9 +9,9 @@
 // project files do not go through it yet. Next users: peak files, the write
 // direction (recording, bounce) and video, on this library, with no second
 // byte layer. It knows bytes, positions and the medium only: no frames, no
-// audio types, no decoder phases.
+// audio types, no decoder activities.
 
-#include "TByteStats.h"
+#include "TReadsByOrigin.h"
 
 #include <QString>
 
@@ -40,7 +40,7 @@ using TByteSourceResult = std::expected<std::unique_ptr<TByteSource>, TByteSourc
  * The libraries pull their bytes themselves, in the middle of a decode, so the
  * line between reading and decoding runs here, below the decoders: libsndfile
  * libmpg123 and WavPack through their virtual IO, FAAD directly. Every read is
- * counted and timed into a TByteStats, which its user (a decoder) points at
+ * counted and timed into a TReadsByOrigin, which its user (a decoder) points at
  * the kind of work going on.
  *
  * Small reads go through a block of BlockBytes: the parsers of MP4 and ADTS
@@ -79,25 +79,25 @@ public:
     std::optional<QString> take_error();
 
     // Where the reads are counted; it outlives this, nullptr: not counted
-    void set_stats(TByteStats* stats) { m_stats = stats; }
+    void count_reads_into(TReadsByOrigin* reads) { m_reads = reads; }
 
 protected:
     // What is there without waiting for the medium: up to bytes from position
     // into data, 0 for nothing. No value: the platform cannot tell.
     virtual std::optional<qint64> read_cached(qint64 position, void* data, qint64 bytes);
     // Up to bytes from position into data, waiting for the medium: fewer only
-    // at the end of the file or on a failure, which goes to read_failed()
+    // at the end of the file or on a failure, which goes to record_read_failure()
     virtual qint64 read_medium(qint64 position, void* data, qint64 bytes) = 0;
-    void read_failed(const QString& reason);
+    void record_read_failure(const QString& reason);
 
 private:
     // Up to bytes from position, from the medium, counted
-    qint64 transfer(qint64 position, char* data, qint64 bytes);
+    qint64 read_and_count(qint64 position, char* data, qint64 bytes);
 
     qint64 m_position{0};
-    TByteStats* m_stats{nullptr};
-    std::optional<QString> m_error;
-    // Set by read_failed() during the read transfer() makes: that read failed
+    TReadsByOrigin* m_reads{nullptr};
+    std::optional<QString> m_inErrorState;
+    // Set by record_read_failure() during the read read_and_count() makes: that read failed
     bool m_readFailed{false};
     // The bytes of the last small read, from m_blockStart on
     std::vector<char> m_block;

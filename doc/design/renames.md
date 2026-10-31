@@ -10,6 +10,25 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-10-31 | `TByteTransfer` | `TReadTotals` |  |
+| 2026-10-31 | `TByteStats` (`TByteStats.h`) | `TReadsByOrigin` (`TReadsByOrigin.h`) | by where the bytes came from |
+| 2026-10-31 | `untold` | `unclassified` | the reads the platform could not tell apart |
+| 2026-10-31 | `TByteSource::set_stats()` | `count_reads_into()` |  |
+| 2026-10-31 | `TByteSource::transfer()` | `read_and_count()` |  |
+| 2026-10-31 | `TByteSource::read_failed()` | `record_read_failure()` |  |
+| 2026-10-31 | `TAudioPhaseStats` | `TAudioIOCost` |  |
+| 2026-10-31 | `TAudioIOStats::Phase`, `phase` | `Activity`, `activity` |  |
+| 2026-10-31 | `TAudioPhaseStats::bytes` | `TAudioIOCost::reads` |  |
+| 2026-10-31 | `TAudioIOStats::current()` | `current_cost()` |  |
+| 2026-10-31 | `TAudioDecoder::stats()` | `io_stats()` |  |
+| 2026-10-31 | `set_phase()` | `set_activity()` | on `TAudioIOStats` |
+| 2026-10-31 | `TAudioDecoder::opened()` | `finish_open()` | its parameter: the reads of the probes |
+| 2026-10-31 | `TAudioDecoder::frame()`, `m_frame` | `next_frame()`, `m_nextFrame` |  |
+| 2026-10-31 | `TAudioDecoder::reads_from()` | `next_read_is_at()` |  |
+| 2026-10-31 | `TAudioDecoder::error()`, `m_error` | `in_error_state()`, `m_inErrorState` |  |
+| 2026-10-31 | `no_decoder()` | `why_no_decoder()` | `TAudioDecoder.cpp` |
+| 2026-10-31 | `TAudioReader::m_frame` | `m_nextOutputFrame` |  |
+| 2026-10-31 | `TAudioReader::reset()` | `reset_resampler()` |  |
 | 2026-10-31 | `src/audiofileio/TByteSource.h`, `TByteSource.cpp`, `TByteStats.h` (in `traversoaudiofileio`) | `src/byteio/` (library `traversobyteio`) | moved, unchanged: all disk access goes through it (`src/byteio/README.md`); audiofileio links it |
 | 2026-10-30 | `TAudioByteSource` (`TAudioByteSource.h/.cpp`) | `TByteSource` (`TByteSource.h/.cpp`) | bytes, positions, time and the medium; nothing of audio (T71) |
 | 2026-10-30 | `TAudioTransfer` | `TByteTransfer` (`TByteStats.h`) | |

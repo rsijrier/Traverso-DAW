@@ -282,24 +282,24 @@ TAudioFileResult TScenarioDecoder::read_frames(TAudioBuffer& buffer, nframes_t c
     buffer.check_capacity(count, m_channels);
 
     nframes_t readFrames = 0;
-    if (!at_end() && !m_error) {
+    if (!at_end() && !m_inErrorState) {
         // Up to the end of the file, and up to a damaged part: the frames
         // before it are read, then the error state (read_done())
-        readFrames = std::min(count, m_frames - m_frame);
+        readFrames = std::min(count, m_frames - m_nextFrame);
         for (const Fault& fault : m_faults) {
-            if (fault.kind == Fault::Kind::ReadError && fault.first < m_frame + readFrames && fault.first + fault.frames > m_frame) {
-                readFrames = fault.first > m_frame ? std::min(readFrames, fault.first - m_frame) : 0;
+            if (fault.kind == Fault::Kind::ReadError && fault.first < m_nextFrame + readFrames && fault.first + fault.frames > m_nextFrame) {
+                readFrames = fault.first > m_nextFrame ? std::min(readFrames, fault.first - m_nextFrame) : 0;
             }
         }
         for (uint channel = 0; channel < m_channels; ++channel) {
             audio_sample_t* data = buffer.get_channel_buffer(channel).get_data(readFrames);
             for (nframes_t i = 0; i < readFrames; ++i) {
-                data[i] = sample(m_signals[channel], m_frame + i);
+                data[i] = sample(m_signals[channel], m_nextFrame + i);
             }
         }
         for (const Fault& fault : m_faults) {
-            if (fault.kind == Fault::Kind::Value && fault.first >= m_frame && fault.first < m_frame + readFrames) {
-                buffer.get_channel_buffer(fault.channel).get_data(readFrames)[fault.first - m_frame] = fault.value;
+            if (fault.kind == Fault::Kind::Value && fault.first >= m_nextFrame && fault.first < m_nextFrame + readFrames) {
+                buffer.get_channel_buffer(fault.channel).get_data(readFrames)[fault.first - m_nextFrame] = fault.value;
             }
         }
     }

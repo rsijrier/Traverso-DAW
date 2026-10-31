@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-struct TAudioPhaseStats;
+struct TAudioIOCost;
 
 /**
  * @brief Why a call into the audio file library failed
@@ -38,7 +38,7 @@ struct TAudioFileError
     Code code;
     QString detail;
     // A failed open: what it cost, there is no decoder left to ask
-    std::shared_ptr<const TAudioPhaseStats> openCost{};
+    std::shared_ptr<const TAudioIOCost> openCost{};
 };
 
 /**

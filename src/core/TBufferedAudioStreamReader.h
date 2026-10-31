@@ -74,7 +74,7 @@ public :
     const TAudioIOStats& io_stats() const;
 
 	int init();
-	int get_error() const {return m_error;}
+	int get_error() const {return m_inErrorState;}
 	QString get_error_string() const;
 	int set_file(const QString& filename);
     void set_active(bool active);
@@ -99,7 +99,7 @@ private:
     std::unique_ptr<TAudioReader> m_audioReader;
 
     int                 m_refcount;
-    int                 m_error;
+    int                 m_inErrorState;
     bool                m_silent;
     std::atomic<bool>   m_active;
 

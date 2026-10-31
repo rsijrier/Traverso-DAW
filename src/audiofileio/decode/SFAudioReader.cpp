@@ -174,7 +174,7 @@ TAudioFileResult SFAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_
 
     float* readBuffer = interleaved_scratch(size_t(count) * m_channels);
 
-    const nframes_t readFrames = (m_sf && !at_end() && !m_error) ? nframes_t(sf_readf_float(m_sf, readBuffer, count)) : 0;
+    const nframes_t readFrames = (m_sf && !at_end() && !m_inErrorState) ? nframes_t(sf_readf_float(m_sf, readBuffer, count)) : 0;
 
     // De-interlace
     switch (m_channels) {

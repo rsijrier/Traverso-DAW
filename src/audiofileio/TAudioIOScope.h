@@ -8,27 +8,27 @@
 
 /**
  * @brief Measures one seek, read or open of a decoder: from here on the sources
- * count into phase; when it ends, also by an early return or an error, the time
- * and the call go to phase's cost and the phase before it comes back.
+ * count into activity; when it ends, also by an early return or an error, the time
+ * and the call go to activity's cost and the activity before it comes back.
  */
 class TAudioIOScope
 {
 public:
-    TAudioIOScope(TAudioIOStats& stats, TAudioIOStats::Phase phase)
+    TAudioIOScope(TAudioIOStats& stats, TAudioIOStats::Activity activity)
         : m_stats(&stats)
-        , m_phase(phase)
-        , m_previous(stats.phase)
+        , m_activity(activity)
+        , m_previous(stats.activity)
         , m_start(now_nanoseconds())
     {
-        stats.set_phase(phase);
+        stats.set_activity(activity);
     }
 
     ~TAudioIOScope()
     {
-        TAudioPhaseStats& cost = m_stats->cost_of(m_phase);
+        TAudioIOCost& cost = m_stats->cost_of(m_activity);
         cost.nanoseconds += now_nanoseconds() - m_start;
         ++cost.calls;
-        m_stats->set_phase(m_previous);
+        m_stats->set_activity(m_previous);
     }
 
     TAudioIOScope(const TAudioIOScope&) = delete;
@@ -39,12 +39,12 @@ public:
     void move_to(TAudioIOStats& stats)
     {
         m_stats = &stats;
-        m_previous = stats.phase;
+        m_previous = stats.activity;
     }
 
 private:
     TAudioIOStats* m_stats;
-    TAudioIOStats::Phase m_phase;
-    TAudioIOStats::Phase m_previous;
+    TAudioIOStats::Activity m_activity;
+    TAudioIOStats::Activity m_previous;
     uint64_t m_start;
 };

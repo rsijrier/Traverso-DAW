@@ -44,28 +44,28 @@ qint64 TByteSource::read(void* data, qint64 bytes)
 
     from_block();
     if (got < bytes && bytes - got >= BlockBytes) {
-        got += transfer(m_position + got, destination + got, bytes - got);
+        got += read_and_count(m_position + got, destination + got, bytes - got);
     } else if (got < bytes) {
         m_block.resize(BlockBytes);
         m_blockStart = m_position + got;
-        m_blockBytes = transfer(m_blockStart, m_block.data(), BlockBytes);
+        m_blockBytes = read_and_count(m_blockStart, m_block.data(), BlockBytes);
         from_block();
     }
 
     m_position += got;
-    return got > 0 || !m_error ? got : -1;
+    return got > 0 || !m_inErrorState ? got : -1;
 }
 
-qint64 TByteSource::transfer(qint64 position, char* data, qint64 bytes)
+qint64 TByteSource::read_and_count(qint64 position, char* data, qint64 bytes)
 {
-    TByteStats* stats = m_stats;
+    TReadsByOrigin* reads = m_reads;
 
     const quint64 start = now_nanoseconds();
     const std::optional<qint64> cached = read_cached(position, data, bytes);
     const quint64 afterCached = now_nanoseconds();
     qint64 got = cached.value_or(0);
-    if (stats && got > 0) {
-        stats->cached.add(quint64(got), afterCached - start);
+    if (reads && got > 0) {
+        reads->cached.add(quint64(got), afterCached - start);
     }
 
     if (got < bytes) {
@@ -75,8 +75,8 @@ qint64 TByteSource::transfer(qint64 position, char* data, qint64 bytes)
         const qint64 waited = read_medium(position + got, data + got, bytes - got);
         // Every read counts, also one that gave nothing: its wait is the
         // interesting part on a stalling medium
-        if (stats) {
-            TByteTransfer& kind = cached ? stats->medium : stats->untold;
+        if (reads) {
+            TReadTotals& kind = cached ? reads->medium : reads->unclassified;
             kind.add(quint64(std::max<qint64>(waited, 0)), now_nanoseconds() - afterCached);
             // A read that met an error, also one that gave some bytes first
             if (m_readFailed) {
@@ -101,7 +101,7 @@ bool TByteSource::seek(qint64 position)
 
 std::optional<QString> TByteSource::take_error()
 {
-    return std::exchange(m_error, std::nullopt);
+    return std::exchange(m_inErrorState, std::nullopt);
 }
 
 std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
@@ -109,9 +109,9 @@ std::optional<qint64> TByteSource::read_cached(qint64, void*, qint64)
     return std::nullopt;
 }
 
-void TByteSource::read_failed(const QString& reason)
+void TByteSource::record_read_failure(const QString& reason)
 {
-    m_error = reason;
+    m_inErrorState = reason;
     m_readFailed = true;
 }
 
@@ -147,7 +147,7 @@ public:
 protected:
 #if defined(Q_OS_LINUX)
     // preadv2/RWF_NOWAIT: glibc 2.26 and kernel headers 4.14 or later
-    // (Debian has both); ENOSYS or another error falls back to untold reads
+    // (Debian has both); ENOSYS or another error falls back to unclassified reads
     std::optional<qint64> read_cached(qint64 position, void* data, qint64 bytes) override
     {
         if (!m_canTell) {
@@ -161,7 +161,7 @@ protected:
         if (errno == EAGAIN) {
             return 0;
         }
-        // Not on this file system (or kernel): the reads stay untold
+        // Not on this file system (or kernel): the reads stay unclassified
         m_canTell = false;
         return std::nullopt;
     }
@@ -180,7 +180,7 @@ protected:
                     continue;
                 }
                 // Not strerror(): it may share one buffer between threads
-                read_failed(QString::fromStdString(std::generic_category().message(errno)));
+                record_read_failure(QString::fromStdString(std::generic_category().message(errno)));
                 break;
             }
             got += read;
@@ -195,12 +195,12 @@ protected:
     qint64 read_medium(qint64 position, void* data, qint64 bytes) override
     {
         if (!m_file.seek(position)) {
-            read_failed(m_file.errorString());
+            record_read_failure(m_file.errorString());
             return 0;
         }
         const qint64 read = m_file.read(static_cast<char*>(data), bytes);
         if (read < 0) {
-            read_failed(m_file.errorString());
+            record_read_failure(m_file.errorString());
             return 0;
         }
         return read;

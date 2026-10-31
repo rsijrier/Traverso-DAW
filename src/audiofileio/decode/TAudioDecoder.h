@@ -26,7 +26,7 @@ class TAudioIOScope;
  * open_audio_decoder().
  *
  * What a decoder does, and nothing else does for it: it keeps its position
- * in the file (frame(), in frames at the file's rate), moves it (seek()) and
+ * in the file (next_frame(), in frames at the file's rate), moves it (seek()) and
  * reads from it (read()). The file's channels, rate and frames are set once,
  * when it is opened.
  *
@@ -38,14 +38,14 @@ class TAudioIOScope;
  * 2. seek(frame) is only asked for a frame below frame_count(); a read at or
  *    past the end is handled above the decoder (read_from(),
  *    TAudioReader::read()): zeros and 0, no decoder call, no error. A seek
- *    that succeeds lands exactly: frame() is frame and the next read starts
+ *    that succeeds lands exactly: next_frame() is frame and the next read starts
  *    there, its samples equal to a read from the start (within the format's
  *    seek tolerance, MP3 and AAC). A seek that cannot go there says why (SeekFailed),
- *    leaves frame() unchanged and is an error.
+ *    leaves next_frame() unchanged and is an error.
  * 3. On an error (a failed seek, a failed read) the decoder is in its error
- *    state (error()): reads give zeros and 0 until a seek succeeds, which
+ *    state (in_error_state()): reads give zeros and 0 until a seek succeeds, which
  *    clears it, so a damaged part of a file can be skipped. A caller seeks
- *    again when the decoder is in its error state, also to frame().
+ *    again when the decoder is in its error state, also to next_frame().
  * 4. Audio that ends before frame_count() (a header that says more, a file
  *    cut short) is an error. A packet that does not decode (FAAD) stays
  *    silence, as the decoder decides: not an error.
@@ -62,7 +62,7 @@ class TAudioIOScope;
  * source from the probes, which is opened once.
  *
  * A decoder reaches its file through TByteSource only (source()), so
- * what it read and what it decoded can be told apart: stats().
+ * what it read and what it decoded can be told apart: io_stats().
  *
  * Not for the audio thread: file IO, and the buffer may grow.
  */
@@ -82,23 +82,23 @@ public:
     virtual QString decoder_type() const = 0;
 
     // The frame the next read() starts at
-    nframes_t frame() const { return m_frame; }
-    bool at_end() const { return m_frame >= m_frames; }
+    nframes_t next_frame() const { return m_nextFrame; }
+    bool at_end() const { return m_nextFrame >= m_frames; }
     // A seek or a read failed, and no seek succeeded since (point 3)
-    bool error() const { return m_error; }
+    bool in_error_state() const { return m_inErrorState; }
     // The next read() reads frame: the decoder is there and not in its
     // error state. Otherwise a read from frame seeks first (point 3).
-    bool reads_from(nframes_t frame) const { return m_frame == frame && !m_error; }
+    bool next_read_is_at(nframes_t frame) const { return m_nextFrame == frame && !m_inErrorState; }
 
     // To frame, which is below frame_count(); why not when the decoder
-    // cannot go there (frame() is then unchanged)
+    // cannot go there (next_frame() is then unchanged)
     [[nodiscard]] TAudioFileStatus seek(nframes_t frame);
-    // count frames from frame() into buffer, as the contract above says:
-    // the frames read from the file (frame() moves on by as many), and the
+    // count frames from next_frame() into buffer, as the contract above says:
+    // the frames read from the file (next_frame() moves on by as many), and the
     // error when this read failed
     TAudioFileResult read(TAudioBuffer& buffer, nframes_t count);
 
-    // count frames from first: a seek only when frame() is elsewhere or the
+    // count frames from first: a seek only when next_frame() is elsewhere or the
     // decoder is in its error state (a seek costs: mpg123 and FAAD decode
     // frames before the target), then read(). At or past the end zeros and
     // 0, no error; where the decoder cannot seek to, zeros, 0 and the seek's
@@ -106,10 +106,10 @@ public:
     TAudioFileResult read_from(TAudioBuffer& buffer, nframes_t first, nframes_t count);
 
     // What it read and decoded since it opened
-    const TAudioIOStats& stats() const { return m_stats; }
+    const TAudioIOStats& io_stats() const { return m_stats; }
     // The open is over: the reads of the probes before the decoder are added,
     // and from now on seeks and reads
-    void opened(const TByteStats& probeBytes);
+    void finish_open(const TReadsByOrigin& probeReads);
     // The rest of the open's measurement ends on this decoder
     void measure_open_on_stats(TAudioIOScope& scope);
 
@@ -123,7 +123,7 @@ protected:
     // The bytes of the file, for as long as the decoder lives
     TByteSource& source() { return *m_sources.front(); }
     // A second file of this one (WavPack's correction file), for as long as
-    // the decoder lives, counted in stats(); nullptr when it is not there
+    // the decoder lives, counted in io_stats(); nullptr when it is not there
     TByteSource* open_extra_source(const QString& fileName);
     // The end of every decoder's open: channels, a rate and frames, or why
     // not (a decoder without one of them reads nothing, and a rate of 0 would
@@ -131,11 +131,11 @@ protected:
     TAudioFileStatus has_audio() const;
     // The end of every seek_frame() that landed: at frame, no error
     TAudioFileStatus seek_landed(nframes_t frame);
-    // The end of every seek_frame() that did not: the error state, frame()
+    // The end of every seek_frame() that did not: the error state, next_frame()
     // unchanged; detail says why (the source's words where a read failed,
     // else the library's where it has any)
     TAudioFileStatus seek_failed(nframes_t frame, const QString& detail = QString());
-    // The end of every read_frames(): zeros past the frames read, frame()
+    // The end of every read_frames(): zeros past the frames read, next_frame()
     // moved on by them, and fewer frames than asked before frame_count() an
     // error, with detail where the decoder knows why (a failed read of the
     // source goes before it)
@@ -148,8 +148,8 @@ protected:
     nframes_t m_frames{0};
     // Moved by seek_frame() and read_frames() only, through seek_landed(),
     // seek_failed() and read_done()
-    nframes_t m_frame{0};
-    bool m_error{false};
+    nframes_t m_nextFrame{0};
+    bool m_inErrorState{false};
 
 private:
     // Why a read of a source failed since the last call, empty when none did

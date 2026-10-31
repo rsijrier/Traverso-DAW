@@ -8,7 +8,7 @@
 #include <algorithm>
 
 // Reads of one kind: how many, their bytes and their time
-struct TByteTransfer
+struct TReadTotals
 {
     quint64 reads{0};
     quint64 bytes{0};
@@ -27,7 +27,7 @@ struct TByteTransfer
         worstNanoseconds = std::max(worstNanoseconds, readNanoseconds);
     }
 
-    void add(const TByteTransfer& other)
+    void add(const TReadTotals& other)
     {
         reads += other.reads;
         bytes += other.bytes;
@@ -44,20 +44,20 @@ struct TByteTransfer
  * A read from the page cache shows only the copy of the memory, not the
  * medium, so the two are kept apart: cached is what came without waiting,
  * medium what had to wait for the disk or the network. Where the platform or
- * the file system cannot tell them apart the bytes are untold.
+ * the file system cannot tell them apart the bytes are unclassified.
  */
-struct TByteStats
+struct TReadsByOrigin
 {
-    TByteTransfer cached;
-    TByteTransfer medium;
-    TByteTransfer untold;
+    TReadTotals cached;
+    TReadTotals medium;
+    TReadTotals unclassified;
 
-    quint64 read_nanoseconds() const { return cached.nanoseconds + medium.nanoseconds + untold.nanoseconds; }
+    quint64 read_nanoseconds() const { return cached.nanoseconds + medium.nanoseconds + unclassified.nanoseconds; }
 
-    void add(const TByteStats& other)
+    void add(const TReadsByOrigin& other)
     {
         cached.add(other.cached);
         medium.add(other.medium);
-        untold.add(other.untold);
+        unclassified.add(other.unclassified);
     }
 };

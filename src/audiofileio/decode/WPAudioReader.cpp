@@ -173,7 +173,7 @@ TAudioFileResult WPAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_
     fileIOBuffer.check_capacity(count, m_channels);
 
     nframes_t readFrames = 0;
-    if (m_wp && !at_end() && !m_error) {
+    if (m_wp && !at_end() && !m_inErrorState) {
         // WavPack unpacks into int32_t, the buffers are float: scratch per
         // thread, used within this read only, grown to the largest read
         static thread_local std::vector<int32_t> unpackBuffer;
