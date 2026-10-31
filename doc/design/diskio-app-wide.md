@@ -308,7 +308,7 @@ Decided by the user on 2026-10-23, after measuring on "Minidisk opname"
   A stop-gap (2026-10-24): the long file is to be built by several readers
   at once, each its own idle task on its own core, for compressed files
   only (a WAV is read faster than it is reduced). The weight goes with
-  that; a task for later.
+  that; a task for later (T19, `peak-records.md` section 7).
 - **A peak build reads a second of its source per step** (was a fifth):
   five times fewer hand-overs to the pool.
 

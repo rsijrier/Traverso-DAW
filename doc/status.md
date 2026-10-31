@@ -54,6 +54,9 @@ After the release, pulled by a use case
   ioscheduler free of Qt) and 2d (the window in time). Trigger: the live
   playhead, libraries on a NAS or HDD, or a measured seek problem. (T71;
   T61.)
+- A long file's peaks built in parallel, chunk by chunk (T19;
+  `peak-records.md` section 7). Waits for the kept seek index (T71 step 4),
+  the read pool per medium and the windows of byteio (T71 step 2c).
 - The byte source as a library of its own, and the write direction.
 - Waveform performance through shaders (`gpu-waveform-poc`,
   `curve-gpu-bench`; Foundations: organic interface).
@@ -303,7 +306,8 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   `WavpackCloseFile()` is never called afterwards (`WPAudioWriter.cpp:137-141`,
   `close()` returns at `:240-242`): a leak and a silent failure.
 - **T19 (medium-low): parallel readers for a long compressed file's peak
-  build**; then `TIOIdleTask::weight()` goes.
+  build**; then `TIOIdleTask::weight()` goes. Design note:
+  `peak-records.md` section 7 (Remon, 2026-10-31), after the release.
 - **T20 (done 2026-10-28: merged `9ab838d7`; built otherwise than planned, see Built): `TChannelBuffer` operations auto-vectorised, hand SIMD
   retired.** Measure first. Three variants on Linux: the portable loops,
   the SSE assembly, and AVX2 through `target_clones("avx2", "default")` on

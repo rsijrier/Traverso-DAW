@@ -199,3 +199,60 @@ Headless, on the pure classes (`tests/peaks`):
 Not tested headless: the app's recording path (writer, clip, service), which
 needs a runtime test, and the mapping of a file that another handle still
 appends to on Windows and macOS.
+
+## 7. Building one file in parallel (Remon, 2026-10-31; after the release)
+
+A design note, nothing of it is built. It replaces the stop-gap of
+`diskio-app-wide.md` section "Decided by the user on 2026-10-23" and fills in
+T19: a long compressed file is built last and alone, on one core. When this is
+in, `TIOIdleTask::weight()` and the heaviest-first rotation go.
+
+**One builder, one file.** A peak builder owns one file: the handles of its
+decoders, the peak file in memory, and the moment it is written.
+
+**Chunks are the unit.** The file is divided on the chunks of section 1: their
+boundaries fall on a multiple of the block of the top level (64 frames at level
+0, a factor two per level). Today C = 10, 65536 frames, about 1.5 s at 44.1 kHz;
+C = 11 would be about 3 s, and a reader takes C from the file. Pairs never cross
+a chunk, so every chunk builds its whole pyramid itself: there is nothing to
+merge.
+
+**Tasks.** Chunks go as tasks ("decode chunk i for builder B") to the shared
+decode pool. Every decoder has its own handle; the mutex around `mpg123_new()`
+makes that safe. An MP3 chunk starts with its preframes from the chunk before:
+at most 90 frames of overlap (`mp3-decoder.md` section 4).
+
+**Fairness.** A maximum number of decoders per builder, so one large file does
+not hold up the small ones. Playback always goes first.
+
+**The scan once.** An MP3 is scanned once; the index is kept next to the peak
+file, so the next open does not scan (`mpg123_set_index64()`). The kept data also
+holds the scanned samples: they are the seek limit, and without a tag
+`mpg123_length64()` stays an estimate (`mp3-decoder.md` section 4).
+
+**Per medium.** The scheduler chooses from what it measured of the medium.
+- Fast (SSD): first the scan, then the decoders read for themselves.
+- Slow (HDD, NAS): one reading thread delivers the chunks in sequence and the
+  decoders work from memory. Memory stays bounded: at most as many chunks as
+  there are decoders, plus one being read.
+- WAV and other uncompressed material gain nothing from several decoders: the
+  disk is the limit there, one reader as today.
+
+**Waits for.**
+- The kept index: T71 step 4 ("the MP3 seek index kept next to the peak file").
+- The read pool per medium and the decode pool: T71 step 2c, T61.
+- The windows of byteio: T71 step 2c, `byteio-open-questions.md`.
+
+**Where this goes beyond the decisions so far, to be settled when it is built.**
+- The scan decodes nothing, but it does read all of the audio's bytes, not only
+  the frame headers: libmpg123 reads each frame whole (measured: all 93,538 bytes
+  of an MP3 at the open). On a slow medium the scan costs a full read of the file.
+- Section 1 says the file is only appended to, in order. Chunks now finish out of
+  order, so the builder keeps finished chunks in memory and writes them in order.
+  The memory bound above covers the chunks being read, not these.
+- After a seek MP3 samples differ from plain decoding in the last bits (seek
+  tolerance 1e-6), so a parallel build need not equal a sequential one to the
+  bit; whether a code can differ by a step is not measured.
+- Other compressed formats are not decided: FLAC and WavPack, and whether AAC
+  with its seek tolerance of 0.002 and Ogg belong here at all.
+- The gain is not measured.
