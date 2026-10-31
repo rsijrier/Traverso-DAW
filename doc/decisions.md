@@ -91,3 +91,6 @@ Entries for `audio-byte-source` up to 2026-10-31 were written afterwards
 | 2026-10-31 | mp3-mpg123 | `TAudioDecoderFactory::open<Decoder>()` as a struct with one template, a friend of every decoder; no new virtual functions | constructors and `start()` stay each decoder's own; one short friend line per decoder | `TAudioDecoder.h`, decoders |
 | 2026-10-31 | mp3-mpg123 | `MpgAudioReader::start()` ends in `return scan();` | it fits the one helper; a later open from a saved index replaces this one line | `MpgAudioReader.cpp` |
 | 2026-10-31 | mp3-mpg123 | `TAudioFileError::openCost` stays: `test_audio_byte_source` reads it | Remon's rule: remove it only when nobody reads it. Its only reader is that test, no code and no log line | `TAudioFileError.h` |
+| 2026-10-31 | mp3-mpg123 | `open_audio_decoder()` is declared above `TAudioDecoder`, with its comment | a friend needs the declaration with the default argument first | `TAudioDecoder.h` |
+| 2026-10-31 | mp3-mpg123 | After the switch in `open_measured()` a `Q_UNREACHABLE()` | no default, so `-Wswitch` works; every case returns | `TAudioDecoder.cpp` |
+| 2026-10-31 | mp3-mpg123 | The status of byteio stays in its README, without audio words; the header says "a real-time thread" | the README's line matches Remon's grep check otherwise | `src/byteio/` |
