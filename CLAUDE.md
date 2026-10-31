@@ -31,6 +31,9 @@ Ask before deciding, however small the change looks, when it touches:
 - public APIs of a library;
 - existing (older) code that a change gives a new role: a new caller, a
   new thread, new input;
+- functionality that already exists elsewhere in Traverso: reusing it
+  across a library boundary, moving it, or writing a second version of
+  it;
 - the recorded design rules, the scope of the task or the release
   planning.
 When in doubt whether something belongs on this list: ask.
