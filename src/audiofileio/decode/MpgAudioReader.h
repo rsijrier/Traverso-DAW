@@ -31,6 +31,9 @@ struct MpgInput
  * switches itself off when the scan finds fewer frames than the tag promises,
  * which shifts the audio of a file cut short.
  *
+ * Another rate or channel count inside a file is damage: the read fails where
+ * it changes, and every seek after that too, until the file is opened again.
+ *
  * Seeks decode PREFRAMES frames before the target to fill the bit reservoir:
  * 12 for MPEG-1, 90 for MPEG-2 and 2.5. The known limit: 90 covers the 85
  * frames a stereo stream of 24 kHz at 8 kbps can reach back, 3 bytes per frame.
@@ -85,4 +88,6 @@ private:
     int64_t m_scannedSamples{0};
     // Frame 0 of this reader in mpg123's samples
     int64_t m_skip{0};
+    // A read met another format: from now on every seek fails
+    bool m_formatChanged{false};
 };

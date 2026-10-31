@@ -1040,15 +1040,29 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         if (reader) {
             const bool same = back.frames() > source.frames() && std::equal(whole.channels[0].begin(), whole.channels[0].end(), back.channels[0].begin());
             check(same, "A change of format: exact up to the change");
-            // The first seek after a change of rate can fail, with an error;
-            // the seek after it lands (contract point 3: a caller seeks again)
+            // From here on every seek is refused, also back into the first
+            // part, and it says why
+            TAudioFileResult refused;
+            seek_error(*reader, 5000, 2000, whole.channels[0], &refused);
+            std::snprintf(what, sizeof(what), "A change of format: a seek is refused (%s)", refused.error ? qPrintable(refused.error->detail) : "no error");
+            check(refused.frames == 0 && refused.error && refused.error->code == TAudioFileError::Code::SeekFailed && refused.error->detail.contains(QLatin1String("format changes")), what);
+        }
+
+        // A new reader, not at the change yet: its first seek lands in the
+        // first part, or fails; nowhere wrong audio
+        const std::unique_ptr<TAudioReader> fresh = TAudioReader::open(path).value_or(nullptr);
+        if (fresh) {
             TAudioFileResult first;
-            float worst = seek_error(*reader, 5000, 2000, whole.channels[0], &first);
-            if (first.error) {
-                worst = seek_error(*reader, 5000, 2000, whole.channels[0]);
-            }
-            std::snprintf(what, sizeof(what), "A change of format: a seek back reads (worst %.2g)", double(worst));
-            check(worst <= MpgSeekTolerance, what);
+            const float worst = seek_error(*fresh, source.frames() / 2, 2000, whole.channels[0], &first);
+            std::snprintf(what, sizeof(what), "A change of format: a first seek in the first part (%u frames, worst %.2g, %s)", first.frames, double(worst), first.error ? qPrintable(first.error->detail) : "no error");
+            check((first.frames == 2000 && worst <= MpgSeekTolerance) || (first.frames == 0 && first.error), what);
+        }
+        const std::unique_ptr<TAudioReader> beyond = TAudioReader::open(path).value_or(nullptr);
+        if (beyond) {
+            TAudioFileResult past;
+            seek_error(*beyond, source.frames() + 5000, 1000, whole.channels[0], &past);
+            std::snprintf(what, sizeof(what), "A change of format: a first seek past it gives no audio (%u frames, %s)", past.frames, past.error ? qPrintable(past.error->detail) : "no error");
+            check(past.frames == 0 && past.error, what);
         }
     }
 }

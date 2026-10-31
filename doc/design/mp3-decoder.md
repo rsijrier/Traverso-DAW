@@ -52,6 +52,8 @@ unless section 7 says otherwise.
     `TRAVERSO_MPG123_DECODER`), documented. No extra parameter in the API.
 14. `NO_PEEK_END` was provisional in the probe, for the build to confirm. It
     did not: it is not used (section 3).
+15. A change of format inside a file: damage. After it the reader refuses every
+    seek, until the decoder is opened again (section 4).
 
 ## 2. Why
 
@@ -224,7 +226,9 @@ on the scan, and a later open without one needs them too.
 With a tag (delay and padding >= 0):
 - the source of the samples is the tag's length when it says more than the
   scan found, a file cut short; otherwise the scan, so a tag that says less
-  (concatenated files) does not cut anything;
+  (concatenated files) does not cut anything. Only a real frame count counts:
+  a tag without one (an encoder's name only) gives a length estimated from the
+  file size, and then the scan decides;
 - `m_frames` = samples - delay - max(padding, 529);
 - skip = delay + 529, the decoder's delay being 529.
 
@@ -237,11 +241,13 @@ Keep the scanned samples: they are the seek limit.
 de-interleave as `SFAudioReader` does. A read that ends before `m_frames` is
 an error through `read_done()`.
 
-**A change of format.** Another rate or channel count inside a file is damage:
-the read stops there with an error, a seek back reads again. Accepted: after a
-change of rate the first seek back can fail with mpg123's "Error reading the
-stream", and the seek after it lands. That is a clean error within contract
-point 3, never wrong audio, and a caller seeks again.
+**A change of format.** Another rate or channel count inside a file is damage
+(decision 15): the read stops there with an error, and from then on every seek
+fails with `SeekFailed` and the reason, until the decoder is opened again.
+mpg123 turns a position into frames with the size of the frame it is at, and
+`mpg123_seek64()` gives back the position it was asked for, so past a change of
+frame size its answer proves nothing. A seek before the first read of the change
+lands: measured in the first part, exact; past the change the read fails at once.
 
 **Preframes, the known limit.** 90 covers the 85 frames a stereo stream of
 24 kHz at 8 kbps can reach back (24 bytes per frame, minus 21 of header and

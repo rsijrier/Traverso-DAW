@@ -245,6 +245,11 @@ void MpgAudioReader::scan()
 TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
 {
     Q_ASSERT(frame < m_frames);
+    // mpg123 turns a position into frames with the size of the frame it is at:
+    // past a change of rate no seek can be trusted
+    if (m_formatChanged) {
+        return seek_failed(frame, QStringLiteral("the format changes inside the file: no seek until it is opened again"));
+    }
     const int64_t position = int64_t(frame) + m_skip;
     if (!m_handle || position >= m_scannedSamples) {
         return seek_failed(frame, QStringLiteral("frame %1 lies past the audio in the file").arg(frame));
@@ -292,8 +297,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
         size_t done = 0;
         result = mpg123_read(m_handle, reinterpret_cast<char*>(readBuffer) + have, bytes - have, &done);
         have += done;
-        // Also after a seek back over a change of format: the first format
-        // again goes on, another one is damage
+        // The format at the open again goes on, another one is damage
         if (result == MPG123_NEW_FORMAT && same_format()) {
             result = MPG123_OK;
         }
@@ -309,6 +313,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
 
     QString detail;
     if (result == MPG123_NEW_FORMAT) {
+        m_formatChanged = true;
         detail = QStringLiteral("the format changes at frame %1").arg(m_frame + readFrames);
     } else if (result != MPG123_OK && result != MPG123_DONE) {
         detail = QString::fromUtf8(mpg123_strerror(m_handle));
