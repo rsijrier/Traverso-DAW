@@ -27,3 +27,12 @@ race:QArrayDataPointer<QThreadPoolThread*>
 # glib: a GRWLock initialised lazily with glib's own atomics (Qt's event
 # dispatcher on pool threads).
 race:g_rw_lock_reader_lock
+
+# Traverso: the hand-over of a step to QThreadPool (s_handOverFence in
+# TIOScheduler.h). The step lambda reads what QRunnable::create() copied on
+# the scheduler thread. TSan ziet de lock van QThreadPool niet; verdwijnt bij
+# T71 stap 2c (eigen pools). race_top: only an access in the lambda's own
+# body, not in the stream's step() it calls. Remove with T71 step 2c
+# (doc/status.md).
+race_top:TIOScheduler::start_stream_step
+race_top:TIOScheduler::start_task_step
