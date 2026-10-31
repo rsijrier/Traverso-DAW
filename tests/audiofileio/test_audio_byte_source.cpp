@@ -384,8 +384,12 @@ static qsizetype first_frame_bytes(const QByteArray& bytes)
 }
 
 // Album art of 1 MiB is skipped, not read: libmpg123 (MPG123_SKIP_ID3V2) reads
-// none of the tag, in the probe or the reader. The scan reads all the audio,
-// so what is read is the audio's size and more, far below the tag's here.
+// none of the tag, in the probe or the reader. What may be read: all the audio
+// (the scan) and what goes around it. libmpg123 reads in small pieces, so every
+// place it goes to fetches a block of the source: the probe three, the reader
+// two, the seek one, and the ends of the file (ID3v1). 98550 bytes measured on
+// top of the audio, 6 blocks and a little; a margin of 8 blocks keeps 2 spare.
+// It does not grow with the tag, so a tag that is read fails.
 static void test_large_tag(const QTemporaryDir& dir)
 {
     const QString plain = dir.filePath(QStringLiteral("file.mp3"));
@@ -431,7 +435,7 @@ static void test_large_tag(const QTemporaryDir& dir)
     const quint64 total = bytes(stats.open) + bytes(stats.seek) + bytes(stats.stream);
     char what[160];
     std::snprintf(what, sizeof(what), "behind a tag of 1 MiB: the tag is not read (%llu bytes read of %lld)", static_cast<unsigned long long>(total), static_cast<long long>(fileBytes));
-    check(total < quint64(tagBytes), what);
+    check(total <= quint64(fileBytes - tagBytes) + 8 * quint64(TByteSource::BlockBytes), what);
 }
 
 // A read that fails during the scan: libmpg123 takes it for the end of the
