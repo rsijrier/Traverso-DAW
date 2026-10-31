@@ -119,7 +119,9 @@ public:
 protected:
     TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
 
-    // The decoder's seek() and read(), as the contract above says
+    // The decoder's seek() and read(), as the contract above says. Inside a
+    // decoder call seek_frame(), from outside seek(): a seek during the open
+    // belongs to the open, whose scope measures it
     [[nodiscard]] virtual TAudioFileStatus seek_frame(nframes_t frame) = 0;
     virtual TAudioFileResult read_frames(TAudioBuffer& buffer, nframes_t count) = 0;
 

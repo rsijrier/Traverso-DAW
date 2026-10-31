@@ -557,7 +557,7 @@ bool FaadAudioReader::start_at_frame_0()
 		m_openFailure = QStringLiteral("no AAC frames in it");
 		return false;
 	}
-	if (TAudioFileStatus atStart = seek(0); !atStart) {
+	if (TAudioFileStatus atStart = seek_frame(0); !atStart) {
 		m_openFailure = atStart.error().detail;
 		return false;
 	}

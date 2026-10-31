@@ -62,10 +62,6 @@ private:
 
 TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 {
-    // A seek of the open itself (mpg123, FAAD) counts for the open
-    if (m_stats.activity == TAudioIOStats::Activity::Open) {
-        return seek_frame(frame);
-    }
     TAudioIOScope scope(*this, TAudioIOStats::Activity::Seek);
     return seek_frame(frame);
 }

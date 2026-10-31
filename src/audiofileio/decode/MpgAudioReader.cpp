@@ -246,7 +246,7 @@ TAudioFileStatus MpgAudioReader::scan()
     }
     m_frames = nframes_t(frames);
 
-    if (TAudioFileStatus sought = seek(0); !sought) {
+    if (TAudioFileStatus sought = seek_frame(0); !sought) {
         return open_failed(sought.error().detail);
     }
     return has_audio();
