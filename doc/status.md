@@ -59,6 +59,7 @@ After the release, pulled by a use case
   `curve-gpu-bench`; Foundations: organic interface).
 - TTimeRef free of Qt (T12).
 - The live playhead as a feature (`multi-transport.md`; T60).
+- Clean-up: `interleaved_scratch()` in one place (T75).
 
 ## Legend
 
@@ -200,11 +201,9 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   two reports of one fault, each costing a seek (MP3: with pre-roll). Not
   wrong, but "one log line per stream" needs de-duplication by position,
   not by count.
-- **T11 (medium): MP3 without libmad goes to libsndfile, whose seeks are not
-  exact.** Proposal: refuse MP3 without MAD and tell the user. Behaviour
-  change: Remon confirms.
-  Falls away with T73 (`doc/design/mp3-decoder.md`): MP3 no longer goes
-  through MAD or libsndfile. To be marked as dropped when T73 is done.
+- **T11 (dropped 2026-10-31 with T73): MP3 without libmad goes to libsndfile,
+  whose seeks are not exact.** MP3 no longer goes through MAD or libsndfile
+  (`doc/design/mp3-decoder.md`).
 - **T12 (medium): TTimeRef frame-conversion cleanup.** One symmetric style
   (`from_frames` ↔ `frame_at_or_before/after`), one call for rate-to-rate
   counts, one call for `to_nframes(frame_*(...))` (8 sites). The text/QTime
@@ -708,7 +707,7 @@ From the GPU waveform test program, clip edges in variant A (branch
     `m_bufferSlotFrames` in the seek and in the refill (one source).
   - **Step 2:** `prefetch()` into a window in own memory, with a floor of
     16 KB and a margin that grows after a miss; exact byte ranges for PCM,
-    MAD and FAAD; the counter "unplanned reads", target zero.
+    libmpg123 and FAAD; the counter "unplanned reads", target zero.
     The kernel's readahead hides the medium in step 1 (a slow decoder finds
     its pages read already): the prefetch must be the only reader, for
     instance `posix_fadvise(POSIX_FADV_RANDOM)` on the stream's file, only
@@ -757,34 +756,30 @@ From the GPU waveform test program, clip edges in variant A (branch
   - Scenario files are still read through `QFile`: a small text file, no
     audio.
   - From Remon's review (2026-10-30), not urgent:
-    - Opening reads whole files: MAD's `countFrames()`, and FAAD scans an
+    - Opening reads whole files: `mpg123_scan()`, and FAAD scans an
       ADTS file through, byte by byte at a mismatch. The 16 KB block keeps
       it bearable; the real answer is the seek index next to the peak file
       (step 4).
     - The `(off_t)` cast at `SFAudioReader.cpp:141` (`sf_seek` takes
       `sf_count_t`).
-    - `size()` makes a system call each time, and MAD asks it through
-      `at_end()` at every buffer fill: it can be a variable.
     - FAAD makes a new `QByteArray` per packet: allocations per decode.
-    - `K3bMad::decodeNextFrame()` is dead code (no callers; Fable's review):
-      goes at the next clean-up, not now.
-    - MP3 seek pre-roll by bitrate (candidate once scrubbing or many seeks
-      weigh in the measurements; since step 2b every reset is a real seek):
-      `MadAudioReader` decodes `PreRollFrames` (16) before the target
-      whatever the bitrate, about 4 ms per seek (measured, 2026-10-30).
-      The bit reservoir reaches back at most 511 bytes (`main_data_begin`,
-      9 bits), plus one frame for the filterbank's overlap: at 128 kbps
-      (frames of about 418 bytes) about 3 frames, at 32 kbps about 6.
-    - The MAD points above and `countFrames()` fall away with T73
-      (`doc/design/mp3-decoder.md`). To be marked as dropped when T73
-      is done.
+    - The MAD points fell away with T73 (2026-10-31): `size()` asked at
+      every buffer fill, `K3bMad::decodeNextFrame()`, the pre-roll by
+      bitrate (now `MPG123_PREFRAMES`). The whole read at the open stays,
+      through `mpg123_scan()`, above.
 
-- **T73 `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
-  Build it as `doc/design/mp3-decoder.md` says, with the new tests listed
-  there; the decisions are in that document and in `doc/decisions.md`. After
-  the open merges; Remon gives the order separately.
+- **T73 (built 2026-10-31, awaiting review, branch `mp3-mpg123`)
+  `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
+  Built as `doc/design/mp3-decoder.md` says, with the new tests listed there;
+  the decisions are in that document and in `doc/decisions.md`.
   - Two reports for mpg123 exist as drafts, in
     `reports/mpg123-upstream-drafts.md`; Remon sends them himself.
+- **T74 `transport_position` fails now and then under load** (low; Remon,
+  2026-10-31). Seen once, Clang, `ctest -j4`: "the reader is not starved by the
+  writer". A timing test, apart from T73; the cause is not looked into.
+- **T75 `interleaved_scratch()` in three files** (low; Remon, 2026-10-31):
+  `SFAudioReader.cpp`, `MpgAudioReader.cpp`, `TAudioWriter.cpp`. One place, in
+  the clean-up after the release.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the
