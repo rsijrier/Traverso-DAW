@@ -64,6 +64,8 @@ struct Medium
     bool waits{false};
     // Reads from this byte on fail, -1: none do
     qint64 failFrom{-1};
+    // Up to this byte, -1: to the end
+    qint64 failTo{-1};
 };
 
 // A file's bytes in memory
@@ -92,7 +94,8 @@ protected:
             return 0;
         }
         const qint64 end = std::min(position + bytes, qint64(m_bytes.size()));
-        const qint64 good = m_medium->failFrom < 0 ? end : std::min(end, m_medium->failFrom);
+        const bool failing = m_medium->failFrom >= 0 && (m_medium->failTo < 0 || position < m_medium->failTo);
+        const qint64 good = failing ? std::min(end, m_medium->failFrom) : end;
         if (good < end) {
             read_failed(Reason);
         }
@@ -320,6 +323,18 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     check(stats.seek.calls == 1 && stats.seek.nanoseconds >= stats.seek.read_nanoseconds() && stats.stream.calls == stream.calls + 1, what);
 }
 
+// An ID3v2 tag at the start of bytes
+static QByteArray with_id3_tag(const QByteArray& bytes, int tagBytes)
+{
+    QByteArray tagged("ID3\x04\x00\x00", 6);
+    for (const int shift : {21, 14, 7, 0}) {
+        tagged.append(char((tagBytes >> shift) & 0x7f));
+    }
+    tagged.append(QByteArray(tagBytes, '\0'));
+    tagged.append(bytes);
+    return tagged;
+}
+
 // A medium that fails from the first byte on: every probe and the open fail,
 // and the open says why, it does not hang. MAD's search for its first header
 // used to loop forever on a read that failed at the start (a large ID3 tag,
@@ -346,12 +361,7 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
         return;
     }
     const int tagBytes = 20 * 1024;
-    QByteArray tagged("ID3\x04\x00\x00", 6);
-    for (const int shift : {21, 14, 7, 0}) {
-        tagged.append(char((tagBytes >> shift) & 0x7f));
-    }
-    tagged.append(QByteArray(tagBytes, '\0'));
-    tagged.append(file.readAll());
+    const QByteArray tagged = with_id3_tag(file.readAll(), tagBytes);
     const QString taggedPath = dir.filePath(QStringLiteral("tagged.mp3"));
     QFile out(taggedPath);
     if (!out.open(QIODevice::WriteOnly) || out.write(tagged) != tagged.size()) {
@@ -363,6 +373,99 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
     check(TAudioReader::open(taggedPath, memory_opener(&whole)).has_value(), "MP3: an MP3 behind a 20 KiB tag opens");
     medium.failFrom = 10 + tagBytes;
     check(!TAudioReader::open(taggedPath, memory_opener(&medium)).has_value(), "MP3: the tag reads, the first audio byte fails: no decoder, no hang");
+}
+
+// The size of the first frame of an MP3 by libsndfile, its Info frame: 128
+// kbps at this file's rate
+static qsizetype first_frame_bytes(const QByteArray& bytes)
+{
+    const uchar* header = reinterpret_cast<const uchar*>(bytes.constData());
+    static const int bitrates[] = {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320};
+    return 144 * bitrates[header[2] >> 4] * 1000 / Rate + ((header[2] >> 1) & 1);
+}
+
+// Album art of 1 MiB is skipped, not read: libmpg123 (MPG123_SKIP_ID3V2) reads
+// none of the tag, in the probe or the reader. The scan reads all the audio,
+// so what is read is the audio's size and more, far below the tag's here.
+static void test_large_tag(const QTemporaryDir& dir)
+{
+    const QString plain = dir.filePath(QStringLiteral("file.mp3"));
+    QFile file(plain);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    const QByteArray audio = file.readAll();
+    const int tagBytes = 1024 * 1024;
+    const QString path = dir.filePath(QStringLiteral("art.mp3"));
+    QFile out(path);
+    if (!out.open(QIODevice::WriteOnly) || out.write(with_id3_tag(audio, tagBytes)) == -1) {
+        check(false, "the MP3 with a tag of 1 MiB is written");
+        return;
+    }
+    out.close();
+    const qint64 fileBytes = out.size();
+
+    Medium medium;
+    auto plainReader = TAudioReader::open(plain, memory_opener(&medium));
+    auto reader = TAudioReader::open(path, memory_opener(&medium));
+    if (!reader || !plainReader) {
+        check(false, "an MP3 behind a tag of 1 MiB opens");
+        return;
+    }
+    check((*reader)->file_frame_count() == (*plainReader)->file_frame_count(), "behind a tag of 1 MiB: its length");
+
+    TAudioBuffer buffer;
+    TAudioBuffer plainBuffer;
+    const nframes_t first = (*reader)->file_frame_count() / 2;
+    const nframes_t frames = (*reader)->read_file_frames(buffer, first, 4800).frames;
+    (void)(*plainReader)->read_file_frames(plainBuffer, first, 4800);
+    const float* data = buffer.get_channel_buffer(0).get_data(4800);
+    const float* plainData = plainBuffer.get_channel_buffer(0).get_data(4800);
+    float worst = 0.0f;
+    for (nframes_t frame = 0; frame < frames; ++frame) {
+        worst = std::max(worst, std::fabs(data[frame] - plainData[frame]));
+    }
+    check(frames == 4800 && worst <= 1e-6f, "behind a tag of 1 MiB: a seek reads what is there");
+
+    const auto bytes = [](const TAudioPhaseStats& phase) { return phase.bytes.cached.bytes + phase.bytes.medium.bytes + phase.bytes.untold.bytes; };
+    const TAudioIOStats& stats = (*reader)->io_stats();
+    const quint64 total = bytes(stats.open) + bytes(stats.seek) + bytes(stats.stream);
+    char what[160];
+    std::snprintf(what, sizeof(what), "behind a tag of 1 MiB: the tag is not read (%llu bytes read of %lld)", static_cast<unsigned long long>(total), static_cast<long long>(fileBytes));
+    check(total < quint64(tagBytes), what);
+}
+
+// A read that fails during the scan: libmpg123 takes it for the end of the
+// file, the open must not. The probe's frames and the end of the file read
+// well, so only the scan meets it. Without a tag the place lies inside the 64
+// KiB that may follow the audio: only the source's error tells.
+static void test_scan_failure(const QTemporaryDir& dir)
+{
+    const QString tagged = dir.filePath(QStringLiteral("file.mp3"));
+    QFile file(tagged);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    const QByteArray bytes = file.readAll();
+    const QString bare = dir.filePath(QStringLiteral("bare.mp3"));
+    QFile out(bare);
+    if (!out.open(QIODevice::WriteOnly) || out.write(bytes.mid(first_frame_bytes(bytes))) == -1) {
+        check(false, "the MP3 without a tag is written");
+        return;
+    }
+    out.close();
+
+    for (const QString& path : {tagged, bare}) {
+        const qint64 size = QFile(path).size();
+        Medium medium;
+        medium.failFrom = size - 20 * 1024;
+        medium.failTo = size - 16 * 1024;
+        const auto reader = TAudioReader::open(path, memory_opener(&medium));
+        char what[200];
+        std::snprintf(what, sizeof(what), "a read that fails during the scan (%s): CannotOpen with the reason (%s)", path == tagged ? "a tag" : "no tag",
+                      reader ? "it opened" : qPrintable(reader.error().detail));
+        check(!reader && reader.error().code == TAudioFileError::Code::CannotOpen && reader.error().detail == QString(Reason), what);
+    }
 }
 
 // A read of the medium that fails in the middle of the file: whatever the
@@ -695,6 +798,8 @@ int main()
         test_read_failure(dir, format);
         test_open_failure(dir, format);
     }
+    test_large_tag(dir);
+    test_scan_failure(dir);
     test_file_source(dir);
     test_large_offsets();
     test_large_garbage();

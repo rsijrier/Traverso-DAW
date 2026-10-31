@@ -50,9 +50,10 @@ static int64_t source_seek(void* handle, int64_t offset, int whence)
     return source->seek(position) ? position : -1;
 }
 
-// A handle open on input, nullptr when there is none; the probe and the reader
-// differ in extraFlags only
-static mpg123_handle* open_handle(MpgInput& input, long extraFlags, int* error)
+// A handle open on input, the same for the probe and the reader; nullptr when
+// there is none. Not MPG123_NO_PEEK_END in the probe: it makes the stream
+// unseekable, and MPG123_SKIP_ID3V2 then reads through the tag
+static mpg123_handle* open_handle(MpgInput& input, int* error)
 {
     const QByteArray decoder = qgetenv("TRAVERSO_MPG123_DECODER");
     mpg123_handle* handle = nullptr;
@@ -70,7 +71,7 @@ static mpg123_handle* open_handle(MpgInput& input, long extraFlags, int* error)
     // MPG123_SKIP_ID3V2 skips a tag of any size instead of reading album art
     // into every handle.
     mpg123_param(handle, MPG123_REMOVE_FLAGS, MPG123_AUTO_RESAMPLE | MPG123_GAPLESS, 0.0);
-    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_FORCE_FLOAT | MPG123_QUIET | MPG123_NO_RESYNC | MPG123_SKIP_ID3V2 | extraFlags, 0.0);
+    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_FORCE_FLOAT | MPG123_QUIET | MPG123_NO_RESYNC | MPG123_SKIP_ID3V2, 0.0);
     mpg123_param(handle, MPG123_RESYNC_LIMIT, ResyncLimit, 0.0);
 
     input.source->seek(0);
@@ -95,7 +96,7 @@ MpgAudioReader::MpgAudioReader(const QString& filename, const TByteSourceOpener&
     }
 
     int error = MPG123_OK;
-    m_handle = open_handle(m_input, 0, &error);
+    m_handle = open_handle(m_input, &error);
     if (!m_handle) {
         open_failed(QString::fromUtf8(mpg123_plain_strerror(error)));
         return;
@@ -145,7 +146,7 @@ bool MpgAudioReader::can_decode(TByteSource& source)
 {
     MpgInput input{&source};
     int error = MPG123_OK;
-    const std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle(open_handle(input, MPG123_NO_PEEK_END, &error), mpg123_delete);
+    const std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle(open_handle(input, &error), mpg123_delete);
     if (!handle) {
         return false;
     }
