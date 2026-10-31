@@ -60,3 +60,5 @@ target_link_libraries(traversocommands
 
 add_subdirectory(plugins)
 
+# byteio's types reach it through core's and audiofileio's headers
+target_link_libraries(traversocommands PRIVATE traversobyteio)

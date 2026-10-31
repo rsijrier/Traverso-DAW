@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "MadAudioReader.h"
-#include <QFile>
 #include <QString>
 #include <QVector>
 
@@ -85,7 +84,7 @@ void K3bMad::clearInputBuffer()
 }
 
 
-bool K3bMad::open(const QString& filename)
+bool K3bMad::open(TByteSource* input)
 {
     cleanup();
 
@@ -93,9 +92,9 @@ bool K3bMad::open(const QString& filename)
     m_eofPadded = false;
     m_channels = m_sampleRate = 0;
 
-    m_inputFile.setFileName(filename);
+    m_input = input;
 
-    if (!m_inputFile.open(QIODevice::ReadOnly)) {
+    if (!m_input || !m_input->seek(0)) {
         return false;
     }
 
@@ -113,6 +112,11 @@ bool K3bMad::inputError() const
 
 bool K3bMad::fillStreamBuffer()
 {
+    if (!m_input) {
+        m_bInputError = true;
+        return false;
+    }
+
     /* The input bucket must be filled if it becomes empty or if
     * it's the first execution of the loop.
     */
@@ -139,8 +143,8 @@ bool K3bMad::fillStreamBuffer()
         long readSize = INPUT_BUFFER_SIZE - remaining;
         long result = 0;
 
-        if (!m_inputFile.atEnd()) {
-            result = m_inputFile.read((char*)readStart, readSize);
+        if (!m_input->at_end()) {
+            result = m_input->read((char*)readStart, readSize);
             if (result < 0) {
                 m_bInputError = true;
                 return false;
@@ -159,7 +163,7 @@ bool K3bMad::fillStreamBuffer()
             m_guardBytes = MAD_BUFFER_GUARD;
             m_eofPadded = true;
         }
-        else if (m_inputFile.atEnd()) {
+        else if (m_input->at_end()) {
             memset(readStart + result, 0, MAD_BUFFER_GUARD);
             result += MAD_BUFFER_GUARD;
             m_guardBytes = MAD_BUFFER_GUARD;
@@ -178,7 +182,7 @@ bool K3bMad::fillStreamBuffer()
 bool K3bMad::skipTag()
 {
     // skip the tag at the beginning of the file
-    m_inputFile.seek(0);
+    m_input->seek(0);
 
     //
     // now check if the file starts with an id3 tag and skip it if so
@@ -186,8 +190,8 @@ bool K3bMad::skipTag()
     // The ten bytes of an ID3v2 header are all it takes (a file shorter than
     // that has no tag; a short MP3 is a file, too)
     char buf[10];
-    if (m_inputFile.read(buf, 10) < 10) {
-        return m_inputFile.seek(0);
+    if (m_input->read(buf, 10) < 10) {
+        return m_input->seek(0);
     }
 
     if ((buf[0] == 'I' && buf[1] == 'D' && buf[2] == '3') &&
@@ -208,13 +212,13 @@ bool K3bMad::skipTag()
         }
 
         // skip the id3 tag
-        if (!m_inputFile.seek(offset)) {
+        if (!m_input->seek(offset)) {
             return false;
         }
     }
     else {
         // reset file
-        return m_inputFile.seek(0);
+        return m_input->seek(0);
     }
 
     return true;
@@ -317,8 +321,12 @@ bool K3bMad::seekFirstHeader()
     //
     bool headerFound = findNextHeader();
     qint64 startInputPos = streamPos();
+    // A read that failed ends the search: the position does not move then,
+    // and every further read fails too (the source keeps its error until it
+    // is taken), so the loop would run forever
     while (!headerFound &&
-       !m_inputFile.atEnd() &&
+       !m_bInputError &&
+       !m_input->at_end() &&
        streamPos() <= startInputPos+1024) {
         headerFound = findNextHeader();
     }
@@ -337,7 +345,7 @@ bool K3bMad::seekFirstHeader()
     // seek back to the begin of the audio frame
     if (headerFound) {
         qint64 targetPos = streamPos();
-        m_inputFile.seek(targetPos);
+        m_input->seek(targetPos);
     }
 
     // reset the stream to make sure mad really starts decoding at our seek position
@@ -351,13 +359,13 @@ bool K3bMad::seekFirstHeader()
 
 bool K3bMad::eof() const
 {
-    return m_inputFile.atEnd();
+    return m_input->at_end();
 }
 
 
 qint64 K3bMad::inputPos() const
 {
-    return m_inputFile.pos();
+    return m_input->position();
 }
 
 
@@ -373,7 +381,9 @@ bool K3bMad::inputSeek(qint64 pos)
     mad_stream_init(madStream);
     m_eofPadded = false;
     m_guardBytes = 0;
-    return m_inputFile.seek(pos);
+    // A new position: a failure before it is not this read's
+    m_bInputError = false;
+    return m_input->seek(pos);
 }
 
 
@@ -393,15 +403,7 @@ void K3bMad::initMad()
 void K3bMad::cleanup()
 {
     m_eofPadded = false;
-    if (m_inputFile.isOpen()) {
-        //kdDebug() << "(K3bMad) cleanup at offset: "
-        //	      << "Input file at: " << m_inputFile.pos() << " "
-        //	      << "Input file size: " << m_inputFile.size() << " "
-        //	      << "stream pos: "
-        //	      << ( m_inputFile.pos() - (madStream->bufend - madStream->this_frame + 1) )
-        //	      << endl;
-        m_inputFile.close();
-    }
+    m_input = nullptr;
 
     if (m_madStructuresInitialized) {
         mad_frame_finish(madFrame);
@@ -418,29 +420,23 @@ void K3bMad::cleanup()
 //
 bool K3bMad::findNextHeader()
 {
-    if (!fillStreamBuffer()) {
-        return false;
-    }
-
     //
     // MAD_RECOVERABLE == true:  frame was read, decoding failed (about to skip frame)
     // MAD_RECOVERABLE == false: frame was not read, need data
     //
-
-    if (mad_header_decode( &madFrame->header, madStream ) < 0) {
-        if (MAD_RECOVERABLE(madStream->error) ||
-           madStream->error == MAD_ERROR_BUFLEN) {
-            return findNextHeader();
+    // A loop, not a recursion: a large file without audio (zeros, random
+    // bytes: every file no other decoder takes comes here) gives an error or
+    // a refill after the other, more than 12,000 for 256 MiB of zeros
+    while (true) {
+        if (!fillStreamBuffer()) {
+            return false;
         }
-        else
-        //      kdDebug() << "(K3bMad::findNextHeader) error: " << mad_stream_errorstr( madStream ) << endl;
-
-        // FIXME probably we should not do this here since we don't do it
-        // in the frame decoding
-        //     if(!checkFrameHeader(&madFrame->header))
-        //       return findNextHeader();
-
-        return false;
+        if (mad_header_decode( &madFrame->header, madStream ) >= 0) {
+            break;
+        }
+        if (!MAD_RECOVERABLE(madStream->error) && madStream->error != MAD_ERROR_BUFLEN) {
+            return false;
+        }
     }
 
     if (!m_channels) {
@@ -456,17 +452,17 @@ bool K3bMad::findNextHeader()
 
 bool K3bMad::decodeNextFrame()
 {
-    if (!fillStreamBuffer()) {
-        return false;
-    }
-
-    if (mad_frame_decode(madFrame, madStream) < 0) {
-        if (MAD_RECOVERABLE(madStream->error) ||
-            madStream->error == MAD_ERROR_BUFLEN) {
-            return decodeNextFrame();
+    // A loop, not a recursion: see findNextHeader()
+    while (true) {
+        if (!fillStreamBuffer()) {
+            return false;
         }
-
-        return false;
+        if (mad_frame_decode(madFrame, madStream) >= 0) {
+            break;
+        }
+        if (!MAD_RECOVERABLE(madStream->error) && madStream->error != MAD_ERROR_BUFLEN) {
+            return false;
+        }
     }
 
     if (!m_channels) {
@@ -530,11 +526,16 @@ public:
 
 
 
-MadAudioReader::MadAudioReader(const QString& filename)
- : TAudioDecoder(filename)
+MadAudioReader::MadAudioReader(const QString& filename, const TByteSourceOpener& opener)
+ : TAudioDecoder(filename, opener)
 {
     d = new MadDecoderPrivate();
     d->handle = new K3bMad();
+    m_source = open_source(m_fileName);
+    if (!m_source) {
+        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
+        return;
+    }
 
     if (!initDecoderInternal()) {
         m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("MAD finds no MPEG audio header in it")};
@@ -608,7 +609,7 @@ MadAudioReader::~MadAudioReader()
     }
 }
 
-bool MadAudioReader::can_decode(const QString& filename)
+bool MadAudioReader::can_decode(TByteSource& source)
 {
     //
     // HACK:
@@ -617,23 +618,17 @@ bool MadAudioReader::can_decode(const QString& filename)
     // It always takes waves for mp3 files so we introduce this hack to
     // filter out wave files. :(
     //
-    QFile f(filename);
-    if (!f.open( QIODevice::ReadOnly)) {
-        return false;
-    }
-
     char buffer[12];
-    if (f.read(buffer, 12) != 12) {
+    if (!source.seek(0) || source.read(buffer, 12) != 12) {
         return false;
     }
     if (!qstrncmp(buffer, "RIFF", 4) && !qstrncmp(buffer + 8, "WAVE", 4)) {
         return false;
     }
-    f.close();
 
 
     K3bMad handle;
-    if (!handle.open(filename)) {
+    if (!handle.open(&source)) {
         return false;
     }
     handle.skipTag();
@@ -675,7 +670,7 @@ bool MadAudioReader::can_decode(const QString& filename)
 }
 
 
-TAudioFileStatus MadAudioReader::seek(nframes_t frame)
+TAudioFileStatus MadAudioReader::seek_frame(nframes_t frame)
 {
     Q_ASSERT(frame < m_frames);
     if (!d) {
@@ -718,7 +713,7 @@ bool MadAudioReader::initDecoderInternal()
     d->handle->cleanup();
 
 
-    if (!d->handle->open(m_fileName)) {
+    if (!d->handle->open(m_source)) {
         return false;
     }
 
@@ -773,7 +768,7 @@ unsigned long MadAudioReader::countFrames()
 }
 
 
-TAudioFileResult MadAudioReader::read(TAudioBuffer& fileIOBuffer, nframes_t count)
+TAudioFileResult MadAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
 {
     if (count == 0) {
         return {};

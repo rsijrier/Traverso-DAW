@@ -77,3 +77,6 @@ target_link_libraries(traversosheetcanvas
         Qt6::Core
         Qt6::Concurrent
 )
+
+# byteio's types reach it through core's and audiofileio's headers
+target_link_libraries(traversosheetcanvas PRIVATE traversobyteio)

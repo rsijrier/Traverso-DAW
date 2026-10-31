@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioBuffer.h"
 #include "TQueueBufferSlot.h"
 #include "Utils.h"
-#include "TAudioDevice.h"
 #include "Debugger.h"
 #include "TLog.h"
 
@@ -264,6 +263,12 @@ TAudioFileResult TBufferedAudioStreamReader::file_read_frames(TAudioBuffer& buff
 }
 
 
+const TAudioIOStats& TBufferedAudioStreamReader::io_stats() const
+{
+    Q_ASSERT(m_audioReader);
+    return m_audioReader->io_stats();
+}
+
 TBufferedAudioStreamReader * TBufferedAudioStreamReader::deep_copy( )
 {
     PENTER;
@@ -318,6 +323,10 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
         m_bufferstatus.set_sync_status(TBufferedAudioStreamStatus::SyncStatus::OUT_OF_WINDOW);
         return;
     }
+
+    // A seek starts from nothing, also to where the reader happens to be: the
+    // decoder and the resampler keep nothing of the position before
+    m_audioReader->forget_position();
 
     // Transport Location is in our range or at least close. since we want to start to fill
     // the buffers in advance the transport location can still be in front of our start location
@@ -393,6 +402,9 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
                 // What the stream does on a read error is task T10
                 TLOG_W("audiofile", "{}: read {} of {} frames ({})", m_fileName.toStdString(), read, toRead, error->detail.toStdString());
             }
+            if (stale()) {
+                return;
+            }
 
             if (!m_freeBufferSlotsQueue->try_dequeue(slot)) {
                 TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "ReadSource::rb_seek_to_transport_location:: try dequeue failed");
@@ -453,7 +465,8 @@ void TBufferedAudioStreamReader::process_realtime_buffers(TAudioBuffer& fileDeco
 
     TTimeRef slotFileLocation = m_lastQueuedRTBufferSlot->get_file_location();
     TTimeRef transportLocation = m_lastQueuedRTBufferSlot->get_transport_location();
-    auto bufferSize = m_lastQueuedRTBufferSlot->get_buffer_size();
+    // The slot size the ring was made for, as in the seek
+    const nframes_t bufferSize = m_bufferSlotFrames;
 
     // We need the next slot so add buffer size length to the last slot transport location
     // except when we are seeking, then the rt queueu actually is empty and we need to
@@ -480,6 +493,11 @@ void TBufferedAudioStreamReader::process_realtime_buffers(TAudioBuffer& fileDeco
 
     while (slotsToFill)
     {
+        // Slots that do get in go with the seek: it empties the queue
+        if (stale()) {
+            return;
+        }
+
         if (!m_freeBufferSlotsQueue->try_dequeue(slot)) {
             PERROR("ReadSource::fill_realtime_buffers: try dequeue failed");
             m_bufferstatus.set_sync_status(TBufferedAudioStreamStatus::FILL_RTBUFFER_DEQUEUE_FAILURE);

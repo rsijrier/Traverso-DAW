@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <memory>
 
 #include "TAudioFileError.h"
+#include "TAudioReader.h"
 #include "TAudioResampler.h"
 #include "TBufferedAudioStream.h"
 #include "TProcessContext.h"
@@ -32,6 +33,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 class TAudioReader;
+struct TAudioIOStats;
 class AudioBus;
 class TLocation;
 
@@ -67,6 +69,9 @@ public :
     // and zeros past its end (TAudioReader).
     TAudioFileResult file_read(TAudioBuffer &buffer, const TTimeRef& fileLocation, nframes_t count) const;
     TAudioFileResult file_read_frames(TAudioBuffer &buffer, nframes_t firstFrame, nframes_t count) const;
+
+    // What the file's reader read and decoded: for the thread that steps
+    const TAudioIOStats& io_stats() const;
 
 	int init();
 	int get_error() const {return m_error;}
@@ -116,6 +121,7 @@ private:
     // re-implemented only to be called by DiskIO
     void process_realtime_buffers(TAudioBuffer &fileDecodeBuffer) final;
     void rb_seek_to_transport_location(TAudioBuffer& fileDecodeBuffer, const TTimeRef &transportLocation) final;
+    const TAudioIOStats* decoder_stats() const final { return m_audioReader ? &m_audioReader->io_stats() : nullptr; }
     void set_output_rate_and_resampler(int outputRate, const Resampler& resampler) final;
     // Out of its window, a reader needs work when the transport came close
     // (it seeks then) and its fill does not count; otherwise it needs work

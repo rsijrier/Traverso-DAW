@@ -24,28 +24,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioDecoder.h"
 #include "sndfile.h"
 
-#include <QFile>
 
 // WAV, W64, AIFF, FLAC, Ogg Vorbis, MP3 and what else libsndfile reads
 class SFAudioReader : public TAudioDecoder
 {
 public:
-    explicit SFAudioReader(const QString& filename);
+    explicit SFAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
     ~SFAudioReader() override;
 
     QString decoder_type() const override { return "sndfile"; }
 
-    static bool can_decode(QString filename) { return major_format(filename) != 0; }
-    // libsndfile's major format of filename (SF_FORMAT_WAV, ...), 0 when it
+    // libsndfile's major format of the file (SF_FORMAT_WAV, ...), 0 when it
     // cannot read it
-    static int major_format(const QString& filename);
+    static int major_format(TByteSource& source);
 
-    TAudioFileStatus seek(nframes_t frame) override;
-    TAudioFileResult read(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+    TAudioFileStatus seek_frame(nframes_t frame) override;
+    TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
     SNDFILE*	m_sf{nullptr};
     SF_INFO		m_sfinfo{};
-    QFile m_file;
 };
 

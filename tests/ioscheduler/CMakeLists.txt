@@ -20,4 +20,4 @@ add_test(NAME io_scheduler COMMAND traverso_io_scheduler_test)
 # the peak builds of a directory of audio files as idle work. Build it in
 # Release.
 add_executable(traverso_measure_idle_builds EXCLUDE_FROM_ALL measure_idle_builds.cpp)
-target_link_libraries(traverso_measure_idle_builds PRIVATE traverso_compiler_settings traversoioscheduler traversowaveform traversoaudiofileio traversodsp traversosupport Qt6::Core)
+target_link_libraries(traverso_measure_idle_builds PRIVATE traverso_compiler_settings traversoioscheduler traversowaveform traversoaudiofileio traversobyteio traversodsp traversosupport Qt6::Core)

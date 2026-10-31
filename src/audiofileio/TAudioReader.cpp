@@ -31,9 +31,9 @@ bool TAudioReader::can_read(const QString& fileName)
     return can_decode_audio(fileName);
 }
 
-std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName)
+std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TByteSourceOpener& opener)
 {
-    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName);
+    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName, opener);
     if (!decoder) {
         return std::unexpected(std::move(decoder.error()));
     }
@@ -67,6 +67,11 @@ nframes_t TAudioReader::file_frame_count() const
 TTimeRef TAudioReader::length() const
 {
     return m_decoder->length();
+}
+
+const TAudioIOStats& TAudioReader::io_stats() const
+{
+    return m_decoder->stats();
 }
 
 QString TAudioReader::decoder_type() const
@@ -122,11 +127,8 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
     // Where a seek fails the decoder may be anywhere: no position then
     m_frame.reset();
     if (!m_resampler) {
-        // A decoder that reads from there already does not seek
-        if (!m_decoder->reads_from(frame)) {
-            if (TAudioFileStatus sought = m_decoder->seek(frame); !sought) {
-                return std::unexpected(std::move(sought.error()));
-            }
+        if (TAudioFileStatus sought = m_decoder->seek(frame); !sought) {
+            return std::unexpected(std::move(sought.error()));
         }
         m_frame = frame;
         return true;
@@ -153,14 +155,18 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
     if (fileFrame >= file_frame_count()) {
         return false;
     }
-    if (!m_decoder->reads_from(fileFrame)) {
-        if (TAudioFileStatus sought = m_decoder->seek(fileFrame); !sought) {
-            return std::unexpected(std::move(sought.error()));
-        }
+    if (TAudioFileStatus sought = m_decoder->seek(fileFrame); !sought) {
+        return std::unexpected(std::move(sought.error()));
     }
     m_dropFrames = TTimeRef::to_nframes(TTimeRef::frame_at_or_before(position - common, m_outputRate));
     m_frame = frame;
     return true;
+}
+
+void TAudioReader::forget_position()
+{
+    m_frame.reset();
+    reset();
 }
 
 TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& location, nframes_t count)

@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "FaadAudioReader.h"
 
-#include <QFile>
 #include <QVector>
 #include <algorithm>
 #include <limits>
@@ -36,7 +35,7 @@ extern "C" {
 
 static int mp4_read_callback(int64_t offset, void *buffer, size_t size, void *token)
 {
-	QFile *file = static_cast<QFile*>(token);
+	TByteSource *file = static_cast<TByteSource*>(token);
 	if (!file || !file->seek(offset)) {
 		return 1;
 	}
@@ -67,7 +66,7 @@ struct Mp4Box
 	qint64 end{0};
 };
 
-static bool read_box(QFile& file, qint64 at, qint64 limit, Mp4Box& box)
+static bool read_box(TByteSource& file, qint64 at, qint64 limit, Mp4Box& box)
 {
 	unsigned char header[16];
 	if (!file.seek(at) || file.read(reinterpret_cast<char*>(header), 8) != 8) {
@@ -93,7 +92,7 @@ static bool read_box(QFile& file, qint64 at, qint64 limit, Mp4Box& box)
 	return true;
 }
 
-static bool find_box(QFile& file, qint64 from, qint64 to, quint32 type, Mp4Box& found)
+static bool find_box(TByteSource& file, qint64 from, qint64 to, quint32 type, Mp4Box& found)
 {
 	for (qint64 at = from; at < to;) {
 		Mp4Box box;
@@ -110,7 +109,7 @@ static bool find_box(QFile& file, qint64 from, qint64 to, quint32 type, Mp4Box& 
 }
 
 // The timescale of an mvhd or mdhd box (version 0 or 1)
-static quint32 header_timescale(QFile& file, const Mp4Box& box)
+static quint32 header_timescale(TByteSource& file, const Mp4Box& box)
 {
 	unsigned char data[24];
 	if (!file.seek(box.content) || file.read(reinterpret_cast<char*>(data), 24) != 24) {
@@ -130,7 +129,7 @@ struct Mp4Edit
 	quint32 mediaTimescale{0};
 };
 
-static bool read_audio_edit(QFile& file, Mp4Edit& edit)
+static bool read_audio_edit(TByteSource& file, Mp4Edit& edit)
 {
 	Mp4Box moov;
 	if (!find_box(file, 0, file.size(), box_type("moov"), moov)) {
@@ -221,10 +220,6 @@ public:
 			isMp4 = false;
 		}
 
-		if (file.isOpen()) {
-			file.close();
-		}
-
 		adtsFrameOffsets.clear();
 		adtsFrameSizes.clear();
 
@@ -237,10 +232,12 @@ public:
 		if (size <= 0) {
 			return QByteArray();
 		}
-		if (!file.seek(offset)) {
+		QByteArray bytes(size, Qt::Uninitialized);
+		if (!source->seek(offset)) {
 			return QByteArray();
 		}
-		return file.read(size);
+		bytes.resize(std::max<qint64>(source->read(bytes.data(), size), 0));
+		return bytes;
 	}
 
 	// The AAC packets of the file: MP4 samples, or ADTS frames. Nothing when
@@ -271,7 +268,7 @@ public:
 		return data;
 	}
 
-	QFile file;
+	TByteSource* source{nullptr};
 	NeAACDecHandle hDecoder{nullptr};
 	bool isMp4{false};
 	bool demuxOpen{false};
@@ -303,11 +300,12 @@ public:
 	nframes_t pendingCount{0};
 };
 
-FaadAudioReader::FaadAudioReader(const QString& filename)
-	: TAudioDecoder(filename)
+FaadAudioReader::FaadAudioReader(const QString& filename, const TByteSourceOpener& opener)
+	: TAudioDecoder(filename, opener)
 	, d(new FaadDecoderPrivate())
 {
-	if (!initDecoderInternal()) {
+	d->source = open_source(m_fileName);
+	if (!d->source || !initDecoderInternal()) {
 		// Not opened: no frames (is_valid() false), and why where known
 		if (!m_openError) {
 			m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("FAAD cannot read it")};
@@ -322,14 +320,10 @@ FaadAudioReader::~FaadAudioReader()
 	delete d;
 }
 
-bool FaadAudioReader::can_decode(const QString& filename)
+bool FaadAudioReader::can_decode(TByteSource& f)
 {
-	QFile f(filename);
-	if (!f.open(QIODevice::ReadOnly)) {
-		return false;
-	}
-
 	char header[12];
+	f.seek(0);
 	qint64 readBytes = f.read(header, 12);
 	if (readBytes < 12) {
 		return false;
@@ -368,7 +362,8 @@ bool FaadAudioReader::can_decode(const QString& filename)
 
 	// 2. Check if valid ADTS AAC stream
 	f.seek(0);
-	QByteArray buf = f.read(4096);
+	QByteArray buf(4096, Qt::Uninitialized);
+	buf.resize(std::max<qint64>(f.read(buf.data(), buf.size()), 0));
 	if (buf.size() >= 7) {
 		const unsigned char* p = reinterpret_cast<const unsigned char*>(buf.constData());
 		if (p[0] == 0xFF && (p[1] & 0xF0) == 0xF0) {
@@ -396,13 +391,10 @@ bool FaadAudioReader::initDecoderInternal()
 {
 	d->cleanup();
 
-	d->file.setFileName(m_fileName);
-	if (!d->file.open(QIODevice::ReadOnly)) {
-		return false;
-	}
+	d->source->seek(0);
 
 	// 1. Attempt MP4 demuxing with minimp4
-	int mp4Ok = MP4D_open(&d->demux, mp4_read_callback, &d->file, d->file.size());
+	int mp4Ok = MP4D_open(&d->demux, mp4_read_callback, d->source, d->source->size());
 	if (mp4Ok) {
 		d->demuxOpen = true;
 		for (unsigned int i = 0; i < d->demux.track_count; ++i) {
@@ -476,7 +468,7 @@ bool FaadAudioReader::initDecoderInternal()
 			Mp4Edit edit;
 			const unsigned int timescale = track->timescale ? track->timescale : m_rate;
 			const uint64_t duration = ((uint64_t)track->duration_hi << 32) | track->duration_lo;
-			if (read_audio_edit(d->file, edit)) {
+			if (read_audio_edit(*d->source, edit)) {
 				const qint64 priming = edit.mediaTime * qint64(m_rate) / edit.mediaTimescale;
 				d->skip = nframes_t(std::max<qint64>(0, priming - own));
 				frames = edit.segmentDuration * qint64(m_rate) / edit.movieTimescale;
@@ -492,17 +484,14 @@ bool FaadAudioReader::initDecoderInternal()
 
 	// 2. Fallback: ADTS AAC stream parsing
 	d->cleanup();
-	d->file.setFileName(m_fileName);
-	if (!d->file.open(QIODevice::ReadOnly)) {
-		return false;
-	}
+	d->source->seek(0);
 
-	qint64 fsize = d->file.size();
+	qint64 fsize = d->source->size();
 	qint64 offset = 0;
 	while (offset + 7 <= fsize) {
-		d->file.seek(offset);
+		d->source->seek(offset);
 		unsigned char hdr[7];
-		if (d->file.read(reinterpret_cast<char*>(hdr), 7) != 7) {
+		if (d->source->read(reinterpret_cast<char*>(hdr), 7) != 7) {
 			break;
 		}
 		if (hdr[0] != 0xFF || (hdr[1] & 0xF0) != 0xF0) {
@@ -616,7 +605,7 @@ bool FaadAudioReader::measure_decoder()
 	return false;
 }
 
-TAudioFileStatus FaadAudioReader::seek(nframes_t frame)
+TAudioFileStatus FaadAudioReader::seek_frame(nframes_t frame)
 {
 	Q_ASSERT(frame < m_frames);
 
@@ -646,7 +635,7 @@ TAudioFileStatus FaadAudioReader::seek(nframes_t frame)
 	return seek_landed(frame);
 }
 
-TAudioFileResult FaadAudioReader::read(TAudioBuffer& fileIOBuffer, nframes_t count)
+TAudioFileResult FaadAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
 {
     if (count == 0) {
         return {};

@@ -27,15 +27,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class FaadAudioReader : public TAudioDecoder
 {
 public:
-	explicit FaadAudioReader(const QString& filename);
+	explicit FaadAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
 	~FaadAudioReader() override;
 
     QString decoder_type() const final { return "faad"; }
 
-	static bool can_decode(const QString& filename);
+	static bool can_decode(TByteSource& source);
 
-    TAudioFileStatus seek(nframes_t frame) override;
-    TAudioFileResult read(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+    TAudioFileStatus seek_frame(nframes_t frame) override;
+    TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 protected:
     // The packets decoded before the one a seek goes to (with a fresh

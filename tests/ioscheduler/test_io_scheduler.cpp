@@ -48,6 +48,7 @@ public:
             std::this_thread::sleep_for(std::chrono::microseconds(m_stepMicroseconds));
         }
         m_lastTransport.store(info.transportLocation.universal_frame());
+        m_lastGeneration.store(info.generation);
         if (info.seek) {
             m_lastSeek.store(info.seekLocation.universal_frame());
             m_seeks.fetch_add(1);
@@ -81,6 +82,7 @@ public:
     std::atomic<int> m_stepsAfterRetire{0};
     std::atomic<qint64> m_lastTransport{0};
     std::atomic<qint64> m_lastSeek{0};
+    std::atomic<quint64> m_lastGeneration{0};
 };
 
 // How many steps run at the same time, and the most there were
@@ -144,6 +146,41 @@ public:
 
 int main()
 {
+
+    // The generation is the stream's: a seek raises it for the streams of its
+    // song, not for others, and a step carries the one it was made with
+    {
+        TIOScheduler scheduler;
+        scheduler.set_output_sample_rate(48000);
+        scheduler.set_buffer_size(256);
+        TIOGroup seeks;
+        TIOGroup other;
+        FakeStream first(false);
+        FakeStream second(false);
+        FakeStream elsewhere(false);
+        scheduler.add_group(&seeks);
+        scheduler.add_group(&other);
+        scheduler.add_stream(&first, &seeks);
+        scheduler.add_stream(&second, &seeks);
+        scheduler.add_stream(&elsewhere, &other);
+        seeks.set_playing(true);
+        scheduler.dispatch();
+        for (quint64 seek = 1; seek <= 3; ++seek) {
+            seeks.request_seek(TTimeRef(qint64(seek) * 1000));
+            scheduler.dispatch();
+            scheduler.dispatch();
+            check(first.generation() == seek && second.generation() == seek, "a seek raises the generation of the song's streams");
+            check(first.m_lastGeneration.load() == seek, "the seek step carries it");
+        }
+        first.next_generation();
+        check(first.generation() == 4 && second.generation() == 3, "a stream's own seek raises its own only");
+        check(elsewhere.generation() == 0, "the streams of another song stay");
+        scheduler.remove_stream(&first);
+        scheduler.remove_stream(&second);
+        scheduler.remove_stream(&elsewhere);
+        scheduler.remove_group(&seeks);
+        scheduler.remove_group(&other);
+    }
 
     // dispatch() without a scheduler thread and without a driver: the streams that need
     // work get one step per dispatch, an idle task runs to its end and is

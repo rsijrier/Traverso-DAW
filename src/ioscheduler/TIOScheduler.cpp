@@ -308,6 +308,7 @@ TIOStream::StepInfo TIOScheduler::step_info(const StreamWork& work, uint outputR
         info.transportLocation = TTimeRef(work.group->m_transportLocation.load(std::memory_order_relaxed));
     }
     info.seek = work.seek;
+    info.generation = work.stream->generation();
     info.seekLocation = info.transportLocation;
     // A new rate or buffer size goes with the stream's next seek: its rings
     // are made again there, where the audio thread does not use them
@@ -354,6 +355,7 @@ bool TIOScheduler::start_steps()
         for (const std::unique_ptr<StreamWork>& work : m_streams) {
             if (work->group == group.group) {
                 work->seek = true;
+                work->stream->next_generation();
                 ++group.seeksLeft;
             }
         }

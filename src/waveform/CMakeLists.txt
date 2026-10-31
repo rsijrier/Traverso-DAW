@@ -27,5 +27,6 @@ target_link_libraries(traversowaveform
         traversosupport
         traversodsp
         traversoaudiofileio
+        traversobyteio
         Qt6::Core
 )

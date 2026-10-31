@@ -686,6 +686,90 @@ From the GPU waveform test program, clip edges in variant A (branch
     the clip, the first may lose up to 63 frames inside it. Not tested; the
     clip edge test of the test program (`clipedges/`) can run through
     `device_columns()`.
+- **T71 Reading and decoding apart: `TAudioByteSource` (now `TByteSource`)** (Remon, 2026-10-30;
+  branch `audio-byte-source`). Rule: no disk access the scheduler does not
+  know about.
+  - **Open questions for step 2c:** `doc/design/byteio-open-questions.md`
+    (mlock, readahead and buffer management, Qt in byteio).
+  - **Step 1, built:** every decoder reaches its file through one byte
+    source; open, seek and stream counted apart, page cache apart from the
+    medium, decode time = call time − read time. No scheduler change.
+  - **Step 2a, built:** file offsets of 64 bits, also on 32-bit ARM
+    (`_FILE_OFFSET_BITS=64` for every library in `CMakeLists.txt`, a
+    `static_assert` on `off_t` in `TByteSource.cpp`).
+  - **Step 2b, built:** a seek of a stream is a full reset with a
+    generation (`TIOStream::next_generation()`, `stale()`,
+    `forget_position()`, the scheduler's bump in `TIOScheduler.cpp`): a
+    refill in flight across a seek stops at its next `stale()`.
+  - **The slot size (T58):** `device-ownership` was merged first
+    (2026-10-31); this branch was rebased onto it and keeps its
+    `m_bufferSlotFrames` in the seek and in the refill (one source).
+  - **Step 2:** `prefetch()` into a window in own memory, with a floor of
+    16 KB and a margin that grows after a miss; exact byte ranges for PCM,
+    MAD and FAAD; the counter "unplanned reads", target zero.
+    The kernel's readahead hides the medium in step 1 (a slow decoder finds
+    its pages read already): the prefetch must be the only reader, for
+    instance `posix_fadvise(POSIX_FADV_RANDOM)` on the stream's file, only
+    with the prefetch in place (without it the library's small reads lose
+    their readahead). Measure both.
+  - **Step 2c (read pool per medium, decode pool):** ioscheduler becomes free
+    of Qt, as part of the redesign of the pools.
+    - `QThread`, `QThreadPool` and `QRunnable` become `std::thread` with
+      pools of our own. No new pools on top of Qt.
+    - `QObject` and the signal `seekFinished` become a plain callback. Core
+      itself sees to it that the message arrives on the GUI thread (now
+      through `Qt::QueuedConnection`, `TSheet.cpp:145`).
+    - `s_handOverFence` (`TIOScheduler.h:274-278`) exists only because TSan
+      does not see `QThreadPool`'s lock. With pools of our own it can go;
+      then verify the hand-over contract (`TIOScheduler.h:78-80`) with TSan
+      again.
+    - `idle_limit_for()` in `TIOScheduler.cpp`, with its `QString` and
+      `QFile`, may stay in this step: it belongs to the detection of the
+      medium.
+    - Platform details go into one small helper in support, next to
+      `TPlatform.h`; the pools themselves stay pure standard C++. The helper
+      holds only:
+      - The thread's name at OS level. Mind the differences:
+        `pthread_setname_np` has another call on Linux than on macOS, Windows
+        uses `SetThreadDescription`.
+      - The thread's priority.
+      - The IO priority: `ioprio_set` on Linux; on macOS and Windows the
+        equivalent, or a documented no-op.
+      - The number of cores: `std::thread::hardware_concurrency`, with a
+        fallback when it gives 0.
+
+      Plain functions, no class hierarchy or interface per platform. Each
+      function says which platforms it was tested on; macOS and Windows
+      cannot be built here, so those branches are marked untested. No other
+      functions than these four without consulting Remon.
+    - Touches waveform: `TPeakCache.cpp:247` uses
+      `QThreadPool::globalInstance()` once. Noted, not changed in this step.
+  - **Step 3:** two phases in `fill_realtime_buffers()` and the peak build
+    (meets T4 and T6).
+  - **Step 4 (after T58, T60):** disk slots and a decode pool (T61); a miss
+    asks the scheduler; opening and scanning as an idle task; the MP3 seek
+    index kept next to the peak file (own task).
+  - Scenario files are still read through `QFile`: a small text file, no
+    audio.
+  - From Remon's review (2026-10-30), not urgent:
+    - Opening reads whole files: MAD's `countFrames()`, and FAAD scans an
+      ADTS file through, byte by byte at a mismatch. The 16 KB block keeps
+      it bearable; the real answer is the seek index next to the peak file
+      (step 4).
+    - The `(off_t)` cast at `SFAudioReader.cpp:141` (`sf_seek` takes
+      `sf_count_t`).
+    - `size()` makes a system call each time, and MAD asks it through
+      `at_end()` at every buffer fill: it can be a variable.
+    - FAAD makes a new `QByteArray` per packet: allocations per decode.
+    - `K3bMad::decodeNextFrame()` is dead code (no callers; Fable's review):
+      goes at the next clean-up, not now.
+    - MP3 seek pre-roll by bitrate (candidate once scrubbing or many seeks
+      weigh in the measurements; since step 2b every reset is a real seek):
+      `MadAudioReader` decodes `PreRollFrames` (16) before the target
+      whatever the bitrate, about 4 ms per seek (measured, 2026-10-30).
+      The bit reservoir reaches back at most 511 bytes (`main_data_begin`,
+      9 bits), plus one frame for the filterbank's overlap: at 128 kbps
+      (frames of about 418 bytes) about 3 frames, at 32 kbps about 6.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the
