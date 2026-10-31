@@ -40,6 +40,8 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
+    friend struct TAudioDecoderFactory;
+
     WPAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     TAudioFileStatus start();
 

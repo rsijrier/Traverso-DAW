@@ -38,6 +38,8 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 protected:
+    friend struct TAudioDecoderFactory;
+
     FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     TAudioFileStatus start();
 

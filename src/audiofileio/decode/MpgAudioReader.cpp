@@ -112,11 +112,7 @@ MpgAudioReader::MpgAudioReader(const QString& fileName, std::unique_ptr<TByteSou
 
 std::expected<std::unique_ptr<MpgAudioReader>, TAudioFileError> MpgAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
-    std::unique_ptr<MpgAudioReader> decoder(new MpgAudioReader(fileName, std::move(source), opener));
-    if (TAudioFileStatus started = decoder->start().and_then([&] { return decoder->scan(); }); !started) {
-        return std::unexpected(std::move(started.error()));
-    }
-    return decoder;
+    return TAudioDecoderFactory::open<MpgAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus MpgAudioReader::start()
@@ -152,7 +148,7 @@ TAudioFileStatus MpgAudioReader::start()
 
     m_channels = uint(channels);
     m_rate = uint(rate);
-    return {};
+    return scan();
 }
 
 MpgAudioReader::~MpgAudioReader()

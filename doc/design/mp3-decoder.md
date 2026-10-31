@@ -208,9 +208,9 @@ the end of the file in the probe, one block.
 - `mpg123_reader64()` on the `TByteSource`, `mpg123_open_handle64()`.
   Define `MPG123_PORTABLE_API`.
 
-**Open.** `open()` runs `start()`, then `scan()`, both private. Steps 3 and 6 are
-in `start()`, with 1 and 2: they do not depend on the scan, and a later open
-without one needs them too.
+**Open.** `start()` ends in `scan()`, both private. Steps 3 and 6 are in
+`start()`, with 1 and 2: they do not depend on the scan, and a later open without
+one needs them too.
 1. `mpg123_getformat()`.
 2. Read delay, padding and `mpg123_length64()` before the scan.
 3. `MPG123_INDEX_SIZE` 10000: at most 80 KB per handle. The default of 1000

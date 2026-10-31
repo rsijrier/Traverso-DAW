@@ -215,11 +215,7 @@ TScenarioDecoder::TScenarioDecoder(const QString& fileName, std::unique_ptr<TByt
 
 std::expected<std::unique_ptr<TScenarioDecoder>, TAudioFileError> TScenarioDecoder::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
-    std::unique_ptr<TScenarioDecoder> decoder(new TScenarioDecoder(fileName, std::move(source), opener));
-    if (TAudioFileStatus started = decoder->start(); !started) {
-        return std::unexpected(std::move(started.error()));
-    }
-    return decoder;
+    return TAudioDecoderFactory::open<TScenarioDecoder>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus TScenarioDecoder::start()

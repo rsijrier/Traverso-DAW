@@ -90,11 +90,7 @@ WPAudioReader::WPAudioReader(const QString& fileName, std::unique_ptr<TByteSourc
 
 std::expected<std::unique_ptr<WPAudioReader>, TAudioFileError> WPAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
-    std::unique_ptr<WPAudioReader> decoder(new WPAudioReader(fileName, std::move(source), opener));
-    if (TAudioFileStatus started = decoder->start(); !started) {
-        return std::unexpected(std::move(started.error()));
-    }
-    return decoder;
+    return TAudioDecoderFactory::open<WPAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus WPAudioReader::start()

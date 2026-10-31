@@ -779,6 +779,9 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T75 `interleaved_scratch()` in three files** (low; Remon, 2026-10-31):
   `SFAudioReader.cpp`, `MpgAudioReader.cpp`, `TAudioWriter.cpp`. One place, in
   the clean-up after the release.
+- **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
+  deep in its parsers where its functions could return the reason, and the opener
+  every decoder carries while only WavPack's correction file needs it.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the

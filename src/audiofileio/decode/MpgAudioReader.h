@@ -18,8 +18,8 @@ struct MpgInput
  * @brief MPEG audio (Layer I, II and III) through libmpg123, also inside a WAV
  * file (the format of doc/design/mp3-decoder.md).
  *
- * open() opens the file in two steps: start(), then scan(), which gives the
- * length. So a later open can take the scan's results from a saved index
+ * Opening has two steps: start() opens the file, and ends in scan(), which
+ * gives the length. So a later open can take the scan's results from a saved index
  * (mpg123_set_index64()) instead. That saved data must hold the scanned
  * samples as well: they are the seek limit, and without a LAME tag
  * mpg123_length64() stays an estimate.
@@ -69,6 +69,8 @@ public:
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
 private:
+    friend struct TAudioDecoderFactory;
+
     MpgAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     TAudioFileStatus start();
     // Reads through the whole file: the frames, the seek limit and an index

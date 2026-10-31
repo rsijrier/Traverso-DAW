@@ -168,6 +168,24 @@ private:
     TAudioIOStats m_stats;
 };
 
+/**
+ * @brief What every decoder's open() does: make the decoder and start it, the
+ * decoder or why not. A friend of each decoder, whose constructor and start()
+ * are its own.
+ */
+struct TAudioDecoderFactory
+{
+    template <typename Decoder>
+    static std::expected<std::unique_ptr<Decoder>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    {
+        std::unique_ptr<Decoder> decoder(new Decoder(fileName, std::move(source), opener));
+        if (TAudioFileStatus started = decoder->start(); !started) {
+            return std::unexpected(std::move(started.error()));
+        }
+        return decoder;
+    }
+};
+
 // The decoder for fileName, open, or why there is none: NotFound
 // when the file is not there, else CannotOpen (no permission, no decoder for
 // its format, the decoder's own reason). A scenario file (.tscenario) is

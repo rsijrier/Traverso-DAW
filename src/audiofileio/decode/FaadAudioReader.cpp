@@ -308,11 +308,7 @@ FaadAudioReader::FaadAudioReader(const QString& fileName, std::unique_ptr<TByteS
 
 std::expected<std::unique_ptr<FaadAudioReader>, TAudioFileError> FaadAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
-    std::unique_ptr<FaadAudioReader> decoder(new FaadAudioReader(fileName, std::move(source), opener));
-    if (TAudioFileStatus started = decoder->start(); !started) {
-        return std::unexpected(std::move(started.error()));
-    }
-    return decoder;
+    return TAudioDecoderFactory::open<FaadAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus FaadAudioReader::start()

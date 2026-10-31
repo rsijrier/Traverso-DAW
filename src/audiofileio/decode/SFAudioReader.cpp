@@ -70,11 +70,7 @@ SFAudioReader::SFAudioReader(const QString& fileName, std::unique_ptr<TByteSourc
 
 std::expected<std::unique_ptr<SFAudioReader>, TAudioFileError> SFAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
-    std::unique_ptr<SFAudioReader> decoder(new SFAudioReader(fileName, std::move(source), opener));
-    if (TAudioFileStatus started = decoder->start(); !started) {
-        return std::unexpected(std::move(started.error()));
-    }
-    return decoder;
+    return TAudioDecoderFactory::open<SFAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus SFAudioReader::start()
