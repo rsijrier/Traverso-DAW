@@ -1,0 +1,38 @@
+# ThreadSanitizer suppressions for the tests (TRAVERSO_TSAN builds; ctest
+# passes this file in TSAN_OPTIONS, tests/CMakeLists.txt).
+#
+# Only reports whose racing accesses are inside Qt or glib, which are not
+# instrumented: they synchronise with their own locks and atomics, which TSan
+# cannot see. Each pattern is a Qt or glib function that is never on a
+# Traverso stack except as Qt's own callee. Checked 2026-10-31 with a probe
+# (two QThreads racing on an int in our own code): still reported with this
+# file. The analysis with the stacks: reports/tsan-clean-2026-10-31 (local).
+# Needs Qt's debug information (Qt 6.12.0 "Debug Information Files" with the
+# matching Qt build), else the Qt frames have no names and nothing matches.
+
+# Qt: a QObject's binding status, made when a QThread starts (on the starting
+# thread) and freed or cleared on that QThread; QThreadData's own clean-up.
+# Reached from TAudioThreadMessageQueue::make_instance() and the end of
+# TAudioDeviceThread::run() (its WatchDogThread).
+race:QtPrivate::BindingStatusOrList
+race:initBindingStatus
+
+# Qt: QThreadPool's task queue, allocated in enqueueTask() and freed by the
+# pool thread that runs the task.
+race:QThreadPoolPrivate::enqueueTask
+
+# Qt: QThreadPool's list of its threads.
+race:QArrayDataPointer<QThreadPoolThread*>
+
+# glib: a GRWLock initialised lazily with glib's own atomics (Qt's event
+# dispatcher on pool threads).
+race:g_rw_lock_reader_lock
+
+# Traverso: the hand-over of a step to QThreadPool (s_handOverFence in
+# TIOScheduler.h). The step lambda reads what QRunnable::create() copied on
+# the scheduler thread. TSan ziet de lock van QThreadPool niet; verdwijnt bij
+# T71 stap 2c (eigen pools). race_top: only an access in the lambda's own
+# body, not in the stream's step() it calls. Remove with T71 step 2c
+# (doc/status.md).
+race_top:TIOScheduler::start_stream_step
+race_top:TIOScheduler::start_task_step

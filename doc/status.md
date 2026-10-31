@@ -716,6 +716,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     their readahead). Measure both.
   - **Step 2c (read pool per medium, decode pool):** ioscheduler becomes free
     of Qt, as part of the redesign of the pools.
+    - When the own pools are in: remove the two hand-over lines
+      (`race_top:TIOScheduler::start_stream_step`, `start_task_step`) and
+      the `QThreadPool` lines from `tests/tsan.supp`, and run TSan again.
     - `QThread`, `QThreadPool` and `QRunnable` become `std::thread` with
       pools of our own. No new pools on top of Qt.
     - `QObject` and the signal `seekFinished` become a plain callback. Core

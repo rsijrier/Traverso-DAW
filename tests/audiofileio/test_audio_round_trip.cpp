@@ -346,14 +346,18 @@ static void round_trip(const QTemporaryDir& dir, const Format& format, TraversoD
 int main()
 {
     // The test's memory capped, so whatever a file claims, the test fails and
-    // nothing else on the machine does. Not under AddressSanitizer, which
-    // reserves terabytes of address space.
+    // nothing else on the machine does. Not under a sanitizer (address or
+    // thread): they reserve terabytes of address space for their shadow
+    // memory. GCC says so with __SANITIZE_*__, Clang with __has_feature.
 #if defined(__has_feature)
-#if __has_feature(address_sanitizer)
-#define ROUND_TRIP_ASAN
+#if __has_feature(address_sanitizer) || __has_feature(thread_sanitizer)
+#define ROUND_TRIP_SANITIZER
 #endif
 #endif
-#if defined(Q_OS_UNIX) && !defined(__SANITIZE_ADDRESS__) && !defined(ROUND_TRIP_ASAN)
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
+#define ROUND_TRIP_SANITIZER
+#endif
+#if defined(Q_OS_UNIX) && !defined(ROUND_TRIP_SANITIZER)
     const rlimit limit{rlim_t(4) << 30, rlim_t(4) << 30};
     setrlimit(RLIMIT_AS, &limit);
 #endif
