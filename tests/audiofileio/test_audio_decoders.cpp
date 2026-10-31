@@ -819,8 +819,8 @@ static float seek_error(TAudioReader& reader, nframes_t first, nframes_t count, 
 
 // How far a reader's seeks over the whole file lie from a handle of our own,
 // with the reader's settings but without its detour over the file size.
-// counted: the file has a tag, so its frame 0 lies behind delay and decoder delay
-static float worst_against_plain_handle(TAudioReader& reader, const QString& path, bool counted)
+// Its frame 0 lies behind the encoder's delay and the decoder's
+static float worst_against_plain_handle(TAudioReader& reader, const QString& path)
 {
     const QByteArray decoder = qgetenv("TRAVERSO_MPG123_DECODER");
     int error = MPG123_OK;
@@ -842,7 +842,7 @@ static float worst_against_plain_handle(TAudioReader& reader, const QString& pat
         double unused = 0.0;
         mpg123_getstate(handle, MPG123_ENC_DELAY, &delay, &unused);
         mpg123_scan(handle);
-        const int64_t skip = counted ? delay + 529 : 0;
+        const int64_t skip = delay >= 0 ? delay + 529 : 0;
         const nframes_t frames = reader.file_frame_count();
         const nframes_t count = 2000;
         TAudioBuffer buffer;
@@ -939,8 +939,8 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         check(over && over->file_frame_count() == source.frames() + 2 * 1152 && overBack.error && overBack.frames() < over->file_frame_count(), what);
     }
 
-    // A tag with an encoder's name and no frame count is no tag: all that says
-    // how long the file is, is the scan
+    // A tag with an encoder's name and no frame count: the scan gives the
+    // length, delay and padding still place the audio as a full tag does
     {
         const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
         const QString path = dir.filePath(QStringLiteral("t73-no-count.mp3"));
@@ -949,9 +949,16 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
         const nframes_t count = reader ? reader->file_frame_count() : 0;
         const ReadBack back = reader ? read_back(*reader) : ReadBack{};
-        std::snprintf(what, sizeof(what), "A tag without a frame count: the scan's length, read to its end (%u frames, %u read, %s)", count, back.frames(),
+        const std::unique_ptr<TAudioReader> full = TAudioReader::open(vbrPath).value_or(nullptr);
+        const nframes_t fullCount = full ? full->file_frame_count() : 0;
+        const ReadBack fullBack = full ? read_back(*full) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag without a frame count: read to its end, the length of a full tag within a frame (%u frames against %u, %u read, %s)", count, fullCount, back.frames(),
                       back.error ? qPrintable(back.error->detail) : "no error");
-        check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
+        check(count > 0 && std::labs(long(count) - long(fullCount)) <= 1152 && back.frames() == count && !back.error, what);
+        const nframes_t from = std::min(count, fullCount) / 2;
+        const long lag = count > 0 && fullCount > 0 ? best_lag(fullBack.channels[0], from, back.channels[0], from, 4096, 3000) : -1;
+        std::snprintf(what, sizeof(what), "A tag without a frame count: the audio where a full tag has it (%+ld frames)", lag);
+        check(lag == 0, what);
 
         // Damage in the middle: refused, not opened short
         QByteArray damaged = changed;
@@ -973,10 +980,9 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         for (const QByteArray& file : {bytes, with_id3v1(bytes), without_frame_count(file_bytes(vbrPath)), with_id3v1(without_frame_count(file_bytes(vbrPath)))}) {
             write_bytes(path, file);
             const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
-            const bool counted = !without_frame_count(file).isEmpty();
-            const float worst = reader ? worst_against_plain_handle(*reader, path, counted) : 1.0f;
+            const float worst = reader ? worst_against_plain_handle(*reader, path) : 1.0f;
             const ReadBack back = reader ? read_back(*reader) : ReadBack{};
-            std::snprintf(what, sizeof(what), "The detour: seeks equal a plain handle (%s, worst %.2g), read to the end (%u of %u)", counted ? "a frame count" : "no frame count", double(worst), back.frames(), reader ? reader->file_frame_count() : 0);
+            std::snprintf(what, sizeof(what), "The detour: seeks equal a plain handle (worst %.2g), read to the end (%u of %u)", double(worst), back.frames(), reader ? reader->file_frame_count() : 0);
             check(reader && worst <= MpgSeekTolerance && back.frames() == reader->file_frame_count() && !back.error, what);
         }
     }

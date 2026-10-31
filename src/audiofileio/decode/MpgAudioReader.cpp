@@ -226,18 +226,24 @@ void MpgAudioReader::scan()
     }
     m_scannedSamples = mpg123_length64(m_handle);
 
+    const bool gapless = m_delay >= 0 && m_padding >= 0;
     int64_t frames = m_scannedSamples;
-    if (m_tagSamples > 0 && m_delay >= 0 && m_padding >= 0) {
+    if (m_tagSamples > 0 && gapless) {
         // The tag goes first when it says more than a frame over what the scan
         // found, a file cut short: the audio stays in place and the end is an
         // error. One frame over is iTunes, which counts its Info frame. When
         // the tag says less (concatenated files) nothing is cut
-        const int64_t samples = m_tagSamples > m_scannedSamples + m_frameSamples ? m_tagSamples : m_scannedSamples;
-        m_skip = m_delay + DecoderDelay;
-        frames = samples - m_delay - std::max<int64_t>(m_padding, DecoderDelay);
+        if (m_tagSamples > m_scannedSamples + m_frameSamples) {
+            frames = m_tagSamples;
+        }
     } else if (const qint64 size = m_input.source->size(); size - m_input.furthest > ScanEndSlack) {
         open_failed(QStringLiteral("the audio stops at byte %1 of %2").arg(m_input.furthest).arg(size));
         return;
+    }
+    // Also without a frame count: delay and padding place the audio
+    if (gapless) {
+        m_skip = m_delay + DecoderDelay;
+        frames -= m_delay + std::max<int64_t>(m_padding, DecoderDelay);
     }
 
     if (frames <= 0 || frames > std::numeric_limits<nframes_t>::max()) {

@@ -227,8 +227,11 @@ on the scan, and a later open without one needs them too.
 
 **The length.** Without a tag: the scanned samples. A scan that stops more than
 64 KiB before the end gives `CannotOpen` with the byte position (decision 5). A
-tag without a real frame count is no tag, also with an encoder's name in it, so
-its delay and padding are not used.
+tag without a real frame count, also with an encoder's name in it, counts as no
+tag for the length and for this rule: there is no count to check against. Its
+delay and padding are used when mpg123 gives them (>= 0): the length is the
+scanned samples - delay - max(padding, 529), and skip = delay + 529, as with a
+full tag. Without delay or padding: length as above, skip = 0.
 
 With a tag (a real frame count, delay and padding >= 0):
 - the source of the samples is the tag's length when it says more than one

@@ -82,8 +82,9 @@ private:
     // The encoder's delay and padding of the LAME tag, -1 without one
     long m_delay{-1};
     long m_padding{-1};
-    // What the tag's frame count says, 0 without one: a tag without a count
-    // (an encoder's name only) is no tag
+    // What the tag's frame count says, 0 without one: without a count (an
+    // encoder's name only) the scan alone gives the length, and the damage
+    // rule holds; delay and padding are used all the same
     int64_t m_tagSamples{0};
     // The samples of one MPEG frame
     int64_t m_frameSamples{0};
