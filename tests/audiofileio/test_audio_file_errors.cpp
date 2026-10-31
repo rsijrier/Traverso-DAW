@@ -54,7 +54,7 @@ static void test_open_reader(const QTemporaryDir& dir)
     check(fails_with(unknown, TAudioFileError::Code::CannotOpen) && unknown.error().detail.contains(QLatin1String("no decoder")),
           "a file of no known format: CannotOpen, no decoder");
 
-    const QString broken = write_file(dir, "broken.tscenario", QByteArray("{\"version\": 1,"));
+    const QString broken = write_file(dir, "broken.tscenario", QByteArray("# tscenario 1\n{"));
     const auto scenario = TAudioReader::open(broken);
     check(fails_with(scenario, TAudioFileError::Code::CannotOpen) && scenario.error().detail.contains(QLatin1String("not a scenario")),
           "a broken scenario: CannotOpen, with why");

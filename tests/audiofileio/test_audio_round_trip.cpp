@@ -94,7 +94,8 @@ static QString write_scenario(const QTemporaryDir& dir, uint channels, bool ramp
     }
     const QString path = dir.filePath(QStringLiteral("source-%1-%2.tscenario").arg(channels).arg(ramp ? "ramp" : "sweeps"));
     QFile file(path);
-    const QByteArray json = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": [%3]})")
+    const QByteArray json = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": [%3]})")
                                 .arg(Rate).arg(Frames).arg(channelList).toUtf8();
     if (!file.open(QIODevice::WriteOnly) || file.write(json) != json.size()) {
         return QString();

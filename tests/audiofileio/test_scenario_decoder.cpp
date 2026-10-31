@@ -47,7 +47,8 @@ static QString write_file(const QTemporaryDir& dir, const char* name, const QByt
 
 static QByteArray scenario(uint rate, nframes_t frames, const char* channels, const char* faults = "[]", int version = 1)
 {
-    return QStringLiteral(R"({"version": %1, "rate": %2, "frames": %3, "channels": %4, "faults": %5})")
+    return QStringLiteral(R"(# tscenario %1
+{"rate": %2, "frames": %3, "channels": %4, "faults": %5})")
         .arg(version)
         .arg(rate)
         .arg(frames)
@@ -152,7 +153,7 @@ static void test_refused(const QTemporaryDir& dir)
     const QString empty = write_file(dir, "empty.tscenario", scenario(48000, 0, sine));
     check(!TAudioReader::open(empty), "a scenario of no frames is refused");
 
-    const QString broken = write_file(dir, "broken.tscenario", QByteArray("{\"version\": 1, \"rate\": 48000,"));
+    const QString broken = write_file(dir, "broken.tscenario", QByteArray("# tscenario 1\n{\"rate\": 48000,"));
     check(!TAudioReader::can_read(broken) && !TAudioReader::open(broken), "a scenario that does not parse is no audio file");
 
     const QString unknown = write_file(dir, "unknown.tscenario", scenario(48000, 1000, R"([{"signal": "noise"}])"));

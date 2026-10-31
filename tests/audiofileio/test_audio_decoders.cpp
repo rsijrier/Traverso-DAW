@@ -147,7 +147,8 @@ static bool write_scenario(const QString& path, const Source& source)
     if (source.channels != 2) {
         return false;
     }
-    const QString json = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": [
+    const QString json = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": [
         {"signal": "sweep", "mode": "exponential", "start": 200, "end": %3, "amplitude": 0.5},
         {"signal": "sweep", "mode": "linear", "start": 3000, "end": 300, "amplitude": 0.3}]})")
                              .arg(source.rate)

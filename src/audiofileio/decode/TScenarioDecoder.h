@@ -15,10 +15,11 @@
  * files. It keeps the TAudioDecoder contract like every decoder and is
  * chosen by the factory like them, by the file (its extension, first).
  *
- * The file is JSON:
+ * The first line is exactly "# tscenario <version>", ended by \n or \r\n; the
+ * version says what follows. In version 1 that is JSON:
  *
+ *     # tscenario 1
  *     {
- *       "version": 1,
  *       "rate": 48000,
  *       "frames": 96000,
  *       "channels": [
@@ -47,8 +48,8 @@
  * the read there fails (another format may refuse such a seek instead);
  * "value" (frame, channel, value "nan", "inf" or "-inf").
  *
- * The version is a guard: another one does not open. A file that does not
- * parse is no scenario: no decoder reads it.
+ * Another version does not open, and it is known before anything parses. A
+ * file that does not parse is no scenario: no decoder reads it.
  */
 class TScenarioDecoder : public TAudioDecoder
 {

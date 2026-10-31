@@ -15,6 +15,7 @@
 #include <limits>
 
 static constexpr int ScenarioVersion = 1;
+static constexpr QByteArrayView ScenarioLine("# tscenario ");
 // A scenario is a short description (a few hundred bytes, some KB with
 // many channels or faults); a larger file named .tscenario is not read whole
 static constexpr qint64 MaxScenarioBytes = 64 * 1024;
@@ -68,15 +69,27 @@ std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(TByte
     if (!source.seek(0) || source.read(bytes.data(), bytes.size()) != bytes.size()) {
         return fail(QStringLiteral("cannot read it"));
     }
+    // The first line names the format and its version, before anything parses
+    const qsizetype lineEnd = bytes.indexOf('\n');
+    QByteArray line = bytes.left(lineEnd);
+    if (line.endsWith('\r')) {
+        line.chop(1);
+    }
+    const QByteArray versionText = line.mid(ScenarioLine.size());
+    const bool digits = !versionText.isEmpty() && std::all_of(versionText.begin(), versionText.end(), [](char c) { return c >= '0' && c <= '9'; });
+    if (lineEnd < 0 || !line.startsWith(ScenarioLine) || !digits) {
+        return fail(QStringLiteral("no tscenario line"));
+    }
+    if (versionText.toInt() != ScenarioVersion) {
+        return fail(QStringLiteral("tscenario version %1, this Traverso reads %2").arg(QString::fromLatin1(versionText)).arg(ScenarioVersion));
+    }
+
     QJsonParseError error;
-    const QJsonDocument document = QJsonDocument::fromJson(bytes, &error);
+    const QJsonDocument document = QJsonDocument::fromJson(bytes.mid(lineEnd + 1), &error);
     if (!document.isObject()) {
         return fail(QStringLiteral("no JSON object (%1)").arg(error.errorString()));
     }
     const QJsonObject root = document.object();
-    if (root.value(QLatin1String("version")).toInt(-1) != ScenarioVersion) {
-        return fail(QStringLiteral("version %1 is not %2").arg(root.value(QLatin1String("version")).toVariant().toString()).arg(ScenarioVersion));
-    }
 
     Scenario scenario;
     const std::optional<nframes_t> rate = frames_of(root.value(QLatin1String("rate")));

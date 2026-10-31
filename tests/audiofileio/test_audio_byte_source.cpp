@@ -801,7 +801,8 @@ static void test_scenario(const QTemporaryDir& dir)
     const QString path = dir.filePath(QStringLiteral("signal.tscenario"));
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly) ||
-        file.write(R"({"version": 1, "rate": 48000, "frames": 4800, "channels": [{"signal": "silence"}]})") < 0) {
+        file.write(R"(# tscenario 1
+{"rate": 48000, "frames": 4800, "channels": [{"signal": "silence"}]})") < 0) {
         check(false, "a scenario is written");
         return;
     }
