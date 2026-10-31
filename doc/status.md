@@ -689,6 +689,8 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T71 Reading and decoding apart: `TAudioByteSource` (now `TByteSource`)** (Remon, 2026-10-30;
   branch `audio-byte-source`). Rule: no disk access the scheduler does not
   know about.
+  - **Open questions for step 2c:** `doc/design/byteio-open-questions.md`
+    (mlock, readahead and buffer management, Qt in byteio).
   - **Step 1, built:** every decoder reaches its file through one byte
     source; open, seek and stream counted apart, page cache apart from the
     medium, decode time = call time − read time. No scheduler change.
