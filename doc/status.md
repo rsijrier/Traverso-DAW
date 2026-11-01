@@ -440,9 +440,18 @@ Other open tasks:
   1.0 (a sign or offset error) and mono has one frame more (the pad byte of
   an odd-sized chunk?). Round-trip test, KNOWN entry.
 - **T48 AAC channels** (proposed medium-low, with T21): mono written by FAAC
-  reads back as 2 channels (FAAD's upmix?); with 2 and 6 channels the
-  levels, the placement and the channel order are wrong. Round-trip test,
-  KNOWN entries.
+  reads back as 2 channels with FAAD (its upmix: FFmpeg reads 1 channel); with 2
+  and 6 channels the levels, the placement and the channel order are wrong.
+  Round-trip test, KNOWN entries.
+  - **Found 2026-11-01**: `FaacAudioWriter` never looks at `dataFormat`. It tells
+    the encoder 16 bit and reads the buffer as `int16_t`, while `TAudioWriter`
+    packs it in the format asked for, so 8, 24, 32 bit and float encode the wrong
+    bytes. The export dialog forces 16 bit for M4A, so only the API reaches this.
+    The writer must take 16 bit only, or convert.
+  - **With FFmpeg's reader** the mono round trip goes on to levels and placement:
+    9 lines fail, 16 bit only on placement, lag -2048, which is T21.
+  - **To check**: whether these two causes explain all of the 2 and 6 channel
+    entries. Mono's KNOWN entry goes when FAAD does.
 - **T49 What the writer refuses** (proposed low, with T22): libsndfile
   refuses WAV and W64 at 8 bit (they take unsigned 8 bit: map PCM_S8 to
   PCM_U8?), FLAC float and 32 bit (not in FLAC: should the dialog offer
