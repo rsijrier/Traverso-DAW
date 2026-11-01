@@ -27,6 +27,8 @@ void TAudioDecoder::adopt_open_cost(const TAudioIOCost& cost)
     m_stats.open.nanoseconds += cost.nanoseconds;
     m_stats.open.reads.add(cost.reads);
     set_activity(TAudioIOStats::Activity::Stream);
+    // A probe's failed read the open went past is not the first seek's
+    take_source_error();
 }
 
 void TAudioDecoder::set_activity(TAudioIOStats::Activity activity)
@@ -109,9 +111,12 @@ TAudioFileResult TAudioDecoder::read_from(TAudioBuffer& buffer, nframes_t first,
 
 TAudioFileStatus TAudioDecoder::seek_landed(nframes_t frame)
 {
+    // A library can land on a read that failed: then it did not land
+    if (const QString reason = take_source_error(); !reason.isEmpty()) {
+        return seek_failed(frame, reason);
+    }
     m_nextFrame = frame;
     m_inErrorState = false;
-    take_source_error();
     return {};
 }
 

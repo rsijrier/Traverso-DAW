@@ -278,10 +278,8 @@ TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)
     if (mpg123_seek64(m_handle, position, SEEK_SET) != position) {
         return seek_failed(frame, QString::fromUtf8(mpg123_strerror(m_handle)));
     }
-    // mpg123's seek takes a failed read for the end of the stream and lands
-    if (std::optional<QString> sourceError = m_input.source->take_error()) {
-        return seek_failed(frame, *sourceError);
-    }
+    // mpg123's seek takes a failed read for the end of the stream and lands:
+    // seek_landed() asks the source
     return seek_landed(frame);
 }
 
