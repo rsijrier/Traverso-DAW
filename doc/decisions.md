@@ -122,3 +122,4 @@ Entries for `audio-byte-source` up to 2026-10-31 were written afterwards
 | 2026-11-01 | ffmpeg-reader-poc | The open of an MP4 seeks 8192 frames before the end, not to the last packet | E-AC-3 lost a packet after a seek to the last one | `FFmpegAudioReader.cpp` |
 | 2026-11-01 | ffmpeg-reader-poc | When the tables give the first packet more than the decoder has, `m_firstTimestamp` moves by the difference, for MP4 only | the reader filled the jump with silence, 48 frames late on Opus; CLI and decoder run on | `FFmpegAudioReader.cpp` |
 | 2026-11-01 | ffmpeg-reader-poc | The last packet cuts the length only within one packet of it | further off is damage and stays an error at the end | `FFmpegAudioReader.cpp` |
+| 2026-11-01 | master | **Remon's decision.** APE, TTA and WMA through FFmpeg only when users ask for them | rare in a recording project; each needs its own length rule, samples and tests | `doc/status.md` (T82) |

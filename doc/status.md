@@ -886,6 +886,10 @@ From the GPU waveform test program, clip edges in variant A (branch
       are corrected at the open;
     - only what has no length reads every packet at the open: an MP4 reads its first
       packets and, from a little before the end, its last.
+  - **Other formats**: FFmpeg decodes APE, TTA and WMA; they come only when users ask
+    (Remon, 2026-11-01). FLAC stays with libsndfile. Measured against FFmpeg's CLI
+    on the 15 FLAC samples: bit exact on the 7 both read; only FFmpeg reads 32 bit
+    FLAC (`sine-s32-stereo.flac`) and `ooming-header.flac`.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
