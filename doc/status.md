@@ -832,8 +832,7 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T83 A rare race in `TIOScheduler`** (Remon, 2026-11-01). `io_scheduler` failed
   once under TSan on 2026-11-01 with 22 reports (`TIOScheduler.cpp:44`, `:71`,
   `TIOScheduler.h:289`, `:296`), then passed 6 of 6. Not from FFmpeg's reader.
-  Find out what it was; the reports are lost when the run is repeated, so keep
-  the output (`check-ctest-tsan-ffmpeg.txt`, local).
+  Find out what it was.
 - **T82 FFmpeg as the optional decoder instead of FAAD** (research; Remon,
   2026-11-01). An `FFmpegAudioReader` on libavformat and libavcodec, optional as
   FAAD is now; a build without it has no AAC. FAAD and the MP4 code of our own go.
