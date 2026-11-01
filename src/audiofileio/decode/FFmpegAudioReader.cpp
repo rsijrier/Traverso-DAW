@@ -178,13 +178,18 @@ TAudioFileStatus FFmpegAudioReader::start()
         return open_error(QStringLiteral("out of memory"));
     }
     if (int error = open_format(source(), m_io, m_format); error < 0) {
-        return open_error(words_of(error));
+        return open_error(QStringLiteral("not a readable MP4 or AAC file: %1").arg(words_of(error)));
     }
     if (int error = avformat_find_stream_info(m_format, nullptr); error < 0) {
         return open_error(words_of(error));
     }
     m_stream = av_find_best_stream(m_format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     if (m_stream < 0) {
+        for (unsigned i = 0; i < m_format->nb_streams; ++i) {
+            if (m_format->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+                return open_error(QStringLiteral("%1: this FFmpeg has no decoder for it").arg(format_in_words(m_format, m_format->streams[i])));
+            }
+        }
         return open_error(QStringLiteral("no audio in it"));
     }
     const AVStream* stream = m_format->streams[m_stream];
