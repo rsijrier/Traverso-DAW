@@ -851,10 +851,12 @@ From the GPU waveform test program, clip edges in variant A (branch
     decoder, `libfdk_aac` of fdk-aac-free, gives half the samples on implicit HE-AAC
     without an error and refuses Main, so the reader asks for `aac` by name, not for
     what the codec id finds first.
-  - **Versions**: EPEL 9 and 10 have `ffmpeg-free` 7.1.5, Tumbleweed 9.0.2. The FFmpeg
-    9.0.2 CLI gives `ff-16b-2c-44100hz.m4a` 872 frames fewer than 8.0.1, not looked
-    into: the length rules need a test against the oldest and the newest. RHEL
-    itself and EPEL's build were not tested.
+  - **Versions**: FFmpeg 8.0 and 9.0 are tested, 8.0 is the lower bound for now
+    (Remon, 2026-11-01): the releases Traverso first lands in have 9.0, Ubuntu 26.04
+    LTS and this machine 8.0.1, and stable releases with 7.1 or older do not get it.
+    The requirement can change with the outcome of those tests. The FFmpeg 9.0.2 CLI
+    gives `ff-16b-2c-44100hz.m4a` 872 frames fewer than 8.0.1, not looked into, and
+    the PoC has only been built against 8.0.1.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
