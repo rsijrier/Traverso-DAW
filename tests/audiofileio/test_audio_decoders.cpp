@@ -947,7 +947,10 @@ static void test_mp4_files(const QTemporaryDir& dir, const Source& source, const
     const QString fewerPath = dir.filePath(QStringLiteral("fewer.m4a"));
     check(write_bytes(fewerPath, fewer), "MP4 lengths: fewer packets written");
     const std::unique_ptr<TAudioReader> shorter = TAudioReader::open(fewerPath).value_or(nullptr);
-    check(shorter != nullptr && shorter->file_frame_count() < frames, "MP4 lengths: fewer packets in the tables read as a shorter file");
+    const long missing = shorter ? long(frames) - long(shorter->file_frame_count()) : 0;
+    std::snprintf(what, sizeof(what), "MP4 lengths: fewer packets in the tables read as a shorter file (%ld frames less)", missing);
+    // A hundred packets, and the short last packet goes with them
+    check(std::labs(missing - 100 * 1024) <= 2048, what);
 
     // The tables first and the audio cut: the length stays, the read and a seek
     // behind the cut fail
@@ -976,7 +979,7 @@ static void test_mp4_files(const QTemporaryDir& dir, const Source& source, const
     const auto refused = TAudioReader::open(halvedPath);
     std::snprintf(what, sizeof(what), "MP4 lengths: tables above the header are refused (%s)",
                   refused ? "it opened" : qPrintable(refused.error().detail));
-    check(!refused && refused.error().code == TAudioFileError::Code::CannotOpen, what);
+    check(!refused && refused.error().detail.contains(QStringLiteral("tables hold more")), what);
 }
 
 // What does not fit one file of one format
@@ -1033,6 +1036,20 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
             std::snprintf(what, sizeof(what), "A video's audio does not read the video (%llu bytes of %lld)", static_cast<unsigned long long>(bytes),
                           static_cast<long long>(QFile(videoPath).size()));
             check(bytes < uint64_t(QFile(videoPath).size()) / 2, what);
+        }
+    }
+
+    // can_read() says what open() says
+    const QStringList forms[] = {asAdts, {QStringLiteral("-f"), QStringLiteral("adts"), QStringLiteral("-write_id3v2"), QStringLiteral("1")}, {},
+                                 {QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}};
+    int form = 0;
+    for (const QStringList& container : forms) {
+        const QString formPath = dir.filePath(QStringLiteral("form-%1.%2").arg(form).arg(form < 2 ? QStringLiteral("aac") : QStringLiteral("m4a")));
+        ++form;
+        if (write_with_ffmpeg(formPath, source, encode + container)) {
+            const bool opens = TAudioReader::open(formPath).has_value();
+            std::snprintf(what, sizeof(what), "Form %d: can_read() and open() agree, both yes", form);
+            check(opens && TAudioReader::can_read(formPath), what);
         }
     }
 
@@ -1469,13 +1486,19 @@ int main()
         // ffmpeg's edit list says 23 frames fewer than it was given (ffprobe
         // too): the decoder takes the file's word
         {.name = "AAC in M4A (ffmpeg)", .suffix = "m4a", .source = stereo, .write = ffmpeg(aacWithoutNoise), .frameTolerance = 64},
+        // Other codecs in an MP4
+        {.name = "ALAC in MP4", .suffix = "alac.m4a", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("alac")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
+        {.name = "FLAC in fragmented MP4", .suffix = "flac.mp4", .source = stereo,
+         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("flac"), QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
         // No word on the priming: as ADTS but for its length the file says nothing of
         // where the audio starts, and the encoder's delay stays in
         {.name = "AAC in M4A, no edit list", .suffix = "no-edit-list.m4a", .source = stereo,
          .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-use_editlist"), QStringLiteral("0")}), .frameTolerance = 1024,
          .placement = false},
         {.name = "AAC in fragmented MP4", .suffix = "frag.mp4", .source = stereo,
-         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}), .frameTolerance = 2048,
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}), .frameTolerance = 1024,
          .placement = false},
 #if defined(M4A_ENCODE_SUPPORT)
         {.name = "AAC in ADTS (Traverso's writer)", .suffix = "traverso.aac", .source = stereo,

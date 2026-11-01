@@ -903,19 +903,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     MP3 stays with libmpg123, measured through both readers on 63 files: normal audio
     the same and no gain in speed, but FFmpeg goes on silently over damage, which our
     T73 rules report, and keeps the decoder delay where no tag names it.
-- **T84 ADTS behind an ID3v2 tag** (low; Fable, 2026-11-01): refused, as by FAAD.
-  FFmpeg's demuxer skips the tag: the check could start behind it, under the 1 MiB
-  rule of `mp3-decoder.md`.
-- **T85 FFmpeg reader: reasons of a refusal** (low; Fable, 2026-11-01): "this FFmpeg
-  has no decoder for it" also shows for audio without channels or rate, and what
-  the reason can name without a decoder is what the container says.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.
-- **T87 FFmpeg reader: test coverage** (low; Fable, 2026-11-01): "fewer packets" only
-  tests `<`, "tables above" any `CannotOpen`, `frameTolerance` 2048 where +1024 is
-  measured; `can_read()` against `open()` on a file with few headers; non-AAC codecs
-  in MP4; `audio_corpus` of T80; T21's lag in `known()` is labelled T48.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.

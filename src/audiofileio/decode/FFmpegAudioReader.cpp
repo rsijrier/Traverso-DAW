@@ -94,6 +94,12 @@ static bool is_mp4(const AVFormatContext* format)
     return std::strstr(format->iformat->name, "mp4") != nullptr;
 }
 
+// AAC by name: a libfdk_aac in the same build reads HE-AAC at half the length
+static const AVCodec* decoder_of(const AVStream* stream)
+{
+    return stream->codecpar->codec_id == AV_CODEC_ID_AAC ? avcodec_find_decoder_by_name("aac") : avcodec_find_decoder(stream->codecpar->codec_id);
+}
+
 // Any audio stream: av_find_best_stream() passes over one FFmpeg knows little of
 static const AVStream* first_audio_stream(const AVFormatContext* format)
 {
@@ -130,6 +136,20 @@ static QString format_in_words(const AVFormatContext* format, const AVStream* st
     return is_mp4(format) ? QStringLiteral("M4A with %1").arg(name) : name;
 }
 
+// Where the audio starts behind an ID3v2 tag, which FFmpeg's demuxer skips
+static int64_t behind_id3(TByteSource& source)
+{
+    constexpr int TagHeaderBytes = 10;
+    constexpr int64_t MostBytes = 1024 * 1024;
+    unsigned char tag[TagHeaderBytes];
+    source.seek(0);
+    if (source.read(tag, TagHeaderBytes) != TagHeaderBytes || std::memcmp(tag, "ID3", 3) != 0 || (tag[6] | tag[7] | tag[8] | tag[9]) & 0x80) {
+        return 0;
+    }
+    const int64_t bytes = TagHeaderBytes + ((tag[6] << 21) | (tag[7] << 14) | (tag[8] << 7) | tag[9]);
+    return bytes <= MostBytes ? bytes : 0;
+}
+
 // ADTS has no signature but its frames: a sync word, layer 0, a sample rate of
 // the table and a length that leads to the next frame or the end of the file
 static bool holds_adts(TByteSource& source)
@@ -137,7 +157,7 @@ static bool holds_adts(TByteSource& source)
     constexpr int HeaderBytes = 7;
     constexpr int FramesToSee = 2;
     constexpr int SampleRates = 13;
-    int64_t at = 0;
+    int64_t at = behind_id3(source);
     const int64_t size = source.size();
     for (int frame = 0; frame < FramesToSee; ++frame) {
         unsigned char header[HeaderBytes];
@@ -214,15 +234,18 @@ TAudioFileStatus FFmpegAudioReader::start()
     m_stream = av_find_best_stream(m_format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     if (m_stream < 0) {
         const AVStream* unread = first_audio_stream(m_format);
-        return open_error(unread ? QStringLiteral("%1: this FFmpeg has no decoder for it").arg(format_in_words(m_format, unread)) : QStringLiteral("no audio in it"));
+        if (!unread) {
+            return open_error(QStringLiteral("no audio in it"));
+        }
+        return open_error(decoder_of(unread) ? QStringLiteral("%1: the file does not say enough of its audio").arg(format_in_words(m_format, unread))
+                                             : QStringLiteral("%1: this FFmpeg has no decoder for it").arg(format_in_words(m_format, unread)));
     }
     // A video would be read with the audio, and dropped
     for (unsigned i = 0; i < m_format->nb_streams; ++i) {
         m_format->streams[i]->discard = int(i) == m_stream ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
     }
     const AVStream* stream = m_format->streams[m_stream];
-    // AAC by name: a libfdk_aac in the same build reads HE-AAC at half the length
-    m_decoder = stream->codecpar->codec_id == AV_CODEC_ID_AAC ? avcodec_find_decoder_by_name("aac") : avcodec_find_decoder(stream->codecpar->codec_id);
+    m_decoder = decoder_of(stream);
     if (!m_decoder) {
         return open_error(QStringLiteral("%1: this FFmpeg has no decoder for it").arg(format_in_words(m_format, stream)));
     }
