@@ -204,9 +204,6 @@ std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> TAudioDecoderFact
     }
     if (decoder) {
         (*decoder)->adopt_open_cost(openStats.open);
-    } else {
-        // No decoder keeps the measurement: it goes with the error
-        decoder.error().openCost = std::make_shared<const TAudioIOCost>(openStats.open);
     }
     return decoder;
 }
