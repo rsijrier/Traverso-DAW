@@ -838,6 +838,15 @@ From the GPU waveform test program, clip edges in variant A (branch
   - place: `vbri.mp3` (1152 frames), `Example.mp3` (529, an iTunes tag with
     delay 0), `bear-opus.ogg` (312, pre-skip);
   - `bear-audio-10s-CBR-has-TOC.mp3`: the same length, 33 dB apart.
+- **T90 Video** (parked; Remon, 2026-11-01). A PoC closed, branch `video-poc` stays as a
+  reference, not merged. byteio and the I/O scheduler carry video: warm no missed
+  refill next to 32 tracks, 4K on one thread, one line in core. If it goes on: video as
+  idle work or at least below audio; as idle tasks a seek of the audio takes 3 ms
+  against up to 2 s, but idle work stops while a song records. Open: video while
+  recording, peak builds in the same queue, a TVideoTrack apart from `TTrack`, the
+  link between a video clip and its audio clip, the sync (never judged). Missing in
+  the scheduler: a stream of 0 channels is left out without a word, `TIOStream` is an
+  audio interface, a group's seek waits for its slowest stream, a step has no bound.
 - **T83 A rare race in `TIOScheduler`** (Remon, 2026-11-01). `io_scheduler` failed
   once under TSan on 2026-11-01 with 22 reports (`TIOScheduler.cpp:44`, `:71`,
   `TIOScheduler.h:289`, `:296`), then passed 6 of 6. Not from FFmpeg's reader.
