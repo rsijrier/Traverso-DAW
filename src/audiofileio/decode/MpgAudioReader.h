@@ -77,7 +77,7 @@ private:
     // Reads through the whole file: the frames, the seek limit and an index
     // for the seeks
     TAudioFileStatus scan();
-    // Why the open failed: the source's words where a read failed
+    // Why the open failed
     TAudioFileStatus open_failed(const QString& detail);
     // The file's format is still the one it opened with
     bool same_format();

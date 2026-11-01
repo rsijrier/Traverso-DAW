@@ -167,8 +167,7 @@ MpgAudioReader::~MpgAudioReader()
 
 TAudioFileStatus MpgAudioReader::open_failed(const QString& detail)
 {
-    std::optional<QString> sourceError = m_input.source->take_error();
-    return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, sourceError.value_or(detail)});
+    return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, detail});
 }
 
 std::expected<void, QString> MpgAudioReader::can_decode(TByteSource& source)

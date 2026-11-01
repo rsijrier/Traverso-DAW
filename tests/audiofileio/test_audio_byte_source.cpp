@@ -483,6 +483,24 @@ static void test_scan_failure(const QTemporaryDir& dir)
     }
 }
 
+// A read that fails inside a decoder's own open: the source's reason, not what
+// the library made of it. The probe reads the first block, the open the next
+static void test_start_failure(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.flac"));
+    if (!QFile::exists(path)) {
+        check(false, "a failed start: the FLAC is there");
+        return;
+    }
+    Medium medium;
+    medium.failFrom = 0;
+    medium.failTo = 1;
+    const auto reader = TAudioReader::open(path, memory_opener(&medium));
+    char what[200];
+    std::snprintf(what, sizeof(what), "a read that fails in the open: the reason of the source (%s)", reader ? "it opened" : qPrintable(reader.error().detail));
+    check(!reader && reader.error().detail == QString(Reason), what);
+}
+
 // A read of the medium that fails in the middle of the file: whatever the
 // library makes of its short read, the caller gets ReadFailed and the reason
 static void test_read_failure(const QTemporaryDir& dir, const Format& format)
@@ -856,6 +874,7 @@ int main()
     test_large_tag(dir);
     test_scan_failure(dir);
     test_seek_failure(dir);
+    test_start_failure(dir);
     test_one_source(dir);
     test_file_source(dir);
     test_large_offsets();

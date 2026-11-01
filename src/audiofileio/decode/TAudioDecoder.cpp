@@ -5,6 +5,7 @@
 
 #include "TAudioBuffer.h"
 #include "TAudioIOScope.h"
+#include "TLog.h"
 
 TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 {
@@ -50,6 +51,10 @@ TByteSource* TAudioDecoder::open_extra_source(const QString& fileName)
 {
     TByteSourceResult source = m_opener ? m_opener(fileName) : TByteSource::open_file(fileName);
     if (!source) {
+        // No such file is the normal case, a correction file is optional
+        if (!source.error().notFound) {
+            TLOG_W("audiofile", "{}: cannot read it ({}), going on without", fileName.toStdString(), source.error().reason.toStdString());
+        }
         return nullptr;
     }
     (*source)->count_reads_into(&m_stats.current_cost().reads);

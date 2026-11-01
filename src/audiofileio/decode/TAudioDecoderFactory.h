@@ -24,6 +24,10 @@ struct TAudioDecoderFactory
         // Not make_unique: the constructor is private, this struct is its friend
         std::unique_ptr<Decoder> decoder(new Decoder(fileName, std::move(source), opener));
         if (TAudioFileStatus started = decoder->start(); !started) {
+            // A read that failed goes before what the library made of it
+            if (const QString reason = decoder->take_source_error(); !reason.isEmpty()) {
+                started.error().detail = reason;
+            }
             return std::unexpected(std::move(started.error()));
         }
         return decoder;
