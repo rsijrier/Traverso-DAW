@@ -173,7 +173,7 @@ using TDecoderResult = std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileE
 static TDecoderResult open_faad(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
 {
 #if defined M4A_DECODE_SUPPORT
-    return FaadAudioReader::open(fileName, std::move(source), opener);
+    return TAudioDecoderFactory::open_decoder<FaadAudioReader>(fileName, std::move(source), opener);
 #else
     return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")});
 #endif
@@ -195,15 +195,15 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     }
     switch (*library) {
     case DecoderLibrary::Scenario:
-        return TScenarioDecoder::open(fileName, std::move(*source), opener);
+        return TAudioDecoderFactory::open_decoder<TScenarioDecoder>(fileName, std::move(*source), opener);
     case DecoderLibrary::SndFile:
-        return SFAudioReader::open(fileName, std::move(*source), opener);
+        return TAudioDecoderFactory::open_decoder<SFAudioReader>(fileName, std::move(*source), opener);
     case DecoderLibrary::WavPack:
-        return WPAudioReader::open(fileName, std::move(*source), opener);
+        return TAudioDecoderFactory::open_decoder<WPAudioReader>(fileName, std::move(*source), opener);
     case DecoderLibrary::Faad:
         return open_faad(fileName, std::move(*source), opener);
     case DecoderLibrary::Mpg:
-        return MpgAudioReader::open(fileName, std::move(*source), opener);
+        return TAudioDecoderFactory::open_decoder<MpgAudioReader>(fileName, std::move(*source), opener);
     }
     Q_UNREACHABLE();
 }

@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "WPAudioReader.h"
-#include "TAudioDecoderFactory.h"
 #include <QString>
 #include <algorithm>
 #include <cstdio>
@@ -87,11 +86,6 @@ static WavpackContext* open_on_source(TByteSource& source, TByteSource* correcti
 WPAudioReader::WPAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     : TAudioDecoder(fileName, std::move(source), opener)
 {
-}
-
-std::expected<std::unique_ptr<WPAudioReader>, TAudioFileError> WPAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
-{
-    return TAudioDecoderFactory::open<WPAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus WPAudioReader::start()

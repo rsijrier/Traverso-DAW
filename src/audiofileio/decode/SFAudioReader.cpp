@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "SFAudioReader.h"
-#include "TAudioDecoderFactory.h"
 #include <QString>
 
 #include <algorithm>
@@ -67,11 +66,6 @@ static SNDFILE* open_on_source(TByteSource& source, SF_INFO& info)
 SFAudioReader::SFAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     : TAudioDecoder(fileName, std::move(source), opener)
 {
-}
-
-std::expected<std::unique_ptr<SFAudioReader>, TAudioFileError> SFAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
-{
-    return TAudioDecoderFactory::open<SFAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus SFAudioReader::start()

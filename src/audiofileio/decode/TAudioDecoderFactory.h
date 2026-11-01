@@ -12,14 +12,14 @@
 // the decoders.
 
 /**
- * @brief What every decoder's open() does: make the decoder and start it, the
+ * @brief Opening a decoder: make it and start it, the
  * decoder or why not. A friend of each decoder, whose constructor and start()
  * are its own.
  */
 struct TAudioDecoderFactory
 {
     template <typename Decoder>
-    static std::expected<std::unique_ptr<Decoder>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    static std::expected<std::unique_ptr<Decoder>, TAudioFileError> open_decoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     {
         // Not make_unique: the constructor is private, this struct is its friend
         std::unique_ptr<Decoder> decoder(new Decoder(fileName, std::move(source), opener));

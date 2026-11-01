@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "MpgAudioReader.h"
-#include "TAudioDecoderFactory.h"
 
 #include "TAudioBuffer.h"
 
@@ -113,11 +112,6 @@ static int64_t tag_samples_or_zero(mpg123_handle* handle, int64_t fileSize)
 MpgAudioReader::MpgAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     : TAudioDecoder(fileName, std::move(source), opener)
 {
-}
-
-std::expected<std::unique_ptr<MpgAudioReader>, TAudioFileError> MpgAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
-{
-    return TAudioDecoderFactory::open<MpgAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus MpgAudioReader::start()

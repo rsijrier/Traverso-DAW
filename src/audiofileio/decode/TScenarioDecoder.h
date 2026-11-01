@@ -54,8 +54,6 @@
 class TScenarioDecoder : public TAudioDecoder
 {
 public:
-    static std::expected<std::unique_ptr<TScenarioDecoder>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
-
     QString decoder_type() const override { return QStringLiteral("scenario"); }
 
     // The source parses as a scenario, or why not

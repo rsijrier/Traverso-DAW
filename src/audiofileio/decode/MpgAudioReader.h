@@ -56,7 +56,6 @@ struct MpgInput
 class MpgAudioReader : public TAudioDecoder
 {
 public:
-    static std::expected<std::unique_ptr<MpgAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
     ~MpgAudioReader() override;
 
     QString decoder_type() const override { return "mpg123"; }

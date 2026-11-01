@@ -63,7 +63,7 @@ class TAudioBuffer;
  * call failed (TAudioFileError): the error of that call, nothing is logged.
  *
  * A decoder that cannot open its file does not exist: every decoder has a
- * static open() that gives the decoder or the reason. It gets the file's
+ * start() that says why not, and TAudioDecoderFactory opens it. It gets the file's
  * source from the probes, which is opened once.
  *
  * A decoder reaches its file through TByteSource only (source()), so

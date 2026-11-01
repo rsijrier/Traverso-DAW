@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class FaadAudioReader : public TAudioDecoder
 {
 public:
-    static std::expected<std::unique_ptr<FaadAudioReader>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
 	~FaadAudioReader() override;
 
     QString decoder_type() const final { return "faad"; }

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "TScenarioDecoder.h"
-#include "TAudioDecoderFactory.h"
 
 #include "TAudioBuffer.h"
 
@@ -223,11 +222,6 @@ std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(TByte
 TScenarioDecoder::TScenarioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     : TAudioDecoder(fileName, std::move(source), opener)
 {
-}
-
-std::expected<std::unique_ptr<TScenarioDecoder>, TAudioFileError> TScenarioDecoder::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
-{
-    return TAudioDecoderFactory::open<TScenarioDecoder>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus TScenarioDecoder::start()

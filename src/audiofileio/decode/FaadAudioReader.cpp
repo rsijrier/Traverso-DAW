@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "FaadAudioReader.h"
-#include "TAudioDecoderFactory.h"
 
 #include <QVector>
 #include <algorithm>
@@ -305,11 +304,6 @@ FaadAudioReader::FaadAudioReader(const QString& fileName, std::unique_ptr<TByteS
 	: TAudioDecoder(fileName, std::move(source), opener)
 	, d(new FaadDecoderPrivate())
 {
-}
-
-std::expected<std::unique_ptr<FaadAudioReader>, TAudioFileError> FaadAudioReader::open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
-{
-    return TAudioDecoderFactory::open<FaadAudioReader>(fileName, std::move(source), opener);
 }
 
 TAudioFileStatus FaadAudioReader::start()
