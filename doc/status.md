@@ -773,7 +773,7 @@ From the GPU waveform test program, clip edges in variant A (branch
       bitrate (now `MPG123_PREFRAMES`). The whole read at the open stays,
       through `mpg123_scan()`, above.
 
-- **T73 (built 2026-10-31, awaiting review, branch `mp3-mpg123`)
+- **T73 (done 2026-11-01: merged after three Fable reviews)
   `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
   Built as `doc/design/mp3-decoder.md` says, with the new tests listed there;
   the decisions are in that document and in `doc/decisions.md`.
@@ -813,6 +813,13 @@ From the GPU waveform test program, clip edges in variant A (branch
   outcome per file becomes the expectation of `audio_corpus`. First with `ffprobe`
   per file. Candidates: `nero-chapters.m4b`, `bear-mpeg2-aac-only_frag.mp4`,
   `apev2-lyricsv2.mp3`, `synth-bad.mp3`; the vague "FAAD cannot read it".
+- **T82 FFmpeg as the optional decoder instead of FAAD** (research; Remon,
+  2026-11-01). An `FFmpegAudioReader` on libavformat and libavcodec, optional as
+  FAAD is now; a build without it has no AAC. FAAD and the MP4 code of our own go.
+  To show: exact seeks and length by the contract (`test_audio_decoders`,
+  `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
+  without `#if`. Goes together with the choice for video. Until then no large
+  refactor of `FaadAudioReader`. A PoC next to FAAD on `ffmpeg-reader-poc`.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
