@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #pragma once
 
+#include <optional>
 #include "TContextItem.h"
 
 #include <QDomNode>
@@ -183,7 +184,8 @@ private:
     TRtTransportPosition        m_rtTransportPosition;
     // GUI thread
     TTransportPositionEstimator m_heardPositionEstimator;
-    uint64_t                    m_heardPositionNanoseconds{0};
+    // The frame time of m_heardPosition, none yet
+    std::optional<uint64_t>     m_heardPositionNanoseconds;
     TTimeRef                    m_heardPosition;
 
 
