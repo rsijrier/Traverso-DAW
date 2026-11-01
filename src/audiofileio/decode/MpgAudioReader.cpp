@@ -103,7 +103,10 @@ static int64_t tag_samples_or_zero(mpg123_handle* handle, int64_t fileSize)
     mpg123_set_filesize64(handle, 2 * streamSize);
     const bool counted = mpg123_length64(handle) == samples;
     mpg123_set_filesize64(handle, streamSize);
-    Q_ASSERT(mpg123_length64(handle) == samples);
+    // A library that keeps more out of the stream than ID3v1: the scan decides
+    if (mpg123_length64(handle) != samples) {
+        return 0;
+    }
     return counted ? samples : 0;
 }
 
@@ -145,7 +148,9 @@ TAudioFileStatus MpgAudioReader::start()
 
     mpg123_frameinfo2 info{};
     mpg123_param(m_handle, MPG123_INDEX_SIZE, IndexSize, 0.0);
-    mpg123_info(m_handle, &info);
+    if (mpg123_info(m_handle, &info) != MPG123_OK) {
+        return open_failed(QString::fromUtf8(mpg123_strerror(m_handle)));
+    }
     mpg123_param(m_handle, MPG123_PREFRAMES, info.version == MPG123_1_0 ? PreframesMpeg1 : PreframesMpeg2, 0.0);
 
     m_channels = uint(channels);
