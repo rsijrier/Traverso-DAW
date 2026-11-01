@@ -214,12 +214,9 @@ static const char* known(const Format& format, TraversoDAW::DataFormat data, uin
         return "T47: samples off by up to 1.0, mono one frame more";
     }
     if (format.writer == TraversoDAW::WriterType::M4A) {
-        if (channels == 1 && is("frames")) {
-            return "T48: mono reads back as 2 channels";
-        }
-        // The level of 16 bit stereo comes out right
-        const bool levelRight = channels == 2 && data == TraversoDAW::DataFormat::PCM_16;
-        if (channels > 1 && (is("placement") || is("order") || (is("levels") && !levelRight))) {
+        // The level of 16 bit mono and stereo comes out right
+        const bool levelRight = channels <= 2 && data == TraversoDAW::DataFormat::PCM_16;
+        if (is("placement") || (is("order") && channels > 1) || (is("levels") && !levelRight)) {
             return "T48: channels mixed up and shifted";
         }
     }
@@ -380,7 +377,7 @@ int main()
         {"WavPack", "wv", WriterType::WAVPACK, FileFormat::WAVPACK, false, 0},
         {"Ogg Vorbis", "ogg", WriterType::SNDFILE, FileFormat::OGG, true, 0},
         {"MP3", "mp3", WriterType::SNDFILE, FileFormat::MP3, true, 0},
-#if defined(M4A_ENCODE_SUPPORT) && defined(M4A_DECODE_SUPPORT)
+#if defined(M4A_ENCODE_SUPPORT)
         {"AAC (ADTS)", "aac", WriterType::M4A, FileFormat::UNKNOWN, true, 2048},
 #endif
     };

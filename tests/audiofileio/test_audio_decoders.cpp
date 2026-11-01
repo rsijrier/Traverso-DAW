@@ -26,6 +26,7 @@
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTemporaryDir>
+#include <QtEndian>
 
 #include <sndfile.h>
 
@@ -244,10 +245,7 @@ struct Format
     // tag does not: the encoder's delay stays in)
     bool placement = true;
     // How far a read after a seek may differ from the read from the start:
-    // nothing, bit for bit, but for MP3 (MpgSeekTolerance) and for AAC with
-    // noise substitution (PNS, on in ffmpeg's encoder): FAAD fills those bands from a random generator,
-    // which a seek starts anew (with -aac_pns 0 those seeks are bit exact
-    // too, measured 2026-10-25)
+    // nothing, bit for bit, but for MP3 (MpgSeekTolerance)
     float seekTolerance = 0.0f;
     // A defect known of the writer of this file, and only that (review of
     // 2026-10-24): its audio lies knownLag frames off where it was written.
@@ -898,6 +896,89 @@ static const QLatin1String NoDecoder("no decoder reads this format");
 // Every case of doc/design/mp3-decoder.md section 6 that goes through a file.
 // The audio is the sweeps, so a shift shows; the files are made from one MP3
 // by libsndfile's LAME, which has an Info frame with delay and padding.
+// The offset of an MP4 box's content, by its name inside the moov
+static qsizetype box_in_moov(const QByteArray& bytes, const char* name)
+{
+    return bytes.indexOf(name, bytes.indexOf("moov")) + 4;
+}
+
+static uint32_t big_endian(const QByteArray& bytes, qsizetype at)
+{
+    return qFromBigEndian<uint32_t>(bytes.constData() + at);
+}
+
+static void set_big_endian(QByteArray& bytes, qsizetype at, uint32_t value)
+{
+    qToBigEndian(value, bytes.data() + at);
+}
+
+// The tables and the header of an MP4 against each other, and what an open reads
+static void test_mp4_files(const QTemporaryDir& dir, const Source& source, const QStringList& encode)
+{
+    char what[200];
+    const QString path = dir.filePath(QStringLiteral("length.m4a"));
+    if (!write_with_ffmpeg(path, source, encode + QStringList{QStringLiteral("-af"), QStringLiteral("aloop=loop=30:size=44100")})) {
+        std::printf("MP4 lengths: cannot be written here, skipped\n");
+        return;
+    }
+    QFile file(path);
+    check(file.open(QIODevice::ReadOnly), "MP4 lengths: the file opens");
+    const QByteArray healthy = file.readAll();
+
+    const std::unique_ptr<TAudioReader> whole = TAudioReader::open(path).value_or(nullptr);
+    check(whole != nullptr, "MP4 lengths: a healthy file opens");
+    if (!whole) {
+        return;
+    }
+    const nframes_t frames = whole->file_frame_count();
+    const TAudioIOCost& open = whole->io_stats().open;
+    const uint64_t opened = open.reads.cached.bytes + open.reads.medium.bytes + open.reads.unclassified.bytes;
+    std::snprintf(what, sizeof(what), "MP4 lengths: the open reads %llu bytes of %lld", static_cast<unsigned long long>(opened),
+                  static_cast<long long>(healthy.size()));
+    check(opened < uint64_t(healthy.size()) / 2, what);
+
+    // A hundred packets gone from the tables: FFmpeg shortens the header to them,
+    // and what the tables hold is the file
+    QByteArray fewer = healthy;
+    const qsizetype sizes = box_in_moov(fewer, "stsz");
+    const qsizetype times = box_in_moov(fewer, "stts");
+    set_big_endian(fewer, sizes + 8, big_endian(fewer, sizes + 8) - 100);
+    set_big_endian(fewer, times + 8, big_endian(fewer, times + 8) - 100);
+    const QString fewerPath = dir.filePath(QStringLiteral("fewer.m4a"));
+    check(write_bytes(fewerPath, fewer), "MP4 lengths: fewer packets written");
+    const std::unique_ptr<TAudioReader> shorter = TAudioReader::open(fewerPath).value_or(nullptr);
+    check(shorter != nullptr && shorter->file_frame_count() < frames, "MP4 lengths: fewer packets in the tables read as a shorter file");
+
+    // The tables first and the audio cut: the length stays, the read and a seek
+    // behind the cut fail
+    const QString cutPath = dir.filePath(QStringLiteral("front.m4a"));
+    if (write_with_ffmpeg(cutPath, source, encode + QStringList{QStringLiteral("-af"), QStringLiteral("aloop=loop=30:size=44100"), QStringLiteral("-movflags"), QStringLiteral("+faststart")})) {
+        QFile front(cutPath);
+        check(front.open(QIODevice::ReadWrite) && front.resize(front.size() * 2 / 3), "MP4 lengths: the audio cut");
+        front.close();
+        const std::unique_ptr<TAudioReader> cut = TAudioReader::open(cutPath).value_or(nullptr);
+        std::snprintf(what, sizeof(what), "MP4 lengths: cut audio keeps its length (%u of %u)", cut ? cut->file_frame_count() : 0, frames);
+        check(cut != nullptr && cut->file_frame_count() == frames, what);
+        if (cut) {
+            TAudioBuffer buffer;
+            const TAudioFileResult behind = cut->read_file_frames(buffer, frames - 4096, 4096);
+            std::snprintf(what, sizeof(what), "MP4 lengths: a seek behind the cut is an error (%u frames)", behind.frames);
+            check(behind.frames < 4096 && behind.error.has_value(), what);
+        }
+    }
+
+    // The header's length halved: the tables hold more than it says
+    QByteArray halved = healthy;
+    const qsizetype header = box_in_moov(halved, "mdhd") + 16;
+    set_big_endian(halved, header, big_endian(halved, header) / 2);
+    const QString halvedPath = dir.filePath(QStringLiteral("halved.m4a"));
+    check(write_bytes(halvedPath, halved), "MP4 lengths: halved header written");
+    const auto refused = TAudioReader::open(halvedPath);
+    std::snprintf(what, sizeof(what), "MP4 lengths: tables above the header are refused (%s)",
+                  refused ? "it opened" : qPrintable(refused.error().detail));
+    check(!refused && refused.error().code == TAudioFileError::Code::CannotOpen, what);
+}
+
 static void test_mpeg_files(const QTemporaryDir& dir)
 {
     char what[240];
@@ -1273,6 +1354,10 @@ int main()
         return [encode](const QString& path, const Source& source) { return write_with_ffmpeg(path, source, encode); };
     };
     const Source stereo;
+    // Without noise substitution (PNS): its bands come from a random generator, which
+    // a seek starts anew, and with it a seek reads what was there, bit for bit
+    const QStringList aacWithoutNoise{QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"),
+                                      QStringLiteral("-aac_pns"), QStringLiteral("0")};
     const Source mono22{22050, 1};
     const std::vector<Format> formats = {
         {.name = "WAV float (sndfile)", .suffix = "wav", .source = stereo, .write = sndfile(SF_FORMAT_WAV | SF_FORMAT_FLOAT), .lossless = true, .resolution = 0.0f},
@@ -1306,17 +1391,21 @@ int main()
              return write_with_traverso(path, source, TraversoDAW::WriterType::WAVPACK, TraversoDAW::FileFormat::WAVPACK);
          },
          .lossless = true},
-#if defined(M4A_DECODE_SUPPORT)
         {.name = "AAC in ADTS (ffmpeg)", .suffix = "aac", .source = stereo,
-         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-f"),
-                 QStringLiteral("adts")}),
-         .frameTolerance = 1024, .seekTolerance = 0.002f},
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-f"), QStringLiteral("adts")}),
+         .frameTolerance = 1024},
         // ffmpeg's edit list says 23 frames fewer than it was given (ffprobe
         // too): the decoder takes the file's word
-        {.name = "AAC in M4A (ffmpeg)", .suffix = "m4a", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k")}),
-         .frameTolerance = 64, .seekTolerance = 0.002f},
-#endif
-#if defined(M4A_ENCODE_SUPPORT) && defined(M4A_DECODE_SUPPORT)
+        {.name = "AAC in M4A (ffmpeg)", .suffix = "m4a", .source = stereo, .write = ffmpeg(aacWithoutNoise), .frameTolerance = 64},
+        // No word on the priming: as ADTS but for its length the file says nothing of
+        // where the audio starts, and the encoder's delay stays in
+        {.name = "AAC in M4A, no edit list", .suffix = "no-edit-list.m4a", .source = stereo,
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-use_editlist"), QStringLiteral("0")}), .frameTolerance = 1024,
+         .placement = false},
+        {.name = "AAC in fragmented MP4", .suffix = "frag.mp4", .source = stereo,
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov")}), .frameTolerance = 2048,
+         .placement = false},
+#if defined(M4A_ENCODE_SUPPORT)
         {.name = "AAC in ADTS (Traverso's writer)", .suffix = "traverso.aac", .source = stereo,
          .write = [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::M4A, TraversoDAW::FileFormat::UNKNOWN);
@@ -1336,6 +1425,7 @@ int main()
         test_cut_file(dir, format, seekBack);
     }
 #endif
+    test_mp4_files(dir, stereo, aacWithoutNoise);
     test_mpeg_files(dir);
 
     // Everything MP3 again with mpg123's generic decoder, the one without
