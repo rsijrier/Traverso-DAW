@@ -234,8 +234,8 @@ struct Format
     std::function<bool(const QString&, const Source&)> write;
     // Lossless: the samples as written (within the format's resolution);
     // lossy: each channel's level, and the audio where it was written
-    bool lossless;
-    float resolution;
+    bool lossless = false;
+    float resolution = 0.0f;
     // How far the frames may be off what was written: 0 where the format
     // says (MP3 with a LAME tag, Ogg, M4A), an AAC frame for ADTS, which does
     // not say where the audio starts and ends
@@ -1275,51 +1275,53 @@ int main()
     const Source stereo;
     const Source mono22{22050, 1};
     const std::vector<Format> formats = {
-        {"WAV float (sndfile)", "wav", stereo, sndfile(SF_FORMAT_WAV | SF_FORMAT_FLOAT), true, 0.0f},
+        {.name = "WAV float (sndfile)", .suffix = "wav", .source = stereo, .write = sndfile(SF_FORMAT_WAV | SF_FORMAT_FLOAT), .lossless = true, .resolution = 0.0f},
         // The test signals described, computed by the decoder on its own:
         // the same sweeps within float rounding
-        {"Scenario (test signals)", "tscenario", stereo, write_scenario, true, 1e-6f},
-        {"WAV 16 bit (sndfile)", "16.wav", stereo, sndfile(SF_FORMAT_WAV | SF_FORMAT_PCM_16), true, 1.0f / 32768},
-        {"FLAC 24 bit (sndfile)", "flac", stereo, sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"AIFF 24 bit (sndfile)", "aiff", stereo, sndfile(SF_FORMAT_AIFF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"W64 24 bit (sndfile)", "w64", stereo, sndfile(SF_FORMAT_W64 | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"RF64 float (sndfile)", "rf64", stereo, sndfile(SF_FORMAT_RF64 | SF_FORMAT_FLOAT), true, 0.0f},
-        {"CAF 24 bit (sndfile)", "caf", stereo, sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"Ogg Vorbis (sndfile)", "ogg", stereo, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), false, 0.0f},
-        {"Ogg Opus (sndfile)", "opus", Source{48000, 2}, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), false, 0.0f},
-        {"MP3 with a LAME tag", "mp3", stereo, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f, 0, true, MpgSeekTolerance},
-        {"MP3 MPEG-2 mono 22.05 kHz", "22.mp3", mono22, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f, 0, true, MpgSeekTolerance},
+        {.name = "Scenario (test signals)", .suffix = "tscenario", .source = stereo, .write = write_scenario, .lossless = true, .resolution = 1e-6f},
+        {.name = "WAV 16 bit (sndfile)", .suffix = "16.wav", .source = stereo, .write = sndfile(SF_FORMAT_WAV | SF_FORMAT_PCM_16), .lossless = true, .resolution = 1.0f / 32768},
+        {.name = "FLAC 24 bit (sndfile)", .suffix = "flac", .source = stereo, .write = sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "AIFF 24 bit (sndfile)", .suffix = "aiff", .source = stereo, .write = sndfile(SF_FORMAT_AIFF | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "W64 24 bit (sndfile)", .suffix = "w64", .source = stereo, .write = sndfile(SF_FORMAT_W64 | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "RF64 float (sndfile)", .suffix = "rf64", .source = stereo, .write = sndfile(SF_FORMAT_RF64 | SF_FORMAT_FLOAT), .lossless = true, .resolution = 0.0f},
+        {.name = "CAF 24 bit (sndfile)", .suffix = "caf", .source = stereo, .write = sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "Ogg Vorbis (sndfile)", .suffix = "ogg", .source = stereo, .write = sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), .lossless = false, .resolution = 0.0f},
+        {.name = "Ogg Opus (sndfile)", .suffix = "opus", .source = Source{48000, 2}, .write = sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), .lossless = false, .resolution = 0.0f},
+        {.name = "MP3 with a LAME tag", .suffix = "mp3", .source = stereo, .write = sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), .seekTolerance = MpgSeekTolerance},
+        {.name = "MP3 MPEG-2 mono 22.05 kHz", .suffix = "22.mp3", .source = mono22, .write = sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), .seekTolerance = MpgSeekTolerance},
         // The tag's padding is a lie here: the file holds more frames than
         // were written, the last of them silence
-        {"MP3 with a LAME padding below 529", "pad.mp3", stereo,
-         [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); }, false, 0.0f, 2304, true, MpgSeekTolerance},
-        {"MP3 without gapless information (ffmpeg)", "nolame.mp3", stereo,
-         ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
+        {.name = "MP3 with a LAME padding below 529", .suffix = "pad.mp3", .source = stereo,
+         .write = [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); },
+         .frameTolerance = 2304, .seekTolerance = MpgSeekTolerance},
+        {.name = "MP3 without gapless information (ffmpeg)", .suffix = "nolame.mp3", .source = stereo,
+         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
                  QStringLiteral("0")}),
-         false, 0.0f, 3000, false, MpgSeekTolerance},
+         .frameTolerance = 3000, .placement = false, .seekTolerance = MpgSeekTolerance},
         // Layer II through mpg123 too (decision 4), which limits its preframes to 2
-        {"MP2 (ffmpeg)", "mp2", stereo, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("mp2"), QStringLiteral("-b:a"), QStringLiteral("192k")}), false, 0.0f, 3000, false, MpgSeekTolerance},
-        {"WavPack float", "wv", stereo,
-         [](const QString& path, const Source& source) {
+        {.name = "MP2 (ffmpeg)", .suffix = "mp2", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("mp2"), QStringLiteral("-b:a"), QStringLiteral("192k")}),
+         .frameTolerance = 3000, .placement = false, .seekTolerance = MpgSeekTolerance},
+        {.name = "WavPack float", .suffix = "wv", .source = stereo,
+         .write = [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::WAVPACK, TraversoDAW::FileFormat::WAVPACK);
          },
-         true, 0.0f},
+         .lossless = true},
 #if defined(M4A_DECODE_SUPPORT)
-        {"AAC in ADTS (ffmpeg)", "aac", stereo,
-         ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-f"),
+        {.name = "AAC in ADTS (ffmpeg)", .suffix = "aac", .source = stereo,
+         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-f"),
                  QStringLiteral("adts")}),
-         false, 0.0f, 1024, true, 0.002f},
+         .frameTolerance = 1024, .seekTolerance = 0.002f},
         // ffmpeg's edit list says 23 frames fewer than it was given (ffprobe
         // too): the decoder takes the file's word
-        {"AAC in M4A (ffmpeg)", "m4a", stereo, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k")}),
-         false, 0.0f, 64, true, 0.002f},
+        {.name = "AAC in M4A (ffmpeg)", .suffix = "m4a", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k")}),
+         .frameTolerance = 64, .seekTolerance = 0.002f},
 #endif
 #if defined(M4A_ENCODE_SUPPORT) && defined(M4A_DECODE_SUPPORT)
-        {"AAC in ADTS (Traverso's writer)", "traverso.aac", stereo,
-         [](const QString& path, const Source& source) {
+        {.name = "AAC in ADTS (Traverso's writer)", .suffix = "traverso.aac", .source = stereo,
+         .write = [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::M4A, TraversoDAW::FileFormat::UNKNOWN);
          },
-         false, 0.0f, 1024, true, 0.0f, -2048, "libfaac leaves out the first 2048 frames (task: Traverso's AAC writer)"},
+         .frameTolerance = 1024, .knownLag = -2048, .knownWhy = "libfaac leaves out the first 2048 frames (task: Traverso's AAC writer)"},
 #endif
     };
     for (const Format& format : formats) {
