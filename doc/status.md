@@ -845,9 +845,9 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T82 FFmpeg as the required decoder instead of FAAD** (Remon, 2026-11-01). An
   `FFmpegAudioReader` on libavformat and libavcodec, a required dependency, also
   when a distribution's build has fewer codecs. FAAD and the MP4 code of our own
-  go; no second AAC path, not per file and not per system. A PoC next to FAAD on
-  `ffmpeg-reader-poc`; no order to build it yet. Until then no large refactor of
-  `FaadAudioReader`.
+  go; no second AAC path, not per file and not per system. Built on `ffmpeg-aac`.
+  `FaadAudioReader` stays in the tree and is built, but nothing reaches it, until
+  Remon has spoken to Ben, whose code it is.
   - **To show**: exact seeks and length by the contract (`test_audio_decoders`,
     `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
     without `#if`.
@@ -872,13 +872,17 @@ From the GPU waveform test program, clip edges in variant A (branch
     tables' end, both after the priming; one packet is the index's own packet length.
     - apart by at most one packet: the smallest of the two, healthy;
     - tables more than one packet below the header: open with the header's length,
-      damage, the read fails at the end;
+      damage, the read fails at the end; FFmpeg shortens the header to the tables
+      when it reads them (`mov.c`), so a table cut short reads as a shorter file:
+      what the tables hold is the file. Audio cut from the file keeps its length
+      and fails at the end;
     - tables more than one packet above the header: refuse with a reason;
     - header missing, zero, negative or above `nframes_t`: refuse with a reason;
     - fragmented MP4 under the same rule; ADTS has no length and keeps counting.
     - the priming of an MP4 is what the decoder reports on its first frame
       (`AV_FRAME_DATA_SKIP_SAMPLES`), which fits every sample on 8.0 and 9.0; ADTS
-      reports nothing and keeps one AAC frame;
+      reports nothing and keeps one AAC frame; an MP4 without an edit list keeps
+      the encoder's delay, as FFmpeg's CLI does: such a file says nothing;
     - at the open the last packet is decoded and the length cut to what the decoder
       gives: a healthy file does not end in an error.
     - tables can give the first packet more than the decoder has (Opus in MP4 1008
