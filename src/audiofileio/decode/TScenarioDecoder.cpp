@@ -67,13 +67,16 @@ std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(TByte
     }
     // The first line names the format and its version, before anything parses
     const qsizetype lineEnd = bytes.indexOf('\n');
+    if (lineEnd < 0) {
+        return fail(QStringLiteral("no tscenario line"));
+    }
     QByteArray line = bytes.left(lineEnd);
     if (line.endsWith('\r')) {
         line.chop(1);
     }
     const QByteArray versionText = line.mid(ScenarioLine.size());
     const bool digits = !versionText.isEmpty() && std::all_of(versionText.begin(), versionText.end(), [](char c) { return c >= '0' && c <= '9'; });
-    if (lineEnd < 0 || !line.startsWith(ScenarioLine) || !digits) {
+    if (!line.startsWith(ScenarioLine) || !digits) {
         return fail(QStringLiteral("no tscenario line"));
     }
     if (versionText.toInt() != ScenarioVersion) {
