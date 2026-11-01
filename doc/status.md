@@ -854,9 +854,22 @@ From the GPU waveform test program, clip edges in variant A (branch
   - **Versions**: FFmpeg 8.0 and 9.0 are tested, 8.0 is the lower bound for now
     (Remon, 2026-11-01): the releases Traverso first lands in have 9.0, Ubuntu 26.04
     LTS and this machine 8.0.1, and stable releases with 7.1 or older do not get it.
-    The requirement can change with the outcome of those tests. The FFmpeg 9.0.2 CLI
-    gives `ff-16b-2c-44100hz.m4a` 872 frames fewer than 8.0.1, not looked into, and
-    the PoC has only been built against 8.0.1.
+    The requirement can change with the outcome of those tests. Measured with the
+    PoC built against both: the same frames from the decoder with
+    `AV_CODEC_FLAG2_SKIP_MANUAL`; 9.0 only adds an end skip to the last packet's
+    `AV_PKT_DATA_SKIP_SAMPLES`. The reader must not lean on that: 8.0 lacks it.
+    `count_frames()` of the PoC subtracts it twice on 9.0, the rule below replaces that.
+  - **Length of an MP4** (Remon, 2026-11-01): compare the header's length with the
+    tables' end, both after the priming; one packet is the index's own packet length.
+    - apart by at most one packet: the smallest of the two, healthy;
+    - tables more than one packet below the header: open with the header's length,
+      damage, the read fails at the end;
+    - tables more than one packet above the header: refuse with a reason;
+    - header missing, zero, negative or above `nframes_t`: refuse with a reason;
+    - fragmented MP4 under the same rule; ADTS has no length and keeps counting.
+  - **Open**: the priming of a file without skip data and start 0. One frame off fits
+    `bear-mpeg2-aac-only_frag.mp4` and not `ep7.m4b` or `ep9.m4b`, as FFmpeg's CLI
+    reads them on both versions.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
