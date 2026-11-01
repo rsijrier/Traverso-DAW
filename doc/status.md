@@ -817,6 +817,23 @@ From the GPU waveform test program, clip edges in variant A (branch
   outcome per file becomes the expectation of `audio_corpus`. First with `ffprobe`
   per file. Candidates: `nero-chapters.m4b`, `bear-mpeg2-aac-only_frag.mp4`,
   `apev2-lyricsv2.mp3`, `synth-bad.mp3`; the vague "FAAD cannot read it".
+  Work list from all samples against ffmpeg (2026-11-01; a rough comparison, to
+  check by hand):
+  - possibly refused wrongly: `apev2-lyricsv2.mp3` (ffmpeg reads 85295 frames),
+    `lame397v9short.mp3` (with the reason "-300 frames of audio");
+  - shorter than ffmpeg: `double-sfx.ogg` (15435 against 30742, chained Ogg),
+    `populated-zero-value-padding.ogg` (48000 against 96000, ffmpeg reports CRC
+    errors), `icy_sfx.mp3` (11025 against 14976);
+  - opens but reads nothing, better refused: `52-overwritten-metadata.flac`,
+    `flac_application.flac`, `ooming-header.flac`;
+  - place: `vbri.mp3` (1152 frames), `Example.mp3` (529, an iTunes tag with
+    delay 0), `bear-opus.ogg` (312, pre-skip);
+  - `bear-audio-10s-CBR-has-TOC.mp3`: the same length, 33 dB apart.
+- **T83 A rare race in `TIOScheduler`** (Remon, 2026-11-01). `io_scheduler` failed
+  once under TSan on 2026-11-01 with 22 reports (`TIOScheduler.cpp:44`, `:71`,
+  `TIOScheduler.h:289`, `:296`), then passed 6 of 6. Not from FFmpeg's reader.
+  Find out what it was; the reports are lost when the run is repeated, so keep
+  the output (`check-ctest-tsan-ffmpeg.txt`, local).
 - **T82 FFmpeg as the optional decoder instead of FAAD** (research; Remon,
   2026-11-01). An `FFmpegAudioReader` on libavformat and libavcodec, optional as
   FAAD is now; a build without it has no AAC. FAAD and the MP4 code of our own go.
