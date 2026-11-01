@@ -833,13 +833,28 @@ From the GPU waveform test program, clip edges in variant A (branch
   once under TSan on 2026-11-01 with 22 reports (`TIOScheduler.cpp:44`, `:71`,
   `TIOScheduler.h:289`, `:296`), then passed 6 of 6. Not from FFmpeg's reader.
   Find out what it was.
-- **T82 FFmpeg as the optional decoder instead of FAAD** (research; Remon,
-  2026-11-01). An `FFmpegAudioReader` on libavformat and libavcodec, optional as
-  FAAD is now; a build without it has no AAC. FAAD and the MP4 code of our own go.
-  To show: exact seeks and length by the contract (`test_audio_decoders`,
-  `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
-  without `#if`. Goes together with the choice for video. Until then no large
-  refactor of `FaadAudioReader`. A PoC next to FAAD on `ffmpeg-reader-poc`.
+- **T82 FFmpeg as the required decoder instead of FAAD** (Remon, 2026-11-01). An
+  `FFmpegAudioReader` on libavformat and libavcodec, a required dependency, also
+  when a distribution's build has fewer codecs. FAAD and the MP4 code of our own
+  go; no second AAC path, not per file and not per system. A PoC next to FAAD on
+  `ffmpeg-reader-poc`; no order to build it yet. Until then no large refactor of
+  `FaadAudioReader`.
+  - **To show**: exact seeks and length by the contract (`test_audio_decoders`,
+    `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
+    without `#if`.
+  - **A build without the decoder**: refuse with a reason that names the format as
+    the file gives it, and that this FFmpeg has no decoder for it. No tested
+    distribution needs this today. Implicit HE-AAC shows as LC in its container.
+  - **Measured 2026-11-01**: Fedora 44's `ffmpeg-free` 8.1.3 and Tumbleweed's
+    FFmpeg 9.0.2 use the native `aac` decoder. On Fedora all 26 AAC samples came out
+    byte for byte as FFmpeg 8.0.1, also HE-AAC v1, v2 and Main. Fedora's other
+    decoder, `libfdk_aac` of fdk-aac-free, gives half the samples on implicit HE-AAC
+    without an error and refuses Main, so the reader asks for `aac` by name, not for
+    what the codec id finds first.
+  - **Versions**: EPEL 9 and 10 have `ffmpeg-free` 7.1.5, Tumbleweed 9.0.2. The FFmpeg
+    9.0.2 CLI gives `ff-16b-2c-44100hz.m4a` 872 frames fewer than 8.0.1, not looked
+    into: the length rules need a test against the oldest and the newest. RHEL
+    itself and EPEL's build were not tested.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
