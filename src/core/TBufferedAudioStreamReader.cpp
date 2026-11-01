@@ -114,7 +114,7 @@ void TBufferedAudioStreamReader::private_init()
     m_sourceStartLocation = TTimeRef();
 
     m_refcount = 0;
-    m_inErrorState = 0;
+    m_errorCode = 0;
 
     m_aboutOneToFourSecondsTime = TTimeRef::UNIVERSAL_SAMPLE_RATE * (TraversoDAW::Utils::randomNumberBetween(0, 3) + 1.0);
 }
@@ -196,7 +196,7 @@ int TBufferedAudioStreamReader::init( )
 
     if (m_channelCount == 0) {
         PERROR("ReadSource channel count is 0");
-        return (m_inErrorState = INVALID_CHANNEL_COUNT);
+        return (m_errorCode = INVALID_CHANNEL_COUNT);
     }
 
     // A reader exists only for a file it reads (channels, rate and frames
@@ -206,7 +206,7 @@ int TBufferedAudioStreamReader::init( )
     std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> reader = TAudioReader::open(m_fileName);
     if (!reader) {
         TLOG_W("audiofile", "{}: cannot read it ({})", m_fileName.toStdString(), reader.error().detail.toStdString());
-        return (m_inErrorState = reader.error().code == TAudioFileError::Code::NotFound ? FILE_DOES_NOT_EXIST : COULD_NOT_OPEN_FILE);
+        return (m_errorCode = reader.error().code == TAudioFileError::Code::NotFound ? FILE_DOES_NOT_EXIST : COULD_NOT_OPEN_FILE);
     }
     m_audioReader = std::move(*reader);
 
@@ -292,7 +292,7 @@ int TBufferedAudioStreamReader::set_file(const QString & filename)
 {
     PENTER;
 
-    m_inErrorState = 0;
+    m_errorCode = 0;
 
     int splitpoint = filename.lastIndexOf("/") + 1;
     int length = filename.length();
@@ -687,7 +687,7 @@ uint TBufferedAudioStreamReader::get_file_rate() const
 
 QString TBufferedAudioStreamReader::get_error_string() const
 {
-	switch(m_inErrorState) {
+	switch(m_errorCode) {
 		case COULD_NOT_OPEN_FILE: return tr("Could not open file");
 		case INVALID_CHANNEL_COUNT: return tr("Invalid channel count");
 		case ZERO_CHANNELS: return tr("File has zero channels");
