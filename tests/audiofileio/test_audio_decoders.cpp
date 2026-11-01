@@ -1297,6 +1297,8 @@ int main()
          ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
                  QStringLiteral("0")}),
          false, 0.0f, 3000, false, MpgSeekTolerance},
+        // Layer II through mpg123 too (decision 4), which limits its preframes to 2
+        {"MP2 (ffmpeg)", "mp2", stereo, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("mp2"), QStringLiteral("-b:a"), QStringLiteral("192k")}), false, 0.0f, 3000, false, MpgSeekTolerance},
         {"WavPack float", "wv", stereo,
          [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::WAVPACK, TraversoDAW::FileFormat::WAVPACK);
@@ -1339,7 +1341,7 @@ int main()
     qputenv("TRAVERSO_MPG123_DECODER", "generic");
     std::printf("mpg123's generic decoder:\n");
     for (const Format& format : formats) {
-        if (QLatin1String(format.suffix).endsWith(QLatin1String("mp3"))) {
+        if (QLatin1String(format.suffix).endsWith(QLatin1String("mp3")) || QLatin1String(format.suffix) == QLatin1String("mp2")) {
             test_format(dir, format);
 #if !defined(Q_OS_WIN)
             test_cut_file(dir, format, SeekBack::NotTried);

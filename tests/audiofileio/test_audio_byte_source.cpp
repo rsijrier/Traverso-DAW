@@ -358,7 +358,7 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
     char what[160];
     std::snprintf(what, sizeof(what), "%s: a medium that fails at once: no decoder, no hang", format.name);
     const auto refused = TAudioReader::open(path, memory_opener(&medium));
-    check(!refused.has_value(), what);
+    check(!refused && refused.error().detail == QString(Reason), what);
 
     // An MP3 behind an ID3v2 tag larger than the source's block (album art):
     // the tag reads, the first audio byte after it fails
@@ -683,8 +683,11 @@ static void test_large_garbage()
         randomFile.write(block);
     }
     randomFile.close();
-    check(!TAudioReader::open(zeros).has_value(), "256 MiB of zeros: no decoder takes it, no crash");
-    check(!TAudioReader::open(random).has_value(), "32 MiB of random bytes: no decoder takes it, no crash");
+    const auto refusedZeros = TAudioReader::open(zeros);
+    const auto refusedRandom = TAudioReader::open(random);
+    const QLatin1String noDecoder("no decoder reads this format");
+    check(!refusedZeros && refusedZeros.error().detail.startsWith(noDecoder), "256 MiB of zeros: no decoder takes it, no crash");
+    check(!refusedRandom && refusedRandom.error().detail.startsWith(noDecoder), "32 MiB of random bytes: no decoder takes it, no crash");
 }
 
 #if defined(Q_OS_LINUX)
