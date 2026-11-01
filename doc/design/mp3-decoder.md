@@ -232,7 +232,8 @@ tag without a real frame count, also with an encoder's name in it, counts as no
 tag for the length and for this rule: there is no count to check against. Its
 delay and padding are used when mpg123 gives them (>= 0): the length is the
 scanned samples - delay - max(padding, 529), and skip = delay + 529, as with a
-full tag. Without delay or padding: length as above, skip = 0.
+full tag. Without delay or padding: length as above, skip = 0, also with a
+frame count.
 
 With a real frame count in the tag:
 - the source of the samples is the tag's length when it says more than one

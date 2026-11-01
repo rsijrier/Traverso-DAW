@@ -684,6 +684,24 @@ static QByteArray with_frame_count_over(const QByteArray& bytes, uint extraFrame
     return changed;
 }
 
+// The Info frame with its frame count, without the encoder's part: no name, no
+// delay, no padding
+static QByteArray without_lame_part(const QByteArray& bytes)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64) {
+        return QByteArray();
+    }
+    const int flags = changed[tag + 7];
+    const qsizetype part = tag + 8 + (flags & 1 ? 4 : 0) + (flags & 2 ? 4 : 0) + (flags & 4 ? 100 : 0) + (flags & 8 ? 4 : 0);
+    changed.replace(part, 24, QByteArray(24, '\0'));
+    return changed;
+}
+
 // An ID3v1 tag behind the audio, which mpg123 leaves out of the stream
 static QByteArray with_id3v1(const QByteArray& bytes)
 {
@@ -938,6 +956,25 @@ static void test_mpeg_files(const QTemporaryDir& dir)
         const ReadBack overBack = over ? read_back(*over) : ReadBack{};
         std::snprintf(what, sizeof(what), "A tag two frames over the scan: the tag's length, an error at the end (%u frames, %u read)", over ? over->file_frame_count() : 0, overBack.frames());
         check(over && over->file_frame_count() == source.frames() + 2 * 1152 && overBack.error && overBack.frames() < over->file_frame_count(), what);
+    }
+
+    // A frame count without delay and padding: it still says how long the file
+    // is, so a file cut short ends in an error
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-count-only.mp3"));
+        const QByteArray countOnly = without_lame_part(bytes);
+        write_bytes(path, countOnly);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A frame count alone: read to its end (%u frames, %u read)", count, back.frames());
+        check(count >= source.frames() && back.frames() == count && !back.error, what);
+
+        write_bytes(path, countOnly.left(countOnly.size() / 2));
+        const std::unique_ptr<TAudioReader> cut = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack cutBack = cut ? read_back(*cut) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A frame count alone, cut short: the count's length, an error at the end (%u frames, %u read)", cut ? cut->file_frame_count() : 0, cutBack.frames());
+        check(cut && cut->file_frame_count() == count && cutBack.error && cutBack.frames() < count, what);
     }
 
     // A tag with an encoder's name and no frame count: the scan gives the

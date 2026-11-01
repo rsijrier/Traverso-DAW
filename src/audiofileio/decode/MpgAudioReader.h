@@ -89,7 +89,7 @@ private:
     long m_padding{-1};
     // What the tag's frame count says, 0 without one: without a count (an
     // encoder's name only) the scan alone gives the length, and the damage
-    // rule holds; delay and padding are used all the same
+    // rule holds. Delay and padding are apart from it: a tag can hold either
     int64_t m_tagSamples{0};
     // The samples of one MPEG frame
     int64_t m_frameSamples{0};

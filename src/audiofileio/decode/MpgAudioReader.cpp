@@ -228,11 +228,10 @@ TAudioFileStatus MpgAudioReader::scan()
     m_scannedSamples = mpg123_length64(m_handle);
 
     const bool gapless = m_delay >= 0 && m_padding >= 0;
-    // A real frame count with delay and padding; otherwise the scan alone gives
-    // the length and the damage rule holds
-    const bool fullTag = m_tagSamples > 0 && gapless;
     int64_t frames = m_scannedSamples;
-    if (fullTag) {
+    // A real frame count; without one the scan alone gives the length and the
+    // damage rule holds
+    if (m_tagSamples > 0) {
         // The tag goes first when it says more than a frame over what the scan
         // found, a file cut short: the audio stays in place and the end is an
         // error. One frame over is iTunes, which counts its Info frame. When
