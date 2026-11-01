@@ -14,7 +14,8 @@
 #include <mutex>
 #include <vector>
 
-// off_t stays out of our code; this asks for mpg123_info2() and the 64 calls
+// off_t stays out of our code; this asks for the 64 calls, and mpg123.h maps
+// mpg123_info() to mpg123_info2()
 #define MPG123_PORTABLE_API
 #include <mpg123.h>
 

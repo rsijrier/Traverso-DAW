@@ -39,7 +39,7 @@ unless section 7 says otherwise.
    does.
 7. Threads: one process-wide mutex around our own `mpg123_new()`, and no
    mutex around `sf_open_virtual()`.
-8. Probe step 4 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
+8. Probe step 3 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
 9. A WAV with MP3 in it (`WAV|MPEG_LAYER_III` according to libsndfile) goes
    to `MpgAudioReader`.
 10. The probe goes by content, never by file name: a table of fixed
@@ -47,8 +47,8 @@ unless section 7 says otherwise.
     of WavPack and FAAD (section 3). A table entry holds fixed signatures
     only, no versions, subtypes or codecs; in doubt the library decides. A
     format that is not in the table keeps working through the later steps.
-11. `.tscenario` by file name is a deliberate exception: it is a test
-    facility, not an audio format.
+11. No exception on the name: a scenario is known by its first line, `# tscenario
+    <N>` (signature `# ts`). `.tscenario` stays a convention for people.
 12. Junk in front of the audio: limit 1 MiB.
 13. The test chooses the generic decoder through an environment variable
     that `MpgAudioReader` reads itself (for instance
@@ -138,20 +138,20 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 
 ## 3. `find_decoder()`
 
-1. `.tscenario`, by file name (decision 11).
-2. The table below. A match goes to that decoder directly. When libsndfile
-   refuses a file of its table entries, the strict probe of step 3 still gets
-   it (`RIFF....RMP3`); no entries are added for that.
-3. `MpgAudioReader::can_decode()`, the strict probe.
-4. `SFAudioReader::major_format()`: `SF_FORMAT_MPEG` gives no decoder;
+1. The table below. A match goes to that decoder directly, whose open says why
+   not. When libsndfile refuses a file of its table entries, the strict probe of
+   step 2 still gets it (`RIFF....RMP3`); no entries are added for that.
+2. `MpgAudioReader::can_decode()`, the strict probe.
+3. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on
    the RIFF route of the table: it is known after libsndfile opened the file.
-5. The existing probes of WavPack and FAAD.
+4. The existing probes of WavPack and FAAD.
 
 | Signature | Offset | Decoder |
 |---|---|---|
 | `RIFF`, `RF64`, `riff` (W64), `FORM`, `fLaC`, `OggS`, `caff`, `.snd` | 0 | libsndfile |
 | `wvpk` | 0 | WavPack |
+| `# ts` | 0 | `TScenarioDecoder` |
 | `ftyp` | 4 | FAAD |
 
 Also fixed, not tried: `RIFX`, `dns.`. `ID3` is not in the table: a tag can
@@ -234,7 +234,7 @@ delay and padding are used when mpg123 gives them (>= 0): the length is the
 scanned samples - delay - max(padding, 529), and skip = delay + 529, as with a
 full tag. Without delay or padding: length as above, skip = 0.
 
-With a tag (a real frame count, delay and padding >= 0):
+With a real frame count in the tag:
 - the source of the samples is the tag's length when it says more than one
   MPEG frame over what the scan found, a file cut short; otherwise the scan, so
   iTunes' extra frame and a tag that says less (concatenated files) do not cut
@@ -271,14 +271,14 @@ what it needs. The saved data must also hold the scanned samples: without a tag
 `mpg123_length64()` stays an estimate, and they are the seek limit.
 
 **In the code itself.** The remaining risk of "Why no mutex around libsndfile",
-the exception of decision 11, the environment variable of decision 13.
+the environment variable of decision 13.
 
 ## 5. Files
 
 - `src/audiofileio/decode/MpgAudioReader.h`, `.cpp`: new.
 - `src/audiofileio/decode/MadAudioReader.h`, `.cpp`: removed, with the RIFF
   hack in its `can_decode()`.
-- `src/audiofileio/decode/TAudioDecoder.cpp`: `find_decoder()`, and the
+- `src/audiofileio/decode/TAudioDecoderFactory.cpp`: `find_decoder()`, and the
   comments on MAD; the claim about "hundreds of frames" is wrong.
 - `src/audiofileio/decode/TAudioDecoder.h`, `src/byteio/TByteSource.h`:
   mentions of MAD.

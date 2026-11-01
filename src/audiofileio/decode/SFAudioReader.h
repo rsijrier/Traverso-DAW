@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 // WAV, W64, AIFF, FLAC, Ogg Vorbis and what else libsndfile reads; not MP3,
-// which goes to MpgAudioReader (TAudioDecoder.cpp)
+// which goes to MpgAudioReader (TAudioDecoderFactory.cpp)
 class SFAudioReader : public TAudioDecoder
 {
 public:

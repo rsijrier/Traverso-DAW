@@ -10,6 +10,14 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-11-01 | `TByteSource::read_failed()`, `m_readFailed` | gone | `read_medium()` gives `TMediumRead {bytes, reason}` |
+| 2026-11-01 | `TByteSource::now_nanoseconds()`, `TRtTransportPosition::now_nanoseconds()`, `TFrameClock::now_nanoseconds()` | `TClock::now_nanoseconds()` |  |
+| 2026-11-01 | `SFAudioReader::major_format()` | `format()` | gives the subtype and the reason |
+| 2026-11-01 | `TAudioDecoder::open_source()` | `source()`, `open_extra_source()` | the first source comes from the probes |
+| 2026-11-01 | `TAudioDecoder::is_valid()`, `open_error()`, `m_openError` | gone | a decoder that cannot open does not exist |
+| 2026-11-01 | `TScenarioDecoder::is_scenario_file()` | gone | a scenario by its first line |
+| 2026-11-01 | `DecoderLibrary::None` | gone | `find_decoder()` gives `std::expected` |
+| 2026-11-01 | `TAudioFileError::openCost` | gone | back when it has a user, for instance at 2c |
 | 2026-11-01 | `open_audio_decoder()`, `can_decode_audio()` | `TAudioDecoderFactory::open_file()`, `can_read()` | so the base class names one friend, the same as the decoders |
 | 2026-11-01 | `has_audio()` | `require_audio()` | it gives a status |
 | 2026-10-31 | `TByteTransfer` | `TReadTotals` |  |
@@ -17,7 +25,6 @@ forks and agents: a name in an older text means what it meant then.
 | 2026-10-31 | `untold` | `unclassified` | the reads the platform could not tell apart |
 | 2026-10-31 | `TByteSource::set_stats()` | `count_reads_into()` |  |
 | 2026-10-31 | `TByteSource::transfer()` | `read_and_count()` |  |
-| 2026-10-31 | `TByteSource::read_failed()` | `record_read_failure()` |  |
 | 2026-10-31 | `TAudioPhaseStats` | `TAudioIOCost` |  |
 | 2026-10-31 | `TAudioIOStats::Phase`, `phase` | `Activity`, `activity` |  |
 | 2026-10-31 | `TAudioPhaseStats::bytes` | `TAudioIOCost::reads` |  |

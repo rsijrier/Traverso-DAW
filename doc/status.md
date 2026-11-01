@@ -783,6 +783,12 @@ From the GPU waveform test program, clip edges in variant A (branch
   real file asks for it: read a damaged file and skip just the broken parts, where
   now the read stops at the damage. Accepted for now: a leaner and more robust
   API and library, at the price of fewer files read than MAD did.
+- **T78 The reason of a failed open does not reach the user** (Remon, 2026-11-01).
+  A drag onto the canvas is refused without a word (`TClipsViewPort.cpp:110` asks
+  `can_read()`, a yes or no). In a project or an import the user sees "Could not
+  open file": `TBufferedAudioStreamReader` keeps an error code, the reason goes to
+  the log only. Keep the `TAudioFileError` in the stream and show its detail; let
+  a refused drag say why.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.

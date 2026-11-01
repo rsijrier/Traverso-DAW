@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
-#include "TClock.h"
 #include "TLog.h"
 #include "TAudioIOStats.h"
 
