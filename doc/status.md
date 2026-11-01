@@ -799,6 +799,20 @@ From the GPU waveform test program, clip edges in variant A (branch
   the borders with JACK (32 bit) and PipeWire (`uint64_t`). What can be negative
   keeps a signed type. `-Wsign-conversion` on the targets it touches. A step in
   between: SF and WavPack refuse above the limit.
+- **T80 A sample library as a test** (Remon, 2026-11-01). Real and damaged files in
+  `~/Music/TraversoSamples/` (local, never in the repository; `manifest.tsv` has
+  source, license and result per file). A test target `audio_corpus` that runs only
+  when the folder is there (path through a variable): read, seek, build peaks,
+  resample per file, also under TSan. Then a project `TraversoSamples` for the
+  application: import, waveforms, playback. Not done yet: so far every file only
+  went through `TAudioReader` one by one.
+- **T81 Judge the files of the sample library** (Remon, 2026-11-01). A file refused
+  wrongly is a bug and gets fixed. A damaged file that may be usable is judged on
+  its use in Traverso. A file really broken, or without audio, is refused. The
+  message to the user is clear and says what is wrong (with T78). The judged
+  outcome per file becomes the expectation of `audio_corpus`. First with `ffprobe`
+  per file. Candidates: `nero-chapters.m4b`, `bear-mpeg2-aac-only_frag.mp4`,
+  `apev2-lyricsv2.mp3`, `synth-bad.mp3`; the vague "FAAD cannot read it".
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
