@@ -164,24 +164,24 @@ TAudioFileStatus MpgAudioReader::open_failed(const QString& detail)
     return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, detail});
 }
 
-std::expected<void, QString> MpgAudioReader::can_decode(TByteSource& source)
+std::expected<void, std::optional<QString>> MpgAudioReader::can_decode(TByteSource& source)
 {
     MpgInput input{&source};
     int error = MPG123_OK;
     const std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle(open_handle(input, &error), mpg123_delete);
     if (!handle) {
-        return std::unexpected(QString());
+        return std::unexpected(std::nullopt);
     }
 
     long rate = 0;
     int channels = 0;
     int encoding = 0;
     if (mpg123_getformat(handle.get(), &rate, &channels, &encoding) != MPG123_OK) {
-        return std::unexpected(QString());
+        return std::unexpected(std::nullopt);
     }
     mpg123_frameinfo2 first{};
     if (mpg123_info(handle.get(), &first) != MPG123_OK) {
-        return std::unexpected(QString());
+        return std::unexpected(std::nullopt);
     }
 
     // The open read a frame already, so n frames walked is n + 1 frames. On

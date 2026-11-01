@@ -111,12 +111,12 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
         return *signature;
     }
 
-    const std::expected<void, QString> mpeg = MpgAudioReader::can_decode(source);
+    const std::expected<void, std::optional<QString>> mpeg = MpgAudioReader::can_decode(source);
     if (mpeg) {
         return DecoderLibrary::Mpg;
     }
     // Only when it looked like MPEG audio: the other probes' refusals are noise
-    const QString none = mpeg.error().isEmpty() ? QStringLiteral("no decoder reads this format") : QStringLiteral("no decoder reads this format (%1)").arg(mpeg.error());
+    const QString none = mpeg.error() ? QStringLiteral("no decoder reads this format (%1)").arg(*mpeg.error()) : QStringLiteral("no decoder reads this format");
 
     // libsndfile's MPEG goes nowhere: a file the strict probe refused
     if (const std::expected<int, QString> format = SFAudioReader::format(source)) {
