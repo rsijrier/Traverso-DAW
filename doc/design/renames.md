@@ -36,7 +36,7 @@ forks and agents: a name in an older text means what it meant then.
 | 2026-10-31 | `TAudioDecoder::reads_from()` | `next_read_is_at()` |  |
 | 2026-10-31 | `TAudioDecoder::error()`, `m_error` | `in_error_state()`, `m_inErrorState` |  |
 | 2026-10-31 | `TBufferedAudioStreamReader::m_error` | `m_errorCode` | an error code, not a state |
-| 2026-10-31 | `no_decoder()` | `why_no_decoder()` | `TAudioDecoder.cpp` |
+| 2026-10-31 | `no_decoder()` | `why_no_decoder()` | `TAudioDecoderFactory.cpp` |
 | 2026-10-31 | `TAudioReader::m_frame` | `m_nextOutputFrame` |  |
 | 2026-10-31 | `TAudioReader::reset()` | `reset_resampler()` |  |
 | 2026-10-31 | `src/audiofileio/TByteSource.h`, `TByteSource.cpp`, `TByteStats.h` (in `traversoaudiofileio`) | `src/byteio/` (library `traversobyteio`) | moved, unchanged: all disk access goes through it (`src/byteio/README.md`); audiofileio links it |

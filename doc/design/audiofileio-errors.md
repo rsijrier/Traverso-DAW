@@ -29,8 +29,8 @@ keeps a null handle; `process()` then gives 0 and the stream plays zeros
 There are 31 `TLOG_` lines in the library: 30 failures, one not
 (`WPAudioReader.cpp:79`, the WavPack version). FAAD logs nothing of its own;
 its open failures reach the user as "the X decoder cannot read it (0 channels,
-0 Hz, 0 frames)". `MpgAudioReader` logs nothing either and says why in
-`m_openError`.
+0 Hz, 0 frames)". `MpgAudioReader` logs nothing either and says why
+through `start()`.
 
 ## Decision (Remon, 2026-10-27)
 
@@ -274,8 +274,8 @@ GCC 12+ is libstdc++'s own requirement.
   `TAudioFileStatus = std::expected<void, TAudioFileError>`.
 - Decoders: `seek()` returns `TAudioFileStatus`, `read()` a result;
   `seek_failed()` and `read_done()` take the library's words; a decoder that
-  cannot open keeps the reason in `m_openError`. `MpgAudioReader::scan()`
-  checks its `seek(0)`; FAAD's dead `if (!d)` and its sample-size narrowing are gone, and a
+  cannot open returns the reason from `start()`. `MpgAudioReader::scan()`
+  checks its `seek_frame(0)`; FAAD's dead `if (!d)` and its sample-size narrowing are gone, and a
   failed start keeps its reason. `TScenarioDecoder::check()` returns
   `std::expected<void, QString>` (pattern 5 gone).
 - Encoders: `open()`/`close()` return `TAudioFileStatus`, `write()` a result;
