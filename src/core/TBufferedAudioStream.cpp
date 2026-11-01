@@ -130,7 +130,7 @@ void TBufferedAudioStream::prepare_ring_buffers(nframes_t bufferSize)
 struct TSeekReads
 {
     double cachedKiB, cachedMs, mediumKiB, mediumMs, unclassifiedKiB, unclassifiedMs;
-    quint64 nanoseconds;
+    uint64_t nanoseconds;
 };
 
 static TSeekReads seek_reads(const TReadsByOrigin& before, const TReadsByOrigin& after)
@@ -145,19 +145,19 @@ static TSeekReads seek_reads(const TReadsByOrigin& before, const TReadsByOrigin&
 
 static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, uint64_t wallNanoseconds)
 {
-    const quint64 callsNanoseconds = (after.seek.nanoseconds - before.seek.nanoseconds) + (after.stream.nanoseconds - before.stream.nanoseconds);
+    const uint64_t callsNanoseconds = (after.seek.nanoseconds - before.seek.nanoseconds) + (after.stream.nanoseconds - before.stream.nanoseconds);
     // Nothing decoded (a stream out of its window): nothing to tell
     if (callsNanoseconds == 0) {
         return;
     }
     const TSeekReads seek = seek_reads(before.seek.reads, after.seek.reads);
     const TSeekReads fill = seek_reads(before.stream.reads, after.stream.reads);
-    const quint64 readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
-    const quint64 decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
-    const quint64 restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
+    const uint64_t readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
+    const uint64_t decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
+    const uint64_t restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
     // The decoder's seek without its reads: its share of decode
-    const quint64 seekCallNanoseconds = after.seek.nanoseconds - before.seek.nanoseconds;
-    const quint64 seekDecodeNanoseconds = seekCallNanoseconds > seek.nanoseconds ? seekCallNanoseconds - seek.nanoseconds : 0;
+    const uint64_t seekCallNanoseconds = after.seek.nanoseconds - before.seek.nanoseconds;
+    const uint64_t seekDecodeNanoseconds = seekCallNanoseconds > seek.nanoseconds ? seekCallNanoseconds - seek.nanoseconds : 0;
     // The numbers first: a log line is cut after 256 characters, so only a
     // long file name can be cut. c, m, u: cache, medium, unclassified (KiB, ms)
     TLOG_I("diskio", "seek {:.1f} ms: seek reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, fill reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, decode {:.1f} (in seek {:.1f}), rest {:.1f}: {}",

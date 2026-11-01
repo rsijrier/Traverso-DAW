@@ -54,7 +54,7 @@ static thread_local bool              t_claimTried = false;
 // The seconds in the log count from the start of the process, so records
 // from before start() have no negative time
 static const uint64_t s_processStartNs = TClock::now_nanoseconds();
-static const uint64_t s_processStartWallMs = QDateTime::currentMSecsSinceEpoch();
+static const int64_t s_processStartWallMs = QDateTime::currentMSecsSinceEpoch();
 
 // The calling thread's buffer, claimed from the pool on the first call.
 // nullptr when the pool is exhausted. Real-time safe: the thread_locals are
@@ -248,7 +248,7 @@ static FILE*                  s_file = nullptr;
 static QString                s_fileName;
 static qint64                 s_fileBytes = 0;
 static uint64_t               s_anchorMonoNs = s_processStartNs;
-static qint64                 s_anchorWallMs = s_processStartWallMs;
+static int64_t                s_anchorWallMs = s_processStartWallMs;
 static std::vector<TLogPending> s_pending;
 
 // A program that returns from main() without stop() must not destroy the

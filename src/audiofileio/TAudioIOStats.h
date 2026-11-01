@@ -5,7 +5,7 @@
 
 #include "TReadsByOrigin.h"
 
-#include <QtTypes>
+#include <cstdint>
 
 /**
  * @brief What one kind of decoder work cost: its calls and time, and the bytes
@@ -52,7 +52,7 @@ struct TAudioIOStats
     TAudioIOCost stream;
     // The medium the file is on (st_dev), 0 where unknown: files on the same
     // medium wait for each other
-    quint64 mediumId{0};
+    uint64_t mediumId{0};
 
     TAudioIOCost& cost_of(Activity of)
     {

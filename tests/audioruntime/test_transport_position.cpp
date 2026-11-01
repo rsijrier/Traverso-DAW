@@ -24,11 +24,11 @@ static void check(bool ok, const char* what)
     }
 }
 
-static const quint32 rate = 48000;
-static const quint32 frames = 512;
+static const uint32_t rate = 48000;
+static const uint32_t frames = 512;
 static const uint64_t period = 1000000000ULL * frames / rate;   // nanoseconds
 
-static TTransportPosition cycle(qint64 bufferStartFrame, qint64 runStartFrame, uint64_t cycleTime)
+static TTransportPosition cycle(int64_t bufferStartFrame, int64_t runStartFrame, uint64_t cycleTime)
 {
     return TTransportPosition{
         .universalFrame = TTimeRef(nframes_t(bufferStartFrame), rate).universal_frame(),
@@ -39,7 +39,7 @@ static TTransportPosition cycle(qint64 bufferStartFrame, qint64 runStartFrame, u
     };
 }
 
-static qint64 frame_of(const TTimeRef& position)
+static int64_t frame_of(const TTimeRef& position)
 {
     return TTimeRef::frame_nearest(position, rate);
 }
@@ -63,16 +63,16 @@ static void test_publish_read()
                                          .cycleTimeNanoseconds = 0, .frames = 0, .sampleRate = 1});
     std::atomic<bool> stop{false};
     std::atomic<bool> mixed{false};
-    std::atomic<qint64> reads{0};
+    std::atomic<int64_t> reads{0};
 
     std::thread writer([&]() {
-        for (qint64 i = 1; !stop.load(); ++i) {
+        for (int64_t i = 1; !stop.load(); ++i) {
             published.publish(TTransportPosition{
                 .universalFrame = i,
                 .runStartUniversalFrame = i * 2,
                 .cycleTimeNanoseconds = uint64_t(i * 3),
-                .frames = quint32(i % 1000),
-                .sampleRate = quint32(i % 7 + 1)
+                .frames = uint32_t(i % 1000),
+                .sampleRate = uint32_t(i % 7 + 1)
             });
         }
     });
@@ -80,9 +80,9 @@ static void test_publish_read()
     const auto end = std::chrono::steady_clock::now() + std::chrono::milliseconds(300);
     while (std::chrono::steady_clock::now() < end) {
         const TTransportPosition p = published.read();
-        const qint64 i = p.universalFrame;
+        const int64_t i = p.universalFrame;
         if (p.runStartUniversalFrame != i * 2 || p.cycleTimeNanoseconds != i * 3
-            || p.frames != quint32(i % 1000) || p.sampleRate != quint32(i % 7 + 1)) {
+            || p.frames != uint32_t(i % 1000) || p.sampleRate != uint32_t(i % 7 + 1)) {
             mixed.store(true);
         }
         reads.fetch_add(1);
