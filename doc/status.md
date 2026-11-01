@@ -903,6 +903,12 @@ From the GPU waveform test program, clip edges in variant A (branch
     MP3 stays with libmpg123, measured through both readers on 63 files: normal audio
     the same and no gain in speed, but FFmpeg goes on silently over damage, which our
     T73 rules report, and keeps the decoder delay where no tag names it.
+- **T88 `can_read()` opens an MP4** (low; Fable, 2026-11-01): `avformat_open_input` for
+  every MP4, twice on the `can_read()` path, on the GUI thread; a fragmented one is
+  walked whole. The signature route could answer from the signature.
+- **T89 FFmpeg reader: more reasons** (low; Fable, 2026-11-01): "no audio in it" also
+  means that no packet came (`nero-chapters.m4b`); `truncated-64bit.mp4` says "cannot
+  seek to frame 0"; FFmpeg's bare text at the open.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.

@@ -39,6 +39,7 @@ private:
     TAudioFileStatus start();
     TAudioFileStatus open_codec();
     void note_packet();
+    void note_format();
     void place_frame_zero(bool mp4);
     TAudioFileStatus mp4_length();
     TAudioFileStatus count_frames();

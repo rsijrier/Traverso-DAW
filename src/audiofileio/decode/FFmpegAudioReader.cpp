@@ -140,14 +140,15 @@ static QString format_in_words(const AVFormatContext* format, const AVStream* st
 static int64_t behind_id3(TByteSource& source)
 {
     constexpr int TagHeaderBytes = 10;
-    constexpr int64_t MostBytes = 1024 * 1024;
+    constexpr int FooterFlag = 0x10;
     unsigned char tag[TagHeaderBytes];
     source.seek(0);
     if (source.read(tag, TagHeaderBytes) != TagHeaderBytes || std::memcmp(tag, "ID3", 3) != 0 || (tag[6] | tag[7] | tag[8] | tag[9]) & 0x80) {
         return 0;
     }
-    const int64_t bytes = TagHeaderBytes + ((tag[6] << 21) | (tag[7] << 14) | (tag[8] << 7) | tag[9]);
-    return bytes <= MostBytes ? bytes : 0;
+    // The tag says its size: nothing to search, so no limit
+    const int64_t footer = (tag[5] & FooterFlag) ? TagHeaderBytes : 0;
+    return TagHeaderBytes + footer + ((tag[6] << 21) | (tag[7] << 14) | (tag[8] << 7) | tag[9]);
 }
 
 // ADTS has no signature but its frames: a sync word, layer 0, a sample rate of
@@ -259,7 +260,7 @@ TAudioFileStatus FFmpegAudioReader::start()
     if (!counted) {
         return counted;
     }
-    if (m_firstFrameSamples > 0 && !sample_format_read(m_sampleFormat)) {
+    if (m_sampleFormat >= 0 && !sample_format_read(m_sampleFormat)) {
         return open_error(QStringLiteral("samples as %1 are not read").arg(QString::fromUtf8(av_get_sample_fmt_name(AVSampleFormat(m_sampleFormat)))));
     }
     if (TAudioFileStatus sought = seek_frame(0); !sought) {
@@ -311,10 +312,7 @@ void FFmpegAudioReader::note_packet()
     if (avcodec_receive_frame(m_codec, m_frameBuffer) == 0) {
         m_skipKnown = true;
         m_firstFrameSamples = m_frameBuffer->nb_samples;
-        // What the decoder gives counts, not what the headers say of it
-        m_sampleFormat = m_frameBuffer->format;
-        m_channels = uint(m_frameBuffer->ch_layout.nb_channels);
-        m_rate = uint(m_frameBuffer->sample_rate);
+        note_format();
         const AVFrameSideData* side = av_frame_get_side_data(m_frameBuffer, AV_FRAME_DATA_SKIP_SAMPLES);
         if (side && side->size >= 4) {
             uint32_t skip = 0;
@@ -322,6 +320,14 @@ void FFmpegAudioReader::note_packet()
             m_priming = skip;
         }
     }
+}
+
+// What the decoder gives counts, not what the headers say of it
+void FFmpegAudioReader::note_format()
+{
+    m_sampleFormat = m_frameBuffer->format;
+    m_channels = uint(m_frameBuffer->ch_layout.nb_channels);
+    m_rate = uint(m_frameBuffer->sample_rate);
 }
 
 // Frame 0 lies at m_firstTimestamp; the first packet starts m_priming frames before it
@@ -392,6 +398,10 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
     const auto take_frames = [&] {
         while (avcodec_receive_frame(m_codec, m_frameBuffer) == 0) {
             decodedEnd = position_of_frame() + m_frameBuffer->nb_samples;
+            // None of the first packets decoded: the file's format comes from here
+            if (m_sampleFormat < 0) {
+                note_format();
+            }
         }
     };
     while (av_read_frame(m_format, m_packet) >= 0) {
@@ -409,7 +419,12 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
     take_frames();
 
     const int64_t packet = av_rescale_q(m_firstDuration, stream->time_base, rate);
-    const int64_t header = av_rescale_q(av_sat_sub64(stream->duration, m_firstTimestamp), stream->time_base, rate);
+    // The header's duration is a span: it starts at the track's first stamp, also
+    // behind an empty edit. A first stamp that comes twice is the second packet's
+    const int64_t headerStart = m_secondTimestamp == m_startTimestamp ? m_startTimestamp - m_firstDuration
+                                : stream->start_time != AV_NOPTS_VALUE ? stream->start_time : m_startTimestamp;
+    const int64_t headerEnd = av_sat_add64(headerStart, stream->duration);
+    const int64_t header = av_rescale_q(av_sat_sub64(headerEnd, m_firstTimestamp), stream->time_base, rate);
     const int64_t tables = av_rescale_q(av_sat_sub64(av_sat_add64(lastTimestamp, lastDuration), m_firstTimestamp), stream->time_base, rate);
     const int64_t apart = av_sat_sub64(header, tables);
     if (av_sat_sub64(tables, header) > packet) {
@@ -487,8 +502,10 @@ bool FFmpegAudioReader::decode_next()
                 return false;
             }
             // The first packet's stamp can say nothing of its place: it can come
-            // twice at the start of a file
-            m_decodedFirst = m_fromStart ? -m_priming : position_of_frame();
+            // twice at the start of a file. A later packet, when the first did not
+            // decode, has its own stamp
+            const bool firstPacket = m_frameBuffer->pts == m_startTimestamp || m_frameBuffer->best_effort_timestamp == m_startTimestamp;
+            m_decodedFirst = m_fromStart && firstPacket ? -m_priming : position_of_frame();
             m_fromStart = false;
             m_decodedCount = m_frameBuffer->nb_samples;
             return true;
@@ -520,6 +537,7 @@ bool FFmpegAudioReader::decode_next()
 
 TAudioFileStatus FFmpegAudioReader::seek_frame(nframes_t frame)
 {
+    Q_ASSERT(frame < m_frames);
     const AVStream* stream = m_format->streams[m_stream];
     const AVRational rate{1, int(m_rate)};
     m_fromStart = int64_t(frame) <= PreRollFrames;
@@ -539,7 +557,8 @@ TAudioFileStatus FFmpegAudioReader::seek_frame(nframes_t frame)
     m_decoderDrained = false;
     m_decodedCount = 0;
     m_lastError.clear();
-    bool landed = false;
+    // From the file's start a gap is packets that did not decode: silence
+    bool landed = m_fromStart;
     while (m_decodedCount == 0 || m_decodedFirst + m_decodedCount <= int64_t(frame)) {
         if (!decode_next()) {
             return seek_failed(frame, m_lastError);

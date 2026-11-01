@@ -1008,7 +1008,7 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
                 read = reader->read_file_frames(buffer, at, 4096);
             }
             std::snprintf(what, sizeof(what), "A format change: an error where it changes, not a crash (at frame %u: %s)", at, read.error ? qPrintable(read.error->detail) : "none");
-            check(read.error.has_value() && at > 0, what);
+            check(read.error.has_value() && read.error->detail.contains(QStringLiteral("changes")) && at > 0, what);
         }
     }
 
@@ -1037,6 +1037,74 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
                           static_cast<long long>(QFile(videoPath).size()));
             check(bytes < uint64_t(QFile(videoPath).size()) / 2, what);
         }
+    }
+
+    // Two tags before ADTS: a size is read, not searched, and a footer counts
+    QFile adtsFile(adts);
+    if (adtsFile.exists() && adtsFile.open(QIODevice::ReadOnly)) {
+        const QByteArray frames = adtsFile.readAll();
+        const auto tagged = [&](int size, char flags) {
+            QByteArray tag("ID3\x04\x00", 5);
+            tag.append(flags);
+            for (const int shift : {21, 14, 7, 0}) {
+                tag.append(char((size >> shift) & 0x7f));
+            }
+            return tag + QByteArray(size + (flags ? 10 : 0), '\0') + frames;
+        };
+        const QString bigPath = dir.filePath(QStringLiteral("big-tag.aac"));
+        const QString footerPath = dir.filePath(QStringLiteral("footer-tag.aac"));
+        check(write_bytes(bigPath, tagged(1300000, 0)) && write_bytes(footerPath, tagged(100, 0x10)), "ADTS behind a tag: written");
+        check(TAudioReader::can_read(bigPath), "ADTS behind a tag over 1 MiB is read");
+        check(TAudioReader::can_read(footerPath), "ADTS behind a tag with a footer is read");
+
+        // The first payload broken: the second packet's audio stays where it is
+        QByteArray broken = frames;
+        const int firstFrame = ((uchar(frames[3]) & 0x03) << 11) | (uchar(frames[4]) << 3) | (uchar(frames[5]) >> 5);
+        for (int i = 7; i < firstFrame; ++i) {
+            broken[i] = char(uchar(broken[i]) ^ 0xa5);
+        }
+        const QString brokenPath = dir.filePath(QStringLiteral("broken.aac"));
+        check(write_bytes(brokenPath, broken), "A broken first packet: written");
+        const std::unique_ptr<TAudioReader> whole = TAudioReader::open(adts).value_or(nullptr);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(brokenPath).value_or(nullptr);
+        check(whole != nullptr && reader != nullptr, "A broken first packet: opens");
+        if (whole && reader) {
+            TAudioBuffer good;
+            TAudioBuffer bad;
+            whole->read_file_frames(good, 0, 3000);
+            reader->read_file_frames(bad, 0, 3000);
+            const float* expected = good.get_channel_buffer(0).get_data(3000);
+            const float* got = bad.get_channel_buffer(0).get_data(3000);
+            float worst = 0.0f;
+            for (int i = 2000; i < 3000; ++i) {
+                worst = std::max(worst, std::fabs(expected[i] - got[i]));
+            }
+            std::snprintf(what, sizeof(what), "A broken first packet: the audio after it stays (worst %.3g)", double(worst));
+            check(worst < 0.01f, what);
+        }
+    }
+
+    // An MP4 with a damaged head: silence, as a packet that does not decode, not a refusal
+    const QString headPath = dir.filePath(QStringLiteral("head.m4a"));
+    if (write_with_ffmpeg(headPath, source, encode)) {
+        QFile headFile(headPath);
+        check(headFile.open(QIODevice::ReadOnly), "A damaged head: opens for reading");
+        QByteArray head = headFile.readAll();
+        const qsizetype data = head.indexOf("mdat") + 4;
+        for (qsizetype i = data; i < data + 8192 && i < head.size(); ++i) {
+            head[i] = 0;
+        }
+        const QString damagedPath = dir.filePath(QStringLiteral("damaged-head.m4a"));
+        check(write_bytes(damagedPath, head), "A damaged head: written");
+        const auto opened = TAudioReader::open(damagedPath);
+        std::snprintf(what, sizeof(what), "A damaged head opens (%s)", opened ? "it does" : qPrintable(opened.error().detail));
+        check(opened.has_value(), what);
+    }
+
+    // Two audio streams: the first, FFmpeg's choice
+    const QString twoPath = dir.filePath(QStringLiteral("two-audio.m4a"));
+    if (write_with_ffmpeg(twoPath, source, encode + QStringList{QStringLiteral("-map"), QStringLiteral("0:a"), QStringLiteral("-map"), QStringLiteral("0:a")})) {
+        check(TAudioReader::open(twoPath).has_value(), "Two audio streams open");
     }
 
     // can_read() says what open() says
@@ -1492,6 +1560,10 @@ int main()
         {.name = "FLAC in fragmented MP4", .suffix = "flac.mp4", .source = stereo,
          .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("flac"), QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}),
          .lossless = true, .resolution = 1.0f / 32768.0f},
+        // Audio that starts after the file's start, as behind a video: an empty edit
+        {.name = "AAC in M4A, a late start", .suffix = "late.m4a", .source = stereo,
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-output_ts_offset"), QStringLiteral("1")}), .frameTolerance = 1024,
+         .placement = false},
         // No word on the priming: as ADTS but for its length the file says nothing of
         // where the audio starts, and the encoder's delay stays in
         {.name = "AAC in M4A, no edit list", .suffix = "no-edit-list.m4a", .source = stereo,

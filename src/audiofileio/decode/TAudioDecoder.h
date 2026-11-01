@@ -71,8 +71,7 @@ class TAudioBuffer;
  * pull their bytes themselves, in the middle of a decode, so the line between
  * reading and decoding runs below the decoders: libsndfile, libmpg123 and
  * WavPack through their virtual IO, FFmpeg through an AVIOContext. Small reads share the
- * source's block: the parsers of MP4 and ADTS read a few bytes at a time, tens
- * of thousands of times when a file opens.
+ * source's block.
  *
  * Not for the audio thread: file IO, and the buffer may grow.
  */

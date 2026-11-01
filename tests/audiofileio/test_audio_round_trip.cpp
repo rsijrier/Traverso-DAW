@@ -214,13 +214,16 @@ static const char* known(const Format& format, TraversoDAW::DataFormat data, uin
         return "T47: samples off by up to 1.0, mono one frame more";
     }
     if (format.writer == TraversoDAW::WriterType::M4A) {
-        if (is("placement") && channels == 1 && data == TraversoDAW::DataFormat::PCM_16) {
-            return "T21: the writer drops the first 2048 frames";
+        const bool bits16 = data == TraversoDAW::DataFormat::PCM_16;
+        if (is("placement")) {
+            return bits16 ? "T21: the writer drops the first 2048 frames" : "T48: the writer ignores the data format";
+        }
+        if (is("levels") && !bits16) {
+            return "T48: the writer ignores the data format";
         }
         // The level of 16 bit mono and stereo comes out right
-        const bool levelRight = channels <= 2 && data == TraversoDAW::DataFormat::PCM_16;
-        if (is("placement") || (is("order") && channels > 1) || (is("levels") && !levelRight)) {
-            return "T48: channels mixed up and shifted";
+        if ((is("levels") && channels > 2) || (is("order") && channels > 1)) {
+            return "T48: channels mixed up";
         }
     }
     return nullptr;
