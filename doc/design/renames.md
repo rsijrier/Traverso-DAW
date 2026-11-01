@@ -10,6 +10,8 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-11-01 | `open_audio_decoder()`, `can_decode_audio()` | `TAudioDecoderFactory::open_file()`, `can_read()` | so the base class names one friend, the same as the decoders |
+| 2026-11-01 | `has_audio()` | `require_audio()` | it gives a status |
 | 2026-10-31 | `TByteTransfer` | `TReadTotals` |  |
 | 2026-10-31 | `TByteStats` (`TByteStats.h`) | `TReadsByOrigin` (`TReadsByOrigin.h`) | by where the bytes came from |
 | 2026-10-31 | `untold` | `unclassified` | the reads the platform could not tell apart |

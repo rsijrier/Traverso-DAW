@@ -28,12 +28,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 bool TAudioReader::can_read(const QString& fileName)
 {
-    return can_decode_audio(fileName);
+    return TAudioDecoderFactory::can_read(fileName);
 }
 
 std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TByteSourceOpener& opener)
 {
-    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName, opener);
+    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = TAudioDecoderFactory::open_file(fileName, opener);
     if (!decoder) {
         return std::unexpected(std::move(decoder.error()));
     }

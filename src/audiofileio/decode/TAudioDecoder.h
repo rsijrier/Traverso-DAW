@@ -22,7 +22,7 @@ class TAudioBuffer;
  * library (SFAudioReader: libsndfile, WPAudioReader: WavPack, MpgAudioReader:
  * MPEG audio through libmpg123, FaadAudioReader: AAC), and TScenarioDecoder
  * for a test signal described in a scenario file; opened by
- * open_audio_decoder().
+ * TAudioDecoderFactory::open_file().
  *
  * What a decoder does, and nothing else does for it: it keeps its position
  * in the file (next_frame(), in frames at the file's rate), moves it (seek()) and
@@ -134,7 +134,7 @@ protected:
     // A second file of this one (WavPack's correction file), for as long as
     // the decoder lives, counted in io_stats(); nullptr when it is not there.
     // During the open its reads count directly in m_stats.open, the main source
-    // in the local openStats of open_audio_decoder(); adopt_open_cost() joins them
+    // in the local openStats of TAudioDecoderFactory::open_file(); adopt_open_cost() joins them
     TByteSource* open_extra_source(const QString& fileName);
     // The end of every decoder's open: channels, a rate and frames, or why
     // not (a decoder without one of them reads nothing, and a rate of 0 would
@@ -164,7 +164,7 @@ protected:
 
 private:
     friend class TAudioIOScope;
-    friend std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener);
+    friend struct TAudioDecoderFactory;
 
     // The open is over, what it cost is the decoder's: time, calls and reads,
     // the probes' included. From now on it counts its own seeks and reads. To

@@ -124,7 +124,7 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
     return std::unexpected(why_no_decoder(source, none));
 }
 
-bool can_decode_audio(const QString& fileName)
+bool TAudioDecoderFactory::can_read(const QString& fileName)
 {
     TByteSourceResult source = TByteSource::open_file(fileName);
     if (!source) {
@@ -194,7 +194,7 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
     Q_UNREACHABLE();
 }
 
-std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
+std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> TAudioDecoderFactory::open_file(const QString& fileName, const TByteSourceOpener& opener)
 {
     TAudioIOStats openStats;
     TDecoderResult decoder = std::unexpected(TAudioFileError{});
