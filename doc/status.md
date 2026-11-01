@@ -872,8 +872,11 @@ From the GPU waveform test program, clip edges in variant A (branch
       reports nothing and keeps one AAC frame;
     - at the open the last packet is decoded and the length cut to what the decoder
       gives: a healthy file does not end in an error.
-  - **Open**: Opus in MP4 reads 48 frames late against the CLI; IAMF holds 7680
-    frames less than its tables.
+    - tables can give the first packet more than the decoder has (Opus in MP4 1008
+      against 960, IAMF 15872 against 8192): the audio runs on, the stamps behind it
+      are corrected at the open;
+    - only what has no length reads every packet at the open: an MP4 reads its first
+      packets and, from a little before the end, its last.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
