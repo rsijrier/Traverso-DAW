@@ -296,14 +296,18 @@ static float* interleaved_scratch(size_t samples)
     return scratch.data();
 }
 
-TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_t count)
+TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& buffer, nframes_t count)
 {
     if (count == 0) {
         return {};
     }
-    fileIOBuffer.check_capacity(count, m_channels);
+    buffer.check_capacity(count, m_channels);
 
-    const nframes_t wanted = !m_inErrorState ? std::min(count, m_frames - m_nextFrame) : 0;
+    const nframes_t wanted = std::min(count, m_frames - m_nextFrame);
+    if (m_inErrorState || wanted == 0) {
+        return read_done(buffer, 0, count);
+    }
+
     float* readBuffer = interleaved_scratch(size_t(wanted) * m_channels);
 
     const size_t frameBytes = m_channels * sizeof(float);
@@ -322,7 +326,7 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
     const nframes_t readFrames = nframes_t(have / frameBytes);
 
     for (uint channel = 0; channel < m_channels; channel++) {
-        audio_sample_t* destination = fileIOBuffer.get_channel_buffer(channel).get_data(readFrames);
+        audio_sample_t* destination = buffer.get_channel_buffer(channel).get_data(readFrames);
         for (nframes_t frame = 0; frame < readFrames; frame++) {
             destination[frame] = readBuffer[frame * m_channels + channel];
         }
@@ -335,5 +339,5 @@ TAudioFileResult MpgAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes
     } else if (result != MPG123_OK && result != MPG123_DONE) {
         detail = QString::fromUtf8(mpg123_strerror(m_handle));
     }
-    return read_done(fileIOBuffer, readFrames, count, detail);
+    return read_done(buffer, readFrames, count, detail);
 }

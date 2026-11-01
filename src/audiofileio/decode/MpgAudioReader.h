@@ -66,7 +66,7 @@ public:
     static std::expected<void, std::optional<QString>> can_decode(TByteSource& source);
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
-    TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+    TAudioFileResult read_frames(TAudioBuffer& buffer, nframes_t count) override;
 
 private:
     friend struct TAudioDecoderFactory;
@@ -78,7 +78,8 @@ private:
     TAudioFileStatus scan();
     // Why the open failed
     TAudioFileStatus open_failed(const QString& detail);
-    // The file's format is still the one it opened with
+    // The file's format is still the one it opened with. Asking also clears
+    // mpg123's notice of a new format, which the read loop relies on
     bool same_format();
 
     mpg123_handle* m_handle{nullptr};
