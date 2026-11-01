@@ -57,7 +57,7 @@ private:
     TTimeRef	m_lastSnapPosition;
     TTimeRef    m_transportLocation;
     QPointer<TFrameClock> m_frameClock;
-    qint64 m_lastLabelFrame{0};   // the label follows about 8 frames per second
+    uint64_t m_lastLabelFrame{0};   // the label follows about 8 frames per second
 
 public slots:
 	void set_project(TProject*);
@@ -70,7 +70,7 @@ private slots:
 	void transport_stopped();
     void update_recording_state();
     // nowNanoseconds: the frame time, see TSession::get_heard_transport_location()
-	void update_label(qint64 nowNanoseconds);
+    void update_label(uint64_t nowNanoseconds);
 	void update_layout();
 };
 

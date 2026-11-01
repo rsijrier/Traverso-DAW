@@ -5,7 +5,7 @@
 
 #include "TAudioBuffer.h"
 
-#include <QFile>
+#include <QByteArray>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,6 +15,7 @@
 #include <limits>
 
 static constexpr int ScenarioVersion = 1;
+static constexpr QByteArrayView ScenarioLine("# tscenario ");
 // A scenario is a short description (a few hundred bytes, some KB with
 // many channels or faults); a larger file named .tscenario is not read whole
 static constexpr qint64 MaxScenarioBytes = 64 * 1024;
@@ -42,41 +43,51 @@ static std::optional<double> number_of(const QJsonObject& object, const char* ke
     return value.toDouble();
 }
 
-bool TScenarioDecoder::is_scenario_file(const QString& fileName)
+std::expected<void, QString> TScenarioDecoder::check(TByteSource& source)
 {
-    return fileName.endsWith(QLatin1String(".tscenario"), Qt::CaseInsensitive);
-}
-
-std::expected<void, QString> TScenarioDecoder::check(const QString& fileName)
-{
-    if (std::expected<Scenario, QString> scenario = parse(fileName); !scenario) {
+    if (std::expected<Scenario, QString> scenario = parse(source); !scenario) {
         return std::unexpected(scenario.error());
     }
     return {};
 }
 
-std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(const QString& fileName)
+std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(TByteSource& source)
 {
     const auto fail = [](const QString& reason) -> std::expected<Scenario, QString> {
         return std::unexpected(reason);
     };
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return fail(QStringLiteral("cannot open it"));
-    }
-    if (file.size() > MaxScenarioBytes) {
+    if (source.size() > MaxScenarioBytes) {
         return fail(QStringLiteral("too large for a scenario"));
     }
+    QByteArray bytes(source.size(), '\0');
+    if (!source.seek(0) || source.read(bytes.data(), bytes.size()) != bytes.size()) {
+        return fail(QStringLiteral("cannot read it"));
+    }
+    // The first line names the format and its version, before anything parses
+    const qsizetype lineEnd = bytes.indexOf('\n');
+    if (lineEnd < 0) {
+        return fail(QStringLiteral("no tscenario line"));
+    }
+    QByteArray line = bytes.left(lineEnd);
+    if (line.endsWith('\r')) {
+        line.chop(1);
+    }
+    const QByteArray versionText = line.mid(ScenarioLine.size());
+    const bool digits = !versionText.isEmpty() && std::all_of(versionText.begin(), versionText.end(), [](char c) { return c >= '0' && c <= '9'; });
+    if (!line.startsWith(ScenarioLine) || !digits) {
+        return fail(QStringLiteral("no tscenario line"));
+    }
+    if (versionText.toInt() != ScenarioVersion) {
+        return fail(QStringLiteral("tscenario version %1, this Traverso reads %2").arg(QString::fromLatin1(versionText)).arg(ScenarioVersion));
+    }
+
     QJsonParseError error;
-    const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
+    const QJsonDocument document = QJsonDocument::fromJson(bytes.mid(lineEnd + 1), &error);
     if (!document.isObject()) {
         return fail(QStringLiteral("no JSON object (%1)").arg(error.errorString()));
     }
     const QJsonObject root = document.object();
-    if (root.value(QLatin1String("version")).toInt(-1) != ScenarioVersion) {
-        return fail(QStringLiteral("version %1 is not %2").arg(root.value(QLatin1String("version")).toVariant().toString()).arg(ScenarioVersion));
-    }
 
     Scenario scenario;
     const std::optional<nframes_t> rate = frames_of(root.value(QLatin1String("rate")));
@@ -208,22 +219,23 @@ std::expected<TScenarioDecoder::Scenario, QString> TScenarioDecoder::parse(const
     return scenario;
 }
 
-TScenarioDecoder::TScenarioDecoder(const QString& fileName)
-    : TAudioDecoder(fileName)
+TScenarioDecoder::TScenarioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
 {
-    // Parsed again here, as every decoder opens its file again after the
-    // factory's probe; nothing set when it no longer parses (is_valid()
-    // false), with the reason
-    std::expected<Scenario, QString> scenario = parse(fileName);
+}
+
+TAudioFileStatus TScenarioDecoder::start()
+{
+    std::expected<Scenario, QString> scenario = parse(source());
     if (!scenario) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())};
-        return;
+        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())});
     }
     m_rate = scenario->rate;
     m_frames = scenario->frames;
     m_channels = uint(scenario->channels.size());
     m_signals = std::move(scenario->channels);
     m_faults = std::move(scenario->faults);
+    return require_audio();
 }
 
 float TScenarioDecoder::sample(const Signal& signal, nframes_t frame) const
@@ -272,24 +284,24 @@ TAudioFileResult TScenarioDecoder::read_frames(TAudioBuffer& buffer, nframes_t c
     buffer.check_capacity(count, m_channels);
 
     nframes_t readFrames = 0;
-    if (!at_end() && !m_error) {
+    if (!at_end() && !m_inErrorState) {
         // Up to the end of the file, and up to a damaged part: the frames
         // before it are read, then the error state (read_done())
-        readFrames = std::min(count, m_frames - m_frame);
+        readFrames = std::min(count, m_frames - m_nextFrame);
         for (const Fault& fault : m_faults) {
-            if (fault.kind == Fault::Kind::ReadError && fault.first < m_frame + readFrames && fault.first + fault.frames > m_frame) {
-                readFrames = fault.first > m_frame ? std::min(readFrames, fault.first - m_frame) : 0;
+            if (fault.kind == Fault::Kind::ReadError && fault.first < m_nextFrame + readFrames && fault.first + fault.frames > m_nextFrame) {
+                readFrames = fault.first > m_nextFrame ? std::min(readFrames, fault.first - m_nextFrame) : 0;
             }
         }
         for (uint channel = 0; channel < m_channels; ++channel) {
             audio_sample_t* data = buffer.get_channel_buffer(channel).get_data(readFrames);
             for (nframes_t i = 0; i < readFrames; ++i) {
-                data[i] = sample(m_signals[channel], m_frame + i);
+                data[i] = sample(m_signals[channel], m_nextFrame + i);
             }
         }
         for (const Fault& fault : m_faults) {
-            if (fault.kind == Fault::Kind::Value && fault.first >= m_frame && fault.first < m_frame + readFrames) {
-                buffer.get_channel_buffer(fault.channel).get_data(readFrames)[fault.first - m_frame] = fault.value;
+            if (fault.kind == Fault::Kind::Value && fault.first >= m_nextFrame && fault.first < m_nextFrame + readFrames) {
+                buffer.get_channel_buffer(fault.channel).get_data(readFrames)[fault.first - m_nextFrame] = fault.value;
             }
         }
     }

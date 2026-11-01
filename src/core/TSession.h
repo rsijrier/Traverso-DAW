@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #pragma once
 
+#include <optional>
 #include "TContextItem.h"
 
 #include <QDomNode>
@@ -75,10 +76,10 @@ public:
     // child session). Any thread
     TTransportPosition get_published_transport_position() const;
     // GUI thread. While rolling: the position heard at nowNanoseconds (clock
-    // of TRtTransportPosition::now_nanoseconds()), computed once per
+    // of TClock::now_nanoseconds()), computed once per
     // nowNanoseconds so all callers of one frame agree; otherwise the
     // transport location
-    TTimeRef get_heard_transport_location(qint64 nowNanoseconds);
+    TTimeRef get_heard_transport_location(uint64_t nowNanoseconds);
 	virtual TSnapList* get_snap_list() const;
 	TTrack* get_track(qint64 id) const;
 	TTimeLineRuler* get_timeline_ruler() const;
@@ -183,7 +184,8 @@ private:
     TRtTransportPosition        m_rtTransportPosition;
     // GUI thread
     TTransportPositionEstimator m_heardPositionEstimator;
-    qint64                      m_heardPositionNanoseconds{-1};
+    // The frame time of m_heardPosition, none yet
+    std::optional<uint64_t>     m_heardPositionNanoseconds;
     TTimeRef                    m_heardPosition;
 
 

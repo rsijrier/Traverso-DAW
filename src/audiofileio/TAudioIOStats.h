@@ -3,26 +3,26 @@
 
 #pragma once
 
-#include "TByteStats.h"
+#include "TReadsByOrigin.h"
 
-#include <QtTypes>
+#include <cstdint>
 
 /**
  * @brief What one kind of decoder work cost: its calls and time, and the bytes
  * that went through its TByteSource during it.
  */
-struct TAudioPhaseStats
+struct TAudioIOCost
 {
-    quint64 calls{0};
-    quint64 frames{0};
-    quint64 nanoseconds{0};
-    TByteStats bytes;
+    uint64_t calls{0};
+    uint64_t frames{0};
+    uint64_t nanoseconds{0};
+    TReadsByOrigin reads;
 
-    quint64 read_nanoseconds() const { return bytes.read_nanoseconds(); }
+    uint64_t read_nanoseconds() const { return reads.read_nanoseconds(); }
     // The rest of the calls' time: the library's decoding and the copies
-    quint64 decode_nanoseconds() const
+    uint64_t decode_nanoseconds() const
     {
-        const quint64 read = read_nanoseconds();
+        const uint64_t read = read_nanoseconds();
         return nanoseconds > read ? nanoseconds - read : 0;
     }
 };
@@ -36,35 +36,36 @@ struct TAudioPhaseStats
  * the medium's latency) and stream (the reads a scheduler can plan).
  *
  * Plain counters of one decoder, for the thread that uses the decoder. The
- * decoder points its sources at the bytes of the current phase
- * (TAudioDecoder::set_phase()).
+ * decoder points its sources at the reads of the current activity.
  */
 struct TAudioIOStats
 {
-    enum class Phase {
+    enum class Activity {
         Open,
         Seek,
         Stream
     };
 
-    Phase phase{Phase::Open};
-    TAudioPhaseStats open;
-    TAudioPhaseStats seek;
-    TAudioPhaseStats stream;
+    Activity activity{Activity::Open};
+    TAudioIOCost open;
+    TAudioIOCost seek;
+    TAudioIOCost stream;
     // The medium the file is on (st_dev), 0 where unknown: files on the same
     // medium wait for each other
-    quint64 mediumId{0};
+    uint64_t mediumId{0};
 
-    TAudioPhaseStats& current()
+    TAudioIOCost& cost_of(Activity of)
     {
-        switch (phase) {
-        case Phase::Open:
+        switch (of) {
+        case Activity::Open:
             return open;
-        case Phase::Seek:
+        case Activity::Seek:
             return seek;
-        case Phase::Stream:
+        case Activity::Stream:
             break;
         }
         return stream;
     }
+
+    TAudioIOCost& current_cost() { return cost_of(activity); }
 };

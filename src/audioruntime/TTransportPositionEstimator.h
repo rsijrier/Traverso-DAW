@@ -29,7 +29,7 @@ class TTransportPositionEstimator
 public:
     // GUI thread. outputLatency: from the start of a cycle to the first
     // frame of its buffer leaving the output
-    TTimeRef heard_position(const TTransportPosition& published, qint64 nowNanoseconds, const TTimeRef& outputLatency)
+    TTimeRef heard_position(const TTransportPosition& published, uint64_t nowNanoseconds, const TTimeRef& outputLatency)
     {
         if (published.sampleRate == 0) {
             // Nothing published yet
@@ -47,7 +47,8 @@ public:
 
         const TTimeRef bufferStart(published.universalFrame);
         const TTimeRef bufferEnd = bufferStart + TTimeRef(nframes_t(published.frames), uint(published.sampleRate));
-        const TTimeRef elapsed = TTimeRef::from_nanoseconds(nowNanoseconds - published.cycleTimeNanoseconds);
+        // Negative when the frame time lies before a cycle just published
+        const TTimeRef elapsed = TTimeRef::from_nanoseconds(int64_t(nowNanoseconds - published.cycleTimeNanoseconds));
 
         TTimeRef heard = bufferStart + elapsed - outputLatency;
 

@@ -50,7 +50,8 @@ static constexpr nframes_t Block = 1024;
 static QString write_scenario(const QTemporaryDir& dir, const char* name, const char* faults)
 {
     const QString path = dir.filePath(QLatin1String(name));
-    const QByteArray json = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": [
+    const QByteArray json = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": [
         {"signal": "sine", "frequency": 441, "amplitude": 0.5}, {"signal": "ramp"}], "faults": %3})")
                                 .arg(FileRate)
                                 .arg(FileFrames)

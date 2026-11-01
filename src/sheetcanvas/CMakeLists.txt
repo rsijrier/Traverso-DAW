@@ -79,4 +79,4 @@ target_link_libraries(traversosheetcanvas
 )
 
 # byteio's types reach it through core's and audiofileio's headers
-target_link_libraries(traversosheetcanvas PRIVATE traversobyteio)
+target_link_libraries(traversosheetcanvas PRIVATE traversobyteio traversosupport)

@@ -197,7 +197,8 @@ int main(int argc, char** argv)
         return 1;
     }
     QFile file(dir.filePath(QStringLiteral("ramp.tscenario")));
-    const QByteArray scenario = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": [{"signal": "ramp"}]})").arg(Rate).arg(Frames).toUtf8();
+    const QByteArray scenario = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": [{"signal": "ramp"}]})").arg(Rate).arg(Frames).toUtf8();
     if (!file.open(QIODevice::WriteOnly) || file.write(scenario) != scenario.size()) {
         std::printf("no scenario\n");
         return 1;

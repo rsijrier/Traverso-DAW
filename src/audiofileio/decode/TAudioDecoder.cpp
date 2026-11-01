@@ -4,75 +4,73 @@
 #include "TAudioDecoder.h"
 
 #include "TAudioBuffer.h"
-
-#include "SFAudioReader.h"
-#include "WPAudioReader.h"
-#include "MadAudioReader.h"
-#include "TScenarioDecoder.h"
-
-#if defined M4A_DECODE_SUPPORT
-#include "FaadAudioReader.h"
-#endif
-
-#include <QFile>
-#include <QFileInfo>
+#include "TAudioIOScope.h"
+#include "TLog.h"
 
 TAudioFileStatus TAudioDecoder::seek(nframes_t frame)
 {
-    // A seek of the open itself (MAD, FAAD) counts for the open
-    if (m_stats.phase == TAudioIOStats::Phase::Open) {
-        return seek_frame(frame);
-    }
-    set_phase(TAudioIOStats::Phase::Seek);
-    const quint64 start = TByteSource::now_nanoseconds();
-    TAudioFileStatus status = seek_frame(frame);
-    m_stats.seek.nanoseconds += TByteSource::now_nanoseconds() - start;
-    ++m_stats.seek.calls;
-    set_phase(TAudioIOStats::Phase::Stream);
-    return status;
+    TAudioIOScope scope(*this, TAudioIOStats::Activity::Seek);
+    return seek_frame(frame);
 }
 
 TAudioFileResult TAudioDecoder::read(TAudioBuffer& buffer, nframes_t count)
 {
-    const quint64 start = TByteSource::now_nanoseconds();
+    TAudioIOScope scope(*this, TAudioIOStats::Activity::Stream);
     TAudioFileResult result = read_frames(buffer, count);
-    m_stats.stream.nanoseconds += TByteSource::now_nanoseconds() - start;
-    ++m_stats.stream.calls;
     m_stats.stream.frames += result.frames;
     return result;
 }
 
-void TAudioDecoder::opened(const TAudioPhaseStats& probes, quint64 nanoseconds)
+void TAudioDecoder::adopt_open_cost(const TAudioIOCost& cost)
 {
-    m_stats.open.nanoseconds = nanoseconds;
-    m_stats.open.bytes.add(probes.bytes);
-    set_phase(TAudioIOStats::Phase::Stream);
+    m_stats.open.calls += cost.calls;
+    m_stats.open.nanoseconds += cost.nanoseconds;
+    m_stats.open.reads.add(cost.reads);
+    set_activity(TAudioIOStats::Activity::Stream);
+    // A probe's failed read the open went past is not the first seek's
+    take_source_error();
 }
 
-// The one place the phase changes: every source of this decoder (WavPack
-// has two, the .wv and its .wvc) counts into the new phase's bytes, so none
-// can be forgotten
-void TAudioDecoder::set_phase(TAudioIOStats::Phase phase)
+void TAudioDecoder::set_activity(TAudioIOStats::Activity activity)
 {
-    m_stats.phase = phase;
+    m_stats.activity = activity;
     for (const std::unique_ptr<TByteSource>& source : m_sources) {
-        source->set_stats(&m_stats.current().bytes);
+        source->count_reads_into(&m_stats.current_cost().reads);
     }
 }
 
-TByteSource* TAudioDecoder::open_source(const QString& fileName)
+TAudioDecoder::TAudioDecoder(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : m_fileName(fileName)
+    , m_opener(opener)
 {
-    std::unique_ptr<TByteSource> source = m_opener ? m_opener(fileName) : TByteSource::open_file(fileName);
+    // It goes on counting where the open is measured until adopt_open_cost(),
+    // so a failed open keeps what it read
+    m_stats.mediumId = source->medium_id();
+    m_sources.push_back(std::move(source));
+}
+
+TByteSource* TAudioDecoder::open_extra_source(const QString& fileName)
+{
+    TByteSourceResult source = m_opener ? m_opener(fileName) : TByteSource::open_file(fileName);
     if (!source) {
+        // No such file is the normal case, a correction file is optional
+        if (!source.error().notFound) {
+            TLOG_W("audiofile", "{}: cannot read it ({}), going on without", fileName.toStdString(), source.error().reason.toStdString());
+        }
         return nullptr;
     }
-    source->set_stats(&m_stats.current().bytes);
-    // The audio file's medium: the first source (WavPack's .wvc comes second)
-    if (m_stats.mediumId == 0) {
-        m_stats.mediumId = source->medium_id();
-    }
-    m_sources.push_back(std::move(source));
+    (*source)->count_reads_into(&m_stats.current_cost().reads);
+    m_sources.push_back(std::move(*source));
     return m_sources.back().get();
+}
+
+TAudioFileStatus TAudioDecoder::require_audio() const
+{
+    if (m_channels > 0 && m_rate > 0 && m_frames > 0) {
+        return {};
+    }
+    return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen,
+                                           QStringLiteral("the %1 decoder cannot read it (%2 channels, %3 Hz, %4 frames)").arg(decoder_type()).arg(m_channels).arg(m_rate).arg(m_frames)});
 }
 
 QString TAudioDecoder::take_source_error()
@@ -87,25 +85,25 @@ QString TAudioDecoder::take_source_error()
     return reason;
 }
 
+TAudioFileResult TAudioDecoder::nothing_read(TAudioBuffer& buffer, nframes_t count, uint channels, std::optional<TAudioFileError> error)
+{
+    if (count > 0) {
+        buffer.check_capacity(count, channels);
+        buffer.silence(0, count, channels);
+    }
+    return {0, std::move(error)};
+}
+
 TAudioFileResult TAudioDecoder::read_from(TAudioBuffer& buffer, nframes_t first, nframes_t count)
 {
-    // Nothing to read: zeros, as read() gives past the end
-    const auto nothing = [&](std::optional<TAudioFileError> error) -> TAudioFileResult {
-        if (count > 0) {
-            buffer.check_capacity(count, m_channels);
-            buffer.silence(0, count, m_channels);
-        }
-        return {0, std::move(error)};
-    };
-
     // At or past the end: no seek, no error (contract point 2)
     if (first >= m_frames) {
-        return nothing(std::nullopt);
+        return nothing_read(buffer, count, m_channels, std::nullopt);
     }
     // A seek only when the decoder does not read from first already
-    if (!reads_from(first)) {
+    if (!next_read_is_at(first)) {
         if (TAudioFileStatus sought = seek(first); !sought) {
-            return nothing(std::move(sought.error()));
+            return nothing_read(buffer, count, m_channels, std::move(sought.error()));
         }
     }
     return read(buffer, count);
@@ -113,19 +111,24 @@ TAudioFileResult TAudioDecoder::read_from(TAudioBuffer& buffer, nframes_t first,
 
 TAudioFileStatus TAudioDecoder::seek_landed(nframes_t frame)
 {
-    m_frame = frame;
-    m_error = false;
-    take_source_error();
+    // A library can land on a read that failed: then it did not land
+    if (const QString reason = take_source_error(); !reason.isEmpty()) {
+        return seek_failed(frame, reason);
+    }
+    m_nextFrame = frame;
+    m_inErrorState = false;
     return {};
+}
+
+QString TAudioDecoder::first_reason(const QString& source, const QString& library, const QString& otherwise)
+{
+    return !source.isEmpty() ? source : !library.isEmpty() ? library : otherwise;
 }
 
 TAudioFileStatus TAudioDecoder::seek_failed(nframes_t frame, const QString& detail)
 {
-    m_error = true;
-    const QString sourceError = take_source_error();
-    return std::unexpected(TAudioFileError{TAudioFileError::Code::SeekFailed, !sourceError.isEmpty() ? sourceError
-                                                                              : detail.isEmpty()     ? QStringLiteral("cannot seek to frame %1").arg(frame)
-                                                                                                     : detail});
+    m_inErrorState = true;
+    return std::unexpected(TAudioFileError{TAudioFileError::Code::SeekFailed, first_reason(take_source_error(), detail, QStringLiteral("cannot seek to frame %1").arg(frame))});
 }
 
 TAudioFileResult TAudioDecoder::read_done(TAudioBuffer& buffer, nframes_t read, nframes_t count, const QString& detail)
@@ -135,134 +138,11 @@ TAudioFileResult TAudioDecoder::read_done(TAudioBuffer& buffer, nframes_t read, 
     TAudioFileResult result{read, std::nullopt};
     const QString sourceError = take_source_error();
     // Short before the end: the file ends early or a read failed (points 3, 4)
-    if (read < count && m_frame + read < m_frames) {
-        m_error = true;
+    if (read < count && m_nextFrame + read < m_frames) {
+        m_inErrorState = true;
         result.error = TAudioFileError{TAudioFileError::Code::ReadFailed,
-                                       !sourceError.isEmpty() ? sourceError
-                                       : detail.isEmpty()     ? QStringLiteral("the audio ends at frame %1 of %2").arg(m_frame + read).arg(m_frames)
-                                                              : detail};
+                                       first_reason(sourceError, detail, QStringLiteral("the audio ends at frame %1 of %2").arg(m_nextFrame + read).arg(m_frames))};
     }
-    m_frame += read;
+    m_nextFrame += read;
     return result;
-}
-
-enum class DecoderLibrary {
-    None,
-    Scenario,
-    SndFile,
-    WavPack,
-    Faad,
-    Mad
-};
-
-// The library that can read fileName, tried in order of preference; the
-// probes' reads go into stats
-static DecoderLibrary find_decoder(const QString& fileName, const TByteSourceOpener& opener, TAudioIOStats& stats)
-{
-    // A scenario (a test signal described, TScenarioDecoder) by its name,
-    // before any library probes it; one that does not parse is no audio file.
-    // First, because the libraries probe the bytes: MAD looks for frame
-    // syncs and can find one in any text, so a scenario (or a broken one)
-    // could pass as an MP3. Cheap for every other file: only the name is
-    // compared, the file is opened only when it is called .tscenario.
-    if (TScenarioDecoder::is_scenario_file(fileName)) {
-        return TScenarioDecoder::check(fileName) ? DecoderLibrary::Scenario : DecoderLibrary::None;
-    }
-    const std::unique_ptr<TByteSource> source = opener ? opener(fileName) : TByteSource::open_file(fileName);
-    if (!source) {
-        return DecoderLibrary::None;
-    }
-    source->set_stats(&stats.open.bytes);
-    if (const int format = SFAudioReader::major_format(*source)) {
-        // MP3 through MAD, whose seeks are sample accurate; libsndfile's are
-        // not (1.2.2, mpg123 lands some hundreds of frames off)
-        if (format == SF_FORMAT_MPEG && MadAudioReader::can_decode(*source)) {
-            return DecoderLibrary::Mad;
-        }
-        return DecoderLibrary::SndFile;
-    }
-    if (WPAudioReader::can_decode(*source)) {
-        return DecoderLibrary::WavPack;
-    }
-#if defined M4A_DECODE_SUPPORT
-    if (FaadAudioReader::can_decode(*source)) {
-        return DecoderLibrary::Faad;
-    }
-#endif
-    if (MadAudioReader::can_decode(*source)) {
-        return DecoderLibrary::Mad;
-    }
-    return DecoderLibrary::None;
-}
-
-bool can_decode_audio(const QString& fileName)
-{
-    TAudioIOStats stats;
-    return find_decoder(fileName, {}, stats) != DecoderLibrary::None;
-}
-
-// Why no decoder reads fileName: not there, not readable, or of a format no
-// decoder knows. Asked after the probes failed, not before: a check before
-// the open is a race and costs a system call on every open.
-static TAudioFileError no_decoder(const QString& fileName)
-{
-    if (!QFileInfo::exists(fileName)) {
-        return {TAudioFileError::Code::NotFound, QStringLiteral("no such file")};
-    }
-    if (QFile file(fileName); !file.open(QIODevice::ReadOnly)) {
-        return {TAudioFileError::Code::CannotOpen, file.errorString()};
-    }
-    if (TScenarioDecoder::is_scenario_file(fileName)) {
-        if (std::expected<void, QString> scenario = TScenarioDecoder::check(fileName); !scenario) {
-            return {TAudioFileError::Code::CannotOpen, QStringLiteral("not a scenario: %1").arg(scenario.error())};
-        }
-    }
-    return {TAudioFileError::Code::CannotOpen, QStringLiteral("no decoder reads this format")};
-}
-
-std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
-{
-    std::unique_ptr<TAudioDecoder> decoder;
-    const quint64 start = TByteSource::now_nanoseconds();
-    TAudioIOStats probes;
-
-    switch (find_decoder(fileName, opener, probes)) {
-    case DecoderLibrary::Scenario:
-        decoder = std::make_unique<TScenarioDecoder>(fileName);
-        break;
-    case DecoderLibrary::SndFile:
-        decoder = std::make_unique<SFAudioReader>(fileName, opener);
-        break;
-    case DecoderLibrary::WavPack:
-        decoder = std::make_unique<WPAudioReader>(fileName, opener);
-        break;
-    case DecoderLibrary::Faad:
-#if defined M4A_DECODE_SUPPORT
-        decoder = std::make_unique<FaadAudioReader>(fileName, opener);
-#endif
-        break;
-    case DecoderLibrary::Mad:
-        decoder = std::make_unique<MadAudioReader>(fileName, opener);
-        break;
-    case DecoderLibrary::None:
-        return std::unexpected(no_decoder(fileName));
-    }
-
-    if (!decoder || !decoder->is_valid()) {
-        // The decoder's own reason, else what it found (a file that went
-        // between the probe and the open lands here too)
-        if (decoder && decoder->open_error()) {
-            return std::unexpected(*decoder->open_error());
-        }
-        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen,
-                                               decoder ? QStringLiteral("the %1 decoder cannot read it (%2 channels, %3 Hz, %4 frames)")
-                                                             .arg(decoder->decoder_type())
-                                                             .arg(decoder->channel_count())
-                                                             .arg(decoder->rate())
-                                                             .arg(decoder->frame_count())
-                                                       : QStringLiteral("no decoder reads this format")});
-    }
-
-    decoder->opened(probes.open, TByteSource::now_nanoseconds() - start);
-    return decoder;
 }

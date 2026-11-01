@@ -10,6 +10,35 @@ forks and agents: a name in an older text means what it meant then.
 
 | Date | Before | Now | Note |
 |---|---|---|---|
+| 2026-11-01 | `TByteSource::read_failed()`, `m_readFailed` | gone | `read_medium()` gives `TMediumRead {bytes, reason}` |
+| 2026-11-01 | `TByteSource::now_nanoseconds()`, `TRtTransportPosition::now_nanoseconds()`, `TFrameClock::now_nanoseconds()` | `TClock::now_nanoseconds()` |  |
+| 2026-11-01 | `SFAudioReader::major_format()` | `format()` | gives the subtype and the reason |
+| 2026-11-01 | `TAudioDecoder::open_source()` | `source()`, `open_extra_source()` | the first source comes from the probes |
+| 2026-11-01 | `TAudioDecoder::is_valid()`, `open_error()`, `m_openError` | gone | a decoder that cannot open does not exist |
+| 2026-11-01 | `TScenarioDecoder::is_scenario_file()` | gone | a scenario by its first line |
+| 2026-11-01 | `DecoderLibrary::None` | gone | `find_decoder()` gives `std::expected` |
+| 2026-11-01 | `TAudioFileError::openCost` | gone | back when it has a user, for instance at 2c |
+| 2026-11-01 | `open_audio_decoder()`, `can_decode_audio()` | `TAudioDecoderFactory::open_file()`, `can_read()` | so the base class names one friend, the same as the decoders |
+| 2026-11-01 | `has_audio()` | `require_audio()` | it gives a status |
+| 2026-10-31 | `TByteTransfer` | `TReadTotals` |  |
+| 2026-10-31 | `TByteStats` (`TByteStats.h`) | `TReadsByOrigin` (`TReadsByOrigin.h`) | by where the bytes came from |
+| 2026-10-31 | `untold` | `unclassified` | the reads the platform could not tell apart |
+| 2026-10-31 | `TByteSource::set_stats()` | `count_reads_into()` |  |
+| 2026-10-31 | `TByteSource::transfer()` | `read_and_count()` |  |
+| 2026-10-31 | `TAudioPhaseStats` | `TAudioIOCost` |  |
+| 2026-10-31 | `TAudioIOStats::Phase`, `phase` | `Activity`, `activity` |  |
+| 2026-10-31 | `TAudioPhaseStats::bytes` | `TAudioIOCost::reads` |  |
+| 2026-10-31 | `TAudioIOStats::current()` | `current_cost()` |  |
+| 2026-10-31 | `TAudioDecoder::stats()` | `io_stats()` |  |
+| 2026-10-31 | `set_phase()` | `set_activity()` | |
+| 2026-10-31 | `TAudioDecoder::opened()` | `adopt_open_cost()` | takes the whole cost of the open |
+| 2026-10-31 | `TAudioDecoder::frame()`, `m_frame` | `next_frame()`, `m_nextFrame` |  |
+| 2026-10-31 | `TAudioDecoder::reads_from()` | `next_read_is_at()` |  |
+| 2026-10-31 | `TAudioDecoder::error()`, `m_error` | `in_error_state()`, `m_inErrorState` |  |
+| 2026-10-31 | `TBufferedAudioStreamReader::m_error` | `m_errorCode` | an error code, not a state |
+| 2026-10-31 | `no_decoder()` | `why_no_decoder()` | `TAudioDecoderFactory.cpp` |
+| 2026-10-31 | `TAudioReader::m_frame` | `m_nextOutputFrame` |  |
+| 2026-10-31 | `TAudioReader::reset()` | `reset_resampler()` |  |
 | 2026-10-31 | `src/audiofileio/TByteSource.h`, `TByteSource.cpp`, `TByteStats.h` (in `traversoaudiofileio`) | `src/byteio/` (library `traversobyteio`) | moved, unchanged: all disk access goes through it (`src/byteio/README.md`); audiofileio links it |
 | 2026-10-30 | `TAudioByteSource` (`TAudioByteSource.h/.cpp`) | `TByteSource` (`TByteSource.h/.cpp`) | bytes, positions, time and the medium; nothing of audio (T71) |
 | 2026-10-30 | `TAudioTransfer` | `TByteTransfer` (`TByteStats.h`) | |

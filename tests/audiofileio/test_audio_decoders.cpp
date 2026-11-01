@@ -29,11 +29,16 @@
 
 #include <sndfile.h>
 
+#define MPG123_PORTABLE_API
+#include <mpg123.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <random>
 #include <vector>
 #include <tuple>
 
@@ -48,6 +53,10 @@ static void check(bool ok, const char* what)
 }
 
 constexpr float Garbage = 0.7f;
+
+// After a seek mpg123's synthesis phase differs from a read from the start, so
+// the last bits do (up to 3e-7 at peak 1.13); the position is exact
+constexpr float MpgSeekTolerance = 1e-6f;
 
 // The audio of a test file: an odd length (no codec block ends there),
 // channel 0 sweeping up from 200 Hz (exponentially) at 0.5, channel 1 down
@@ -138,7 +147,8 @@ static bool write_scenario(const QString& path, const Source& source)
     if (source.channels != 2) {
         return false;
     }
-    const QString json = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": [
+    const QString json = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": [
         {"signal": "sweep", "mode": "exponential", "start": 200, "end": %3, "amplitude": 0.5},
         {"signal": "sweep", "mode": "linear", "start": 3000, "end": 300, "amplitude": 0.3}]})")
                              .arg(source.rate)
@@ -183,8 +193,8 @@ static bool write_mp3_with_padding(const QString& path, const Source& source, in
     if (lame < 0 || lame + 24 > head.size()) {
         return false;
     }
-    // The tag's CRC (its last two bytes) is not made again: Traverso's
-    // parser does not check it (mpg123 does)
+    // The tag's CRC (its last two bytes) is not made again: mpg123
+    // takes the tag without it
     head[lame + 22] = char((uchar(head[lame + 22]) & 0xf0) | ((padding >> 8) & 0x0f));
     head[lame + 23] = char(padding & 0xff);
     return file.seek(0) && file.write(head) == head.size();
@@ -224,8 +234,8 @@ struct Format
     std::function<bool(const QString&, const Source&)> write;
     // Lossless: the samples as written (within the format's resolution);
     // lossy: each channel's level, and the audio where it was written
-    bool lossless;
-    float resolution;
+    bool lossless = false;
+    float resolution = 0.0f;
     // How far the frames may be off what was written: 0 where the format
     // says (MP3 with a LAME tag, Ogg, M4A), an AAC frame for ADTS, which does
     // not say where the audio starts and ends
@@ -234,8 +244,8 @@ struct Format
     // tag does not: the encoder's delay stays in)
     bool placement = true;
     // How far a read after a seek may differ from the read from the start:
-    // nothing, bit for bit, but for AAC with noise substitution (PNS, on in
-    // ffmpeg's encoder): FAAD fills those bands from a random generator,
+    // nothing, bit for bit, but for MP3 (MpgSeekTolerance) and for AAC with
+    // noise substitution (PNS, on in ffmpeg's encoder): FAAD fills those bands from a random generator,
     // which a seek starts anew (with -aac_pns 0 those seeks are bit exact
     // too, measured 2026-10-25)
     float seekTolerance = 0.0f;
@@ -417,7 +427,7 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
 #if !defined(Q_OS_WIN)
 // A file cut short while a reader has it open (a file on a disk that went
 // away, a copy that did not finish): contract points 3 and 4. Buffers and
-// blocks (WavPack blocks, MAD's input buffer, AAC packets) may end the audio
+// blocks (WavPack blocks, AAC packets) may end the audio
 // before the cut, so: a read comes short before the frame count; the frames
 // before it are the file's; after it zeros and 0. A seek back into the part
 // still there clears the error where it can land (WAV): that part reads
@@ -458,8 +468,8 @@ static void test_cut_file(const QTemporaryDir& dir, const Format& format, SeekBa
         }
     }
 
-    // A decoder may hold all of a small file in its buffers from the start
-    // (MAD reads 40 KB at a time): the cut is no cut for it then
+    // A decoder may hold all of a small file in its buffers from the start:
+    // the cut is no cut for it then
     // The reference must be whole (test_format() reports a short one)
     if (reference[0].size() != frames) {
         std::printf("%s: a cut file: the whole file reads short, skipped\n", format.name);
@@ -510,7 +520,7 @@ static void test_cut_file(const QTemporaryDir& dir, const Format& format, SeekBa
 
     // A decoder whose seek failed is read again at the frame it is still at:
     // it must seek, not read from where its library was left (contract point
-    // 3, task R8: MAD and FAAD move their input before the seek can fail).
+    // 3, task R8: a library can move its input before the seek can fail).
     // A seek into the part still there (it lands, the error clears), a seek
     // past the cut (it fails, frame() stays), then the frames right after
     // the first read: a decoder that skipped the seek there reads nothing.
@@ -559,6 +569,695 @@ static void test_cut_file(const QTemporaryDir& dir, const Format& format, SeekBa
 }
 #endif
 
+// The bytes of a file, for the files made from other files below
+static QByteArray file_bytes(const QString& path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
+static bool write_bytes(const QString& path, const QByteArray& bytes)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size();
+}
+
+// An MP3 through libsndfile's LAME: CBR or VBR at a compression level
+static bool write_mp3(const QString& path, const Source& source, int bitrateMode, double level)
+{
+    SF_INFO info{};
+    info.samplerate = int(source.rate);
+    info.channels = int(source.channels);
+    info.format = SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III;
+    SNDFILE* file = sf_open(path.toLocal8Bit().constData(), SFM_WRITE, &info);
+    if (!file) {
+        return false;
+    }
+    sf_command(file, SFC_SET_BITRATE_MODE, &bitrateMode, sizeof(bitrateMode));
+    sf_command(file, SFC_SET_COMPRESSION_LEVEL, &level, sizeof(level));
+    const std::vector<float> samples = source.interleaved();
+    const sf_count_t written = sf_writef_float(file, samples.data(), source.frames());
+    sf_close(file);
+    return written == sf_count_t(source.frames());
+}
+
+// Where the frames of a Layer III file lie
+struct MpegFrame
+{
+    qsizetype offset;
+    qsizetype size;
+    bool mpeg1;
+    bool mono;
+    bool crc;
+};
+
+static std::vector<MpegFrame> mpeg_frames(const QByteArray& bytes)
+{
+    static const int bitratesMpeg1[] = {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320};
+    static const int bitratesMpeg2[] = {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160};
+    static const int ratesMpeg1[] = {44100, 48000, 32000};
+    std::vector<MpegFrame> frames;
+    qsizetype at = 0;
+    while (at + 4 <= bytes.size()) {
+        const uchar* header = reinterpret_cast<const uchar*>(bytes.constData()) + at;
+        const int version = (header[1] >> 3) & 3;
+        const int bitrateIndex = header[2] >> 4;
+        const int rateIndex = (header[2] >> 2) & 3;
+        if (header[0] != 0xff || (header[1] & 0xe0) != 0xe0 || version == 1 || bitrateIndex == 0 || bitrateIndex == 15 || rateIndex == 3) {
+            break;
+        }
+        const bool mpeg1 = version == 3;
+        const int rate = ratesMpeg1[rateIndex] / (mpeg1 ? 1 : version == 2 ? 2 : 4);
+        const int bitrate = (mpeg1 ? bitratesMpeg1 : bitratesMpeg2)[bitrateIndex];
+        const qsizetype size = (mpeg1 ? 144 : 72) * bitrate * 1000 / rate + ((header[2] >> 1) & 1);
+        frames.push_back({at, size, mpeg1, (header[3] >> 6) == 3, !(header[1] & 1)});
+        at += size;
+    }
+    return frames;
+}
+
+// The file without its Info frame: no tag, no delay, no padding, no length
+static QByteArray without_tag(const QByteArray& bytes)
+{
+    const std::vector<MpegFrame> frames = mpeg_frames(bytes);
+    return frames.empty() ? QByteArray() : bytes.mid(frames[0].size);
+}
+
+// The Info frame without its frame count, the encoder's name and the rest of
+// the tag in place: the fields behind the count move up four bytes
+static QByteArray without_frame_count(const QByteArray& bytes)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64 || !(changed[tag + 7] & 1)) {
+        return QByteArray();
+    }
+    const qsizetype count = tag + 8;
+    const qsizetype frameEnd = mpeg_frames(bytes)[0].size;
+    changed[tag + 7] = char(changed[tag + 7] & ~1);
+    changed.replace(count, frameEnd - count, bytes.mid(count + 4, frameEnd - count - 4) + QByteArray(4, '\0'));
+    return changed;
+}
+
+// The Info frame's count extraFrames higher: iTunes writes one too many
+static QByteArray with_frame_count_over(const QByteArray& bytes, uint extraFrames)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64 || !(changed[tag + 7] & 1)) {
+        return QByteArray();
+    }
+    uint count = 0;
+    for (int i = 0; i < 4; ++i) {
+        count = (count << 8) | uchar(changed[tag + 8 + i]);
+    }
+    count += extraFrames;
+    for (int i = 0; i < 4; ++i) {
+        changed[tag + 8 + i] = char((count >> (24 - 8 * i)) & 0xff);
+    }
+    return changed;
+}
+
+// The Info frame with its frame count, without the encoder's part: no name, no
+// delay, no padding
+static QByteArray without_lame_part(const QByteArray& bytes)
+{
+    QByteArray changed = bytes;
+    qsizetype tag = changed.indexOf("Info");
+    if (tag < 0 || tag > 64) {
+        tag = changed.indexOf("Xing");
+    }
+    if (tag < 0 || tag > 64) {
+        return QByteArray();
+    }
+    const int flags = changed[tag + 7];
+    const qsizetype part = tag + 8 + (flags & 1 ? 4 : 0) + (flags & 2 ? 4 : 0) + (flags & 4 ? 100 : 0) + (flags & 8 ? 4 : 0);
+    changed.replace(part, 24, QByteArray(24, '\0'));
+    return changed;
+}
+
+// An ID3v1 tag behind the audio, which mpg123 leaves out of the stream
+static QByteArray with_id3v1(const QByteArray& bytes)
+{
+    QByteArray tag("TAG");
+    tag.append(QByteArray(125, ' '));
+    return bytes + tag;
+}
+
+// The Info frame and the first count frames of audio
+static QByteArray first_frames(const QByteArray& bytes, size_t count)
+{
+    const std::vector<MpegFrame> frames = mpeg_frames(bytes);
+    return count + 1 < frames.size() ? bytes.left(frames[count + 1].offset) : bytes;
+}
+
+// How many frames back the bit reservoir of the file reaches, at most
+static int reservoir_reach(const QByteArray& bytes)
+{
+    const std::vector<MpegFrame> frames = mpeg_frames(bytes);
+    const auto payload = [](const MpegFrame& frame) {
+        const qsizetype side = frame.mpeg1 ? (frame.mono ? 17 : 32) : (frame.mono ? 9 : 17);
+        return frame.size - 4 - side - (frame.crc ? 2 : 0);
+    };
+    int reach = 0;
+    for (size_t i = 0; i < frames.size(); ++i) {
+        const uchar* side = reinterpret_cast<const uchar*>(bytes.constData()) + frames[i].offset + 4 + (frames[i].crc ? 2 : 0);
+        qsizetype back = frames[i].mpeg1 ? (side[0] << 1) | (side[1] >> 7) : side[0];
+        int count = 0;
+        while (back > 0 && size_t(count) < i) {
+            ++count;
+            back -= payload(frames[i - size_t(count)]);
+        }
+        reach = std::max(reach, count);
+    }
+    return reach;
+}
+
+// A WAV holding MP3 frames: format tag 0x55
+static QByteArray wav_with_mp3(const QByteArray& mp3, uint rate, uint channels, nframes_t frames)
+{
+    const auto u16 = [](QByteArray& to, uint value) {
+        to.append(char(value & 0xff));
+        to.append(char((value >> 8) & 0xff));
+    };
+    const auto u32 = [&](QByteArray& to, uint value) {
+        u16(to, value & 0xffff);
+        u16(to, value >> 16);
+    };
+    QByteArray format;
+    u16(format, 0x55);
+    u16(format, channels);
+    u32(format, rate);
+    u32(format, 16000);
+    u16(format, 1);
+    u16(format, 0);
+    u16(format, 12);
+    u16(format, 1);
+    u32(format, 2);
+    u16(format, 417);
+    u16(format, 1);
+    u16(format, 0);
+
+    QByteArray body("WAVEfmt ");
+    u32(body, uint(format.size()));
+    body += format;
+    body += "fact";
+    u32(body, 4);
+    u32(body, frames);
+    body += "data";
+    u32(body, uint(mp3.size()));
+    body += mp3;
+
+    QByteArray riff("RIFF");
+    u32(riff, uint(body.size()));
+    return riff + body;
+}
+
+// Bytes without a 0xff, so no frame sync in them
+static QByteArray junk(qsizetype size)
+{
+    std::mt19937 random(12345);
+    QByteArray bytes(size, '\0');
+    for (char& byte : bytes) {
+        byte = char(random() % 255);
+    }
+    return bytes;
+}
+
+// What a reader gives from the start in reads of 1000 frames, until one comes
+// short, and why that one did
+struct ReadBack
+{
+    std::vector<std::vector<float>> channels;
+    std::optional<TAudioFileError> error;
+    nframes_t frames() const { return channels.empty() ? 0 : nframes_t(channels[0].size()); }
+};
+
+static ReadBack read_back(TAudioReader& reader)
+{
+    ReadBack back;
+    back.channels.resize(reader.channel_count());
+    TAudioBuffer buffer;
+    for (nframes_t at = 0; at < reader.file_frame_count(); at += 1000) {
+        const nframes_t count = std::min<nframes_t>(1000, reader.file_frame_count() - at);
+        const TAudioFileResult result = reader.read_file_frames(buffer, at, count);
+        for (uint channel = 0; channel < reader.channel_count(); ++channel) {
+            const float* data = buffer.get_channel_buffer(channel).get_data(count);
+            back.channels[channel].insert(back.channels[channel].end(), data, data + result.frames);
+        }
+        if (result.frames != count) {
+            back.error = result.error;
+            break;
+        }
+    }
+    return back;
+}
+
+// count frames from first, against what the reference holds there
+static float seek_error(TAudioReader& reader, nframes_t first, nframes_t count, const std::vector<float>& reference, TAudioFileResult* result = nullptr)
+{
+    TAudioBuffer buffer;
+    fill_with_garbage(buffer, count, reader.channel_count());
+    const TAudioFileResult read = reader.read_file_frames(buffer, first, count);
+    if (result) {
+        *result = read;
+    }
+    float worst = read.frames == count ? 0.0f : 1.0f;
+    const float* data = buffer.get_channel_buffer(0).get_data(count);
+    for (nframes_t i = 0; i < read.frames; ++i) {
+        worst = std::max(worst, std::fabs(data[i] - reference[first + i]));
+    }
+    return worst;
+}
+
+// How far a reader's seeks over the whole file lie from a handle of our own,
+// with the reader's settings but without its detour over the file size.
+// Its frame 0 lies behind the encoder's delay and the decoder's
+static float worst_against_plain_handle(TAudioReader& reader, const QString& path)
+{
+    const QByteArray decoder = qgetenv("TRAVERSO_MPG123_DECODER");
+    int error = MPG123_OK;
+    mpg123_handle* handle = mpg123_new(decoder.isEmpty() ? nullptr : decoder.constData(), &error);
+    if (!handle) {
+        return 1.0f;
+    }
+    mpg123_param(handle, MPG123_REMOVE_FLAGS, MPG123_AUTO_RESAMPLE | MPG123_GAPLESS, 0.0);
+    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_FORCE_FLOAT | MPG123_QUIET | MPG123_NO_RESYNC | MPG123_SKIP_ID3V2, 0.0);
+    mpg123_param(handle, MPG123_RESYNC_LIMIT, 1024 * 1024, 0.0);
+    mpg123_param(handle, MPG123_INDEX_SIZE, 10000, 0.0);
+    mpg123_param(handle, MPG123_PREFRAMES, 12, 0.0);
+    long rate = 0;
+    int channels = 0;
+    int encoding = 0;
+    float worst = 1.0f;
+    if (mpg123_open64(handle, path.toLocal8Bit().constData()) == MPG123_OK && mpg123_getformat(handle, &rate, &channels, &encoding) == MPG123_OK) {
+        long delay = 0;
+        double unused = 0.0;
+        mpg123_getstate(handle, MPG123_ENC_DELAY, &delay, &unused);
+        mpg123_scan(handle);
+        const int64_t skip = delay >= 0 ? delay + 529 : 0;
+        const nframes_t frames = reader.file_frame_count();
+        const nframes_t count = 2000;
+        TAudioBuffer buffer;
+        std::vector<float> plain(size_t(count) * size_t(channels));
+        worst = 0.0f;
+        for (int place = 7; place >= 0; --place) {
+            const nframes_t first = (frames - count - 1) / 7 * nframes_t(place);
+            size_t done = 0;
+            const bool landed = mpg123_seek64(handle, first + skip, SEEK_SET) == first + skip && mpg123_read(handle, plain.data(), plain.size() * sizeof(float), &done) == MPG123_OK;
+            const TAudioFileResult read = reader.read_file_frames(buffer, first, count);
+            if (!landed || done != plain.size() * sizeof(float) || read.frames != count) {
+                worst = 1.0f;
+                break;
+            }
+            const float* data = buffer.get_channel_buffer(0).get_data(count);
+            for (nframes_t i = 0; i < count; ++i) {
+                worst = std::max(worst, std::fabs(data[i] - plain[size_t(i) * size_t(channels)]));
+            }
+        }
+    }
+    mpg123_delete(handle);
+    return worst;
+}
+
+// Why path does not open, nothing when it does
+static QString refusal(const QString& path)
+{
+    const auto reader = TAudioReader::open(path);
+    return reader ? QString() : reader.error().detail;
+}
+
+static const QLatin1String NoDecoder("no decoder reads this format");
+
+// Every case of doc/design/mp3-decoder.md section 6 that goes through a file.
+// The audio is the sweeps, so a shift shows; the files are made from one MP3
+// by libsndfile's LAME, which has an Info frame with delay and padding.
+static void test_mpeg_files(const QTemporaryDir& dir)
+{
+    char what[240];
+    Source source;
+    source.extraSeconds = 29;
+    const QString tagged = dir.filePath(QStringLiteral("t73-tagged.mp3"));
+    if (!write_mp3(tagged, source, SF_BITRATE_MODE_CONSTANT, 0.5)) {
+        check(false, "MP3 files: written");
+        return;
+    }
+    const QByteArray bytes = file_bytes(tagged);
+    const QByteArray bare = without_tag(bytes);
+    const std::vector<float> written = source.channel(0);
+    const std::vector<MpegFrame> frames = mpeg_frames(bytes);
+    const std::unique_ptr<TAudioReader> reference = TAudioReader::open(tagged).value_or(nullptr);
+    if (!reference || frames.size() < 100) {
+        check(false, "MP3 files: the file made opens");
+        return;
+    }
+    const ReadBack whole = read_back(*reference);
+    check(reference->file_frame_count() == source.frames() && whole.frames() == source.frames() && !whole.error, "MP3 with a tag: all its frames, no more");
+
+    // VBR without a tag: only a scan knows the length
+    {
+        const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-vbr-bare.mp3"));
+        const bool made = write_mp3(vbrPath, source, SF_BITRATE_MODE_VARIABLE, 0.3) && write_bytes(path, without_tag(file_bytes(vbrPath)));
+        std::vector<qsizetype> sizes;
+        for (const MpegFrame& frame : mpeg_frames(file_bytes(path))) {
+            sizes.push_back(frame.size);
+        }
+        std::sort(sizes.begin(), sizes.end());
+        const size_t kinds = size_t(std::distance(sizes.begin(), std::unique(sizes.begin(), sizes.end())));
+        std::snprintf(what, sizeof(what), "VBR without a tag: the file made is VBR (%zu frame sizes)", kinds);
+        check(made && kinds > 2, what);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "VBR without a tag: the whole length (%u frames of %u, %u read)", count, source.frames(), back.frames());
+        check(count >= source.frames() && count < source.frames() + 3 * 1152 && back.frames() == count && !back.error, what);
+    }
+
+    // iTunes counts its Info frame: one frame over the scan is no cut file,
+    // two are
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-itunes.mp3"));
+        write_bytes(path, with_frame_count_over(bytes, 1));
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag one frame over the scan: the scan's length, no error (%u frames of %u, %u read, %s)", reader ? reader->file_frame_count() : 0, source.frames(), back.frames(),
+                      back.error ? qPrintable(back.error->detail) : "no error");
+        check(reader && reader->file_frame_count() == source.frames() && back.frames() == source.frames() && !back.error, what);
+
+        write_bytes(path, with_frame_count_over(bytes, 2));
+        const std::unique_ptr<TAudioReader> over = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack overBack = over ? read_back(*over) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag two frames over the scan: the tag's length, an error at the end (%u frames, %u read)", over ? over->file_frame_count() : 0, overBack.frames());
+        check(over && over->file_frame_count() == source.frames() + 2 * 1152 && overBack.error && overBack.frames() < over->file_frame_count(), what);
+    }
+
+    // A frame count without delay and padding: it still says how long the file
+    // is, so a file cut short ends in an error
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-count-only.mp3"));
+        const QByteArray countOnly = without_lame_part(bytes);
+        write_bytes(path, countOnly);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A frame count alone: read to its end (%u frames, %u read)", count, back.frames());
+        check(count >= source.frames() && back.frames() == count && !back.error, what);
+
+        write_bytes(path, countOnly.left(countOnly.size() / 2));
+        const std::unique_ptr<TAudioReader> cut = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack cutBack = cut ? read_back(*cut) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A frame count alone, cut short: the count's length, an error at the end (%u frames, %u read)", cut ? cut->file_frame_count() : 0, cutBack.frames());
+        check(cut && cut->file_frame_count() == count && cutBack.error && cutBack.frames() < count, what);
+    }
+
+    // A tag with an encoder's name and no frame count: the scan gives the
+    // length, delay and padding still place the audio as a full tag does
+    {
+        const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-no-count.mp3"));
+        const QByteArray changed = write_mp3(vbrPath, source, SF_BITRATE_MODE_VARIABLE, 0.3) ? without_frame_count(file_bytes(vbrPath)) : QByteArray();
+        check(!changed.isEmpty() && write_bytes(path, changed), "A tag without a frame count: the file made");
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        const std::unique_ptr<TAudioReader> full = TAudioReader::open(vbrPath).value_or(nullptr);
+        const nframes_t fullCount = full ? full->file_frame_count() : 0;
+        const ReadBack fullBack = full ? read_back(*full) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A tag without a frame count: read to its end, the length of a full tag within a frame (%u frames against %u, %u read, %s)", count, fullCount, back.frames(),
+                      back.error ? qPrintable(back.error->detail) : "no error");
+        check(count > 0 && std::labs(long(count) - long(fullCount)) <= 1152 && back.frames() == count && !back.error, what);
+        const nframes_t from = std::min(count, fullCount) / 2;
+        const long lag = count > 0 && fullCount > 0 ? best_lag(fullBack.channels[0], from, back.channels[0], from, 4096, 3000) : -1;
+        std::snprintf(what, sizeof(what), "A tag without a frame count: the audio where a full tag has it (%+ld frames)", lag);
+        check(lag == 0, what);
+
+        // Damage in the middle: refused, not opened short
+        QByteArray damaged = changed;
+        const std::vector<MpegFrame> changedFrames = mpeg_frames(changed);
+        const qsizetype place = changedFrames[changedFrames.size() / 2].offset;
+        damaged.replace(place, 3000, QByteArray(3000, '\0'));
+        write_bytes(path, damaged);
+        const QString why = refusal(path);
+        std::snprintf(what, sizeof(what), "A tag without a frame count, damage in the middle: CannotOpen with the byte position (%s, damage at %lld)", why.isEmpty() ? "it opened" : qPrintable(why), static_cast<long long>(place));
+        check(why.contains(QString::number(place + 4)), what);
+    }
+
+    // The detour that tells a real frame count from an estimate changes the
+    // handle's file size for a moment: seeks over the whole file give what a
+    // handle gives that made no detour, also with an ID3v1 tag behind the audio
+    {
+        const QString vbrPath = dir.filePath(QStringLiteral("t73-vbr-tag.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-detour.mp3"));
+        for (const QByteArray& file : {bytes, with_id3v1(bytes), without_frame_count(file_bytes(vbrPath)), with_id3v1(without_frame_count(file_bytes(vbrPath)))}) {
+            write_bytes(path, file);
+            const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+            const float worst = reader ? worst_against_plain_handle(*reader, path) : 1.0f;
+            const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+            std::snprintf(what, sizeof(what), "The detour: seeks equal a plain handle (worst %.2g), read to the end (%u of %u)", double(worst), back.frames(), reader ? reader->file_frame_count() : 0);
+            check(reader && worst <= MpgSeekTolerance && back.frames() == reader->file_frame_count() && !back.error, what);
+        }
+    }
+
+    // A bit reservoir that reaches further than 16 frames
+    {
+        Source low{24000, 2, 19};
+        const QString path = dir.filePath(QStringLiteral("t73-reservoir.mp3"));
+        const bool made = write_mp3(path, low, SF_BITRATE_MODE_CONSTANT, 1.0);
+        const int reach = made ? reservoir_reach(file_bytes(path)) : 0;
+        std::snprintf(what, sizeof(what), "The reservoir: the file reaches %d frames back", reach);
+        check(reach > 16, what);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        if (reader) {
+            const ReadBack back = read_back(*reader);
+            float worst = 0.0f;
+            for (const nframes_t first : {back.frames() / 2, back.frames() / 3 + 777, back.frames() / 8, back.frames() - 3000}) {
+                worst = std::max(worst, seek_error(*reader, first, 2000, back.channels[0]));
+            }
+            std::snprintf(what, sizeof(what), "The reservoir: seeks read what was there (worst %.2g)", double(worst));
+            check(!back.error && worst <= MpgSeekTolerance, what);
+        } else {
+            check(false, "The reservoir: opens");
+        }
+    }
+
+    // Junk in front of the audio: found below the limit, refused above it
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-junk.mp3"));
+        write_bytes(path, junk(512 * 1024) + bytes);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "Junk of 512 KiB in front: read whole (%u frames)", back.frames());
+        check(back.frames() == whole.frames() && !back.channels.empty() && back.channels[0] == whole.channels[0], what);
+        write_bytes(path, junk(2 * 1024 * 1024) + bytes);
+        check(refusal(path) == NoDecoder, "Junk of 2 MiB in front: refused, no decoder");
+    }
+
+    // The rules of the strict probe. The open reads one frame, then it walks
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-short.mp3"));
+        const auto probed = [&](const QByteArray& file) { return write_bytes(path, file) ? refusal(path) : QStringLiteral("not written"); };
+        const auto opened = [&](const QByteArray& file) { return probed(file).isEmpty(); };
+        const auto refused = [&](const QByteArray& file) { return probed(file).startsWith(NoDecoder); };
+        check(refused(first_frames(bare, 0).left(frames[1].size)), "One frame, no tag: refused");
+        check(probed(without_tag(first_frames(bytes, 2))) == QLatin1String("no decoder reads this format (too few MPEG frames: 2)"), "Two frames, no tag: refused, and why");
+        check(opened(without_tag(first_frames(bytes, 3))), "Three frames, no tag: a clean end after 2 walked");
+        check(opened(without_tag(first_frames(bytes, 7))), "Seven frames, no tag: 4 walked");
+        check(refused(first_frames(bytes, 1)), "One frame and a tag: refused");
+        check(opened(first_frames(bytes, 2)), "Two frames and a tag: a clean end after 1 walked");
+
+        // Random bytes are no audio, also the ones that start with a frame
+        // sync. Fixed seed: a false hit shows every time
+        std::mt19937 random(2026);
+        int hits = 0;
+        for (int file = 0; file < 300; ++file) {
+            QByteArray noise(qsizetype(100 + random() % 70000), '\0');
+            for (char& byte : noise) {
+                byte = char(random());
+            }
+            if (file % 2) {
+                noise[0] = char(0xff);
+                noise[1] = char(0xfb);
+                noise[2] = char(0x90);
+            }
+            hits += opened(noise) ? 1 : 0;
+        }
+        std::snprintf(what, sizeof(what), "300 files of random bytes: %d read as audio", hits);
+        check(hits == 0, what);
+    }
+
+    // Damage in the middle, with a tag: exact up to the damage, an error at
+    // it, a seek past it refused, a seek back reads
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-damage.mp3"));
+        QByteArray damaged = bytes;
+        const MpegFrame& middle = frames[frames.size() / 2];
+        damaged.replace(middle.offset, 3000, QByteArray(3000, '\0'));
+        write_bytes(path, damaged);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        if (!reader) {
+            check(false, "Damage with a tag: opens");
+        } else {
+            const ReadBack back = read_back(*reader);
+            const nframes_t end = back.frames();
+            const nframes_t expected = nframes_t((frames.size() / 2 - 1) * 1152);
+            std::snprintf(what, sizeof(what), "Damage with a tag: the frame count is the tag's, the read fails at the damage (at %u, damage near %u, %s)", end, expected,
+                          back.error ? qPrintable(back.error->detail) : "no error");
+            check(reader->file_frame_count() == source.frames() && back.error && back.error->code == TAudioFileError::Code::ReadFailed && end + 3 * 1152 > expected && end < expected, what);
+            const bool same = end > 0 && std::equal(back.channels[0].begin(), back.channels[0].end(), whole.channels[0].begin());
+            const long lag = end > 8192 ? best_lag(written, end - 4096, back.channels[0], end - 4096, 2048, 3000) : -1;
+            std::snprintf(what, sizeof(what), "Damage with a tag: bit exact up to the damage, not shifted (%+ld frames)", lag);
+            check(same && lag == 0, what);
+
+            TAudioFileResult past;
+            seek_error(*reader, end + 3 * 1152, 1000, whole.channels[0], &past);
+            check(past.frames == 0 && past.error && past.error->code == TAudioFileError::Code::SeekFailed, "Damage with a tag: a seek past it is refused");
+            const float worst = seek_error(*reader, end / 2, 2000, whole.channels[0]);
+            std::snprintf(what, sizeof(what), "Damage with a tag: a seek back reads (worst %.2g)", double(worst));
+            check(worst <= MpgSeekTolerance, what);
+        }
+    }
+
+    // Damage without a tag: nothing says how long the file is
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-damage-bare.mp3"));
+        QByteArray damaged = bare;
+        const std::vector<MpegFrame> bareFrames = mpeg_frames(bare);
+        const qsizetype place = bareFrames[bareFrames.size() / 2].offset;
+        damaged.replace(place, 3000, QByteArray(3000, '\0'));
+        write_bytes(path, damaged);
+        const auto opened = TAudioReader::open(path);
+        std::snprintf(what, sizeof(what), "Damage without a tag: CannotOpen with the byte position (%s, damage at %lld)", opened ? "opened" : qPrintable(opened.error().detail),
+                      static_cast<long long>(place));
+        check(!opened && opened.error().code == TAudioFileError::Code::CannotOpen && opened.error().detail.contains(QString::number(place + 4)), what);
+
+        // Near the end it is the end of the file
+        damaged = bare;
+        const qsizetype late = bareFrames[bareFrames.size() - 20].offset;
+        damaged.replace(late, 2000, QByteArray(2000, '\0'));
+        write_bytes(path, damaged);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "Damage without a tag, less than 64 KiB before the end: opens, what the scan found (%u frames)", back.frames());
+        check(reader && back.frames() == reader->file_frame_count() && !back.error && back.frames() + 40 * 1152 > source.frames(), what);
+    }
+
+    // A file cut short before it is opened: the tag's length, the error at
+    // the end, the audio in place
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-cut.mp3"));
+        write_bytes(path, bytes.left(bytes.size() / 2));
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        if (!reader) {
+            check(false, "Cut before the open: opens");
+        } else {
+            const ReadBack back = read_back(*reader);
+            const nframes_t end = back.frames();
+            std::snprintf(what, sizeof(what), "Cut before the open: the tag's length, an error where the audio ends (at %u of %u)", end, reader->file_frame_count());
+            check(reader->file_frame_count() == source.frames() && back.error && back.error->code == TAudioFileError::Code::ReadFailed && end > source.frames() / 3 && end < source.frames() * 2 / 3, what);
+            const long lag = end > 8192 ? best_lag(written, end - 4096, back.channels[0], end - 4096, 2048, 3000) : -1;
+            const bool same = end > 0 && std::equal(back.channels[0].begin(), back.channels[0].end(), whole.channels[0].begin());
+            std::snprintf(what, sizeof(what), "Cut before the open: the audio in place (%+ld frames)", lag);
+            check(same && lag == 0, what);
+            TAudioFileResult past;
+            seek_error(*reader, end + 3 * 1152, 1000, whole.channels[0], &past);
+            check(past.frames == 0 && past.error && past.error->code == TAudioFileError::Code::SeekFailed, "Cut before the open: a seek past the end of the audio is refused");
+        }
+    }
+
+    // MP3 in a WAV: read by mpg123, whole
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-in-wav.wav"));
+        write_bytes(path, wav_with_mp3(bare, source.rate, source.channels, source.frames()));
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        std::snprintf(what, sizeof(what), "MP3 in a WAV: opens (%s)", reader ? qPrintable(reader->decoder_type()) : "no decoder");
+        check(reader && reader->decoder_type() == QLatin1String("mpg123"), what);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "MP3 in a WAV: whole (%u frames of %u)", back.frames(), source.frames());
+        check(back.frames() >= source.frames() && back.frames() < source.frames() + 3 * 1152 && !back.error, what);
+    }
+
+    // MP3 in a RIFF libsndfile does not know: the probe gets it after all
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-rmp3.mp3"));
+        QByteArray riff = wav_with_mp3(bare, source.rate, source.channels, source.frames());
+        riff.replace(8, 4, "RMP3");
+        write_bytes(path, riff);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        std::snprintf(what, sizeof(what), "RIFF....RMP3: opens (%s)", reader ? qPrintable(reader->decoder_type()) : "no decoder");
+        check(reader && reader->decoder_type() == QLatin1String("mpg123"), what);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "RIFF....RMP3: whole (%u frames of %u)", back.frames(), source.frames());
+        check(back.frames() >= source.frames() && back.frames() < source.frames() + 3 * 1152 && !back.error, what);
+    }
+
+    // Two files one after the other, the second tag in the middle
+    {
+        const QString path = dir.filePath(QStringLiteral("t73-joined.mp3"));
+        write_bytes(path, bytes + bytes);
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        const nframes_t count = reader ? reader->file_frame_count() : 0;
+        std::snprintf(what, sizeof(what), "Concatenated: both parts (%u frames of twice %u, %u read)", count, source.frames(), back.frames());
+        check(count > 2 * source.frames() && count < 2 * source.frames() + 6 * 1152 && back.frames() == count && !back.error, what);
+        if (back.frames() == count && count > source.frames()) {
+            const nframes_t from = count - source.frames() / 2;
+            const long lag = best_lag(written, source.frames() / 2, back.channels[0], from, 4096, 6000);
+            const double level = rms(back.channels[0], count - source.frames() / 2, count - source.frames() / 4);
+            std::snprintf(what, sizeof(what), "Concatenated: the second part is there (%+ld frames, level %.3f)", lag, level);
+            check(std::labs(lag) <= 3 * 1152 + 1 && std::fabs(level - source.level(0)) < 0.05, what);
+        }
+    }
+
+    // Another format inside a file: damage, stop with an error
+    for (const Source& second : {Source{44100, 1, 3}, Source{22050, 2, 3}}) {
+        const QString other = dir.filePath(QStringLiteral("t73-other.mp3"));
+        const QString path = dir.filePath(QStringLiteral("t73-format.mp3"));
+        if (!write_mp3(other, second, SF_BITRATE_MODE_CONSTANT, 0.5) || !write_bytes(path, bytes + without_tag(file_bytes(other)))) {
+            check(false, "A change of format: written");
+            continue;
+        }
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(path).value_or(nullptr);
+        const ReadBack back = reader ? read_back(*reader) : ReadBack{};
+        std::snprintf(what, sizeof(what), "A change of format to %u channels at %u Hz: an error after %u frames (%s)", second.channels, second.rate, back.frames(),
+                      back.error ? qPrintable(back.error->detail) : "no error");
+        check(reader && back.error && back.error->detail.contains(QLatin1String("format changes")) && back.frames() + 3 * 1152 > source.frames() && back.frames() < source.frames() + 3 * 1152, what);
+        if (reader) {
+            const bool same = back.frames() > source.frames() && std::equal(whole.channels[0].begin(), whole.channels[0].end(), back.channels[0].begin());
+            check(same, "A change of format: exact up to the change");
+            // From here on every seek is refused, also back into the first
+            // part, and it says why
+            TAudioFileResult refused;
+            seek_error(*reader, 5000, 2000, whole.channels[0], &refused);
+            std::snprintf(what, sizeof(what), "A change of format: a seek is refused (%s)", refused.error ? qPrintable(refused.error->detail) : "no error");
+            check(refused.frames == 0 && refused.error && refused.error->code == TAudioFileError::Code::SeekFailed && refused.error->detail.contains(QLatin1String("format changes")), what);
+        }
+
+        // A new reader, not at the change yet: its first seek lands in the
+        // first part, or fails; nowhere wrong audio
+        const std::unique_ptr<TAudioReader> fresh = TAudioReader::open(path).value_or(nullptr);
+        if (fresh) {
+            TAudioFileResult first;
+            const float worst = seek_error(*fresh, source.frames() / 2, 2000, whole.channels[0], &first);
+            std::snprintf(what, sizeof(what), "A change of format: a first seek in the first part (%u frames, worst %.2g, %s)", first.frames, double(worst), first.error ? qPrintable(first.error->detail) : "no error");
+            check((first.frames == 2000 && worst <= MpgSeekTolerance) || (first.frames == 0 && first.error), what);
+        }
+        const std::unique_ptr<TAudioReader> beyond = TAudioReader::open(path).value_or(nullptr);
+        if (beyond) {
+            TAudioFileResult past;
+            seek_error(*beyond, source.frames() + 5000, 1000, whole.channels[0], &past);
+            std::snprintf(what, sizeof(what), "A change of format: a first seek past it gives no audio (%u frames, %s)", past.frames, past.error ? qPrintable(past.error->detail) : "no error");
+            check(past.frames == 0 && past.error, what);
+        }
+    }
+}
+
 int main()
 {
     QTemporaryDir dir;
@@ -576,49 +1275,53 @@ int main()
     const Source stereo;
     const Source mono22{22050, 1};
     const std::vector<Format> formats = {
-        {"WAV float (sndfile)", "wav", stereo, sndfile(SF_FORMAT_WAV | SF_FORMAT_FLOAT), true, 0.0f},
+        {.name = "WAV float (sndfile)", .suffix = "wav", .source = stereo, .write = sndfile(SF_FORMAT_WAV | SF_FORMAT_FLOAT), .lossless = true, .resolution = 0.0f},
         // The test signals described, computed by the decoder on its own:
         // the same sweeps within float rounding
-        {"Scenario (test signals)", "tscenario", stereo, write_scenario, true, 1e-6f},
-        {"WAV 16 bit (sndfile)", "16.wav", stereo, sndfile(SF_FORMAT_WAV | SF_FORMAT_PCM_16), true, 1.0f / 32768},
-        {"FLAC 24 bit (sndfile)", "flac", stereo, sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"AIFF 24 bit (sndfile)", "aiff", stereo, sndfile(SF_FORMAT_AIFF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"W64 24 bit (sndfile)", "w64", stereo, sndfile(SF_FORMAT_W64 | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"RF64 float (sndfile)", "rf64", stereo, sndfile(SF_FORMAT_RF64 | SF_FORMAT_FLOAT), true, 0.0f},
-        {"CAF 24 bit (sndfile)", "caf", stereo, sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), true, 1.0f / 8388608},
-        {"Ogg Vorbis (sndfile)", "ogg", stereo, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), false, 0.0f},
-        {"Ogg Opus (sndfile)", "opus", Source{48000, 2}, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), false, 0.0f},
-        {"MP3 with a LAME tag", "mp3", stereo, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
-        {"MP3 MPEG-2 mono 22.05 kHz", "22.mp3", mono22, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), false, 0.0f},
+        {.name = "Scenario (test signals)", .suffix = "tscenario", .source = stereo, .write = write_scenario, .lossless = true, .resolution = 1e-6f},
+        {.name = "WAV 16 bit (sndfile)", .suffix = "16.wav", .source = stereo, .write = sndfile(SF_FORMAT_WAV | SF_FORMAT_PCM_16), .lossless = true, .resolution = 1.0f / 32768},
+        {.name = "FLAC 24 bit (sndfile)", .suffix = "flac", .source = stereo, .write = sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "AIFF 24 bit (sndfile)", .suffix = "aiff", .source = stereo, .write = sndfile(SF_FORMAT_AIFF | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "W64 24 bit (sndfile)", .suffix = "w64", .source = stereo, .write = sndfile(SF_FORMAT_W64 | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "RF64 float (sndfile)", .suffix = "rf64", .source = stereo, .write = sndfile(SF_FORMAT_RF64 | SF_FORMAT_FLOAT), .lossless = true, .resolution = 0.0f},
+        {.name = "CAF 24 bit (sndfile)", .suffix = "caf", .source = stereo, .write = sndfile(SF_FORMAT_CAF | SF_FORMAT_PCM_24), .lossless = true, .resolution = 1.0f / 8388608},
+        {.name = "Ogg Vorbis (sndfile)", .suffix = "ogg", .source = stereo, .write = sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS), .lossless = false, .resolution = 0.0f},
+        {.name = "Ogg Opus (sndfile)", .suffix = "opus", .source = Source{48000, 2}, .write = sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS), .lossless = false, .resolution = 0.0f},
+        {.name = "MP3 with a LAME tag", .suffix = "mp3", .source = stereo, .write = sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), .seekTolerance = MpgSeekTolerance},
+        {.name = "MP3 MPEG-2 mono 22.05 kHz", .suffix = "22.mp3", .source = mono22, .write = sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III), .seekTolerance = MpgSeekTolerance},
         // The tag's padding is a lie here: the file holds more frames than
         // were written, the last of them silence
-        {"MP3 with a LAME padding below 529", "pad.mp3", stereo,
-         [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); }, false, 0.0f, 2304},
-        {"MP3 without gapless information (ffmpeg)", "nolame.mp3", stereo,
-         ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
+        {.name = "MP3 with a LAME padding below 529", .suffix = "pad.mp3", .source = stereo,
+         .write = [](const QString& path, const Source& source) { return write_mp3_with_padding(path, source, 100); },
+         .frameTolerance = 2304, .seekTolerance = MpgSeekTolerance},
+        {.name = "MP3 without gapless information (ffmpeg)", .suffix = "nolame.mp3", .source = stereo,
+         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("libmp3lame"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-write_xing"),
                  QStringLiteral("0")}),
-         false, 0.0f, 3000, false},
-        {"WavPack float", "wv", stereo,
-         [](const QString& path, const Source& source) {
+         .frameTolerance = 3000, .placement = false, .seekTolerance = MpgSeekTolerance},
+        // Layer II through mpg123 too (decision 4), which limits its preframes to 2
+        {.name = "MP2 (ffmpeg)", .suffix = "mp2", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("mp2"), QStringLiteral("-b:a"), QStringLiteral("192k")}),
+         .frameTolerance = 3000, .placement = false, .seekTolerance = MpgSeekTolerance},
+        {.name = "WavPack float", .suffix = "wv", .source = stereo,
+         .write = [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::WAVPACK, TraversoDAW::FileFormat::WAVPACK);
          },
-         true, 0.0f},
+         .lossless = true},
 #if defined(M4A_DECODE_SUPPORT)
-        {"AAC in ADTS (ffmpeg)", "aac", stereo,
-         ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-f"),
+        {.name = "AAC in ADTS (ffmpeg)", .suffix = "aac", .source = stereo,
+         .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k"), QStringLiteral("-f"),
                  QStringLiteral("adts")}),
-         false, 0.0f, 1024, true, 0.002f},
+         .frameTolerance = 1024, .seekTolerance = 0.002f},
         // ffmpeg's edit list says 23 frames fewer than it was given (ffprobe
         // too): the decoder takes the file's word
-        {"AAC in M4A (ffmpeg)", "m4a", stereo, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k")}),
-         false, 0.0f, 64, true, 0.002f},
+        {.name = "AAC in M4A (ffmpeg)", .suffix = "m4a", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-b:a"), QStringLiteral("128k")}),
+         .frameTolerance = 64, .seekTolerance = 0.002f},
 #endif
 #if defined(M4A_ENCODE_SUPPORT) && defined(M4A_DECODE_SUPPORT)
-        {"AAC in ADTS (Traverso's writer)", "traverso.aac", stereo,
-         [](const QString& path, const Source& source) {
+        {.name = "AAC in ADTS (Traverso's writer)", .suffix = "traverso.aac", .source = stereo,
+         .write = [](const QString& path, const Source& source) {
              return write_with_traverso(path, source, TraversoDAW::WriterType::M4A, TraversoDAW::FileFormat::UNKNOWN);
          },
-         false, 0.0f, 1024, true, 0.0f, -2048, "libfaac leaves out the first 2048 frames (task: Traverso's AAC writer)"},
+         .frameTolerance = 1024, .knownLag = -2048, .knownWhy = "libfaac leaves out the first 2048 frames (task: Traverso's AAC writer)"},
 #endif
     };
     for (const Format& format : formats) {
@@ -633,6 +1336,21 @@ int main()
         test_cut_file(dir, format, seekBack);
     }
 #endif
+    test_mpeg_files(dir);
+
+    // Everything MP3 again with mpg123's generic decoder, the one without
+    // assembly (the synthesis rounds differently)
+    qputenv("TRAVERSO_MPG123_DECODER", "generic");
+    std::printf("mpg123's generic decoder:\n");
+    for (const Format& format : formats) {
+        if (QLatin1String(format.suffix).endsWith(QLatin1String("mp3")) || QLatin1String(format.suffix) == QLatin1String("mp2")) {
+            test_format(dir, format);
+#if !defined(Q_OS_WIN)
+            test_cut_file(dir, format, SeekBack::NotTried);
+#endif
+        }
+    }
+    test_mpeg_files(dir);
 
     if (failures) {
         std::printf("%d check(s) failed\n", failures);

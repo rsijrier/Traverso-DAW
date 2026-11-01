@@ -28,10 +28,6 @@ class TFrameClock : public QObject
 public:
     explicit TFrameClock(QWidget* window);
 
-    // The clock of the frame times, the same the audio thread stamps its
-    // cycles with
-    static qint64 now_nanoseconds();
-
     // The clock runs while at least one follower holds it; a follower
     // releases it before it is destroyed
     void hold(QObject* follower);
@@ -39,7 +35,7 @@ public:
     bool is_held_by(QObject* follower) const { return m_followers.contains(follower); }
 
 signals:
-    void frame(qint64 nowNanoseconds);
+    void frame(uint64_t nowNanoseconds);
 
 private:
     void tick();

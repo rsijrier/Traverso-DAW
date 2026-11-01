@@ -21,19 +21,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "TAudioReader.h"
-#include "TAudioDecoder.h"
+#include "TAudioDecoderFactory.h"
 #include "TAudioResampler.h"
 
 #include <algorithm>
 
 bool TAudioReader::can_read(const QString& fileName)
 {
-    return can_decode_audio(fileName);
+    return TAudioDecoderFactory::can_read(fileName);
 }
 
 std::expected<std::unique_ptr<TAudioReader>, TAudioFileError> TAudioReader::open(const QString& fileName, const TByteSourceOpener& opener)
 {
-    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = open_audio_decoder(fileName, opener);
+    std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> decoder = TAudioDecoderFactory::open_file(fileName, opener);
     if (!decoder) {
         return std::unexpected(std::move(decoder.error()));
     }
@@ -71,7 +71,7 @@ TTimeRef TAudioReader::length() const
 
 const TAudioIOStats& TAudioReader::io_stats() const
 {
-    return m_decoder->stats();
+    return m_decoder->io_stats();
 }
 
 QString TAudioReader::decoder_type() const
@@ -106,7 +106,7 @@ TAudioFileStatus TAudioReader::set_output_rate_and_resampler(uint rate, TResampl
     // A frame at the old rate is another time at this one: no position, the
     // next read() seeks (its owner seeks after a change of rate anyway,
     // TBufferedAudioStream::step())
-    m_frame.reset();
+    m_nextOutputFrame.reset();
     return {};
 }
 
@@ -114,7 +114,7 @@ TAudioFileStatus TAudioReader::set_output_rate_and_resampler(uint rate, TResampl
 // history the next output frames would be computed from, and input kept for
 // the next feed) and the frames still to drop after a seek: all of it belongs
 // to the position read before, and the next read is from another one
-void TAudioReader::reset()
+void TAudioReader::reset_resampler()
 {
     if (m_resampler) {
         m_resampler->reset();
@@ -125,12 +125,12 @@ void TAudioReader::reset()
 std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
 {
     // Where a seek fails the decoder may be anywhere: no position then
-    m_frame.reset();
+    m_nextOutputFrame.reset();
     if (!m_resampler) {
         if (TAudioFileStatus sought = m_decoder->seek(frame); !sought) {
             return std::unexpected(std::move(sought.error()));
         }
-        m_frame = frame;
+        m_nextOutputFrame = frame;
         return true;
     }
 
@@ -138,7 +138,7 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
     // read before: fed on, they would put that position's tail (a click, the
     // length of the filter) and its kept frames at the new position. Before
     // the drop is set below, since the reset clears it.
-    reset();
+    reset_resampler();
 
     // A position in output frames is mostly no whole frame of the file, and
     // a seek to the nearest file frame would shift the output by a fraction
@@ -159,14 +159,14 @@ std::expected<bool, TAudioFileError> TAudioReader::reposition(nframes_t frame)
         return std::unexpected(std::move(sought.error()));
     }
     m_dropFrames = TTimeRef::to_nframes(TTimeRef::frame_at_or_before(position - common, m_outputRate));
-    m_frame = frame;
+    m_nextOutputFrame = frame;
     return true;
 }
 
 void TAudioReader::forget_position()
 {
-    m_frame.reset();
-    reset();
+    m_nextOutputFrame.reset();
+    reset_resampler();
 }
 
 TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& location, nframes_t count)
@@ -177,12 +177,6 @@ TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& locati
     // The reader writes into the buffer, so it makes room in it
     buffer.check_capacity(count, channel_count());
 
-    // Nothing to read: zeros, as past the end of the file
-    const auto nothing = [&](std::optional<TAudioFileError> error) -> TAudioFileResult {
-        buffer.silence(0, count, channel_count());
-        return {0, std::move(error)};
-    };
-
     // The output frame nearest to location; before the file: frame 0. The
     // one rounding of a read: it moves with the location, so a read at the
     // location where the last one ended goes on from there, no seek
@@ -190,24 +184,24 @@ TAudioFileResult TAudioReader::read(TAudioBuffer& buffer, const TTimeRef& locati
     // At or past the end: the decoder is not asked (it seeks only below its
     // frame count), no error. No position: the next read seeks.
     if (first >= m_outputFrames) {
-        m_frame.reset();
-        return nothing(std::nullopt);
+        m_nextOutputFrame.reset();
+        return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::nullopt);
     }
     // Elsewhere, no position at all, or a decoder in its error state (after
     // a read that failed, the reader's position may still be right): a seek
-    const bool readsFromFirst = m_frame == first && !m_decoder->error();
+    const bool readsFromFirst = m_nextOutputFrame == first && !m_decoder->in_error_state();
     if (!readsFromFirst) {
         std::expected<bool, TAudioFileError> positioned = reposition(first);
         if (!positioned) {
-            return nothing(std::move(positioned.error()));
+            return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::move(positioned.error()));
         }
         if (!*positioned) {
-            return nothing(std::nullopt);
+            return TAudioDecoder::nothing_read(buffer, count, channel_count(), std::nullopt);
         }
     }
 
     TAudioFileResult result = m_resampler ? read_resampled(buffer, count) : m_decoder->read(buffer, count);
-    m_frame = first + result.frames;
+    m_nextOutputFrame = first + result.frames;
     return result;
 }
 
@@ -217,7 +211,7 @@ TAudioFileResult TAudioReader::read_file_frames(TAudioBuffer& buffer, nframes_t 
         return {};
     }
     // The decoder moves under the output: no position, the next read() seeks
-    m_frame.reset();
+    m_nextOutputFrame.reset();
     return m_decoder->read_from(buffer, firstFrame, count);
 }
 
@@ -225,7 +219,7 @@ TAudioFileResult TAudioReader::read_resampled(TAudioBuffer& buffer, nframes_t co
 {
     // Not past the frames the file gives at the output rate (read() asks
     // below them only)
-    const nframes_t frames = std::min(count, m_outputFrames - *m_frame);
+    const nframes_t frames = std::min(count, m_outputFrames - *m_nextOutputFrame);
 
     // After a seek: the output frames between the common frame the file was
     // sought to and the frame asked for (reposition()), in pieces the buffer
@@ -276,7 +270,7 @@ TAudioFileResult TAudioReader::resample_into(TAudioBuffer& out, nframes_t count)
     // come out as those before the end do.
     TAudioFileResult result;
     while (result.frames < count) {
-        if (m_decoder->at_end() || m_decoder->error()) {
+        if (m_decoder->at_end() || m_decoder->in_error_state()) {
             result.frames += m_resampler->flush(out.channel_buffers(), result.frames, count - result.frames);
             break;
         }

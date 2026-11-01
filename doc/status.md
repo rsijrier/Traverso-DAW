@@ -62,6 +62,7 @@ After the release, pulled by a use case
   `curve-gpu-bench`; Foundations: organic interface).
 - TTimeRef free of Qt (T12).
 - The live playhead as a feature (`multi-transport.md`; T60).
+- Clean-up: `interleaved_scratch()` in one place (T75).
 
 ## Legend
 
@@ -203,11 +204,9 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   two reports of one fault, each costing a seek (MP3: with pre-roll). Not
   wrong, but "one log line per stream" needs de-duplication by position,
   not by count.
-- **T11 (medium): MP3 without libmad goes to libsndfile, whose seeks are not
-  exact.** Proposal: refuse MP3 without MAD and tell the user. Behaviour
-  change: Remon confirms.
-  Falls away with T73 (`doc/design/mp3-decoder.md`): MP3 no longer goes
-  through MAD or libsndfile. To be marked as dropped when T73 is done.
+- **T11 (dropped 2026-10-31 with T73): MP3 without libmad goes to libsndfile,
+  whose seeks are not exact.** MP3 no longer goes through MAD or libsndfile
+  (`doc/design/mp3-decoder.md`).
 - **T12 (medium): TTimeRef frame-conversion cleanup.** One symmetric style
   (`from_frames` ↔ `frame_at_or_before/after`), one call for rate-to-rate
   counts, one call for `to_nframes(frame_*(...))` (8 sites). The text/QTime
@@ -297,7 +296,9 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
 - **T16 (medium): `transport_position` test failed 3 times under ctest load**
   (2026-10-27, Clang and GCC; not reproduced in 72 parallel runs). First find
   out which check: a torn read is a real race in the frame clock's seqlock, a
-  starved reader only a test too tight for a loaded machine.
+  starved reader only a test too tight for a loaded machine. Seen again on
+  2026-10-31: "the reader is not starved by the writer", under `ctest -j4` and
+  once alone; 30 runs alone after that all passed. Was T74 for a moment.
 - **T17 (medium-low): a WavPack file of unknown length** reports 2^32-1
   frames (`WavpackGetNumSamples()` -1, `WPAudioReader.cpp:45`): a clip of
   27 hours, and an error state at its real end.
@@ -349,8 +350,8 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   `QString*` + sticky `error()`, `TPeakStream.h:55-70`) follows T9, so one
   style remains.
 - **T24 (low): an MP3 whose last frame is cut** is now an error at its tail,
-  and every read there costs a seek with pre-roll (MAD counts the header,
-  the decode fails).
+  and every read there costs a seek with preframes (the tag says more than
+  the scan found, the read fails where the audio ends).
 - **T25 (low): FAAD's seek pre-roll assumes AAC-LC**: HE-AAC may decode
   wrongly after a seek; needs a test file, or document the limit.
 - **T26 (low): `sf_strerror(nullptr)`** reads libsndfile's global last-open
@@ -712,7 +713,7 @@ From the GPU waveform test program, clip edges in variant A (branch
     `m_bufferSlotFrames` in the seek and in the refill (one source).
   - **Step 2:** `prefetch()` into a window in own memory, with a floor of
     16 KB and a margin that grows after a miss; exact byte ranges for PCM,
-    MAD and FAAD; the counter "unplanned reads", target zero.
+    libmpg123 and FAAD; the counter "unplanned reads", target zero.
     The kernel's readahead hides the medium in step 1 (a slow decoder finds
     its pages read already): the prefetch must be the only reader, for
     instance `posix_fadvise(POSIX_FADV_RANDOM)` on the stream's file, only
@@ -720,6 +721,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     their readahead). Measure both.
   - **Step 2c (read pool per medium, decode pool):** ioscheduler becomes free
     of Qt, as part of the redesign of the pools.
+    - Look again at who owns the read counters: now the decoder, with a bare
+      pointer in `TByteSource`; with a read pool the source could hold them and
+      the decoder read them out (Remon, 2026-11-01).
     - When the own pools are in: remove the two hand-over lines
       (`race_top:TIOScheduler::start_stream_step`, `start_task_step`) and
       the `QThreadPool` lines from `tests/tsan.supp`, and run TSan again.
@@ -761,34 +765,68 @@ From the GPU waveform test program, clip edges in variant A (branch
   - Scenario files are still read through `QFile`: a small text file, no
     audio.
   - From Remon's review (2026-10-30), not urgent:
-    - Opening reads whole files: MAD's `countFrames()`, and FAAD scans an
+    - Opening reads whole files: `mpg123_scan()`, and FAAD scans an
       ADTS file through, byte by byte at a mismatch. The 16 KB block keeps
       it bearable; the real answer is the seek index next to the peak file
       (step 4).
     - The `(off_t)` cast at `SFAudioReader.cpp:141` (`sf_seek` takes
       `sf_count_t`).
-    - `size()` makes a system call each time, and MAD asks it through
-      `at_end()` at every buffer fill: it can be a variable.
     - FAAD makes a new `QByteArray` per packet: allocations per decode.
-    - `K3bMad::decodeNextFrame()` is dead code (no callers; Fable's review):
-      goes at the next clean-up, not now.
-    - MP3 seek pre-roll by bitrate (candidate once scrubbing or many seeks
-      weigh in the measurements; since step 2b every reset is a real seek):
-      `MadAudioReader` decodes `PreRollFrames` (16) before the target
-      whatever the bitrate, about 4 ms per seek (measured, 2026-10-30).
-      The bit reservoir reaches back at most 511 bytes (`main_data_begin`,
-      9 bits), plus one frame for the filterbank's overlap: at 128 kbps
-      (frames of about 418 bytes) about 3 frames, at 32 kbps about 6.
-    - The MAD points above and `countFrames()` fall away with T73
-      (`doc/design/mp3-decoder.md`). To be marked as dropped when T73
-      is done.
+    - The MAD points fell away with T73 (2026-10-31): `size()` asked at
+      every buffer fill, `K3bMad::decodeNextFrame()`, the pre-roll by
+      bitrate (now `MPG123_PREFRAMES`). The whole read at the open stays,
+      through `mpg123_scan()`, above.
 
-- **T73 `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
-  Build it as `doc/design/mp3-decoder.md` says, with the new tests listed
-  there; the decisions are in that document and in `doc/decisions.md`. After
-  the open merges; Remon gives the order separately.
-  - Two reports for mpg123 exist as drafts, in
-    `reports/mpg123-upstream-drafts.md`; Remon sends them himself.
+- **T73 (done 2026-11-01: merged after three Fable reviews)
+  `MpgAudioReader`: MP3 on libmpg123, MAD removed** (Remon, 2026-10-31).
+  Built as `doc/design/mp3-decoder.md` says, with the new tests listed there;
+  the decisions are in that document and in `doc/decisions.md`.
+  - Two reports for mpg123 exist as drafts; Remon sends them himself.
+- **T75 `interleaved_scratch()` in three files** (low; Remon, 2026-10-31):
+  `SFAudioReader.cpp`, `MpgAudioReader.cpp`, `TAudioWriter.cpp`. One place, in
+  the clean-up after the release.
+- **T77 Reading around damage in an MP3** (parked; Remon, 2026-10-31). Only when a
+  real file asks for it: read a damaged file and skip just the broken parts, where
+  now the read stops at the damage. Accepted for now: a leaner and more robust
+  API and library, at the price of fewer files read than MAD did.
+- **T78 The reason of a failed open does not reach the user** (Remon, 2026-11-01).
+  A drag onto the canvas is refused without a word (`TClipsViewPort.cpp:110` asks
+  `can_read()`, a yes or no). In a project or an import the user sees "Could not
+  open file": `TBufferedAudioStreamReader` keeps an error code, the reason goes to
+  the log only. Keep the `TAudioFileError` in the stream and show its detail; let
+  a refused drag say why.
+- **T79 Frame positions past 32 bit** (research; Remon, 2026-11-01). `nframes_t` is
+  `uint32_t`: 27 hours at 44.1 kHz, 6.2 at 192 kHz. Above it `MpgAudioReader`
+  refuses, `SFAudioReader` and `WPAudioReader` cut the length silently. To find
+  out: all of `nframes_t` to 64 bit in one go, signed (`int64_t`) or unsigned;
+  WavPack to its `64` calls (also T17); armhf and the three `atomic<nframes_t>`;
+  the borders with JACK (32 bit) and PipeWire (`uint64_t`). What can be negative
+  keeps a signed type. `-Wsign-conversion` on the targets it touches. A step in
+  between: SF and WavPack refuse above the limit.
+- **T80 A sample library as a test** (Remon, 2026-11-01). Real and damaged files in
+  `~/Music/TraversoSamples/` (local, never in the repository; `manifest.tsv` has
+  source, license and result per file). A test target `audio_corpus` that runs only
+  when the folder is there (path through a variable): read, seek, build peaks,
+  resample per file, also under TSan. Then a project `TraversoSamples` for the
+  application: import, waveforms, playback. Not done yet: so far every file only
+  went through `TAudioReader` one by one.
+- **T81 Judge the files of the sample library** (Remon, 2026-11-01). A file refused
+  wrongly is a bug and gets fixed. A damaged file that may be usable is judged on
+  its use in Traverso. A file really broken, or without audio, is refused. The
+  message to the user is clear and says what is wrong (with T78). The judged
+  outcome per file becomes the expectation of `audio_corpus`. First with `ffprobe`
+  per file. Candidates: `nero-chapters.m4b`, `bear-mpeg2-aac-only_frag.mp4`,
+  `apev2-lyricsv2.mp3`, `synth-bad.mp3`; the vague "FAAD cannot read it".
+- **T82 FFmpeg as the optional decoder instead of FAAD** (research; Remon,
+  2026-11-01). An `FFmpegAudioReader` on libavformat and libavcodec, optional as
+  FAAD is now; a build without it has no AAC. FAAD and the MP4 code of our own go.
+  To show: exact seeks and length by the contract (`test_audio_decoders`,
+  `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
+  without `#if`. Goes together with the choice for video. Until then no large
+  refactor of `FaadAudioReader`. A PoC next to FAAD on `ffmpeg-reader-poc`.
+- **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
+  deep in its parsers where its functions could return the reason, and the opener
+  every decoder carries while only WavPack's correction file needs it.
 
 From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 - **T72 *BSD: allow it or not** (low; Remon, 2026-10-30). `TPlatform.h` stops the

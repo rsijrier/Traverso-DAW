@@ -1,12 +1,14 @@
 # Define the static library for managing audio file input and output processes
 add_library(traversoaudiofileio STATIC
     decode/TAudioDecoder.h decode/TAudioDecoder.cpp
+    decode/TAudioDecoderFactory.h decode/TAudioDecoderFactory.cpp
+    decode/TAudioIOScope.h
     decode/SFAudioReader.cpp
     TAudioFileError.h
     TAudioIOStats.h
     TAudioReader.h TAudioReader.cpp
     decode/WPAudioReader.cpp
-    decode/MadAudioReader.cpp
+    decode/MpgAudioReader.cpp
     decode/TScenarioDecoder.h decode/TScenarioDecoder.cpp
     encode/TAudioEncoder.h encode/TAudioEncoder.cpp
     encode/SFAudioWriter.cpp
@@ -49,7 +51,7 @@ target_link_libraries(traversoaudiofileio
         Qt6::Core
         PkgConfig::SNDFILE
         PkgConfig::WAVPACK
-        PkgConfig::MAD
+        PkgConfig::MPG123
 )
 
 if(TARGET PkgConfig::FAAD2)

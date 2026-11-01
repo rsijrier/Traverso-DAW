@@ -23,14 +23,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TBufferedAudioStream.h"
 
 #include <utility>
-#include "TSheet.h"
+#include "TClock.h"
 #include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
 #include "TLog.h"
 #include "TAudioIOStats.h"
 
-#include <chrono>
 
 
 
@@ -123,47 +122,47 @@ void TBufferedAudioStream::prepare_ring_buffers(nframes_t bufferSize)
 
 // Where a seek step's time went, from the decoder's counters before and
 // after it: the reads of the decoder's seek and of the refill after it,
-// each by kind (page cache, medium, untold), the decoding (the calls' time
+// each by kind (page cache, medium, unclassified), the decoding (the calls' time
 // without their reads, the decoder's own seek in it) and the rest
 // (resampling, the ring), one line per stream (T71: is a slow seek the
 // medium or the decoder, and were the bytes for the seek or for the refill)
 struct TSeekReads
 {
-    double cachedKiB, cachedMs, mediumKiB, mediumMs, untoldKiB, untoldMs;
-    quint64 nanoseconds;
+    double cachedKiB, cachedMs, mediumKiB, mediumMs, unclassifiedKiB, unclassifiedMs;
+    uint64_t nanoseconds;
 };
 
-static TSeekReads seek_reads(const TByteStats& before, const TByteStats& after)
+static TSeekReads seek_reads(const TReadsByOrigin& before, const TReadsByOrigin& after)
 {
-    const auto kibibytes = [](const TByteTransfer& a, const TByteTransfer& b) { return double(a.bytes - b.bytes) / 1024.0; };
-    const auto milliseconds = [](const TByteTransfer& a, const TByteTransfer& b) { return double(a.nanoseconds - b.nanoseconds) / 1.0e6; };
+    const auto kibibytes = [](const TReadTotals& a, const TReadTotals& b) { return double(a.bytes - b.bytes) / 1024.0; };
+    const auto milliseconds = [](const TReadTotals& a, const TReadTotals& b) { return double(a.nanoseconds - b.nanoseconds) / 1.0e6; };
     return TSeekReads{kibibytes(after.cached, before.cached), milliseconds(after.cached, before.cached),
                       kibibytes(after.medium, before.medium), milliseconds(after.medium, before.medium),
-                      kibibytes(after.untold, before.untold), milliseconds(after.untold, before.untold),
+                      kibibytes(after.unclassified, before.unclassified), milliseconds(after.unclassified, before.unclassified),
                       after.read_nanoseconds() - before.read_nanoseconds()};
 }
 
-static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, quint64 wallNanoseconds)
+static void log_seek(const QString& name, const TAudioIOStats& before, const TAudioIOStats& after, uint64_t wallNanoseconds)
 {
-    const quint64 callsNanoseconds = (after.seek.nanoseconds - before.seek.nanoseconds) + (after.stream.nanoseconds - before.stream.nanoseconds);
+    const uint64_t callsNanoseconds = (after.seek.nanoseconds - before.seek.nanoseconds) + (after.stream.nanoseconds - before.stream.nanoseconds);
     // Nothing decoded (a stream out of its window): nothing to tell
     if (callsNanoseconds == 0) {
         return;
     }
-    const TSeekReads seek = seek_reads(before.seek.bytes, after.seek.bytes);
-    const TSeekReads fill = seek_reads(before.stream.bytes, after.stream.bytes);
-    const quint64 readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
-    const quint64 decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
-    const quint64 restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
+    const TSeekReads seek = seek_reads(before.seek.reads, after.seek.reads);
+    const TSeekReads fill = seek_reads(before.stream.reads, after.stream.reads);
+    const uint64_t readsNanoseconds = seek.nanoseconds + fill.nanoseconds;
+    const uint64_t decodeNanoseconds = callsNanoseconds > readsNanoseconds ? callsNanoseconds - readsNanoseconds : 0;
+    const uint64_t restNanoseconds = wallNanoseconds > callsNanoseconds ? wallNanoseconds - callsNanoseconds : 0;
     // The decoder's seek without its reads: its share of decode
-    const quint64 seekCallNanoseconds = after.seek.nanoseconds - before.seek.nanoseconds;
-    const quint64 seekDecodeNanoseconds = seekCallNanoseconds > seek.nanoseconds ? seekCallNanoseconds - seek.nanoseconds : 0;
+    const uint64_t seekCallNanoseconds = after.seek.nanoseconds - before.seek.nanoseconds;
+    const uint64_t seekDecodeNanoseconds = seekCallNanoseconds > seek.nanoseconds ? seekCallNanoseconds - seek.nanoseconds : 0;
     // The numbers first: a log line is cut after 256 characters, so only a
-    // long file name can be cut. c, m, u: cache, medium, untold (KiB, ms)
+    // long file name can be cut. c, m, u: cache, medium, unclassified (KiB, ms)
     TLOG_I("diskio", "seek {:.1f} ms: seek reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, fill reads c{:.0f}K {:.1f} m{:.0f}K {:.1f} u{:.0f}K {:.1f}, decode {:.1f} (in seek {:.1f}), rest {:.1f}: {}",
            double(wallNanoseconds) / 1.0e6,
-           seek.cachedKiB, seek.cachedMs, seek.mediumKiB, seek.mediumMs, seek.untoldKiB, seek.untoldMs,
-           fill.cachedKiB, fill.cachedMs, fill.mediumKiB, fill.mediumMs, fill.untoldKiB, fill.untoldMs,
+           seek.cachedKiB, seek.cachedMs, seek.mediumKiB, seek.mediumMs, seek.unclassifiedKiB, seek.unclassifiedMs,
+           fill.cachedKiB, fill.cachedMs, fill.mediumKiB, fill.mediumMs, fill.unclassifiedKiB, fill.unclassifiedMs,
            double(decodeNanoseconds) / 1.0e6, double(seekDecodeNanoseconds) / 1.0e6, double(restNanoseconds) / 1.0e6,
            name.toStdString());
 }
@@ -186,7 +185,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
     if (info.seek) {
         const TAudioIOStats* stats = decoder_stats();
         const TAudioIOStats before = stats ? *stats : TAudioIOStats{};
-        const auto start = std::chrono::steady_clock::now();
+        const uint64_t start = TClock::now_nanoseconds();
         if (info.sampleRateChanged) {
             set_output_rate_and_resampler(int(info.outputRate), info.resampler);
             prepare_ring_buffers(info.bufferSize);
@@ -198,8 +197,7 @@ int TBufferedAudioStream::step(const StepInfo& info)
             process_realtime_buffers(fileIOBuffer);
         }
         if (stats) {
-            log_seek(get_name(), before, *stats,
-                     quint64(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count()));
+            log_seek(get_name(), before, *stats, TClock::now_nanoseconds() - start);
         }
         // Out of its window is no failure: nothing to read there yet
         const int syncStatus = status.get_sync_status();

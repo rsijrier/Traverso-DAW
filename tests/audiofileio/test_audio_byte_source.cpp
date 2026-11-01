@@ -54,7 +54,7 @@ static void check(bool ok, const char* what)
 static constexpr nframes_t Rate = 48000;
 static constexpr nframes_t Frames = 10 * Rate + 1037;
 static constexpr uint Channels = 2;
-static constexpr quint64 Wait = 1000 * 1000;
+static constexpr uint64_t Wait = 1000 * 1000;
 static const QLatin1String Reason("the medium is gone");
 
 // What the sources of one test share
@@ -63,7 +63,9 @@ struct Medium
     // Reads wait this long, and only then count as the medium's
     bool waits{false};
     // Reads from this byte on fail, -1: none do
-    qint64 failFrom{-1};
+    int64_t failFrom{-1};
+    // Up to this byte, -1: to the end
+    int64_t failTo{-1};
 };
 
 // A file's bytes in memory
@@ -72,10 +74,10 @@ class MemorySource : public TByteSource
 public:
     MemorySource(QByteArray bytes, const Medium* medium) : m_bytes(std::move(bytes)), m_medium(medium) {}
 
-    qint64 size() const override { return m_bytes.size(); }
+    int64_t size() const override { return m_bytes.size(); }
 
 protected:
-    std::optional<qint64> read_cached(qint64, void*, qint64) override
+    std::optional<int64_t> read_cached(int64_t, void*, int64_t) override
     {
         if (m_medium->waits) {
             return 0;
@@ -83,24 +85,26 @@ protected:
         return std::nullopt;
     }
 
-    qint64 read_medium(qint64 position, void* data, qint64 bytes) override
+    TMediumRead read_medium(int64_t position, void* data, int64_t bytes) override
     {
         if (m_medium->waits) {
             std::this_thread::sleep_for(std::chrono::nanoseconds(Wait));
         }
         if (position >= m_bytes.size()) {
-            return 0;
+            return {};
         }
-        const qint64 end = std::min(position + bytes, qint64(m_bytes.size()));
-        const qint64 good = m_medium->failFrom < 0 ? end : std::min(end, m_medium->failFrom);
+        const int64_t end = std::min(position + bytes, int64_t(m_bytes.size()));
+        const bool failing = m_medium->failFrom >= 0 && (m_medium->failTo < 0 || position < m_medium->failTo);
+        const int64_t good = failing ? std::min(end, m_medium->failFrom) : end;
+        TMediumRead read;
         if (good < end) {
-            read_failed(Reason);
+            read.reason = Reason;
         }
-        if (good <= position) {
-            return 0;
+        if (good > position) {
+            std::memcpy(data, m_bytes.constData() + position, size_t(good - position));
+            read.bytes = good - position;
         }
-        std::memcpy(data, m_bytes.constData() + position, size_t(good - position));
-        return good - position;
+        return read;
     }
 
 private:
@@ -110,10 +114,10 @@ private:
 
 static TByteSourceOpener memory_opener(const Medium* medium)
 {
-    return [medium](const QString& fileName) -> std::unique_ptr<TByteSource> {
+    return [medium](const QString& fileName) -> TByteSourceResult {
         QFile file(fileName);
         if (!file.open(QIODevice::ReadOnly)) {
-            return nullptr;
+            return std::unexpected(TByteSourceError{!file.exists(), file.errorString()});
         }
         return std::make_unique<MemorySource>(file.readAll(), medium);
     };
@@ -123,8 +127,8 @@ static void test_source()
 {
     const Medium medium;
     MemorySource source(QByteArray("0123456789"), &medium);
-    TByteStats stats;
-    source.set_stats(&stats);
+    TReadsByOrigin stats;
+    source.count_reads_into(&stats);
 
     char bytes[10];
     check(source.read(bytes, 4) == 4 && !std::memcmp(bytes, "0123", 4) && source.position() == 4, "a read gives its bytes and moves on");
@@ -135,38 +139,46 @@ static void test_source()
     // Three reads of the source: the block, and two at the end that gave
     // nothing (the rest of the read over the end, the read at the end):
     // every read counts; none failed, there was no error
-    check(stats.untold.reads == 3 && stats.untold.bytes == 10 && stats.untold.failed == 0 && stats.medium.reads == 0 && stats.cached.reads == 0,
-          "small reads share a block; a read that gives nothing counts too; without a word on the cache untold");
+    check(stats.unclassified.reads == 3 && stats.unclassified.bytes == 10 && stats.unclassified.failed == 0 && stats.medium.reads == 0 && stats.cached.reads == 0,
+          "small reads share a block; a read that gives nothing counts too; without a word on the cache unclassified");
 
     const QByteArray large(3 * TByteSource::BlockBytes, 'x');
     MemorySource big(large, &medium);
-    TByteStats bigStats;
-    big.set_stats(&bigStats);
+    TReadsByOrigin bigStats;
+    big.count_reads_into(&bigStats);
     std::vector<char> into(size_t(large.size()));
     check(big.read(into.data(), 2) == 2 && big.read(into.data() + 2, large.size() - 2) == large.size() - 2 && !std::memcmp(into.data(), large.constData(), size_t(large.size())),
           "a large read after a small one gives the block's bytes and the rest");
-    check(bigStats.untold.bytes == quint64(large.size()), "no byte is read twice");
-    check(big.seek(1) && big.read(into.data(), 4) == 4 && bigStats.untold.bytes == quint64(large.size()), "a seek back inside the block reads nothing");
+    check(bigStats.unclassified.bytes == uint64_t(large.size()), "no byte is read twice");
+    check(big.seek(1) && big.read(into.data(), 4) == 4 && bigStats.unclassified.bytes == uint64_t(large.size()), "a seek back inside the block reads nothing");
 
     Medium failing{false, 5};
     MemorySource broken(QByteArray("0123456789"), &failing);
-    TByteStats brokenStats;
-    broken.set_stats(&brokenStats);
+    TReadsByOrigin brokenStats;
+    broken.count_reads_into(&brokenStats);
     check(broken.read(bytes, 8) == 5 && broken.take_error() == QString(Reason), "a read that fails halfway gives what it has, and why");
     check(!broken.take_error(), "why is told once");
     check(broken.read(bytes, 8) == -1 && broken.take_error() == QString(Reason), "a read that gives nothing and fails is -1");
-    check(brokenStats.untold.failed == 2 && brokenStats.untold.reads == 2 && brokenStats.untold.bytes == 5,
+    check(brokenStats.unclassified.failed == 2 && brokenStats.unclassified.reads == 2 && brokenStats.unclassified.bytes == 5,
           "failed reads count, the one with bytes and the one without");
+    // -1 is of this read only: an error that waits for take_error() does not
+    // make a later read at the end of the file a failure
+    MemorySource halfway(QByteArray("0123456789"), &failing);
+    check(halfway.read(bytes, 8) == 5, "a read fails halfway and gives its bytes");
+    check(halfway.seek(10) && halfway.read(bytes, 4) == 0, "the next read, at the end of the file, gives 0, not -1, without take_error() between them");
+    check(halfway.take_error() == QString(Reason), "take_error() then gives the reason of the first read");
+
     // Without take_error() between them (a decoder takes the error only at
     // the end of its call): each failed read counts
     MemorySource again(QByteArray("0123456789"), &failing);
-    TByteStats againStats;
-    again.set_stats(&againStats);
+    TReadsByOrigin againStats;
+    again.count_reads_into(&againStats);
     (void)again.read(bytes, 8);
     (void)again.read(bytes, 8);
-    check(againStats.untold.failed == 2, "every failed read counts, also before the error is taken");
+    check(againStats.unclassified.failed == 2, "every failed read counts, also before the error is taken");
 
-    check(TByteSource::open_file(QStringLiteral("/no/such/file")) == nullptr, "a file that does not open: nullptr");
+    const TByteSourceResult missing = TByteSource::open_file(QStringLiteral("/no/such/file"));
+    check(!missing && missing.error().notFound && !missing.error().reason.isEmpty(), "a file that is not there: not found, with a reason");
 }
 
 static std::vector<float> test_samples()
@@ -297,20 +309,20 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     const TAudioIOStats& stats = (*reader)->io_stats();
 
     std::snprintf(what, sizeof(what), "%s: opening reads, counted as the open", format.name);
-    check(stats.open.bytes.medium.bytes > 0 && stats.seek.bytes.medium.reads == 0 && stats.stream.bytes.medium.reads == 0 && stats.open.nanoseconds >= stats.open.bytes.medium.nanoseconds, what);
+    check(stats.open.reads.medium.bytes > 0 && stats.seek.reads.medium.reads == 0 && stats.stream.reads.medium.reads == 0 && stats.open.nanoseconds >= stats.open.reads.medium.nanoseconds, what);
 
-    const quint64 fileBytes = quint64(QFile(path).size());
+    const uint64_t fileBytes = uint64_t(QFile(path).size());
     TAudioBuffer buffer;
     const nframes_t step = 4800;
     nframes_t read = 0;
     for (nframes_t first = 0; first < (*reader)->file_frame_count(); first += step) {
         read += (*reader)->read_file_frames(buffer, first, step).frames;
     }
-    const TAudioPhaseStats stream = stats.stream;
+    const TAudioIOCost stream = stats.stream;
     std::snprintf(what, sizeof(what), "%s: a read to the end counts every frame and goes through the source", format.name);
-    check(read == (*reader)->file_frame_count() && stream.frames == read && stream.calls > 0 && stream.bytes.medium.reads > 0 && stream.bytes.medium.bytes <= fileBytes, what);
+    check(read == (*reader)->file_frame_count() && stream.frames == read && stream.calls > 0 && stream.reads.medium.reads > 0 && stream.reads.medium.bytes <= fileBytes, what);
     std::snprintf(what, sizeof(what), "%s: the medium's time is what its reads waited, the decoding the rest", format.name);
-    check(stream.bytes.medium.nanoseconds >= stream.bytes.medium.reads * Wait && stream.bytes.medium.worstNanoseconds >= Wait &&
+    check(stream.reads.medium.nanoseconds >= stream.reads.medium.reads * Wait && stream.reads.medium.worstNanoseconds >= Wait &&
               stream.nanoseconds >= stream.read_nanoseconds() && stream.decode_nanoseconds() == stream.nanoseconds - stream.read_nanoseconds(),
           what);
 
@@ -320,10 +332,21 @@ static void test_format(const QTemporaryDir& dir, const Format& format)
     check(stats.seek.calls == 1 && stats.seek.nanoseconds >= stats.seek.read_nanoseconds() && stats.stream.calls == stream.calls + 1, what);
 }
 
+// An ID3v2 tag at the start of bytes
+static QByteArray with_id3_tag(const QByteArray& bytes, int tagBytes)
+{
+    QByteArray tagged("ID3\x04\x00\x00", 6);
+    for (const int shift : {21, 14, 7, 0}) {
+        tagged.append(char((tagBytes >> shift) & 0x7f));
+    }
+    tagged.append(QByteArray(tagBytes, '\0'));
+    tagged.append(bytes);
+    return tagged;
+}
+
 // A medium that fails from the first byte on: every probe and the open fail,
-// and the open says why, it does not hang. MAD's search for its first header
-// used to loop forever on a read that failed at the start (a large ID3 tag,
-// then a NAS that answers EIO)
+// and the open says why, it does not hang, also after a large ID3 tag on a NAS
+// that then answers EIO
 static void test_open_failure(const QTemporaryDir& dir, const Format& format)
 {
     const QString path = dir.filePath(QStringLiteral("file.") + QLatin1String(format.suffix));
@@ -334,7 +357,8 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
     medium.failFrom = 0;
     char what[160];
     std::snprintf(what, sizeof(what), "%s: a medium that fails at once: no decoder, no hang", format.name);
-    check(!TAudioReader::open(path, memory_opener(&medium)).has_value(), what);
+    const auto refused = TAudioReader::open(path, memory_opener(&medium));
+    check(!refused && refused.error().detail == QString(Reason), what);
 
     // An MP3 behind an ID3v2 tag larger than the source's block (album art):
     // the tag reads, the first audio byte after it fails
@@ -346,12 +370,7 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
         return;
     }
     const int tagBytes = 20 * 1024;
-    QByteArray tagged("ID3\x04\x00\x00", 6);
-    for (const int shift : {21, 14, 7, 0}) {
-        tagged.append(char((tagBytes >> shift) & 0x7f));
-    }
-    tagged.append(QByteArray(tagBytes, '\0'));
-    tagged.append(file.readAll());
+    const QByteArray tagged = with_id3_tag(file.readAll(), tagBytes);
     const QString taggedPath = dir.filePath(QStringLiteral("tagged.mp3"));
     QFile out(taggedPath);
     if (!out.open(QIODevice::WriteOnly) || out.write(tagged) != tagged.size()) {
@@ -363,6 +382,123 @@ static void test_open_failure(const QTemporaryDir& dir, const Format& format)
     check(TAudioReader::open(taggedPath, memory_opener(&whole)).has_value(), "MP3: an MP3 behind a 20 KiB tag opens");
     medium.failFrom = 10 + tagBytes;
     check(!TAudioReader::open(taggedPath, memory_opener(&medium)).has_value(), "MP3: the tag reads, the first audio byte fails: no decoder, no hang");
+}
+
+// The size of the first frame of an MP3 by libsndfile, its Info frame: 128
+// kbps at this file's rate
+static qsizetype first_frame_bytes(const QByteArray& bytes)
+{
+    const uchar* header = reinterpret_cast<const uchar*>(bytes.constData());
+    static const int bitrates[] = {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320};
+    return 144 * bitrates[header[2] >> 4] * 1000 / Rate + ((header[2] >> 1) & 1);
+}
+
+// Album art of 1 MiB is skipped, not read: libmpg123 (MPG123_SKIP_ID3V2) reads
+// none of the tag, in the probe or the reader. What may be read: all the audio
+// (the scan) and what goes around it. libmpg123 reads in small pieces, so every
+// place it goes to fetches a block of the source: the probe three, the reader
+// two, the seek one, and the ends of the file (ID3v1). 98550 bytes measured on
+// top of the audio, 6 blocks and a little; a margin of 8 blocks keeps 2 spare.
+// It does not grow with the tag, so a tag that is read fails.
+static void test_large_tag(const QTemporaryDir& dir)
+{
+    const QString plain = dir.filePath(QStringLiteral("file.mp3"));
+    QFile file(plain);
+    if (!file.open(QIODevice::ReadOnly)) {
+        check(false, "a tag of 1 MiB: the MP3 is there");
+        return;
+    }
+    const QByteArray audio = file.readAll();
+    const int tagBytes = 1024 * 1024;
+    const QString path = dir.filePath(QStringLiteral("art.mp3"));
+    QFile out(path);
+    if (!out.open(QIODevice::WriteOnly) || out.write(with_id3_tag(audio, tagBytes)) == -1) {
+        check(false, "the MP3 with a tag of 1 MiB is written");
+        return;
+    }
+    out.close();
+    const int64_t fileBytes = out.size();
+
+    Medium medium;
+    auto plainReader = TAudioReader::open(plain, memory_opener(&medium));
+    auto reader = TAudioReader::open(path, memory_opener(&medium));
+    if (!reader || !plainReader) {
+        check(false, "an MP3 behind a tag of 1 MiB opens");
+        return;
+    }
+    check((*reader)->file_frame_count() == (*plainReader)->file_frame_count(), "behind a tag of 1 MiB: its length");
+
+    TAudioBuffer buffer;
+    TAudioBuffer plainBuffer;
+    const nframes_t first = (*reader)->file_frame_count() / 2;
+    const nframes_t frames = (*reader)->read_file_frames(buffer, first, 4800).frames;
+    (void)(*plainReader)->read_file_frames(plainBuffer, first, 4800);
+    const float* data = buffer.get_channel_buffer(0).get_data(4800);
+    const float* plainData = plainBuffer.get_channel_buffer(0).get_data(4800);
+    float worst = 0.0f;
+    for (nframes_t frame = 0; frame < frames; ++frame) {
+        worst = std::max(worst, std::fabs(data[frame] - plainData[frame]));
+    }
+    check(frames == 4800 && worst <= 1e-6f, "behind a tag of 1 MiB: a seek reads what is there");
+
+    const auto bytes = [](const TAudioIOCost& activity) { return activity.reads.cached.bytes + activity.reads.medium.bytes + activity.reads.unclassified.bytes; };
+    const TAudioIOStats& stats = (*reader)->io_stats();
+    const uint64_t total = bytes(stats.open) + bytes(stats.seek) + bytes(stats.stream);
+    char what[160];
+    std::snprintf(what, sizeof(what), "behind a tag of 1 MiB: the tag is not read (%llu bytes read of %lld)", static_cast<unsigned long long>(total), static_cast<long long>(fileBytes));
+    check(total <= uint64_t(fileBytes - tagBytes) + 8 * uint64_t(TByteSource::BlockBytes), what);
+}
+
+// A read that fails during the scan: libmpg123 takes it for the end of the
+// file, the open must not. The probe's frames and the end of the file read
+// well, so only the scan meets it. Without a tag the place lies inside the 64
+// KiB that may follow the audio: only the source's error tells.
+static void test_scan_failure(const QTemporaryDir& dir)
+{
+    const QString tagged = dir.filePath(QStringLiteral("file.mp3"));
+    QFile file(tagged);
+    if (!file.open(QIODevice::ReadOnly)) {
+        check(false, "a failed scan: the MP3 is there");
+        return;
+    }
+    const QByteArray bytes = file.readAll();
+    const QString bare = dir.filePath(QStringLiteral("bare.mp3"));
+    QFile out(bare);
+    if (!out.open(QIODevice::WriteOnly) || out.write(bytes.mid(first_frame_bytes(bytes))) == -1) {
+        check(false, "the MP3 without a tag is written");
+        return;
+    }
+    out.close();
+
+    for (const QString& path : {tagged, bare}) {
+        const int64_t size = QFile(path).size();
+        Medium medium;
+        medium.failFrom = size - 20 * 1024;
+        medium.failTo = size - 16 * 1024;
+        const auto reader = TAudioReader::open(path, memory_opener(&medium));
+        char what[200];
+        std::snprintf(what, sizeof(what), "a read that fails during the scan (%s): CannotOpen with the reason (%s)", path == tagged ? "a tag" : "no tag",
+                      reader ? "it opened" : qPrintable(reader.error().detail));
+        check(!reader && reader.error().code == TAudioFileError::Code::CannotOpen && reader.error().detail == QString(Reason), what);
+    }
+}
+
+// A read that fails inside a decoder's own open: the source's reason, not what
+// the library made of it. WavPack has a signature, so the first block is read
+// by find_decoder() and all later reads by the decoder's start()
+static void test_start_failure(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.wv"));
+    if (!QFile::exists(path)) {
+        check(false, "a failed start: the WavPack file is there");
+        return;
+    }
+    Medium medium;
+    medium.failFrom = TByteSource::BlockBytes;
+    const auto reader = TAudioReader::open(path, memory_opener(&medium));
+    char what[200];
+    std::snprintf(what, sizeof(what), "a read that fails in the open: the reason of the source (%s)", reader ? "it opened" : qPrintable(reader.error().detail));
+    check(!reader && reader.error().detail == QString(Reason), what);
 }
 
 // A read of the medium that fails in the middle of the file: whatever the
@@ -393,6 +529,67 @@ static void test_read_failure(const QTemporaryDir& dir, const Format& format)
     check(error && error->code == TAudioFileError::Code::ReadFailed && error->detail == QString(Reason), what);
 }
 
+// A read that fails during a seek: mpg123's seek takes it for the end of the
+// stream and lands, the reason must reach the caller all the same
+static void test_seek_failure(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.mp3"));
+    Medium medium;
+    auto reader = TAudioReader::open(path, memory_opener(&medium));
+    if (!reader) {
+        check(false, "a failed seek: the MP3 opens");
+        return;
+    }
+    medium.failFrom = 0;
+    TAudioBuffer buffer;
+    const TAudioFileResult result = (*reader)->read_file_frames(buffer, (*reader)->file_frame_count() * 3 / 5, 4800);
+    char what[200];
+    std::snprintf(what, sizeof(what), "a read that fails during a seek: the source's reason (%s)", result.error ? qPrintable(result.error->detail) : "no error");
+    check(result.frames == 0 && result.error && result.error->code == TAudioFileError::Code::SeekFailed && result.error->detail == QString(Reason), what);
+}
+
+// The probes' source goes on to the decoder: the file is opened once. Where no
+// decoder is found, the reason is the source's
+static void test_one_source(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("file.mp3"));
+    Medium medium;
+    int opens = 0;
+    const TByteSourceOpener counting = [&](const QString& fileName) {
+        ++opens;
+        return memory_opener(&medium)(fileName);
+    };
+    check(TAudioReader::open(path, counting).has_value() && opens == 1, "one open of a file, for the probes and the decoder");
+
+    medium.failFrom = 0;
+    const auto refused = TAudioReader::open(path, memory_opener(&medium));
+    check(!refused && refused.error().code == TAudioFileError::Code::CannotOpen && refused.error().detail == QString(Reason), "no decoder: the reason of the source");
+    medium.failFrom = -1;
+
+    const auto missing = TAudioReader::open(dir.filePath(QStringLiteral("not-there.mp3")), memory_opener(&medium));
+    check(!missing && missing.error().code == TAudioFileError::Code::NotFound, "an opener that finds nothing: NotFound");
+}
+
+// A RIFF that is no WAVE and that libsndfile refuses: the MP3 probe does not walk
+// it. It would reach the bytes that fail
+static void test_riff_not_walked(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("video.avi"));
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        check(false, "a RIFF that is no WAVE is written");
+        return;
+    }
+    file.write(QByteArray("RIFF\xff\xff\xff\x00" "AVI ", 12) + QByteArray(4 * 1024 * 1024, 'x'));
+    file.close();
+    Medium medium;
+    medium.failFrom = 1024 * 1024;
+    const auto reader = TAudioReader::open(path, memory_opener(&medium));
+    char what[200];
+    std::snprintf(what, sizeof(what), "a RIFF that is no WAVE is refused without walking it (%s)", reader ? "it opened" : qPrintable(reader.error().detail));
+    check(!reader && reader.error().detail != QString(Reason), what);
+}
+
 // The real file: the sources are QFile's, counted and on a medium
 static void test_file_source(const QTemporaryDir& dir)
 {
@@ -406,8 +603,8 @@ static void test_file_source(const QTemporaryDir& dir)
     const TAudioIOStats& stats = (*reader)->io_stats();
     check(all == read_with_sndfile(path), "the file source gives the file's samples");
     // The block of the open's last read holds the first of the audio
-    const auto bytes = [](const TAudioPhaseStats& phase) { return phase.bytes.cached.bytes + phase.bytes.medium.bytes + phase.bytes.untold.bytes; };
-    check(bytes(stats.open) + bytes(stats.stream) >= quint64(Frames) * Channels * 2, "the file source counts its reads");
+    const auto bytes = [](const TAudioIOCost& activity) { return activity.reads.cached.bytes + activity.reads.medium.bytes + activity.reads.unclassified.bytes; };
+    check(bytes(stats.open) + bytes(stats.stream) >= uint64_t(Frames) * Channels * 2, "the file source counts its reads");
 #if defined(Q_OS_UNIX)
     check(stats.mediumId != 0, "the file source knows its medium");
 #endif
@@ -420,9 +617,9 @@ static void test_large_offsets()
 {
     QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
     const QString path = dir.filePath(QStringLiteral("sparse.bin"));
-    const qint64 two = 2LL * 1024 * 1024 * 1024;
-    const qint64 four = 2 * two;
-    const qint64 size = four + two;
+    const int64_t two = 2LL * 1024 * 1024 * 1024;
+    const int64_t four = 2 * two;
+    const int64_t size = four + two;
     const QByteArray below("below ");
     const QByteArray above("above ");
     QFile file(path);
@@ -431,8 +628,8 @@ static void test_large_offsets()
         return;
     }
     // Across 2 GiB, across 4 GiB, and at the end
-    const std::vector<qint64> places{two - below.size(), four - below.size(), size - below.size() - above.size()};
-    for (const qint64 place : places) {
+    const std::vector<int64_t> places{two - below.size(), four - below.size(), size - below.size() - above.size()};
+    for (const int64_t place : places) {
         if (!file.seek(place) || file.write(below + above) != below.size() + above.size()) {
             check(false, "a sparse file takes bytes past 2 GiB");
             return;
@@ -440,7 +637,7 @@ static void test_large_offsets()
     }
     file.close();
 
-    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path).value_or(nullptr);
     if (!source) {
         check(false, "the sparse file opens");
         return;
@@ -449,23 +646,21 @@ static void test_large_offsets()
     char bytes[32];
     const qsizetype length = below.size() + above.size();
     bool right = true;
-    for (const qint64 place : places) {
+    for (const int64_t place : places) {
         right = right && source->seek(place) && source->read(bytes, length) == length && QByteArray(bytes, length) == below + above &&
                 source->position() == place + length;
     }
     check(right, "the bytes across 2 GiB, across 4 GiB and at the end, small reads");
 
     std::vector<char> large(size_t(2 * TByteSource::BlockBytes));
-    const qint64 first = two - qint64(large.size()) / 2;
-    const bool whole = source->seek(first) && source->read(large.data(), qint64(large.size())) == qint64(large.size());
+    const int64_t first = two - int64_t(large.size()) / 2;
+    const bool whole = source->seek(first) && source->read(large.data(), int64_t(large.size())) == int64_t(large.size());
     check(whole && QByteArray(large.data() + large.size() / 2 - below.size(), length) == below + above, "the bytes across 2 GiB, a large read");
     check(source->seek(size) && source->at_end() && source->read(bytes, 4) == 0, "the end of a file past 4 GiB");
 }
 
-// A large file without audio goes through every probe, MAD last: refused,
-// without a crash. Zeros give MAD no sync at all (a buffer refill after the
-// other), random bytes many false syncs: both used to recurse in
-// K3bMad::findNextHeader() and decodeNextFrame(), once per refill or error.
+// A large file without audio goes through every probe: refused, without a
+// crash. Zeros give the MP3 probe no sync at all, random bytes many false ones.
 static void test_large_garbage()
 {
     QTemporaryDir dir(QDir::currentPath() + QStringLiteral("/byte-source-XXXXXX"));
@@ -473,7 +668,7 @@ static void test_large_garbage()
     const QString random = dir.filePath(QStringLiteral("random.bin"));
     QFile zeroFile(zeros);
     QFile randomFile(random);
-    if (!dir.isValid() || !zeroFile.open(QIODevice::WriteOnly) || !zeroFile.resize(qint64(256) * 1024 * 1024) ||
+    if (!dir.isValid() || !zeroFile.open(QIODevice::WriteOnly) || !zeroFile.resize(int64_t(256) * 1024 * 1024) ||
         !randomFile.open(QIODevice::WriteOnly)) {
         std::printf("no room for the garbage files: not tested\n");
         return;
@@ -488,8 +683,11 @@ static void test_large_garbage()
         randomFile.write(block);
     }
     randomFile.close();
-    check(!TAudioReader::open(zeros).has_value(), "256 MiB of zeros: no decoder takes it, no crash");
-    check(!TAudioReader::open(random).has_value(), "32 MiB of random bytes: no decoder takes it, no crash");
+    const auto refusedZeros = TAudioReader::open(zeros);
+    const auto refusedRandom = TAudioReader::open(random);
+    const QLatin1String noDecoder("no decoder reads this format");
+    check(!refusedZeros && refusedZeros.error().detail.startsWith(noDecoder), "256 MiB of zeros: no decoder takes it, no crash");
+    check(!refusedRandom && refusedRandom.error().detail.startsWith(noDecoder), "32 MiB of random bytes: no decoder takes it, no crash");
 }
 
 #if defined(Q_OS_LINUX)
@@ -508,26 +706,26 @@ static void test_cache_or_medium()
     }
     file.close();
 
-    std::unique_ptr<TByteSource> source = TByteSource::open_file(path);
+    std::unique_ptr<TByteSource> source = TByteSource::open_file(path).value_or(nullptr);
     if (!source) {
         check(false, "the file opens");
         return;
     }
-    TByteStats stats;
-    source->set_stats(&stats);
+    TReadsByOrigin stats;
+    source->count_reads_into(&stats);
     std::vector<char> into(size_t(bytes.size()));
 
     const bool read = source->read(into.data(), bytes.size()) == bytes.size();
-    if (stats.untold.bytes > 0) {
+    if (stats.unclassified.bytes > 0) {
         std::printf("this file system cannot tell the cache from the medium: not tested\n");
         return;
     }
     check(read && stats.medium.reads > 0 && stats.medium.bytes > 0, "a file out of the page cache waits for the medium");
-    const TByteTransfer medium = stats.medium;
+    const TReadTotals medium = stats.medium;
     check(source->seek(0) && source->read(into.data(), bytes.size()) == bytes.size() && stats.medium.bytes == medium.bytes &&
-              stats.cached.bytes >= quint64(bytes.size()),
+              stats.cached.bytes >= uint64_t(bytes.size()),
           "the same bytes again come from the page cache, no medium");
-    check(stats.untold.bytes == 0, "nothing is untold");
+    check(stats.unclassified.bytes == 0, "nothing is unclassified");
 }
 #endif
 
@@ -551,18 +749,18 @@ static void test_correction_file(const QTemporaryDir& dir)
 
     auto corrected = TAudioReader::open(hybrid);
     check(corrected && read_all(**corrected, 4099) == original, "a hybrid file with its correction file is exact");
-    check(corrected && (*corrected)->io_stats().stream.bytes.cached.bytes + (*corrected)->io_stats().stream.bytes.medium.bytes + (*corrected)->io_stats().stream.bytes.untold.bytes >
-                           quint64(QFile(hybrid).size()) * 9 / 10,
+    check(corrected && (*corrected)->io_stats().stream.reads.cached.bytes + (*corrected)->io_stats().stream.reads.medium.bytes + (*corrected)->io_stats().stream.reads.unclassified.bytes >
+                           uint64_t(QFile(hybrid).size()) * 9 / 10,
           "the correction file's reads count too");
 
-    // Each phase's reads land in that phase, for both sources: the decoder
-    // points them at the phase (TAudioDecoder::set_phase()). A source left
-    // behind would count its bytes in another phase, silently: with the
+    // Each activity's reads land in that activity, for both sources: the decoder
+    // points them at the activity (TAudioDecoder::set_activity()). A source left
+    // behind would count its bytes in another activity, silently: with the
     // correction file the open and a seek read more than without it
-    const auto total = [](const TByteStats& bytes) { return bytes.cached.bytes + bytes.medium.bytes + bytes.untold.bytes; };
+    const auto total = [](const TReadsByOrigin& bytes) { return bytes.cached.bytes + bytes.medium.bytes + bytes.unclassified.bytes; };
     struct PhaseBytes
     {
-        quint64 open, seek, openAfter, streamAfterSeek;
+        uint64_t open, seek, openAfter, streamAfterSeek;
     };
     const auto phases = [&](const QString& path) {
         PhaseBytes result{};
@@ -571,15 +769,15 @@ static void test_correction_file(const QTemporaryDir& dir)
             return result;
         }
         const TAudioIOStats& stats = (*reader)->io_stats();
-        result.open = total(stats.open.bytes);
+        result.open = total(stats.open.reads);
         TAudioBuffer buffer;
         (void)(*reader)->read_file_frames(buffer, (*reader)->file_frame_count() / 2, 4096);
-        result.seek = stats.seek.calls > 0 ? total(stats.seek.bytes) : 0;
+        result.seek = stats.seek.calls > 0 ? total(stats.seek.reads) : 0;
         // On past the block the seek read: the stream reads both files again
         const nframes_t after = (*reader)->file_frame_count() / 2 + 4096;
         (void)(*reader)->read_file_frames(buffer, after, std::min<nframes_t>(65536, (*reader)->file_frame_count() - after));
-        result.openAfter = total(stats.open.bytes);
-        result.streamAfterSeek = total(stats.stream.bytes);
+        result.openAfter = total(stats.open.reads);
+        result.streamAfterSeek = total(stats.stream.reads);
         return result;
     };
     const PhaseBytes with = phases(hybrid);
@@ -616,7 +814,7 @@ static void test_forget_position(const QTemporaryDir& dir)
         const TTimeRef next = start + TTimeRef(nframes_t(4096), rate);
         (void)(*reader)->read(again, start, 4096);
         (void)(*reader)->read(again, next, 4096);
-        const quint64 seeks = (*reader)->io_stats().seek.calls;
+        const uint64_t seeks = (*reader)->io_stats().seek.calls;
         (void)(*reader)->read(again, next + TTimeRef(nframes_t(4096), rate), 16);
         std::snprintf(what, sizeof(what), "at %u Hz a read that goes on does not seek", rate);
         check((*reader)->io_stats().seek.calls == seeks, what);
@@ -642,7 +840,8 @@ static void test_scenario(const QTemporaryDir& dir)
     const QString path = dir.filePath(QStringLiteral("signal.tscenario"));
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly) ||
-        file.write(R"({"version": 1, "rate": 48000, "frames": 4800, "channels": [{"signal": "silence"}]})") < 0) {
+        file.write(R"(# tscenario 1
+{"rate": 48000, "frames": 4800, "channels": [{"signal": "silence"}]})") < 0) {
         check(false, "a scenario is written");
         return;
     }
@@ -654,7 +853,7 @@ static void test_scenario(const QTemporaryDir& dir)
     }
     TAudioBuffer buffer;
     (void)(*reader)->read_file_frames(buffer, 0, 4800);
-    const TAudioPhaseStats& stream = (*reader)->io_stats().stream;
+    const TAudioIOCost& stream = (*reader)->io_stats().stream;
     check(stream.calls == 1 && stream.frames == 4800 && stream.read_nanoseconds() == 0, "a scenario reads no bytes: all its time is decoding");
 }
 
@@ -680,7 +879,7 @@ int main()
         {"FLAC 24 bit", "flac", SF_FORMAT_FLAC | SF_FORMAT_PCM_24, sndfile(SF_FORMAT_FLAC | SF_FORMAT_PCM_24)},
         {"Ogg Vorbis", "ogg", SF_FORMAT_OGG | SF_FORMAT_VORBIS, sndfile(SF_FORMAT_OGG | SF_FORMAT_VORBIS)},
         {"Ogg Opus", "opus", SF_FORMAT_OGG | SF_FORMAT_OPUS, sndfile(SF_FORMAT_OGG | SF_FORMAT_OPUS)},
-        // Through MAD, not libsndfile: not compared with sf_open
+        // Through mpg123, not libsndfile: not compared with sf_open
         {"MP3", "mp3", 0, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III)},
         {"WavPack float", "wv", 0, write_wavpack},
 #if defined(M4A_DECODE_SUPPORT)
@@ -695,6 +894,12 @@ int main()
         test_read_failure(dir, format);
         test_open_failure(dir, format);
     }
+    test_large_tag(dir);
+    test_scan_failure(dir);
+    test_seek_failure(dir);
+    test_start_failure(dir);
+    test_riff_not_walked(dir);
+    test_one_source(dir);
     test_file_source(dir);
     test_large_offsets();
     test_large_garbage();

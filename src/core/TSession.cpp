@@ -293,7 +293,7 @@ TTransportPosition TSession::get_published_transport_position() const
     return m_rtTransportPosition.read();
 }
 
-TTimeRef TSession::get_heard_transport_location(qint64 nowNanoseconds)
+TTimeRef TSession::get_heard_transport_location(uint64_t nowNanoseconds)
 {
     if (m_parentSession) {
         return m_parentSession->get_heard_transport_location(nowNanoseconds);

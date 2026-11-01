@@ -328,7 +328,8 @@ static void stress_stream(const TestSeed& seed, const QString& peakPath, const Q
 // A scenario file (TScenarioDecoder) with these channels and faults
 static QString write_scenario(const QString& path, uint rate, qint64 frames, const char* channels, const char* faults = "[]")
 {
-    const QByteArray json = QStringLiteral(R"({"version": 1, "rate": %1, "frames": %2, "channels": %3, "faults": %4})")
+    const QByteArray json = QStringLiteral(R"(# tscenario 1
+{"rate": %1, "frames": %2, "channels": %3, "faults": %4})")
                                 .arg(rate)
                                 .arg(frames)
                                 .arg(QLatin1String(channels), QLatin1String(faults))

@@ -11,7 +11,7 @@ versioned, may be missing). This document is complete without it.
 Task T73 in `doc/status.md`. `MadAudioReader` (MAD, K3b code, 1031 lines)
 goes; `MpgAudioReader` on libmpg123 comes in its place, measured against
 the decoder contract in `TAudioDecoder.h` and `test_audio_decoders`, not
-against what MAD does. Estimated size: 200 to 250 lines. Everything below
+against what MAD does. Built: about 450 lines with the header (estimated: 200 to 250). Everything below
 was measured in a throwaway prototype on Linux x86-64 with mpg123 1.33.3,
 unless section 7 says otherwise.
 
@@ -32,11 +32,14 @@ unless section 7 says otherwise.
    stays bounded, never -1.
 6. A file cut short before it is opened: the end is an error (contract
    point 4), and this goes before MAD's behaviour. No shift of the audio.
+   Sharpened: the tag only wins with a real frame count, and with more than one
+   MPEG frame over the scan; one frame over is iTunes, which counts its Info
+   frame.
    The reader works out the audio's place from delay and padding as MAD
    does.
 7. Threads: one process-wide mutex around our own `mpg123_new()`, and no
    mutex around `sf_open_virtual()`.
-8. Probe step 3 with the result `SF_FORMAT_MPEG` gives no decoder.
+8. Probe step 3 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
 9. A WAV with MP3 in it (`WAV|MPEG_LAYER_III` according to libsndfile) goes
    to `MpgAudioReader`.
 10. The probe goes by content, never by file name: a table of fixed
@@ -44,15 +47,16 @@ unless section 7 says otherwise.
     of WavPack and FAAD (section 3). A table entry holds fixed signatures
     only, no versions, subtypes or codecs; in doubt the library decides. A
     format that is not in the table keeps working through the later steps.
-11. `.tscenario` by file name is a deliberate exception: it is a test
-    facility, not an audio format.
+11. No exception on the name: a scenario is known by its first line, `# tscenario
+    <N>` (signature `# ts`). `.tscenario` stays a convention for people.
 12. Junk in front of the audio: limit 1 MiB.
 13. The test chooses the generic decoder through an environment variable
     that `MpgAudioReader` reads itself (for instance
     `TRAVERSO_MPG123_DECODER`), documented. No extra parameter in the API.
-14. `NO_PEEK_END` in the probe is provisional: the build confirms it with
-    the tests, because it now rests on one run with unexplained behaviour
-    (section 7).
+14. `NO_PEEK_END` was provisional in the probe, for the build to confirm. It
+    did not: it is not used (section 3).
+15. A change of format inside a file: damage. After it the reader refuses every
+    seek, until the decoder is opened again (section 4).
 
 ## 2. Why
 
@@ -134,29 +138,33 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 
 ## 3. `find_decoder()`
 
-1. `.tscenario`, by file name (decision 11).
-2. The table below. A match goes to that decoder directly.
-3. `MpgAudioReader::can_decode()`, the strict probe.
-4. `SFAudioReader::major_format()`: `SF_FORMAT_MPEG` gives no decoder;
+1. The table below. A match goes to that decoder directly, whose open says why
+   not. When libsndfile refuses a file of its table entries, the strict probe of
+   step 2 still gets it (`RIFF....RMP3`), a RIFF only with the form `WAVE` or
+   `RMP3`: mpg123 walks any RIFF to its data chunk without a limit. No entries
+   are added for that.
+2. `MpgAudioReader::can_decode()`, the strict probe.
+3. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on
    the RIFF route of the table: it is known after libsndfile opened the file.
-5. The existing probes of WavPack and FAAD.
+4. The existing probes of WavPack and FAAD.
 
 | Signature | Offset | Decoder |
 |---|---|---|
 | `RIFF`, `RF64`, `riff` (W64), `FORM`, `fLaC`, `OggS`, `caff`, `.snd` | 0 | libsndfile |
 | `wvpk` | 0 | WavPack |
+| `# ts` | 0 | `TScenarioDecoder` |
 | `ftyp` | 4 | FAAD |
 
 Also fixed, not tried: `RIFX`, `dns.`. `ID3` is not in the table: a tag can
 precede MP3, FLAC or WavPack.
 
-`can_decode_audio()` must really open the file: a table entry alone proves
+`can_read()` must really open the file: a table entry alone proves
 nothing.
 
 ### The strict probe
 
-A handle with the settings of section 4, plus `NO_PEEK_END` (decision 14). Open
+A handle with the settings of section 4. Open
 it, then walk frames with `mpg123_framebyframe_next()`, comparing layer, version
 and rate with the first frame. The open reads one frame already, so n frames
 walked is n + 1 frames.
@@ -173,6 +181,21 @@ at 1 frame walked and a clean end, so that case needs the tag. An untagged file
 of 2 MPEG frames (52 ms) is refused; such a file gave a wrong length through
 libsndfile before.
 
+No `MPG123_NO_PEEK_END` (decision 14). Without a file size mpg123 takes the
+stream for unseekable, and `MPG123_SKIP_ID3V2` then reads through the tag instead
+of seeking past it. Measured, an MP3 of 93,538 bytes behind a tag of 1 MiB:
+
+| Probe | Probe reads | Probe and open |
+|---|---|---|
+| as built | 49,280 bytes, 4 reads | 175,704 bytes, 14 reads |
+| `NO_PEEK_END` | 1,064,960 bytes, 65 reads | 1,191,384 bytes, 75 reads |
+| no `SKIP_ID3V2` | 1,081,482 bytes, 5 reads | 1,207,906 bytes, 15 reads |
+| both | 1,064,970 bytes, 3 reads | 1,191,394 bytes, 13 reads |
+| `NO_PEEK_END` and `FORCE_SEEKABLE` | 32,768 bytes, 2 reads | 159,192 bytes, 12 reads |
+
+The last line is not built: a flag outside this document. It saves the reads at
+the end of the file in the probe, one block.
+
 ## 4. `MpgAudioReader`
 
 **Handle.** `mpg123_new()` under the mutex, the mutex only there.
@@ -187,7 +210,9 @@ libsndfile before.
 - `mpg123_reader64()` on the `TByteSource`, `mpg123_open_handle64()`.
   Define `MPG123_PORTABLE_API`.
 
-**Open.**
+**Open.** `start()` ends in `scan()`, both private. Steps 3 and 6 are in
+`start()`, with 1 and 2: they do not depend on the scan, and a later open without
+one needs them too.
 1. `mpg123_getformat()`.
 2. Read delay, padding and `mpg123_length64()` before the scan.
 3. `MPG123_INDEX_SIZE` 10000: at most 80 KB per handle. The default of 1000
@@ -204,12 +229,19 @@ libsndfile before.
 7. The length, as below.
 
 **The length.** Without a tag: the scanned samples. A scan that stops more than
-64 KiB before the end gives `CannotOpen` with the byte position (decision 5).
+64 KiB before the end gives `CannotOpen` with the byte position (decision 5). A
+tag without a real frame count, also with an encoder's name in it, counts as no
+tag for the length and for this rule: there is no count to check against. Its
+delay and padding are used when mpg123 gives them (>= 0): the length is the
+scanned samples - delay - max(padding, 529), and skip = delay + 529, as with a
+full tag. Without delay or padding: length as above, skip = 0, also with a
+frame count.
 
-With a tag (delay and padding >= 0):
-- the source of the samples is the tag's length when it says more than the
-  scan found, a file cut short; otherwise the scan, so a tag that says less
-  (concatenated files) does not cut anything;
+With a real frame count in the tag:
+- the source of the samples is the tag's length when it says more than one
+  MPEG frame over what the scan found, a file cut short; otherwise the scan, so
+  iTunes' extra frame and a tag that says less (concatenated files) do not cut
+  anything;
 - `m_frames` = samples - delay - max(padding, 529);
 - skip = delay + 529, the decoder's delay being 529.
 
@@ -221,6 +253,14 @@ Keep the scanned samples: they are the seek limit.
 **Read.** Clamp to `m_frames`, read in a loop until the count or the end,
 de-interleave as `SFAudioReader` does. A read that ends before `m_frames` is
 an error through `read_done()`.
+
+**A change of format.** Another rate or channel count inside a file is damage
+(decision 15): the read stops there with an error, and from then on every seek
+fails with `SeekFailed` and the reason, until the decoder is opened again.
+mpg123 turns a position into frames with the size of the frame it is at, and
+`mpg123_seek64()` gives back the position it was asked for, so past a change of
+frame size its answer proves nothing. A seek before the first read of the change
+lands: measured in the first part, exact; past the change the read fails at once.
 
 **Preframes, the known limit.** 90 covers the 85 frames a stereo stream of
 24 kHz at 8 kbps can reach back (24 bytes per frame, minus 21 of header and
@@ -234,14 +274,14 @@ what it needs. The saved data must also hold the scanned samples: without a tag
 `mpg123_length64()` stays an estimate, and they are the seek limit.
 
 **In the code itself.** The remaining risk of "Why no mutex around libsndfile",
-the exception of decision 11, the environment variable of decision 13.
+the environment variable of decision 13.
 
 ## 5. Files
 
 - `src/audiofileio/decode/MpgAudioReader.h`, `.cpp`: new.
 - `src/audiofileio/decode/MadAudioReader.h`, `.cpp`: removed, with the RIFF
   hack in its `can_decode()`.
-- `src/audiofileio/decode/TAudioDecoder.cpp`: `find_decoder()`, and the
+- `src/audiofileio/decode/TAudioDecoderFactory.cpp`: `find_decoder()`, and the
   comments on MAD; the claim about "hundreds of frames" is wrong.
 - `src/audiofileio/decode/TAudioDecoder.h`, `src/byteio/TByteSource.h`:
   mentions of MAD.
@@ -266,7 +306,10 @@ T11 and the MAD points of T71 fall away when this is done.
 - A bit reservoir reaching further than 16 frames.
 - Junk in front of the audio: below and above 1 MiB.
 - An ID3v2 tag of 1 MiB, in memory, in `test_audio_byte_source`: open, length,
-  a seek, and the bytes read (`io_stats()`) below the file size minus the tag.
+  a seek, and the bytes read (`io_stats()`) at most the file size minus the tag
+  plus 8 blocks of `TByteSource` (the scan reads all the audio; 98,550 bytes
+  on top of it were measured, 6 blocks and a little). Without `SKIP_ID3V2` in
+  the probe or the reader the test fails: 1,224,290 bytes read.
 - Short files: the rules of the strict probe, with and without a tag.
 - Damage in the middle, with `best_lag`: exact up to the damage, an error at
   the damage, a seek past it refused, a seek back reads.
@@ -275,26 +318,17 @@ T11 and the MAD points of T71 fall away when this is done.
   place.
 - A read that fails during the scan: `CannotOpen`, with and without a tag.
 - A WAV with MP3 in it.
+- A `RIFF....RMP3` file, which libsndfile refuses.
 - Concatenated files: both parts.
 - Everything MP3 again with the generic decoder.
-- `NO_PEEK_END` in the probe (decision 14).
+- A change of format inside a file: mono, and another rate.
 
-## 7. Not measured, to be done in the build
+## 7. Not measured
 
-Not in the prototype:
-- the route of a WAV with MP3 end to end (a WAV behind an ID3 tag was read
-  right, and mpg123 opens the WAV itself with the right length);
-- `SF_FORMAT_MPEG` giving no decoder in step 4;
-- the `CannotOpen` at 64 KiB without a tag;
-- the 1 MiB and `INDEX_SIZE` 10000 in the test runs (measured apart).
-
-To settle:
-- A change of format inside a file (`MPG123_NEW_FORMAT` with another rate or
-  channel count). Proposal: treat it as damage, stop with an error.
-- `NO_PEEK_END`: with it `mpg123_getformat()` reports OK on short junk far more
-  often, for a reason not found. Walking the frames still refused those files,
-  and the probe gave the same results in the tests. If the tests do not confirm
-  it, it goes.
+Not in the prototype, all tested in the build except the last: the route of a
+WAV with MP3 end to end, `SF_FORMAT_MPEG` giving no decoder in step 4, the
+`CannotOpen` at 64 KiB without a tag, the 1 MiB limit, and `INDEX_SIZE` 10000
+(set, its reads per seek not measured in the build).
 
 Not checked at all: other versions of mpg123, macOS, Windows, ARM, big-endian,
 Layer I, MP3 files of other encoders than LAME and libsndfile, real damage,

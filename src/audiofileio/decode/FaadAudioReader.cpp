@@ -300,19 +300,20 @@ public:
 	nframes_t pendingCount{0};
 };
 
-FaadAudioReader::FaadAudioReader(const QString& filename, const TByteSourceOpener& opener)
-	: TAudioDecoder(filename, opener)
+FaadAudioReader::FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+	: TAudioDecoder(fileName, std::move(source), opener)
 	, d(new FaadDecoderPrivate())
 {
-	d->source = open_source(m_fileName);
-	if (!d->source || !initDecoderInternal()) {
-		// Not opened: no frames (is_valid() false), and why where known
-		if (!m_openError) {
-			m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("FAAD cannot read it")};
-		}
-		m_frames = 0;
+}
+
+TAudioFileStatus FaadAudioReader::start()
+{
+	d->source = &source();
+	if (!initDecoderInternal()) {
 		d->cleanup();
+		return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, m_openFailure.isEmpty() ? QStringLiteral("FAAD cannot read it") : m_openFailure});
 	}
+	return require_audio();
 }
 
 FaadAudioReader::~FaadAudioReader()
@@ -548,11 +549,11 @@ bool FaadAudioReader::initDecoderInternal()
 bool FaadAudioReader::start_at_frame_0()
 {
 	if (m_frames == 0) {
-		m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("no AAC frames in it")};
+		m_openFailure = QStringLiteral("no AAC frames in it");
 		return false;
 	}
-	if (TAudioFileStatus atStart = seek(0); !atStart) {
-		m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, atStart.error().detail};
+	if (TAudioFileStatus atStart = seek_frame(0); !atStart) {
+		m_openFailure = atStart.error().detail;
 		return false;
 	}
 	return true;
@@ -642,7 +643,7 @@ TAudioFileResult FaadAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframe
     }
     fileIOBuffer.check_capacity(count, m_channels);
 
-    const nframes_t readFrames = (d->hDecoder && !at_end() && !m_error) ? decode(fileIOBuffer, count) : 0;
+    const nframes_t readFrames = (d->hDecoder && !at_end() && !m_inErrorState) ? decode(fileIOBuffer, count) : 0;
 
     // A packet the file does not give whole (decode_next_packet()); when the
     // packets ran out before the frame count, read_done() says so itself
@@ -654,11 +655,11 @@ TAudioFileResult FaadAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframe
 nframes_t FaadAudioReader::decode(TAudioBuffer& fileIOBuffer, nframes_t frameCount)
 {
 	nframes_t given = 0;
-	while (given < frameCount && m_frame + given < m_frames) {
+	while (given < frameCount && m_nextFrame + given < m_frames) {
 		if (d->pendingStart >= d->pendingCount && !decode_next_packet()) {
 			break;
 		}
-		const nframes_t n = std::min({frameCount - given, d->pendingCount - d->pendingStart, m_frames - (m_frame + given)});
+		const nframes_t n = std::min({frameCount - given, d->pendingCount - d->pendingStart, m_frames - (m_nextFrame + given)});
 		for (uint channel = 0; channel < m_channels; ++channel) {
 			audio_sample_t* destination = fileIOBuffer.get_channel_buffer(channel).data(given, n);
 			for (nframes_t i = 0; i < n; ++i) {

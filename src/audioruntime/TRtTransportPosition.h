@@ -4,9 +4,7 @@
 #pragma once
 
 #include <QtGlobal>
-#include "TRealTime.h"
 #include <atomic>
-#include <chrono>
 
 /**
  * @brief Where the transport was in the last processed buffer.
@@ -15,15 +13,15 @@
  * in that cycle, frames its length at sampleRate. runStartUniversalFrame is
  * where the transport started rolling for the current run (a seek starts a
  * new run). cycleTimeNanoseconds is when the cycle started, on the clock of
- * TRtTransportPosition::now_nanoseconds().
+ * TClock::now_nanoseconds().
  */
 struct TTransportPosition
 {
     qint64  universalFrame{0};
     qint64  runStartUniversalFrame{0};
-    qint64  cycleTimeNanoseconds{0};
-    quint32 frames{0};
-    quint32 sampleRate{0};
+    uint64_t cycleTimeNanoseconds{0};
+    uint32_t frames{0};
+    uint32_t sampleRate{0};
 };
 
 /**
@@ -37,22 +35,13 @@ struct TTransportPosition
 class TRtTransportPosition
 {
 public:
-    static_assert(std::atomic<qint64>::is_always_lock_free && std::atomic<quint32>::is_always_lock_free,
+    static_assert(std::atomic<int64_t>::is_always_lock_free && std::atomic<uint32_t>::is_always_lock_free,
                   "the transport position must be published without locks");
-
-    // The clock of TTransportPosition::cycleTimeNanoseconds: monotonic, any thread
-    static qint64 now_nanoseconds() T_REALTIME_SAFE
-    {
-        // The steady clock reads the vDSO: real-time safe by contract
-        std::chrono::steady_clock::time_point now;
-        T_REALTIME_SAFE_BY_CONTRACT(now = std::chrono::steady_clock::now();)
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-    }
 
     // Audio thread only
     void publish(const TTransportPosition& position)
     {
-        const quint64 sequence = m_sequence.load(std::memory_order_relaxed);
+        const uint64_t sequence = m_sequence.load(std::memory_order_relaxed);
 
         // Odd: a write is in progress. The fence keeps the field stores
         // after it, so a reader that sees a new field also sees the odd
@@ -76,7 +65,7 @@ public:
         TTransportPosition position;
 
         for (;;) {
-            const quint64 before = m_sequence.load(std::memory_order_acquire);
+            const uint64_t before = m_sequence.load(std::memory_order_acquire);
             if (before & 1) {
                 continue;
             }
@@ -97,10 +86,10 @@ public:
     }
 
 private:
-    std::atomic<quint64> m_sequence{0};
-    std::atomic<qint64>  m_universalFrame{0};
-    std::atomic<qint64>  m_runStartUniversalFrame{0};
-    std::atomic<qint64>  m_cycleTimeNanoseconds{0};
-    std::atomic<quint32> m_frames{0};
-    std::atomic<quint32> m_sampleRate{0};
+    std::atomic<uint64_t> m_sequence{0};
+    std::atomic<qint64>   m_universalFrame{0};
+    std::atomic<qint64>   m_runStartUniversalFrame{0};
+    std::atomic<uint64_t> m_cycleTimeNanoseconds{0};
+    std::atomic<uint32_t> m_frames{0};
+    std::atomic<uint32_t> m_sampleRate{0};
 };

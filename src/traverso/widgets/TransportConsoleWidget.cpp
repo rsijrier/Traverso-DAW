@@ -20,6 +20,7 @@
 #include "TInformUser.h"
 #include "TTransport.h"
 #include "TFrameClock.h"
+#include "TClock.h"
 
 #include <QAction>
 #include <QPushButton>
@@ -97,7 +98,7 @@ TransportConsoleWidget::TransportConsoleWidget(QWidget* parent, TFrameClock* fra
 
     connect(&pm(), &TProjectManager::projectLoaded, this, &TransportConsoleWidget::set_project);
     // About 8 updates per second while the transport rolls
-    connect(m_frameClock, &TFrameClock::frame, this, [this](qint64 nowNanoseconds) {
+    connect(m_frameClock, &TFrameClock::frame, this, [this](uint64_t nowNanoseconds) {
         if (nowNanoseconds - m_lastLabelFrame < 120000000) {
             return;
         }
@@ -117,7 +118,7 @@ TransportConsoleWidget::TransportConsoleWidget(QWidget* parent, TFrameClock* fra
     });
 
     update_layout();
-    update_label(TFrameClock::now_nanoseconds());
+    update_label(TClock::now_nanoseconds());
 }
 
 void TransportConsoleWidget::set_project(TProject* project)
@@ -157,7 +158,7 @@ void TransportConsoleWidget::set_session(TSession* session)
 
     if (!m_sheet) {
         setEnabled(false);
-        update_label(TFrameClock::now_nanoseconds());
+        update_label(TClock::now_nanoseconds());
         return;
     }
 
@@ -167,14 +168,14 @@ void TransportConsoleWidget::set_session(TSession* session)
     connect(m_sheet, &TSheet::transportStarted, this, &TransportConsoleWidget::transport_started);
     connect(m_sheet, &TSheet::transportStopped, this, &TransportConsoleWidget::transport_stopped);
     // Seeks and stops while the clock does not run
-    connect(m_sheet, &TSheet::transportLocationChanged, this, [this]() { update_label(TFrameClock::now_nanoseconds()); });
+    connect(m_sheet, &TSheet::transportLocationChanged, this, [this]() { update_label(TClock::now_nanoseconds()); });
 
     if (m_sheet->is_transport_rolling()) {
         m_frameClock->hold(this);
     } else {
         m_frameClock->release(this);
     }
-    update_label(TFrameClock::now_nanoseconds());
+    update_label(TClock::now_nanoseconds());
 }
 
 TransportConsoleWidget::~TransportConsoleWidget()
@@ -213,7 +214,7 @@ void TransportConsoleWidget::transport_stopped()
     m_recAction->setEnabled(true);
 
     m_frameClock->release(this);
-    update_label(TFrameClock::now_nanoseconds());
+    update_label(TClock::now_nanoseconds());
 }
 
 void TransportConsoleWidget::update_recording_state()
@@ -233,7 +234,7 @@ void TransportConsoleWidget::update_recording_state()
     }
 }
 
-void TransportConsoleWidget::update_label(qint64 nowNanoseconds)
+void TransportConsoleWidget::update_label(uint64_t nowNanoseconds)
 {
     TTimeRef newTransportLocation(TTimeRef::INVALID);
 

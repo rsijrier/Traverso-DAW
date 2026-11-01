@@ -59,6 +59,7 @@ target_link_libraries(traverso
         traversoaudioruntime
         traversoaudiofileio
         traversobyteio
+        traversosupport
         traversoplugins
         traversocommands
         tcp_traversocommands

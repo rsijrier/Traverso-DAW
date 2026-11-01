@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "TFrameClock.h"
-
-#include "TRtTransportPosition.h"
+#include "TClock.h"
 
 #include <QScreen>
 #include <QWidget>
@@ -14,11 +13,6 @@ TFrameClock::TFrameClock(QWidget* window)
 {
     m_timer.setTimerType(Qt::PreciseTimer);
     connect(&m_timer, &QTimer::timeout, this, &TFrameClock::tick);
-}
-
-qint64 TFrameClock::now_nanoseconds()
-{
-    return TRtTransportPosition::now_nanoseconds();
 }
 
 // Runs at the refresh rate of the window's screen at the start
@@ -54,6 +48,6 @@ void TFrameClock::tick()
         return;
     }
     m_ticking = true;
-    emit frame(now_nanoseconds());
+    emit frame(TClock::now_nanoseconds());
     m_ticking = false;
 }

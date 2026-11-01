@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 class FaadAudioReader : public TAudioDecoder
 {
 public:
-	explicit FaadAudioReader(const QString& filename, const TByteSourceOpener& opener = {});
 	~FaadAudioReader() override;
 
     QString decoder_type() const final { return "faad"; }
@@ -36,6 +35,15 @@ public:
 
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
+
+private:
+    friend struct TAudioDecoderFactory;
+
+    FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
+    TAudioFileStatus start();
+
+    // Why the open failed, where known
+    QString m_openFailure;
 
 protected:
     // The packets decoded before the one a seek goes to (with a fresh

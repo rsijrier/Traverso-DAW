@@ -134,7 +134,7 @@ private:
     // seek that failed
     std::expected<bool, TAudioFileError> reposition(nframes_t frame);
     // The resampler and the frames to drop forget the position read before
-    void reset();
+    void reset_resampler();
     // count resampled frames from the reader's position into buffer; what
     // came from the file, zeros after it, and the error of the decoder's
     // reads
@@ -158,7 +158,7 @@ private:
     // The position of read(), in output frames. None after a new output
     // rate, a read of the file's own frames (the decoder moved), a seek that
     // failed or a read at or past the end: the next read() seeks.
-    std::optional<nframes_t> m_frame{0};
+    std::optional<nframes_t> m_nextOutputFrame{0};
     // After a seek: output frames to drop before the frame asked for
     nframes_t m_dropFrames{0};
 };

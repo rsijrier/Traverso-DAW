@@ -27,9 +27,10 @@ keeps a null handle; `process()` then gives 0 and the stream plays zeros
 `set_output_rate_and_resampler()` returns `void` (`TAudioReader.h:93`).
 
 There are 31 `TLOG_` lines in the library: 30 failures, one not
-(`WPAudioReader.cpp:79`, the WavPack version). MAD and FAAD log nothing of
-their own; their open failures reach the user as "the X decoder cannot read
-it (0 channels, 0 Hz, 0 frames)".
+(`WPAudioReader.cpp:79`, the WavPack version). FAAD logs nothing of its own;
+its open failures reach the user as "the X decoder cannot read it (0 channels,
+0 Hz, 0 frames)". `MpgAudioReader` logs nothing either and says why
+through `start()`.
 
 ## Decision (Remon, 2026-10-27)
 
@@ -62,7 +63,7 @@ before is a race, the file can go in between, and costs a system call on
 every open). The one place is the `DecoderLibrary::None` branch of
 `open_audio_decoder()` (`TAudioDecoder.cpp:136-142`): every probe opens the
 file itself (`SFAudioReader.cpp:76-79`, `WPAudioReader.cpp:66`,
-`MadAudioReader.cpp:616-619`, `FaadAudioReader.cpp:327`), so a missing file,
+`MpgAudioReader::can_decode()`, `FaadAudioReader.cpp:327`), so a missing file,
 an unreadable file and a file of an unknown format all end there. That
 branch asks, in this order: does the file exist (else `NotFound`); can it be
 opened for reading (else `CannotOpen`, with the system's reason from
@@ -82,7 +83,7 @@ is shown as the technical addition (libsndfile, WavPack and the others speak
 English and cannot be translated). The detail is copied from the library's
 `const char*` at once; `sf_strerror(nullptr)` is a global last error, which
 copying does not make safe across worker threads (task T26). Where a library
-gives no text, ours: MAD and FAAD, and a failed `fopen` in the WavPack and
+gives no text, ours: FAAD, `MpgAudioReader` next to libmpg123's words, and a failed `fopen` in the WavPack and
 FAAC writers (`strerror(errno)`, `WPAudioWriter.cpp:43-45`,
 `FaacAudioWriter.cpp:91-93`), as after a failed `fwrite`.
 
@@ -273,8 +274,8 @@ GCC 12+ is libstdc++'s own requirement.
   `TAudioFileStatus = std::expected<void, TAudioFileError>`.
 - Decoders: `seek()` returns `TAudioFileStatus`, `read()` a result;
   `seek_failed()` and `read_done()` take the library's words; a decoder that
-  cannot open keeps the reason in `m_openError`. MAD checks its `seek(0)` at
-  open; FAAD's dead `if (!d)` and its sample-size narrowing are gone, and a
+  cannot open returns the reason from `start()`. `MpgAudioReader::scan()`
+  checks its `seek_frame(0)`; FAAD's dead `if (!d)` and its sample-size narrowing are gone, and a
   failed start keeps its reason. `TScenarioDecoder::check()` returns
   `std::expected<void, QString>` (pattern 5 gone).
 - Encoders: `open()`/`close()` return `TAudioFileStatus`, `write()` a result;

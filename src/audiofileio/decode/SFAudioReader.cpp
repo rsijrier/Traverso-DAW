@@ -63,8 +63,12 @@ static SNDFILE* open_on_source(TByteSource& source, SF_INFO& info)
 }
 
 
-SFAudioReader::SFAudioReader(const QString& filename, const TByteSourceOpener& opener)
-    : TAudioDecoder(filename, opener)
+SFAudioReader::SFAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
+    : TAudioDecoder(fileName, std::move(source), opener)
+{
+}
+
+TAudioFileStatus SFAudioReader::start()
 {
     /* although libsndfile says we don't need to set this,
 	valgrind and source code shows us that we do.
@@ -72,22 +76,16 @@ SFAudioReader::SFAudioReader(const QString& filename, const TByteSourceOpener& o
 	*/
     memset (&m_sfinfo, 0, sizeof(m_sfinfo));
 
-    TByteSource* source = open_source(m_fileName);
-    if (!source) {
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QStringLiteral("the file does not open")};
-        return;
-    }
-
-    if ((m_sf = open_on_source(*source, m_sfinfo)) == nullptr) {
+    if ((m_sf = open_on_source(source(), m_sfinfo)) == nullptr) {
         // libsndfile's last open error is global: with files opened at the
         // same time on other threads it may be theirs (task T26)
-        m_openError = TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(sf_strerror(nullptr))};
-        return;
+        return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, QString::fromUtf8(sf_strerror(nullptr))});
     }
 
     m_channels = m_sfinfo.channels;
     m_frames = m_sfinfo.frames;
     m_rate = m_sfinfo.samplerate;
+    return require_audio();
 }
 
 
@@ -101,7 +99,7 @@ SFAudioReader::~SFAudioReader()
 }
 
 
-int SFAudioReader::major_format(TByteSource& source)
+std::expected<int, QString> SFAudioReader::format(TByteSource& source)
 {
     SF_INFO infos;
 
@@ -114,12 +112,12 @@ int SFAudioReader::major_format(TByteSource& source)
 
     //is it supported by libsndfile?
     if (!sndfile) {
-        return 0;
+        return std::unexpected(QString::fromUtf8(sf_strerror(nullptr)));
     }
 
     sf_close(sndfile);
 
-    return infos.format & SF_FORMAT_TYPEMASK;
+    return infos.format;
 }
 
 
@@ -167,7 +165,7 @@ TAudioFileResult SFAudioReader::read_frames(TAudioBuffer& fileIOBuffer, nframes_
 
     float* readBuffer = interleaved_scratch(size_t(count) * m_channels);
 
-    const nframes_t readFrames = (m_sf && !at_end() && !m_error) ? nframes_t(sf_readf_float(m_sf, readBuffer, count)) : 0;
+    const nframes_t readFrames = (m_sf && !at_end() && !m_inErrorState) ? nframes_t(sf_readf_float(m_sf, readBuffer, count)) : 0;
 
     // De-interlace
     switch (m_channels) {

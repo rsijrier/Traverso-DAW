@@ -3,6 +3,8 @@
 
 #include "TLog.h"
 
+#include "TClock.h"
+
 #include <QDateTime>
 #include <QDir>
 #include <QStandardPaths>
@@ -17,7 +19,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
-#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -50,18 +51,10 @@ static std::atomic<quint32>   s_unclaimedDropped{0};
 static thread_local TLogThreadBuffer* t_buffer = nullptr;
 static thread_local bool              t_claimTried = false;
 
-static qint64 now_nanoseconds() T_REALTIME_SAFE
-{
-    // The steady clock reads the vDSO: real-time safe by contract
-    std::chrono::steady_clock::time_point now;
-    T_REALTIME_SAFE_BY_CONTRACT(now = std::chrono::steady_clock::now();)
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-}
-
 // The seconds in the log count from the start of the process, so records
 // from before start() have no negative time
-static const qint64 s_processStartNs = now_nanoseconds();
-static const qint64 s_processStartWallMs = QDateTime::currentMSecsSinceEpoch();
+static const uint64_t s_processStartNs = TClock::now_nanoseconds();
+static const int64_t s_processStartWallMs = QDateTime::currentMSecsSinceEpoch();
 
 // The calling thread's buffer, claimed from the pool on the first call.
 // nullptr when the pool is exhausted. Real-time safe: the thread_locals are
@@ -133,7 +126,7 @@ TLog::Record* TLog::begin_record(TLogLevel level, const char* category) T_REALTI
         return nullptr;
     }
     Record& record = buffer->records[head & (TLogThreadBuffer::Capacity - 1)];
-    record.timeNs = now_nanoseconds();
+    record.timeNs = TClock::now_nanoseconds();
     record.cycle = buffer->cycle;
     record.sequence = buffer->sequence++;
     record.level = level;
@@ -254,8 +247,8 @@ static std::atomic<bool>      s_stderr{false};
 static FILE*                  s_file = nullptr;
 static QString                s_fileName;
 static qint64                 s_fileBytes = 0;
-static qint64                 s_anchorMonoNs = s_processStartNs;
-static qint64                 s_anchorWallMs = s_processStartWallMs;
+static uint64_t               s_anchorMonoNs = s_processStartNs;
+static int64_t                s_anchorWallMs = s_processStartWallMs;
 static std::vector<TLogPending> s_pending;
 
 // A program that returns from main() without stop() must not destroy the
@@ -305,9 +298,11 @@ static void write_line(const std::string& line, int thread)
 static std::string format_line(const TLogPending& pending)
 {
     const TLog::Record& r = pending.record;
-    const qint64 wallMs = s_anchorWallMs + (r.timeNs - s_anchorMonoNs) / 1000000;
+    // Signed: a record of a static initialiser can lie before the anchor
+    const int64_t sinceAnchorNs = int64_t(r.timeNs - s_anchorMonoNs);
+    const int64_t wallMs = s_anchorWallMs + sinceAnchorNs / 1000000;
     const QByteArray wall = QDateTime::fromMSecsSinceEpoch(wallMs).toString("yyyy-MM-dd HH:mm:ss.zzz").toLatin1();
-    const double seconds = double(r.timeNs - s_anchorMonoNs) / 1.0e9;
+    const double seconds = double(sinceAnchorNs) / 1.0e9;
 
     char thread[16];
     if (const char* name = thread_name(pending.thread)) {
@@ -353,7 +348,7 @@ static void drain_round(qint64 holdNs)
         if (dropped != buffer.reportedDropped) {
             TLogPending notice{};
             notice.thread = i;
-            notice.record.timeNs = now_nanoseconds();
+            notice.record.timeNs = TClock::now_nanoseconds();
             notice.record.level = TLogLevel::Warning;
             notice.record.category = "log";
             std::snprintf(notice.record.text, TLog::TextSize, "%u records of this thread dropped, its log buffer was full",
@@ -367,7 +362,7 @@ static void drain_round(qint64 holdNs)
     if (unclaimed > 0) {
         TLogPending notice{};
         notice.thread = 0;
-        notice.record.timeNs = now_nanoseconds();
+        notice.record.timeNs = TClock::now_nanoseconds();
         notice.record.level = TLogLevel::Warning;
         notice.record.category = "log";
         std::snprintf(notice.record.text, TLog::TextSize, "%u records dropped, more than %d threads log", unclaimed, MaxThreads);
@@ -380,7 +375,7 @@ static void drain_round(qint64 holdNs)
         return a.record.sequence < b.record.sequence;
     });
 
-    const qint64 limit = now_nanoseconds() - holdNs;
+    const uint64_t limit = TClock::now_nanoseconds() - holdNs;
     size_t written = 0;
     while (written < s_pending.size() && s_pending[written].record.timeNs <= limit) {
         write_line(format_line(s_pending[written]), s_pending[written].thread);
