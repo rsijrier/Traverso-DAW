@@ -298,9 +298,11 @@ static void write_line(const std::string& line, int thread)
 static std::string format_line(const TLogPending& pending)
 {
     const TLog::Record& r = pending.record;
-    const qint64 wallMs = s_anchorWallMs + (r.timeNs - s_anchorMonoNs) / 1000000;
+    // Signed: a record of a static initialiser can lie before the anchor
+    const int64_t sinceAnchorNs = int64_t(r.timeNs - s_anchorMonoNs);
+    const int64_t wallMs = s_anchorWallMs + sinceAnchorNs / 1000000;
     const QByteArray wall = QDateTime::fromMSecsSinceEpoch(wallMs).toString("yyyy-MM-dd HH:mm:ss.zzz").toLatin1();
-    const double seconds = double(r.timeNs - s_anchorMonoNs) / 1.0e9;
+    const double seconds = double(sinceAnchorNs) / 1.0e9;
 
     char thread[16];
     if (const char* name = thread_name(pending.thread)) {
