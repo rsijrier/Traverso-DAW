@@ -891,6 +891,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     on 17 files: the audio is bit exact, and FFmpeg gains only 32 bit FLAC. It reads
     the whole file at the open or cannot seek reliably without a seektable, which
     libsndfile's FLAC does not write, and refuses the 8 bit FLAC libsndfile writes.
+    MP3 stays with libmpg123, measured through both readers on 63 files: normal audio
+    the same and no gain in speed, but FFmpeg goes on silently over damage, which our
+    T73 rules report, and keeps the decoder delay where no tag names it.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
