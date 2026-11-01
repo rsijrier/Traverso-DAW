@@ -81,6 +81,10 @@ class TAudioDecoder
 public:
     virtual ~TAudioDecoder() = default;
 
+    // The one rule for a reason: the source's words where a read failed, else
+    // the library's, else what the caller can say
+    static QString first_reason(const QString& source, const QString& library, const QString& otherwise = QString());
+
     // Of the file, at its own rate. No channels or no frames: it could not
     // be read
     const QString& file_name() const { return m_fileName; }

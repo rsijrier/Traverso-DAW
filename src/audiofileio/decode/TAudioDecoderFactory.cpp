@@ -87,7 +87,7 @@ static bool riff_may_hold_mp3(TByteSource& source)
 // Why no decoder reads the file its source holds: a failed read goes first
 static TAudioFileError why_no_decoder(TByteSource& source, const QString& detail)
 {
-    return {TAudioFileError::Code::CannotOpen, source.take_error().value_or(detail)};
+    return {TAudioFileError::Code::CannotOpen, TAudioDecoder::first_reason(source.take_error().value_or(QString()), detail)};
 }
 
 // The library for the file, by its content, or why there is none; the probes'

@@ -120,13 +120,15 @@ TAudioFileStatus TAudioDecoder::seek_landed(nframes_t frame)
     return {};
 }
 
+QString TAudioDecoder::first_reason(const QString& source, const QString& library, const QString& otherwise)
+{
+    return !source.isEmpty() ? source : !library.isEmpty() ? library : otherwise;
+}
+
 TAudioFileStatus TAudioDecoder::seek_failed(nframes_t frame, const QString& detail)
 {
     m_inErrorState = true;
-    const QString sourceError = take_source_error();
-    return std::unexpected(TAudioFileError{TAudioFileError::Code::SeekFailed, !sourceError.isEmpty() ? sourceError
-                                                                              : detail.isEmpty()     ? QStringLiteral("cannot seek to frame %1").arg(frame)
-                                                                                                     : detail});
+    return std::unexpected(TAudioFileError{TAudioFileError::Code::SeekFailed, first_reason(take_source_error(), detail, QStringLiteral("cannot seek to frame %1").arg(frame))});
 }
 
 TAudioFileResult TAudioDecoder::read_done(TAudioBuffer& buffer, nframes_t read, nframes_t count, const QString& detail)
@@ -139,9 +141,7 @@ TAudioFileResult TAudioDecoder::read_done(TAudioBuffer& buffer, nframes_t read, 
     if (read < count && m_nextFrame + read < m_frames) {
         m_inErrorState = true;
         result.error = TAudioFileError{TAudioFileError::Code::ReadFailed,
-                                       !sourceError.isEmpty() ? sourceError
-                                       : detail.isEmpty()     ? QStringLiteral("the audio ends at frame %1 of %2").arg(m_nextFrame + read).arg(m_frames)
-                                                              : detail};
+                                       first_reason(sourceError, detail, QStringLiteral("the audio ends at frame %1 of %2").arg(m_nextFrame + read).arg(m_frames))};
     }
     m_nextFrame += read;
     return result;
