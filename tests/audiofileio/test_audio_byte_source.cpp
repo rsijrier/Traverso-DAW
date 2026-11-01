@@ -484,17 +484,17 @@ static void test_scan_failure(const QTemporaryDir& dir)
 }
 
 // A read that fails inside a decoder's own open: the source's reason, not what
-// the library made of it. The probe reads the first block, the open the next
+// the library made of it. WavPack has a signature, so the first block is read
+// by find_decoder() and all later reads by the decoder's start()
 static void test_start_failure(const QTemporaryDir& dir)
 {
-    const QString path = dir.filePath(QStringLiteral("file.flac"));
+    const QString path = dir.filePath(QStringLiteral("file.wv"));
     if (!QFile::exists(path)) {
-        check(false, "a failed start: the FLAC is there");
+        check(false, "a failed start: the WavPack file is there");
         return;
     }
     Medium medium;
-    medium.failFrom = 0;
-    medium.failTo = 1;
+    medium.failFrom = TByteSource::BlockBytes;
     const auto reader = TAudioReader::open(path, memory_opener(&medium));
     char what[200];
     std::snprintf(what, sizeof(what), "a read that fails in the open: the reason of the source (%s)", reader ? "it opened" : qPrintable(reader.error().detail));

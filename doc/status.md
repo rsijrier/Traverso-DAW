@@ -293,7 +293,9 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
 - **T16 (medium): `transport_position` test failed 3 times under ctest load**
   (2026-10-27, Clang and GCC; not reproduced in 72 parallel runs). First find
   out which check: a torn read is a real race in the frame clock's seqlock, a
-  starved reader only a test too tight for a loaded machine.
+  starved reader only a test too tight for a loaded machine. Seen again on
+  2026-10-31: "the reader is not starved by the writer", under `ctest -j4` and
+  once alone; 30 runs alone after that all passed. Was T74 for a moment.
 - **T17 (medium-low): a WavPack file of unknown length** reports 2^32-1
   frames (`WavpackGetNumSamples()` -1, `WPAudioReader.cpp:45`): a clip of
   27 hours, and an error state at its real end.
@@ -715,6 +717,9 @@ From the GPU waveform test program, clip edges in variant A (branch
     their readahead). Measure both.
   - **Step 2c (read pool per medium, decode pool):** ioscheduler becomes free
     of Qt, as part of the redesign of the pools.
+    - Look again at who owns the read counters: now the decoder, with a bare
+      pointer in `TByteSource`; with a read pool the source could hold them and
+      the decoder read them out (Remon, 2026-11-01).
     - When the own pools are in: remove the two hand-over lines
       (`race_top:TIOScheduler::start_stream_step`, `start_task_step`) and
       the `QThreadPool` lines from `tests/tsan.supp`, and run TSan again.
@@ -773,9 +778,6 @@ From the GPU waveform test program, clip edges in variant A (branch
   Built as `doc/design/mp3-decoder.md` says, with the new tests listed there;
   the decisions are in that document and in `doc/decisions.md`.
   - Two reports for mpg123 exist as drafts; Remon sends them himself.
-- **T74 `transport_position` fails now and then under load** (low; Remon,
-  2026-10-31). Seen once, Clang, `ctest -j4`: "the reader is not starved by the
-  writer". A timing test, apart from T73; the cause is not looked into.
 - **T75 `interleaved_scratch()` in three files** (low; Remon, 2026-10-31):
   `SFAudioReader.cpp`, `MpgAudioReader.cpp`, `TAudioWriter.cpp`. One place, in
   the clean-up after the release.
@@ -789,6 +791,14 @@ From the GPU waveform test program, clip edges in variant A (branch
   open file": `TBufferedAudioStreamReader` keeps an error code, the reason goes to
   the log only. Keep the `TAudioFileError` in the stream and show its detail; let
   a refused drag say why.
+- **T79 Frame positions past 32 bit** (research; Remon, 2026-11-01). `nframes_t` is
+  `uint32_t`: 27 hours at 44.1 kHz, 6.2 at 192 kHz. Above it `MpgAudioReader`
+  refuses, `SFAudioReader` and `WPAudioReader` cut the length silently. To find
+  out: all of `nframes_t` to 64 bit in one go, signed (`int64_t`) or unsigned;
+  WavPack to its `64` calls (also T17); armhf and the three `atomic<nframes_t>`;
+  the borders with JACK (32 bit) and PipeWire (`uint64_t`). What can be negative
+  keeps a signed type. `-Wsign-conversion` on the targets it touches. A step in
+  between: SF and WavPack refuse above the limit.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
