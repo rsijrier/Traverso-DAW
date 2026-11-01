@@ -867,9 +867,13 @@ From the GPU waveform test program, clip edges in variant A (branch
     - tables more than one packet above the header: refuse with a reason;
     - header missing, zero, negative or above `nframes_t`: refuse with a reason;
     - fragmented MP4 under the same rule; ADTS has no length and keeps counting.
-  - **Open**: the priming of a file without skip data and start 0. One frame off fits
-    `bear-mpeg2-aac-only_frag.mp4` and not `ep7.m4b` or `ep9.m4b`, as FFmpeg's CLI
-    reads them on both versions.
+    - the priming of an MP4 is what the decoder reports on its first frame
+      (`AV_FRAME_DATA_SKIP_SAMPLES`), which fits every sample on 8.0 and 9.0; ADTS
+      reports nothing and keeps one AAC frame;
+    - at the open the last packet is decoded and the length cut to what the decoder
+      gives: a healthy file does not end in an error.
+  - **Open**: Opus in MP4 reads 48 frames late against the CLI; IAMF holds 7680
+    frames less than its tables.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
