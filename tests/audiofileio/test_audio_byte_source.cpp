@@ -570,6 +570,26 @@ static void test_one_source(const QTemporaryDir& dir)
     check(!missing && missing.error().code == TAudioFileError::Code::NotFound, "an opener that finds nothing: NotFound");
 }
 
+// A RIFF that is no WAVE and that libsndfile refuses: the MP3 probe does not walk
+// it. It would reach the bytes that fail
+static void test_riff_not_walked(const QTemporaryDir& dir)
+{
+    const QString path = dir.filePath(QStringLiteral("video.avi"));
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        check(false, "a RIFF that is no WAVE is written");
+        return;
+    }
+    file.write(QByteArray("RIFF\xff\xff\xff\x00" "AVI ", 12) + QByteArray(4 * 1024 * 1024, 'x'));
+    file.close();
+    Medium medium;
+    medium.failFrom = 1024 * 1024;
+    const auto reader = TAudioReader::open(path, memory_opener(&medium));
+    char what[200];
+    std::snprintf(what, sizeof(what), "a RIFF that is no WAVE is refused without walking it (%s)", reader ? "it opened" : qPrintable(reader.error().detail));
+    check(!reader && reader.error().detail != QString(Reason), what);
+}
+
 // The real file: the sources are QFile's, counted and on a medium
 static void test_file_source(const QTemporaryDir& dir)
 {
@@ -875,6 +895,7 @@ int main()
     test_scan_failure(dir);
     test_seek_failure(dir);
     test_start_failure(dir);
+    test_riff_not_walked(dir);
     test_one_source(dir);
     test_file_source(dir);
     test_large_offsets();

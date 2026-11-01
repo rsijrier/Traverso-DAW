@@ -140,7 +140,9 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 
 1. The table below. A match goes to that decoder directly, whose open says why
    not. When libsndfile refuses a file of its table entries, the strict probe of
-   step 2 still gets it (`RIFF....RMP3`); no entries are added for that.
+   step 2 still gets it (`RIFF....RMP3`), a RIFF only with the form `WAVE` or
+   `RMP3`: mpg123 walks any RIFF to its data chunk without a limit. No entries
+   are added for that.
 2. `MpgAudioReader::can_decode()`, the strict probe.
 3. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on

@@ -70,6 +70,20 @@ static DecoderLibrary library_of_sndfile_format(int format)
     return mp3InWav ? DecoderLibrary::Mpg : DecoderLibrary::SndFile;
 }
 
+// Whether the MP3 probe may look at a file libsndfile refused. mpg123 walks any
+// RIFF byte by byte to its data chunk, with no limit: a video would be read
+// whole, on the GUI thread for a drag. Only the forms that can hold MP3 go on
+static bool riff_may_hold_mp3(TByteSource& source)
+{
+    char head[12]{};
+    source.seek(0);
+    source.read(head, sizeof(head));
+    if (std::memcmp(head, "RIFF", 4) != 0) {
+        return true;
+    }
+    return std::memcmp(head + 8, "WAVE", 4) == 0 || std::memcmp(head + 8, "RMP3", 4) == 0;
+}
+
 // Why no decoder reads the file its source holds: a failed read goes first
 static TAudioFileError why_no_decoder(TByteSource& source, const QString& detail)
 {
@@ -88,7 +102,7 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
             return library_of_sndfile_format(*format);
         }
         // A RIFF libsndfile does not know (RMP3) can still hold MP3
-        if (MpgAudioReader::can_decode(source)) {
+        if (riff_may_hold_mp3(source) && MpgAudioReader::can_decode(source)) {
             return DecoderLibrary::Mpg;
         }
         return std::unexpected(why_no_decoder(source, format.error()));
