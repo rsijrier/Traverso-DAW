@@ -979,6 +979,78 @@ static void test_mp4_files(const QTemporaryDir& dir, const Source& source, const
     check(!refused && refused.error().code == TAudioFileError::Code::CannotOpen, what);
 }
 
+// What does not fit one file of one format
+static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source, const QStringList& encode)
+{
+    char what[200];
+    const QString adts = dir.filePath(QStringLiteral("two.aac"));
+    const QStringList asAdts{QStringLiteral("-f"), QStringLiteral("adts")};
+    const QString monoPath = dir.filePath(QStringLiteral("one.aac"));
+    if (write_with_ffmpeg(adts, source, encode + asAdts) && write_with_ffmpeg(monoPath, source, encode + QStringList{QStringLiteral("-ac"), QStringLiteral("1")} + asAdts)) {
+        QFile stereoFile(adts);
+        QFile monoFile(monoPath);
+        check(stereoFile.open(QIODevice::ReadOnly) && monoFile.open(QIODevice::ReadOnly), "A format change: the parts open");
+        const QByteArray stereoBytes = stereoFile.readAll();
+        const QByteArray both = stereoBytes + monoFile.readAll();
+        const QString bothPath = dir.filePath(QStringLiteral("both.aac"));
+        check(write_bytes(bothPath, both), "A format change: written");
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(bothPath).value_or(nullptr);
+        check(reader != nullptr && reader->channel_count() == 2, "A format change: the first part's format opens");
+        if (reader) {
+            TAudioBuffer buffer;
+            nframes_t at = 0;
+            TAudioFileResult read = reader->read_file_frames(buffer, at, 4096);
+            while (read.frames == 4096 && at < reader->file_frame_count()) {
+                at += read.frames;
+                read = reader->read_file_frames(buffer, at, 4096);
+            }
+            std::snprintf(what, sizeof(what), "A format change: an error where it changes, not a crash (at frame %u: %s)", at, read.error ? qPrintable(read.error->detail) : "none");
+            check(read.error.has_value() && at > 0, what);
+        }
+    }
+
+    const QString bytesPath = dir.filePath(QStringLiteral("bytes.mov"));
+    if (write_with_ffmpeg(bytesPath, source, {QStringLiteral("-c:a"), QStringLiteral("pcm_u8")})) {
+        const auto refused = TAudioReader::open(bytesPath);
+        std::snprintf(what, sizeof(what), "A sample format not read is refused, not silence (%s)", refused ? "it opened" : qPrintable(refused.error().detail));
+        check(!refused && refused.error().detail.contains(QStringLiteral("u8")), what);
+    }
+
+    const QString videoPath = dir.filePath(QStringLiteral("video.mp4"));
+    const QStringList withVideo{QStringLiteral("-f"), QStringLiteral("lavfi"), QStringLiteral("-i"), QStringLiteral("testsrc=size=1280x720:rate=60:duration=4"),
+                                QStringLiteral("-map"), QStringLiteral("0:a"), QStringLiteral("-map"), QStringLiteral("1:v"), QStringLiteral("-c:v"), QStringLiteral("mpeg4"),
+                                QStringLiteral("-q:v"), QStringLiteral("1")};
+    if (write_with_ffmpeg(videoPath, source, withVideo + encode)) {
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(videoPath).value_or(nullptr);
+        check(reader != nullptr, "A video's audio opens");
+        if (reader) {
+            TAudioBuffer buffer;
+            for (nframes_t at = 0; at < reader->file_frame_count(); at += 4096) {
+                reader->read_file_frames(buffer, at, std::min<nframes_t>(4096, reader->file_frame_count() - at));
+            }
+            const TAudioIOCost& stream = reader->io_stats().stream;
+            const uint64_t bytes = stream.reads.cached.bytes + stream.reads.medium.bytes + stream.reads.unclassified.bytes;
+            std::snprintf(what, sizeof(what), "A video's audio does not read the video (%llu bytes of %lld)", static_cast<unsigned long long>(bytes),
+                          static_cast<long long>(QFile(videoPath).size()));
+            check(bytes < uint64_t(QFile(videoPath).size()) / 2, what);
+        }
+    }
+
+    // ADTS is found before the probes that search for MPEG audio
+    const QString longAdts = dir.filePath(QStringLiteral("long.aac"));
+    if (write_with_ffmpeg(longAdts, source, encode + QStringList{QStringLiteral("-af"), QStringLiteral("aloop=loop=30:size=44100")} + asAdts)) {
+        const std::unique_ptr<TAudioReader> reader = TAudioReader::open(longAdts).value_or(nullptr);
+        check(reader != nullptr, "ADTS opens");
+        if (reader) {
+            const TAudioIOCost& open = reader->io_stats().open;
+            const uint64_t bytes = open.reads.cached.bytes + open.reads.medium.bytes + open.reads.unclassified.bytes;
+            std::snprintf(what, sizeof(what), "ADTS: the open reads the file once (%llu bytes of %lld)", static_cast<unsigned long long>(bytes),
+                          static_cast<long long>(QFile(longAdts).size()));
+            check(bytes < uint64_t(QFile(longAdts).size()) * 3 / 2, what);
+        }
+    }
+}
+
 static void test_mpeg_files(const QTemporaryDir& dir)
 {
     char what[240];
@@ -1403,7 +1475,7 @@ int main()
          .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-use_editlist"), QStringLiteral("0")}), .frameTolerance = 1024,
          .placement = false},
         {.name = "AAC in fragmented MP4", .suffix = "frag.mp4", .source = stereo,
-         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov")}), .frameTolerance = 2048,
+         .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}), .frameTolerance = 2048,
          .placement = false},
 #if defined(M4A_ENCODE_SUPPORT)
         {.name = "AAC in ADTS (Traverso's writer)", .suffix = "traverso.aac", .source = stereo,
@@ -1426,6 +1498,7 @@ int main()
     }
 #endif
     test_mp4_files(dir, stereo, aacWithoutNoise);
+    test_ffmpeg_refusals(dir, stereo, aacWithoutNoise);
     test_mpeg_files(dir);
 
     // Everything MP3 again with mpg123's generic decoder, the one without

@@ -68,6 +68,8 @@ private:
     int64_t m_secondTimestamp{INT64_MIN}; // AV_NOPTS_VALUE
     bool m_skipKnown{false};
     int m_firstFrameSamples{0};
+    // Of the first frame, an AVSampleFormat
+    int m_sampleFormat{-1};
     // The next frame decoded is the file's first
     bool m_fromStart{false};
     // The file's frames in m_frameBuffer: [m_decodedFirst, m_decodedFirst + m_decodedCount)

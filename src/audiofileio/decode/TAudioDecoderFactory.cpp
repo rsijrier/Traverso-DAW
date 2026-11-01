@@ -109,6 +109,11 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
         return *signature;
     }
 
+    // First: ADTS frames look like MPEG audio to the probes below, which search a
+    // MiB for it; an MPEG frame is never ADTS (the layer bits)
+    if (FFmpegAudioReader::can_decode(source)) {
+        return DecoderLibrary::FFmpeg;
+    }
     const std::expected<void, std::optional<QString>> mpeg = MpgAudioReader::can_decode(source);
     if (mpeg) {
         return DecoderLibrary::Mpg;
@@ -123,13 +128,9 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
         }
         return library_of_sndfile_format(*format);
     }
-    // ADTS and WavPack behind an ID3 tag have no signature, and libsndfile
-    // does not read them
+    // WavPack behind an ID3 tag has no signature, and libsndfile does not read it
     if (WPAudioReader::can_decode(source)) {
         return DecoderLibrary::WavPack;
-    }
-    if (FFmpegAudioReader::can_decode(source)) {
-        return DecoderLibrary::FFmpeg;
     }
     return std::unexpected(why_no_decoder(source, none));
 }

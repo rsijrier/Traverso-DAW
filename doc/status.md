@@ -878,7 +878,9 @@ From the GPU waveform test program, clip edges in variant A (branch
       and fails at the end;
     - tables more than one packet above the header: refuse with a reason;
     - header missing, zero, negative or above `nframes_t`: refuse with a reason;
-    - fragmented MP4 under the same rule; ADTS has no length and keeps counting.
+    - fragmented MP4 under the same rule, but FFmpeg walks every fragment at the
+      open, so its header says what the walk found and the open reads the whole
+      file (Remon, 2026-11-01: accepted); ADTS has no length and keeps counting.
     - the priming of an MP4 is what the decoder reports on its first frame
       (`AV_FRAME_DATA_SKIP_SAMPLES`), which fits every sample on 8.0 and 9.0; ADTS
       reports nothing and keeps one AAC frame; an MP4 without an edit list keeps
@@ -888,8 +890,11 @@ From the GPU waveform test program, clip edges in variant A (branch
     - tables can give the first packet more than the decoder has (Opus in MP4 1008
       against 960, IAMF 15872 against 8192): the audio runs on, the stamps behind it
       are corrected at the open;
-    - only what has no length reads every packet at the open: an MP4 reads its first
-      packets and, from a little before the end, its last.
+    - only ADTS and fragmented MP4 read every packet at the open: an MP4 reads its
+      first packets and, from a little before the end, its last.
+    - a change of channels, sample format or rate inside a file is damage: the read
+      stops with an error there, as for MP3. A sample format the reader does not
+      convert is refused at the open.
   - **Other formats**: FFmpeg decodes APE, TTA and WMA; they come only when users ask
     (Remon, 2026-11-01). FLAC stays with libsndfile, measured through both readers
     on 17 files: the audio is bit exact, and FFmpeg gains only 32 bit FLAC. It reads
@@ -898,6 +903,19 @@ From the GPU waveform test program, clip edges in variant A (branch
     MP3 stays with libmpg123, measured through both readers on 63 files: normal audio
     the same and no gain in speed, but FFmpeg goes on silently over damage, which our
     T73 rules report, and keeps the decoder delay where no tag names it.
+- **T84 ADTS behind an ID3v2 tag** (low; Fable, 2026-11-01): refused, as by FAAD.
+  FFmpeg's demuxer skips the tag: the check could start behind it, under the 1 MiB
+  rule of `mp3-decoder.md`.
+- **T85 FFmpeg reader: reasons of a refusal** (low; Fable, 2026-11-01): "this FFmpeg
+  has no decoder for it" also shows for audio without channels or rate, and what
+  the reason can name without a decoder is what the container says.
+- **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
+  a shorter healthy file, no error: the file has no length of its own. Document the
+  limit or find one.
+- **T87 FFmpeg reader: test coverage** (low; Fable, 2026-11-01): "fewer packets" only
+  tests `<`, "tables above" any `CannotOpen`, `frameTolerance` 2048 where +1024 is
+  measured; `can_read()` against `open()` on a file with few headers; non-AAC codecs
+  in MP4; `audio_corpus` of T80; T21's lag in `known()` is labelled T48.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.
