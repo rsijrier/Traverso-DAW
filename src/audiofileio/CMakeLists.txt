@@ -9,6 +9,7 @@ add_library(traversoaudiofileio STATIC
     TAudioReader.h TAudioReader.cpp
     decode/WPAudioReader.cpp
     decode/MpgAudioReader.cpp
+    decode/FFmpegAudioReader.cpp
     decode/TScenarioDecoder.h decode/TScenarioDecoder.cpp
     encode/TAudioEncoder.h encode/TAudioEncoder.cpp
     encode/SFAudioWriter.cpp
@@ -52,6 +53,7 @@ target_link_libraries(traversoaudiofileio
         PkgConfig::SNDFILE
         PkgConfig::WAVPACK
         PkgConfig::MPG123
+        PkgConfig::FFMPEG
 )
 
 if(TARGET PkgConfig::FAAD2)
