@@ -37,7 +37,7 @@ public:
     TAudioFileStatus seek_frame(nframes_t frame) override;
     TAudioFileResult read_frames(TAudioBuffer& fileIOBuffer, nframes_t count) override;
 
-protected:
+private:
     friend struct TAudioDecoderFactory;
 
     FaadAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener);
@@ -46,6 +46,7 @@ protected:
     // Why the open failed, where known
     QString m_openFailure;
 
+protected:
     // The packets decoded before the one a seek goes to (with a fresh
     // decoder), so it gives what a read from the start gives there
     static constexpr int PreRollPackets = 2;

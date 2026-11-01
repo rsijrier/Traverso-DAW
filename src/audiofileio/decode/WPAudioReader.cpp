@@ -113,7 +113,7 @@ TAudioFileStatus WPAudioReader::start()
     m_channels = WavpackGetReducedChannels(m_wp);
     m_frames = WavpackGetNumSamples(m_wp);
     m_rate = WavpackGetSampleRate(m_wp);
-    return has_audio();
+    return require_audio();
 }
 
 

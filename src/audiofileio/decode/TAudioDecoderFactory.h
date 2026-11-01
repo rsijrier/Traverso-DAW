@@ -21,6 +21,7 @@ struct TAudioDecoderFactory
     template <typename Decoder>
     static std::expected<std::unique_ptr<Decoder>, TAudioFileError> open(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)
     {
+        // Not make_unique: the constructor is private, this struct is its friend
         std::unique_ptr<Decoder> decoder(new Decoder(fileName, std::move(source), opener));
         if (TAudioFileStatus started = decoder->start(); !started) {
             return std::unexpected(std::move(started.error()));

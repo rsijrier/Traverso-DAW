@@ -197,10 +197,11 @@ static TDecoderResult open_measured(const QString& fileName, const TByteSourceOp
 std::expected<std::unique_ptr<TAudioDecoder>, TAudioFileError> open_audio_decoder(const QString& fileName, const TByteSourceOpener& opener)
 {
     TAudioIOStats openStats;
-    TDecoderResult decoder = [&] {
+    TDecoderResult decoder = std::unexpected(TAudioFileError{});
+    {
         TAudioIOScope scope(openStats.open);
-        return open_measured(fileName, opener, openStats);
-    }();
+        decoder = open_measured(fileName, opener, openStats);
+    }
     if (decoder) {
         (*decoder)->adopt_open_cost(openStats.open);
     } else {

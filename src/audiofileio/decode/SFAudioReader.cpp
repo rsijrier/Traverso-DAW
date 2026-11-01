@@ -91,7 +91,7 @@ TAudioFileStatus SFAudioReader::start()
     m_channels = m_sfinfo.channels;
     m_frames = m_sfinfo.frames;
     m_rate = m_sfinfo.samplerate;
-    return has_audio();
+    return require_audio();
 }
 
 

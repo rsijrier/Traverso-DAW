@@ -57,7 +57,7 @@ TByteSource* TAudioDecoder::open_extra_source(const QString& fileName)
     return m_sources.back().get();
 }
 
-TAudioFileStatus TAudioDecoder::has_audio() const
+TAudioFileStatus TAudioDecoder::require_audio() const
 {
     if (m_channels > 0 && m_rate > 0 && m_frames > 0) {
         return {};

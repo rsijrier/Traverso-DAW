@@ -238,7 +238,7 @@ TAudioFileStatus TScenarioDecoder::start()
     m_channels = uint(scenario->channels.size());
     m_signals = std::move(scenario->channels);
     m_faults = std::move(scenario->faults);
-    return has_audio();
+    return require_audio();
 }
 
 float TScenarioDecoder::sample(const Signal& signal, nframes_t frame) const

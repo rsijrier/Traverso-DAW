@@ -92,7 +92,7 @@ static mpg123_handle* open_handle(MpgInput& input, int* error)
 // estimate from the file size then, and no call tells the two apart: only the
 // estimate moves with the file size. mpg123 ends a stream at that size and
 // leaves an ID3v1 tag out of it, so that is what goes back.
-static int64_t tag_samples(mpg123_handle* handle, int64_t fileSize)
+static int64_t tag_samples_or_zero(mpg123_handle* handle, int64_t fileSize)
 {
     mpg123_id3v1* id3v1 = nullptr;
     mpg123_id3(handle, &id3v1, nullptr);
@@ -139,7 +139,7 @@ TAudioFileStatus MpgAudioReader::start()
     double unused = 0.0;
     mpg123_getstate(m_handle, MPG123_ENC_DELAY, &m_delay, &unused);
     mpg123_getstate(m_handle, MPG123_ENC_PADDING, &m_padding, &unused);
-    m_tagSamples = tag_samples(m_handle, m_input.source->size());
+    m_tagSamples = tag_samples_or_zero(m_handle, m_input.source->size());
     m_frameSamples = mpg123_spf(m_handle);
 
     mpg123_frameinfo2 info{};
@@ -253,7 +253,7 @@ TAudioFileStatus MpgAudioReader::scan()
     if (TAudioFileStatus sought = seek_frame(0); !sought) {
         return open_failed(sought.error().detail);
     }
-    return has_audio();
+    return require_audio();
 }
 
 TAudioFileStatus MpgAudioReader::seek_frame(nframes_t frame)

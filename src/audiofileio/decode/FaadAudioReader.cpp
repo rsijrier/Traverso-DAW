@@ -319,7 +319,7 @@ TAudioFileStatus FaadAudioReader::start()
 		d->cleanup();
 		return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, m_openFailure.isEmpty() ? QStringLiteral("FAAD cannot read it") : m_openFailure});
 	}
-	return has_audio();
+	return require_audio();
 }
 
 FaadAudioReader::~FaadAudioReader()

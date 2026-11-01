@@ -139,7 +139,7 @@ protected:
     // The end of every decoder's open: channels, a rate and frames, or why
     // not (a decoder without one of them reads nothing, and a rate of 0 would
     // be divided by)
-    TAudioFileStatus has_audio() const;
+    TAudioFileStatus require_audio() const;
     // The end of every seek_frame() that landed: at frame, no error
     TAudioFileStatus seek_landed(nframes_t frame);
     // The end of every seek_frame() that did not: the error state, next_frame()
