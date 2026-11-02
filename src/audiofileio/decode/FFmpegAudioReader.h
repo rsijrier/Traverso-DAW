@@ -24,7 +24,7 @@ class FFmpegAudioReader : public TAudioDecoder
 public:
     ~FFmpegAudioReader() override;
 
-    using SampleCopy = void (*)(const uint8_t* data, int step, int64_t first, nframes_t count, audio_sample_t* out);
+    using SampleCopy = void (*)(const uint8_t* data, int step, int64_t firstSample, nframes_t count, audio_sample_t* out);
 
     // Looks for ADTS frames or an MP4 with audio in it
     static bool can_decode(TByteSource& source);
@@ -42,7 +42,6 @@ private:
     TAudioFileStatus open_codec();
     void note_packet();
     void note_format();
-    void place_frame_zero();
     int64_t take_frames(int64_t end);
     TAudioFileStatus mp4_length();
     TAudioFileStatus count_frames();
@@ -52,6 +51,7 @@ private:
     bool decode_next();
     // The file's frame the time stamp of m_frameBuffer stands for
     int64_t position_of_frame() const;
+    int64_t frame_stamp() const;
     void copy_decoded(TAudioBuffer& buffer, nframes_t at, int64_t first, nframes_t count);
 
     AVFormatContext* m_format{nullptr};
@@ -61,22 +61,19 @@ private:
     AVPacket* m_packet{nullptr};
     AVFrame* m_frameBuffer{nullptr};
     int m_stream{-1};
-    // The time stamps of frame 0 and of the first packet, which starts m_priming
-    // frames before frame 0
+    // The time stamps of frame 0 and of the first packet
     int64_t m_firstTimestamp{0};
     int64_t m_startTimestamp{0};
     int64_t m_startDts{0};
-    int64_t m_priming{0};
     int m_packetsSeen{0};
     int64_t m_firstDuration{0};
     int64_t m_secondTimestamp{INT64_MIN}; // AV_NOPTS_VALUE
-    bool m_skipKnown{false};
     int m_firstFrameSamples{0};
+    int64_t m_firstFrameStamp{0};
+    uint32_t m_packetSkip{0};
     // Of the first frame, an AVSampleFormat
     int m_sampleFormat{-1};
     SampleCopy m_sampleCopy{nullptr};
-    // The next frame decoded is the file's first
-    bool m_fromStart{false};
     // The file's frames in m_frameBuffer: [m_decodedFirst, m_decodedFirst + m_decodedCount)
     int64_t m_decodedFirst{0};
     int64_t m_decodedCount{0};

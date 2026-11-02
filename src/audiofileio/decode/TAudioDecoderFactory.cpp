@@ -82,6 +82,14 @@ static bool riff_may_hold_mp3(TByteSource& source)
     return std::memcmp(head + 8, "WAVE", 4) == 0 || std::memcmp(head + 8, "RMP3", 4) == 0;
 }
 
+static bool starts_with_id3(TByteSource& source)
+{
+    char head[3]{};
+    source.seek(0);
+    source.read(head, sizeof(head));
+    return std::memcmp(head, "ID3", 3) == 0;
+}
+
 // Why no decoder reads the file its source holds: a failed read goes first
 static TAudioFileError why_no_decoder(TByteSource& source, const QString& detail)
 {
@@ -111,7 +119,9 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
 
     // First: ADTS frames look like MPEG audio to the probes below, which search a
     // MiB for it; an MPEG frame is never ADTS (the layer bits)
-    if (FFmpegAudioReader::can_decode(source)) {
+    // Behind a tag FFmpeg's probe would read the tag of every MP3: it comes last then
+    const bool tagged = starts_with_id3(source);
+    if (!tagged && FFmpegAudioReader::can_decode(source)) {
         return DecoderLibrary::FFmpeg;
     }
     const std::expected<void, std::optional<QString>> mpeg = MpgAudioReader::can_decode(source);
@@ -131,6 +141,9 @@ static std::expected<DecoderLibrary, TAudioFileError> find_decoder(TByteSource& 
     // WavPack behind an ID3 tag has no signature, and libsndfile does not read it
     if (WPAudioReader::can_decode(source)) {
         return DecoderLibrary::WavPack;
+    }
+    if (tagged && FFmpegAudioReader::can_decode(source)) {
+        return DecoderLibrary::FFmpeg;
     }
     return std::unexpected(why_no_decoder(source, none));
 }

@@ -130,7 +130,7 @@ read fails where the audio ends, and the audio stays in place.
 length defect as plain MP3 (VBR: 79 % gone). mpg123 skips the RIFF header
 itself and reads them whole.
 
-**Why probe step 2 and 5.** ADTS, and WavPack behind an ID3 tag, have no table
+**Why probe steps 2, 5 and 6.** ADTS, and WavPack behind an ID3 tag, have no table
 entry and libsndfile does not read them. ADTS comes before the MP3 probe (Remon,
 2026-11-01): its frames look like MPEG audio to the probes that search a MiB for
 it, which read 3.3 times a small file, and an MPEG frame is never ADTS: its layer
@@ -147,13 +147,15 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
    step 3 still gets it (`RIFF....RMP3`), a RIFF only with the form `WAVE` or
    `RMP3`: mpg123 walks any RIFF to its data chunk without a limit. No entries
    are added for that.
-2. `FFmpegAudioReader::can_decode()`: ADTS frames, or an MP4 with audio that does
-   not start with `ftyp`.
+2. A file without an ID3 tag: `FFmpegAudioReader::can_decode()`, FFmpeg's probe: ADTS,
+   or an MP4 with audio that does not start with `ftyp`.
 3. `MpgAudioReader::can_decode()`, the strict probe.
 4. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on
    the RIFF route of the table: it is known after libsndfile opened the file.
 5. WavPack's probe.
+6. A file with an ID3 tag: `FFmpegAudioReader::can_decode()`. Earlier its probe would
+   read the tag of every MP3.
 
 | Signature | Offset | Decoder |
 |---|---|---|

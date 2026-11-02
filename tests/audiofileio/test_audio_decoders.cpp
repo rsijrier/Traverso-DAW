@@ -1056,6 +1056,10 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
         check(write_bytes(bigPath, tagged(900000, 0)) && write_bytes(footerPath, tagged(100, 0x10)), "ADTS behind a tag: written");
         check(TAudioReader::can_read(bigPath) && TAudioReader::open(bigPath).has_value(), "ADTS behind a tag opens");
         check(TAudioReader::can_read(footerPath) && TAudioReader::open(footerPath).has_value(), "ADTS behind a tag with a footer opens");
+        // FFmpeg's probe stops at 1 MiB: refused, the same both ways
+        const QString hugePath = dir.filePath(QStringLiteral("huge-tag.aac"));
+        check(write_bytes(hugePath, tagged(1300000, 0)), "ADTS behind a tag over 1 MiB: written");
+        check(TAudioReader::can_read(hugePath) == TAudioReader::open(hugePath).has_value(), "ADTS behind a tag over 1 MiB: can_read() and open() agree");
 
         // The first payload broken: the second packet's audio stays where it is
         QByteArray broken = frames;
@@ -1105,8 +1109,8 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
             check((*opened)->file_frame_count() == healthy->file_frame_count(), what);
             TAudioBuffer good;
             TAudioBuffer bad;
-            healthy->read_file_frames(good, 20000, 2000);
-            (*opened)->read_file_frames(bad, 20000, 2000);
+            check(healthy->read_file_frames(good, 20000, 2000).frames == 2000 && (*opened)->read_file_frames(bad, 20000, 2000).frames == 2000,
+                  "A damaged head: both files read");
             const float* expected = good.get_channel_buffer(0).get_data(2000);
             const float* got = bad.get_channel_buffer(0).get_data(2000);
             float worst = 0.0f;
