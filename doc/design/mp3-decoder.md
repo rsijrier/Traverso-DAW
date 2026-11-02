@@ -131,7 +131,7 @@ length defect as plain MP3 (VBR: 79 % gone). mpg123 skips the RIFF header
 itself and reads them whole.
 
 **Why probe steps 2, 5 and 6.** ADTS, and WavPack behind an ID3 tag, have no table
-entry and libsndfile does not read them. ADTS comes before the MP3 probe (Remon,
+entry and libsndfile does not read them. ADTS without a tag comes before the MP3 probe (Remon,
 2026-11-01): its frames look like MPEG audio to the probes that search a MiB for
 it, which read 3.3 times a small file, and an MPEG frame is never ADTS: its layer
 bits are never 00.
