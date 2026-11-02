@@ -9,8 +9,7 @@ Background and measurements: `reports/mp3-decoder-research.md` (not
 versioned, may be missing). This document is complete without it.
 
 Task T73 in `doc/status.md`. `MadAudioReader` (MAD, K3b code, 1031 lines)
-12. Junk in front of the audio: the search for it stops at 1 MiB. A tag that names its
-    size is skipped by that size, whatever it is (Remon, 2026-11-02).
+goes; `MpgAudioReader` on libmpg123 comes in its place, measured against
 the decoder contract in `TAudioDecoder.h` and `test_audio_decoders`, not
 against what MAD does. Built: about 450 lines with the header (estimated: 200 to 250). Everything below
 was measured in a throwaway prototype on Linux x86-64 with mpg123 1.33.3,
@@ -50,7 +49,8 @@ unless section 7 says otherwise.
     format that is not in the table keeps working through the later steps.
 11. No exception on the name: a scenario is known by its first line, `# tscenario
     <N>` (signature `# ts`). `.tscenario` stays a convention for people.
-12. Junk in front of the audio: limit 1 MiB.
+12. Junk in front of the audio: the search for it stops at 1 MiB. A tag that names its
+    size is skipped by that size, whatever it is (Remon, 2026-11-02).
 13. The test chooses the generic decoder through an environment variable
     that `MpgAudioReader` reads itself (for instance
     `TRAVERSO_MPG123_DECODER`), documented. No extra parameter in the API.
