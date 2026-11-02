@@ -930,6 +930,14 @@ From the GPU waveform test program, clip edges in variant A (branch
   "the format changes"; `test_ffmpeg_refusals()` skips without a word;
   `avformat_find_stream_info()` runs before the discard, so a video is read up to the
   probe size.
+- **T92 Moving clips between tracks is broken** (Remon, 2026-11-02): reimplement, the
+  solution of today is weak. `TAudioClipGroup::check_valid_track_index_delta()` ends
+  in `return 0` for a valid delta, `MoveClip` adds that to the track, so a drag and
+  Up/Down keep the track (read, Remon confirms it is broken). Proposed in step 3 of
+  `doc/design/controllers.md`, on its branch.
+- **T93 Plugin order** (Remon, 2026-11-02): the order of plugins must be changeable,
+  in the way it should be. `MovePlugin` was never finished: it moves the view, not
+  the chain, and does not return in the controllers work. To design.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.
