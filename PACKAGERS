@@ -23,6 +23,8 @@ Features:
 
 Audio drivers and plugins are CMake options (WANT_ALSA, WANT_JACK,
 WANT_PIPEWIRE, WANT_PORTAUDIO, WANT_COREAUDIO, WANT_LV2, WANT_M4A_DECODE,
-WANT_M4A_ENCODE); the defaults depend on the platform. E.g.:
+WANT_M4A_ENCODE); the defaults depend on the platform. AAC and MP4 are read by
+FFmpeg 8.0 or newer, a required dependency; WANT_M4A_DECODE only builds the
+FAAD reader, which nothing uses. E.g.:
 
 cmake -S . -B build -DWANT_JACK=ON -DWANT_ALSA=ON -DWANT_PIPEWIRE=ON

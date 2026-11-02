@@ -4,10 +4,12 @@ sudo apt install cmake pkg-config qt6-base-dev qt6-svg-dev \
 libasound2-dev libjack-dev libpipewire-0.3-dev liblilv-dev \
 libfftw3-dev libsamplerate0-dev libsndfile1-dev libwavpack-dev \
 libflac-dev libogg-dev libvorbis-dev libfaad-dev libfaac-dev \
-libavformat-dev libavcodec-dev libavutil-dev \
+libavformat-dev libavcodec-dev libavutil-dev libmpg123-dev \
 libsoxr-dev
 
 # (or similar for rpm/etc.)
+# Needed: FFmpeg 8.0 or newer, libmpg123 1.33 or newer, libsndfile 1.1 or newer,
+# WavPack 5.6 or newer. An older distribution's FFmpeg stops cmake.
 
 
 Windows build setup:
@@ -40,4 +42,4 @@ Mac build setup:
 xcode-select --install
 
 brew install cmake pkgconf qt6 libsndfile libsamplerate fftw wavpack \
-libogg libvorbis flac lilv faad2 faac ffmpeg
+libogg libvorbis flac lilv faad2 faac ffmpeg mpg123 libsoxr
