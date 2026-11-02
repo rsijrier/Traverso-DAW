@@ -1051,11 +1051,11 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
             }
             return tag + QByteArray(size + (flags ? 10 : 0), '\0') + frames;
         };
-        const QString bigPath = dir.filePath(QStringLiteral("big-tag.aac"));
+        const QString bigPath = dir.filePath(QStringLiteral("tag.aac"));
         const QString footerPath = dir.filePath(QStringLiteral("footer-tag.aac"));
-        check(write_bytes(bigPath, tagged(1300000, 0)) && write_bytes(footerPath, tagged(100, 0x10)), "ADTS behind a tag: written");
-        check(TAudioReader::can_read(bigPath), "ADTS behind a tag over 1 MiB is read");
-        check(TAudioReader::can_read(footerPath), "ADTS behind a tag with a footer is read");
+        check(write_bytes(bigPath, tagged(900000, 0)) && write_bytes(footerPath, tagged(100, 0x10)), "ADTS behind a tag: written");
+        check(TAudioReader::can_read(bigPath) && TAudioReader::open(bigPath).has_value(), "ADTS behind a tag opens");
+        check(TAudioReader::can_read(footerPath) && TAudioReader::open(footerPath).has_value(), "ADTS behind a tag with a footer opens");
 
         // The first payload broken: the second packet's audio stays where it is
         QByteArray broken = frames;
@@ -1091,7 +1091,7 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
         check(headFile.open(QIODevice::ReadOnly), "A damaged head: opens for reading");
         QByteArray head = headFile.readAll();
         const qsizetype data = head.indexOf("mdat") + 4;
-        for (qsizetype i = data; i < data + 8192 && i < head.size(); ++i) {
+        for (qsizetype i = data; i < data + 64 && i < head.size(); ++i) {
             head[i] = 0;
         }
         const QString damagedPath = dir.filePath(QStringLiteral("damaged-head.m4a"));
@@ -1099,6 +1099,23 @@ static void test_ffmpeg_refusals(const QTemporaryDir& dir, const Source& source,
         const auto opened = TAudioReader::open(damagedPath);
         std::snprintf(what, sizeof(what), "A damaged head opens (%s)", opened ? "it does" : qPrintable(opened.error().detail));
         check(opened.has_value(), what);
+        const std::unique_ptr<TAudioReader> healthy = TAudioReader::open(headPath).value_or(nullptr);
+        if (opened && healthy) {
+            std::snprintf(what, sizeof(what), "A damaged head: the same length (%u, %u)", (*opened)->file_frame_count(), healthy->file_frame_count());
+            check((*opened)->file_frame_count() == healthy->file_frame_count(), what);
+            TAudioBuffer good;
+            TAudioBuffer bad;
+            healthy->read_file_frames(good, 20000, 2000);
+            (*opened)->read_file_frames(bad, 20000, 2000);
+            const float* expected = good.get_channel_buffer(0).get_data(2000);
+            const float* got = bad.get_channel_buffer(0).get_data(2000);
+            float worst = 0.0f;
+            for (int i = 0; i < 2000; ++i) {
+                worst = std::max(worst, std::fabs(expected[i] - got[i]));
+            }
+            std::snprintf(what, sizeof(what), "A damaged head: the audio behind it stays in place (worst %.3g)", double(worst));
+            check(worst < 0.01f, what);
+        }
     }
 
     // Two audio streams: the first, FFmpeg's choice

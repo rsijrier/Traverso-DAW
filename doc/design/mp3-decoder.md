@@ -9,7 +9,8 @@ Background and measurements: `reports/mp3-decoder-research.md` (not
 versioned, may be missing). This document is complete without it.
 
 Task T73 in `doc/status.md`. `MadAudioReader` (MAD, K3b code, 1031 lines)
-goes; `MpgAudioReader` on libmpg123 comes in its place, measured against
+12. Junk in front of the audio: the search for it stops at 1 MiB. A tag that names its
+    size is skipped by that size, whatever it is (Remon, 2026-11-02).
 the decoder contract in `TAudioDecoder.h` and `test_audio_decoders`, not
 against what MAD does. Built: about 450 lines with the header (estimated: 200 to 250). Everything below
 was measured in a throwaway prototype on Linux x86-64 with mpg123 1.33.3,
@@ -159,7 +160,7 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 | `RIFF`, `RF64`, `riff` (W64), `FORM`, `fLaC`, `OggS`, `caff`, `.snd` | 0 | libsndfile |
 | `wvpk` | 0 | WavPack |
 | `# ts` | 0 | `TScenarioDecoder` |
-| `ftyp` | 4 | FAAD |
+| `ftyp` | 4 | FFmpeg |
 
 Also fixed, not tried: `RIFX`, `dns.`. `ID3` is not in the table: a tag can
 precede MP3, FLAC or WavPack.

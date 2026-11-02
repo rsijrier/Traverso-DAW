@@ -301,6 +301,13 @@ void FFmpegAudioReader::note_packet()
         m_startTimestamp = m_packet->pts != AV_NOPTS_VALUE ? m_packet->pts : 0;
         m_startDts = m_packet->dts != AV_NOPTS_VALUE ? m_packet->dts : m_startTimestamp;
         m_firstDuration = m_packet->duration;
+        // The demuxer's word on the priming, also when this packet does not decode
+        size_t size = 0;
+        if (const uint8_t* side = av_packet_get_side_data(m_packet, AV_PKT_DATA_SKIP_SAMPLES, &size); side && size >= 4) {
+            uint32_t skip = 0;
+            std::memcpy(&skip, side, 4);
+            m_priming = skip;
+        }
     } else if (m_packetsSeen == 1) {
         m_secondTimestamp = m_packet->pts;
     }
@@ -317,7 +324,7 @@ void FFmpegAudioReader::note_packet()
         if (side && side->size >= 4) {
             uint32_t skip = 0;
             std::memcpy(&skip, side->data, 4);
-            m_priming = skip;
+            m_priming = std::max(m_priming, int64_t(skip));
         }
     }
 }
