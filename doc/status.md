@@ -74,13 +74,11 @@ After the release, pulled by a use case
 
 ## Repository
 
-- `master`: `realtime-path`, `scenario-decoder` and `audiofileio-errors`
-  merged 2026-10-27; `audiofileio-api` (T44, T29) merged 2026-10-28
-  (`660ab5ea`); `dsp-kernels` (T52, T51) merged 2026-10-28 (`28216d8e`); `audiodevice-races` (T58 step 1, T53, T54) merged 2026-10-28 (`73dad650`); on 2026-10-28 also `defines-split` (`a9091f38`, `e47c4deb`), `t64-routing-loops` (T64, `094f3e1b`), `t20-measure` (T20, `9ab838d7`) and on master `456432df` (32-bit x86 refused, the last SSE leftovers); not pushed (`origin/master` = `6dc4fe2b`).
+- `master`: pushed to `origin` 2026-11-02.
 - Worktrees: `traverso` (master), `traverso-input-controllers`,
-  `traverso-device-ownership`. The branch
-  `curve-gpu-bench` is kept without a worktree. The merged branches are
-  deleted, with their backups and build directories.
+  `traverso-gpu-waveform-poc`, `traverso-video-poc`. The branch `curve-gpu-bench`
+  is kept without a worktree. `gpu-waveform-poc` and `video-poc` stay local, a hook
+  refuses to push them.
 
 ## Foundations
 
@@ -89,10 +87,11 @@ After the release, pulled by a use case
 | Library split (support, dsp, audioruntime, audiofileio, waveform, ioscheduler) | done | master | — | T15: each lib and a headless test on its own |
 | RT state (TRtList, TRtValue, TRtTransaction, curves, fades, owners) | done | master (2026-10-14…17) | `rt-transaction-design` (agent notes; not in the repo) **(check)** | processing-node graph design (not now); JACK port lists with the JACK revision |
 | DSP: buffer operations (portable and AVX2), `TGain`, `TFaderLaw`, `TDenormals`, `TCpuFeatures` | done | master (T52, T51 `28216d8e`; T20 `9ab838d7`) | `t20-buffer-operations-measurement.md` | denormals on ARM (FPCR.FZ, later); T15 |
-| Audio runtime: `TAudioDevice` races, ownership, the singletons | in progress | `device-ownership` (T58); the races merged (`73dad650`) | — | T58 (`audiodevice()`, then `tsmp()`), then T59–T61 |
+| Audio runtime: `TAudioDevice` races, ownership, the singletons | T58 step 2 done | master (`73dad650`, `02b39fcc`) | — | T59–T61; for the release T34, T41 |
 | Session log (TLog) | done | master (2026-10-17) | — | — |
 | GUI frame clock | done | master (2026-10-17) | — | — |
-| Audio file I/O: `TAudioReader` / `TAudioWriter`, decoders sample exact, resampler choice | done | master (review stack, 2026-10-25) | — (decisions in commits and agent notes) | T8–T11 (from the scenario-decoder review), T12, T21, T22, T24–T27 |
+| Audio file I/O: `TAudioReader` / `TAudioWriter`, decoders sample exact, resampler choice; MP3 on libmpg123, AAC and MP4 on FFmpeg | done | master (2026-11-02) | `mp3-decoder.md` | T8, T10, T12, T21, T22, T26, T27, T86, T88, T89, T91; FAAD waits for Ben |
+| Byte source, 64-bit offsets (T71 steps 1, 2a, 2b) | done | master (`d916d50b`) | | steps 2c and 2d after the release |
 | Waveform library, peak format v4, waveform grid | done | master (review stack, 2026-10-25) | `peak-records.md`, `waveform-grid.md` | post-merge items (below); Remon's in-app grid check **(check)** |
 | IO scheduler (lib, thread, app-wide schedulers, dispatcher) | done | master (review stack, 2026-10-25) | `diskio-app-wide.md`, `diskio-rounds.md` | T4 (stream-window race); requirements R1–R18 of `diskio-app-wide.md` §0 still marked concept **(check)** |
 | Recording latency compensation | done, not runtime-tested with a loopback | master (review stack) | `recording-latency.md` | loopback test |
@@ -105,8 +104,8 @@ After the release, pulled by a use case
 | TimeRef enforcement and timebase | planned; interim fix done (`aaa94dbc`) | — | `design-principles.md` §5 (outside) | T12 first; universal rate 112,896,000 and the upgrade path for old projects before a release |
 | Organic interface (Qt Quick timeline) | planned | `curve-gpu-bench` (reference only) | `curve-gpu-benchmark.md` (on that branch) | after controllers and the fixture |
 
-Three areas are in progress: the scenario decoder, branch 3 (waiting for
-answers) and the singletons (T58, branch `device-ownership`).
+Two areas are in progress: the scenario decoder and branch 3, both waiting for
+answers.
 
 ## Review of 2026-10-25, per branch
 
@@ -151,12 +150,17 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   (`TBufferedAudioStreamReader.cpp:318-339,405`) read them. Only while editing
   during playback. Proposal (awaiting Remon): a `Window{start, end,
   sourceStart}` behind a mutex, set in one call, copied once per step; a TSan
-  test. Describe first what happens to audio already in the ring.
+  test. Describe first what happens to audio already in the ring. Checked in the
+  code 2026-11-02: still so, `set_stream_location_window()` writes two plain
+  `TTimeRef`s, `TAudioClip.cpp:807`.
 - **T5 (high): imports and merges resampled at the device rate**
   (`TBufferedAudioStreamWriter.cpp:60`; Fable review 2026-10-25): with the
   device rate ≠ the source rate a converted import comes out at the wrong
   length and pitch. Runtime test first (New Project dialog converting a file,
-  device rate ≠ source rate).
+  device rate ≠ source rate). Read in the code 2026-11-02, not run: the writer now
+  gets the device rate, but `TAudioFileCopyConvert.cpp` reads `nframes` at the device
+  rate and adds them to the location at the file's rate, so the location runs away
+  from what was read when the two differ. `TAudioFileMerger.cpp:95` goes the same way.
 - **T6 (medium-high): split `TBufferedAudioStreamReader` into the source
   record and the live stream.** Record always present per clip; `open(record)`
   gives a stream or nullptr; `m_error`, `init()`, `m_isReadSourceValid` go;
@@ -173,7 +177,10 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   `TWaveform.cpp:99` and `TPeakBuildService.cpp:104` read it as the file's
   frames at the file's rate: a wrong live-waveform length and peak build
   when the rates differ (Fable, review of the audiofileio API work order,
-  2026-10-27).
+  2026-10-27). Corrected 2026-11-02: those two read `TPeakStream::written_frames()`,
+  not the writer's count, whose only user is the empty-take check, and the live
+  length is right: frames and rate are both the device's. What is left to check: a
+  recording at another project rate gets its peaks at the device rate.
 - **T8 (medium): NaN to the output.** Prevent at the reader boundary on the
   decoder's output (before the resampler); a safety net in
   `TAudioDevice::run_one_cycle()` before `m_driver->write()` (NaN also comes
