@@ -26,7 +26,6 @@
 #include <QString>
 #include <QStringList>
 #include <QDateTime>
-#include <QChar>
 #include <QTranslator>
 #include <QDir>
 #include <random>
