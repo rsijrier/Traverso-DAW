@@ -854,7 +854,7 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T82 FFmpeg as the required decoder instead of FAAD** (Remon, 2026-11-01). An
   `FFmpegAudioReader` on libavformat and libavcodec, a required dependency, also
   when a distribution's build has fewer codecs. FAAD and the MP4 code of our own
-  go; no second AAC path, not per file and not per system. Built on `ffmpeg-aac`.
+  go; no second AAC path, not per file and not per system. Merged 2026-11-02.
   `FaadAudioReader` stays in the tree and is built, but nothing reaches it, until
   Remon has spoken to Ben, whose code it is.
   - **To show**: exact seeks and length by the contract (`test_audio_decoders`,
