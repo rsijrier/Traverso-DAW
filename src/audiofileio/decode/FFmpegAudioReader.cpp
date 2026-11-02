@@ -107,10 +107,10 @@ static const AVStream* first_audio_stream(const AVFormatContext* format)
 
 // One channel of samples to floats: Bits is the full scale, 0 for samples that are floats
 template<typename Sample, int Bits>
-static void copy_samples(const uint8_t* data, int step, int64_t first, nframes_t count, audio_sample_t* out)
+static void copy_samples(const uint8_t* data, int step, int64_t firstSample, nframes_t count, audio_sample_t* out)
 {
     constexpr float FullScale = float(1ull << Bits);
-    const Sample* samples = reinterpret_cast<const Sample*>(data) + first;
+    const Sample* samples = reinterpret_cast<const Sample*>(data) + firstSample;
     for (nframes_t i = 0; i < count; ++i) {
         out[i] = float(samples[int64_t(i) * step]) / FullScale;
     }
@@ -145,72 +145,15 @@ static QString format_in_words(const AVFormatContext* format, const AVStream* st
     return is_mp4(format) ? QStringLiteral("M4A with %1").arg(name) : name;
 }
 
-// Where the audio starts behind an ID3v2 tag, which FFmpeg's demuxer skips
-static int64_t behind_id3(TByteSource& source)
+bool FFmpegAudioReader::can_decode(TByteSource& source)
 {
-    constexpr int TagHeaderBytes = 10;
-    constexpr int FooterFlag = 0x10;
-    unsigned char tag[TagHeaderBytes];
-    source.seek(0);
-    if (source.read(tag, TagHeaderBytes) != TagHeaderBytes || std::memcmp(tag, "ID3", 3) != 0 || (tag[6] | tag[7] | tag[8] | tag[9]) & 0x80) {
-        return 0;
-    }
-    // The tag says its size: nothing to search, so no limit
-    const int64_t footer = (tag[5] & FooterFlag) ? TagHeaderBytes : 0;
-    return TagHeaderBytes + footer + ((tag[6] << 21) | (tag[7] << 14) | (tag[8] << 7) | tag[9]);
-}
-
-// ADTS has no signature but its frames: a sync word, layer 0, a sample rate of
-// the table and a length that leads to the next frame or the end of the file
-static bool holds_adts(TByteSource& source)
-{
-    constexpr int HeaderBytes = 7;
-    constexpr int FramesToSee = 2;
-    constexpr int SampleRates = 13;
-    int64_t at = behind_id3(source);
-    const int64_t size = source.size();
-    for (int frame = 0; frame < FramesToSee; ++frame) {
-        unsigned char header[HeaderBytes];
-        source.seek(at);
-        if (source.read(header, HeaderBytes) != HeaderBytes) {
-            return false;
-        }
-        const bool sync = header[0] == 0xff && (header[1] & 0xf6) == 0xf0;
-        const int rate = (header[2] >> 2) & 0x0f;
-        const int bytes = ((header[3] & 0x03) << 11) | (header[4] << 3) | (header[5] >> 5);
-        if (!sync || rate >= SampleRates || bytes < HeaderBytes || at + bytes > size) {
-            return false;
-        }
-        at += bytes;
-        if (at == size) {
-            return true;
-        }
-    }
-    return true;
-}
-
-// An MP4's boxes come first; only FFmpeg's own reading says it has audio
-static bool mp4_with_audio(TByteSource& source)
-{
+    // FFmpeg's own probe, and only what this reader is for: ADTS, or an MP4 with audio
     AVIOContext* io = nullptr;
     AVFormatContext* format = nullptr;
     const bool opened = open_format(source, io, format) >= 0;
-    const bool audio = opened && is_mp4(format) && first_audio_stream(format);
+    const bool ours = opened && (is_mp4(format) ? first_audio_stream(format) != nullptr : std::strcmp(format->iformat->name, "aac") == 0);
     close_format(io, format);
-    return audio;
-}
-
-bool FFmpegAudioReader::can_decode(TByteSource& source)
-{
-    char head[8]{};
-    source.seek(0);
-    source.read(head, sizeof(head));
-    for (const char* box : {"ftyp", "moov", "mdat", "free", "wide"}) {
-        if (std::memcmp(head + 4, box, 4) == 0) {
-            return mp4_with_audio(source);
-        }
-    }
-    return holds_adts(source);
+    return ours;
 }
 
 FFmpegAudioReader::FFmpegAudioReader(const QString& fileName, std::unique_ptr<TByteSource> source, const TByteSourceOpener& opener)

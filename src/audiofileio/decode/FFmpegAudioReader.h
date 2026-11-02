@@ -24,7 +24,7 @@ class FFmpegAudioReader : public TAudioDecoder
 public:
     ~FFmpegAudioReader() override;
 
-    using SampleCopy = void (*)(const uint8_t* data, int step, int64_t first, nframes_t count, audio_sample_t* out);
+    using SampleCopy = void (*)(const uint8_t* data, int step, int64_t firstSample, nframes_t count, audio_sample_t* out);
 
     // Looks for ADTS frames or an MP4 with audio in it
     static bool can_decode(TByteSource& source);

@@ -873,10 +873,8 @@ From the GPU waveform test program, clip edges in variant A (branch
     (Remon, 2026-11-01): the releases Traverso first lands in have 9.0, Ubuntu 26.04
     LTS and this machine 8.0.1, and stable releases with 7.1 or older do not get it.
     The requirement can change with the outcome of those tests. Measured with the
-    PoC built against both: the same frames from the decoder with
-    `AV_CODEC_FLAG2_SKIP_MANUAL`; 9.0 only adds an end skip to the last packet's
-    `AV_PKT_DATA_SKIP_SAMPLES`. The reader must not lean on that: 8.0 lacks it.
-    `count_frames()` of the PoC subtracts it twice on 9.0, the rule below replaces that.
+    PoC built against both: 9.0 adds an end skip to the last packet, 8.0 lacks it, so
+    the length comes from the rule below and the reader reads the same on both.
   - **Length of an MP4** (Remon, 2026-11-01): compare the header's length with the
     tables' end, both after the priming; one packet is the index's own packet length.
     - apart by at most one packet: the smallest of the two, healthy;
@@ -890,10 +888,10 @@ From the GPU waveform test program, clip edges in variant A (branch
     - fragmented MP4 under the same rule, but FFmpeg walks every fragment at the
       open, so its header says what the walk found and the open reads the whole
       file (Remon, 2026-11-01: accepted); ADTS has no length and keeps counting.
-    - the priming of an MP4 is what the decoder reports on its first frame
-      (`AV_FRAME_DATA_SKIP_SAMPLES`), which fits every sample on 8.0 and 9.0; ADTS
-      reports nothing and keeps one AAC frame; an MP4 without an edit list keeps
-      the encoder's delay, as FFmpeg's CLI does: such a file says nothing;
+    - the decoder leaves out what the file asks to skip and moves the stamps with it;
+      frame 0 is where the first packet's skip ends, or else the decoder's first
+      frame. ADTS says nothing and keeps one AAC frame; an MP4 without an edit list
+      keeps the encoder's delay, as FFmpeg's CLI does: such a file says nothing;
     - at the open the last packet is decoded and the length cut to what the decoder
       gives: a healthy file does not end in an error.
     - tables can give the first packet more than the decoder has (Opus in MP4 1008
@@ -920,12 +918,11 @@ From the GPU waveform test program, clip edges in variant A (branch
   seek to frame 0"; FFmpeg's bare text at the open; xHE-AAC on FFmpeg 8 says "the file
   does not say enough" where the decoder refuses it.
 - **T91 FFmpeg reader: what the third review left** (low; Fable, 2026-11-02): ADTS behind
-  a tag of 1 MiB or more: `can_read()` yes, `open()` refuses, FFmpeg's probe stops there
-  (give it the `aac` demuxer when the check matched); the tail read of `mp4_length()`
-  loses a read error; a file of which no packet decodes at the open gets "the format
-  changes"; `count_frames()` subtracts an end skip nothing gives today;
-  `test_ffmpeg_refusals()` skips without a word; `avformat_find_stream_info()` runs
-  before the discard, so a video is read up to the probe size.
+  a tag of 1 MiB or more is refused, FFmpeg's probe stops there; the tail read of
+  `mp4_length()` loses a read error; a file of which no packet decodes at the open gets
+  "the format changes"; `test_ffmpeg_refusals()` skips without a word;
+  `avformat_find_stream_info()` runs before the discard, so a video is read up to the
+  probe size.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.
