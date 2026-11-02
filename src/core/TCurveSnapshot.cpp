@@ -3,6 +3,7 @@
 
 #include "TCurveSnapshot.h"
 #include "Utils.h"
+#include "TFloatCompare.h"
 
 #include <algorithm>
 #include <cmath>
@@ -53,7 +54,7 @@ void TCurveSnapshot::solve()
 
         // Two points at the same when: a vertical step, keep the value of the
         // first point instead of dividing by zero
-        if (TraversoDAW::Float::equals_0(xdelta)) {
+        if (TFloatCompare::equals_0(xdelta)) {
             m_segments[size_t(i - 1)] = {y(i - 1), 0.0, 0.0, 0.0};
             fplast = 0.0;
             continue;
@@ -190,7 +191,7 @@ void TCurveSnapshot::get_vector(double x0, double x1, float* vec, nframes_t vecl
         // Linear interpolation between the two points
         const double dx = (veclen > 1) ? (hx - lx) / (veclen - 1) : 0.0;
         const double whenDelta = lastPoint.when - firstPoint.when;
-        const double slope = TraversoDAW::Float::equals_0(whenDelta) ? 0.0 : (lastPoint.value - firstPoint.value) / whenDelta;
+        const double slope = TFloatCompare::equals_0(whenDelta) ? 0.0 : (lastPoint.value - firstPoint.value) / whenDelta;
         const double yfrac = dx * slope;
 
         vec[0] = float(firstPoint.value + slope * (lx - firstPoint.when));

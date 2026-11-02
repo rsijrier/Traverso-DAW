@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Utils.h"
 #include "TSession.h"
 #include "TAudioDevice.h"
+#include "TFloatCompare.h"
 
 TBusTrack::TBusTrack(TSession* session, const QString& name, int channelCount)
         : TTrack(session)
@@ -110,7 +111,7 @@ int TBusTrack::process(TProcessContext &context) T_REALTIME_SAFE
 {
     // Real-time Accumulation Protection: If the bus is muted or resting at absolute silence,
     // we MUST evacuate the streaming buffers to prevent scaling explosions from incoming track sends.
-    if (m_isMuted || (TraversoDAW::Float::equals_0(get_gain()))) {
+    if (m_isMuted || (TFloatCompare::equals_0(get_gain()))) {
         if (m_processBus) {
             // Instantly wipe the shared summing bus clean for this hardware block duration
             m_processBus->silence_buffers();

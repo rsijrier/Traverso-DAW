@@ -11,6 +11,7 @@
 #include "TGain.h"
 #include "TContextPointer.h"
 #include "TRtTransaction.h"
+#include "TFloatCompare.h"
 
 MoveCurveNode::MoveCurveNode(TCurve* curve,
                              QList<TCurveNode*> nodes,
@@ -57,7 +58,7 @@ void MoveCurveNode::toggle_vertical_only()
 
 int MoveCurveNode::prepare_actions()
 {
-    if (m_whenDiff.universal_frame() == 0 && TraversoDAW::Float::equals_0(m_valueDiff)) {
+    if (m_whenDiff.universal_frame() == 0 && TFloatCompare::equals_0(m_valueDiff)) {
         return -1;
     }
     return 1;

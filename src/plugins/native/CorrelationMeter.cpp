@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "CorrelationMeter.h"
 #include <AudioBus.h>
 #include "TAudioDevice.h"
+#include "TFloatCompare.h"
 #include <Debugger.h>
 #include <cmath>
 #include <climits>
@@ -114,7 +115,7 @@ void CorrelationMeter::process(AudioBus* bus, nframes_t nframes) T_REALTIME_SAFE
 
 	// We have all data to calculate the correlation coefficient
 	// for the processed buffer (but check for division by 0 first)
-    if ((TraversoDAW::Float::equals_0(a1sq)) || (TraversoDAW::Float::equals_0(a2sq))) {
+    if ((TFloatCompare::equals_0(a1sq)) || (TFloatCompare::equals_0(a2sq))) {
 		r = 1.0;
 	} else {
         r = a1a2 / (sqrtf(a1sq) * sqrtf(a2sq));
@@ -245,7 +246,7 @@ int CorrelationMeter::get_data(qreal& r, qreal& direction)
 	// Now that we truely have taken into account all the levelLeft/Right data
 	// for all buffers that have been processed since last call to get_data()
 	// we now can calculate the direction variable.
-    if (TraversoDAW::Float::equals_0(levelLeft + levelRight)) {
+    if (TFloatCompare::equals_0(levelLeft + levelRight)) {
 		direction = 0.0;
 	} else {
         qreal vl = levelLeft / (levelLeft + levelRight);

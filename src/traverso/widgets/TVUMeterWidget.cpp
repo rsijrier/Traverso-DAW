@@ -42,6 +42,7 @@
 
 
 #include "Debugger.h"
+#include "TFloatCompare.h"
 
 /**
  * \class VUMeter
@@ -627,7 +628,7 @@ void VUMeterLevel::update_peak( )
         m_monitor->set_read();
 
 	// if the meter drops to -inf, reset the 'over LED' and peak hold values
-    if ((TraversoDAW::Float::equals_0(peak)) && (tailDeltaY <= -70.0)) {
+    if ((TFloatCompare::equals_0(peak)) && (tailDeltaY <= -70.0)) {
 		peakHoldValue = -120.0;
 		emit activate_over_led(false);
                 return;

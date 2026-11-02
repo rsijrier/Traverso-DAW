@@ -9,6 +9,7 @@
 #include "TTrack.h"
 #include "Utils.h"
 #include "TInputEventDispatcher.h"
+#include "TFloatCompare.h"
 
 TrackPan::TrackPan(TTrack* track, QVariantList args)
     : TCommand(track, "")
@@ -31,7 +32,7 @@ TrackPan::TrackPan(TTrack* track, QVariantList args)
 
 int TrackPan::prepare_actions()
 {
-    if (TraversoDAW::Float::compare(m_origPan, m_newPan))
+    if (TFloatCompare::compare(m_origPan, m_newPan))
     {
         return -1;
     }

@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTimeLineRuler.h"
 
 #include "Debugger.h"
+#include "TFloatCompare.h"
 #include <qpoint.h>
 
 TSession::TSession(TAudioDevice& device)
@@ -390,7 +391,7 @@ void TSession::set_hzoom( qreal hzoom )
 	qreal old_hzoom = get_hzoom();
 	m_hzoom = hzoom;
 
-    if (!TraversoDAW::Float::compare(old_hzoom, get_hzoom())) {
+    if (!TFloatCompare::compare(old_hzoom, get_hzoom())) {
 		emit hzoomChanged();
 	}
 }

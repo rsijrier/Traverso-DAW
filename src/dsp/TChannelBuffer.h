@@ -25,7 +25,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTypes.h"
 #include "TRealTime.h"
 #include "TBufferOperations.h"
-#include "Utils.h"
+#include "TFloatCompare.h"
+
+#include <QtGlobal>
 
 #include <cstring>
 
@@ -149,7 +151,7 @@ public:
 
     static void mix_buffers_with_gain(const TChannelBuffer &dest, const TChannelBuffer &src, nframes_t nframes, float gain) T_REALTIME_SAFE {
         Q_ASSERT(&dest != &src);
-        if (TraversoDAW::Float::equals_1(gain)) {
+        if (TFloatCompare::equals_1(gain)) {
             return TBufferOperations::mix(dest.get_data(nframes), src.get_data(nframes), nframes);
         }
 

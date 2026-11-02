@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "Debugger.h"
+#include "TFloatCompare.h"
 
 using namespace std;
 
@@ -151,7 +152,7 @@ int TCurve::process(
     if (endlocation > qint64(snapshot->get_range())) {
         audio_sample_t gain = audio_sample_t(snapshot->points().back().value) * makeupgain;
 
-        if (TraversoDAW::Float::equals_1(gain)) {
+        if (TFloatCompare::equals_1(gain)) {
             return 0;
         }
 
@@ -208,7 +209,7 @@ void TCurve::set_node(TCurveNode* node, double when, double value, TRtTransactio
     Q_ASSERT(node->get_curve() == this);
     Q_ASSERT(m_nodes.contains(node));
 
-    if (TraversoDAW::Float::compare(node->get_when(), when) && TraversoDAW::Float::compare(node->get_value(), value)) {
+    if (TFloatCompare::compare(node->get_when(), when) && TFloatCompare::compare(node->get_value(), value)) {
         return;
     }
 
@@ -250,7 +251,7 @@ TCommand* TCurve::add_node(TCurveNode* node, bool historable)
 
     // Guard check preventing overlapping duplicate keyframe layout coordinates
     for (TCurveNode* cn : std::as_const(m_nodes)) {
-        if (TraversoDAW::Float::compare(node->get_when(), cn->get_when()) && TraversoDAW::Float::compare(node->get_value(), cn->get_value())) {
+        if (TFloatCompare::compare(node->get_when(), cn->get_when()) && TFloatCompare::compare(node->get_value(), cn->get_value())) {
             tInformUser().warning(tr("There is already a node at this exact position, not adding a new node"));
             delete node;
             node = nullptr;

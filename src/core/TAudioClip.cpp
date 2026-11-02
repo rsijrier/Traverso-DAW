@@ -51,6 +51,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "GainEnvelope.h"
 #include "TInputEventDispatcher.h"
 #include "Debugger.h"
+#include "TFloatCompare.h"
 
 #include <algorithm>
 
@@ -505,7 +506,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
         return 0;
     }
 
-    if (m_isMuted || (TraversoDAW::Float::equals_0(get_gain())) ) {
+    if (m_isMuted || (TFloatCompare::equals_0(get_gain())) ) {
         return 0;
     }
 
@@ -969,7 +970,7 @@ float TAudioClip::calculate_normalization_factor(float targetdB)
 {
     float target = TGain::from_dB(targetdB);
 
-    if (TraversoDAW::Float::equals_1(target)) {
+    if (TFloatCompare::equals_1(target)) {
         /* do not normalize to precisely 1.0 (0 dBFS), to avoid making it appear
            that we may have clipped.
         */
@@ -985,13 +986,13 @@ float TAudioClip::calculate_normalization_factor(float targetdB)
         return get_gain();
     }
 
-    if (TraversoDAW::Float::equals_0(maxamp)) {
+    if (TFloatCompare::equals_0(maxamp)) {
         PWARN("AudioClip::normalization: max amplitude == 0");
         /* don't even try */
         return get_gain();
     }
 
-    if (TraversoDAW::Float::compare(maxamp, target)) {
+    if (TFloatCompare::compare(maxamp, target)) {
         PWARN("AudioClip::normalization: max amplitude == target amplitude");
         /* we can't do anything useful */
         return get_gain();

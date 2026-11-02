@@ -10,6 +10,7 @@
 #include "TGain.h"
 #include "Utils.h"
 #include "Debugger.h"
+#include "TFloatCompare.h"
 
 /**
  * @class TFaderCommand
@@ -33,7 +34,7 @@ TFaderCommand::~TFaderCommand()
 
 int TFaderCommand::prepare_actions()
 {
-    if (TraversoDAW::Float::compare(m_origGain, m_newGain)) {
+    if (TFloatCompare::compare(m_origGain, m_newGain)) {
         return -1;
     }
     return 1;
@@ -54,7 +55,7 @@ void TFaderCommand::apply_new_gain_to_object(float newGain)
 int TFaderCommand::do_action()
 {
     PENTER;
-    if (TraversoDAW::Float::compare(m_newGain, m_audioProcessingNode->get_gain())) {
+    if (TFloatCompare::compare(m_newGain, m_audioProcessingNode->get_gain())) {
         return 1;
     }
     m_audioProcessingNode->set_gain_animated(m_newGain);

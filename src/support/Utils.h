@@ -25,7 +25,6 @@
 #include <QtCore/qcontainerfwd.h>
 
 class QDateTime;
-#include <cmath>
 
 #define QS_C(x) x.toUtf8().data()
 
@@ -45,45 +44,6 @@ public:
     static QStringList find_qm_files();
     static QString language_name_from_qm_file(const QString& lang);
     static bool can_set_mouse_pos();
-};
-
-class Float {
-public:
-    static constexpr float  RT_EPSILON_F = 0.000001f;
-    static constexpr double RT_EPSILON_D = 0.0000000000001;
-
-    /**
-     * @brief Real-time safe single-precision float comparison.
-     */
-    static inline bool compare(float a, float b)
-    {
-        return std::fabs(a - b) <= RT_EPSILON_F;
-    }
-
-    static inline bool compare(double a, double b)
-    {
-        return std::fabs(a - b) <= RT_EPSILON_D;
-    }
-
-    static inline bool equals_1(float a)
-    {
-        return std::fabs(a - 1.0f) <= RT_EPSILON_F;
-    }
-
-    static inline bool equals_1(double a)
-    {
-        return std::fabs(a - 1.0) <= RT_EPSILON_D;
-    }
-
-    static inline bool equals_0(float a)
-    {
-        return std::fabs(a) <= RT_EPSILON_F;
-    }
-
-    static inline bool equals_0(double a)
-    {
-        return std::fabs(a) <= RT_EPSILON_D;
-    }
 };
 
 } // namespace TraversoDAW

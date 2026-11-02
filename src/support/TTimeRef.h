@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "TTypes.h"
 #include "TRealTime.h"
+#include "TFloatCompare.h"
 #include <QMetaType>
 #include <QString>
 
@@ -211,7 +212,7 @@ public:
     }
 
     friend qreal operator/(const TTimeRef& left, double right) {
-        Q_ASSERT(!TraversoDAW::Float::equals_0(right));
+        Q_ASSERT(!TFloatCompare::equals_0(right));
         return qreal(left.m_universalFrame) / qint64(right);
     }
 

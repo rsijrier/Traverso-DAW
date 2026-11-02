@@ -11,6 +11,7 @@
 #include "qapplication.h"
 
 #include "Debugger.h"
+#include "TFloatCompare.h"
 
 #define ANIME_DURATION		1000
 #define AUTO_SCROLL_MARGIN	0.05  // autoscroll when
@@ -206,7 +207,7 @@ void TPlayHeadView::set_animation_value(int /*value*/)
 {
 	// When the scalefactor changed, stop the animation here as it's no longer valid to run
 	// and reset the animation timeline time back to 0.
-    if (!TraversoDAW::Float::compare(m_animScaleFactor, m_sv->timeref_scalefactor)) {
+    if (!TFloatCompare::compare(m_animScaleFactor, m_sv->timeref_scalefactor)) {
 		m_animation.stop();
 		m_animation.setCurrentTime(0);
 		animation_finished();

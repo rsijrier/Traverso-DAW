@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TThemer.h"
 #include "TAudioTrack.h"
 #include "Utils.h"
+#include "TFloatCompare.h"
 
 #include <QPainter>
 #include <QLineEdit>
@@ -495,7 +496,7 @@ SystemValueBar::SystemValueBar(QWidget * parent)
 
 void SystemValueBar::set_value(float value)
 {
-    if (TraversoDAW::Float::compare(m_current, value)) {
+    if (TFloatCompare::compare(m_current, value)) {
 		return;
 	}
 	
