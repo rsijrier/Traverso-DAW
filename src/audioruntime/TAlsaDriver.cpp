@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TAlsaDriver.h"
 #include "AudioChannel.h"
+#include <bit>
 #include <Utils.h>
 
 #include <algorithm>
@@ -596,7 +597,8 @@ int TAlsaDriver::configure_stream(const QString &device_name,
         return -1;
     }
 
-    if (!TraversoDAW::Utils::is_power_of_two(m_framesPerCycle)) {
+    // A power of two
+    if (!std::has_single_bit(m_framesPerCycle)) {
         TLog::write_printf(TLogLevel::Warning, "alsa", "Traverso: frames must be a power of two (64, 512, 1024, ...)");
         return -1;
     }

@@ -7,6 +7,7 @@
 #include "TTimeLineRuler.h"
 #include "Utils.h"
 
+#include <bit>
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
@@ -140,7 +141,8 @@ void TExportSpecification::set_channel_count(uint channelCount)
 void TExportSpecification::set_block_size(uint blockSize)
 {
     Q_ASSERT(blockSize > 0);
-    Q_ASSERT(TraversoDAW::Utils::is_power_of_two(blockSize));
+    // A power of two
+    Q_ASSERT(std::has_single_bit(blockSize));
     m_blockSize = blockSize;
 }
 

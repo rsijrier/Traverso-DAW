@@ -34,10 +34,6 @@ class Utils
 {
 public:
     static double randomNumberBetween(int start, int end);
-    static inline unsigned int is_power_of_two (unsigned int n)
-    {
-        return !(n & (n - 1));
-    }
 
     static QDateTime extract_date_time(qint64 id);
     static qint64 create_id();
