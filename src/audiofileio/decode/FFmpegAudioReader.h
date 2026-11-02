@@ -24,6 +24,8 @@ class FFmpegAudioReader : public TAudioDecoder
 public:
     ~FFmpegAudioReader() override;
 
+    using SampleCopy = void (*)(const uint8_t* data, int step, int64_t first, nframes_t count, audio_sample_t* out);
+
     // Looks for ADTS frames or an MP4 with audio in it
     static bool can_decode(TByteSource& source);
 
@@ -40,7 +42,8 @@ private:
     TAudioFileStatus open_codec();
     void note_packet();
     void note_format();
-    void place_frame_zero(bool mp4);
+    void place_frame_zero();
+    int64_t take_frames(int64_t end);
     TAudioFileStatus mp4_length();
     TAudioFileStatus count_frames();
     TAudioFileStatus take_length(int64_t frames);
@@ -71,6 +74,7 @@ private:
     int m_firstFrameSamples{0};
     // Of the first frame, an AVSampleFormat
     int m_sampleFormat{-1};
+    SampleCopy m_sampleCopy{nullptr};
     // The next frame decoded is the file's first
     bool m_fromStart{false};
     // The file's frames in m_frameBuffer: [m_decodedFirst, m_decodedFirst + m_decodedCount)

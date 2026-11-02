@@ -1577,6 +1577,15 @@ int main()
         {.name = "FLAC in fragmented MP4", .suffix = "flac.mp4", .source = stereo,
          .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("flac"), QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov"), QStringLiteral("-frag_duration"), QStringLiteral("200000")}),
          .lossless = true, .resolution = 1.0f / 32768.0f},
+        // Interleaved samples, of every format the reader converts
+        {.name = "PCM 16 bit in MOV", .suffix = "s16.mov", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("pcm_s16le")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
+        {.name = "PCM 32 bit in MOV", .suffix = "s32.mov", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("pcm_s32le")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
+        {.name = "PCM float in MOV", .suffix = "f32.mov", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("pcm_f32le")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
+        {.name = "PCM double in MOV", .suffix = "f64.mov", .source = stereo, .write = ffmpeg({QStringLiteral("-c:a"), QStringLiteral("pcm_f64le")}),
+         .lossless = true, .resolution = 1.0f / 32768.0f},
         // Audio that starts after the file's start, as behind a video: an empty edit
         {.name = "AAC in M4A, a late start", .suffix = "late.m4a", .source = stereo,
          .write = ffmpeg(aacWithoutNoise + QStringList{QStringLiteral("-output_ts_offset"), QStringLiteral("1")}), .frameTolerance = 1024,

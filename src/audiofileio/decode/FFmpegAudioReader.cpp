@@ -18,7 +18,6 @@ extern "C" {
 #include <algorithm>
 #include <cstring>
 #include <limits>
-#include <mutex>
 
 // Decoded before the frame a seek goes to: the decoder's overlap, and SBR's
 static constexpr int64_t PreRollFrames = 8192;
@@ -55,16 +54,11 @@ static TAudioFileStatus open_error(const QString& detail)
     return std::unexpected(TAudioFileError{TAudioFileError::Code::CannotOpen, detail});
 }
 
-// FFmpeg's log is its own, on stderr: every reason comes back by a return value
-static void silence_ffmpeg()
-{
-    static std::once_flag once;
-    std::call_once(once, [] { av_log_set_level(AV_LOG_QUIET); });
-}
-
 // An AVFormatContext on source, freed with close_format()
 static int open_format(TByteSource& source, AVIOContext*& io, AVFormatContext*& format)
 {
+    // FFmpeg's log is its own, on stderr: every reason comes back by a return value
+    av_log_set_level(AV_LOG_QUIET);
     auto* buffer = static_cast<unsigned char*>(av_malloc(IoBufferBytes));
     if (!buffer) {
         return AVERROR(ENOMEM);
@@ -111,16 +105,31 @@ static const AVStream* first_audio_stream(const AVFormatContext* format)
     return nullptr;
 }
 
-static bool sample_format_read(int format)
+// One channel of samples to floats: Bits is the full scale, 0 for samples that are floats
+template<typename Sample, int Bits>
+static void copy_samples(const uint8_t* data, int step, int64_t first, nframes_t count, audio_sample_t* out)
+{
+    constexpr float FullScale = float(1ull << Bits);
+    const Sample* samples = reinterpret_cast<const Sample*>(data) + first;
+    for (nframes_t i = 0; i < count; ++i) {
+        out[i] = float(samples[int64_t(i) * step]) / FullScale;
+    }
+}
+
+// The formats read, and how: nullptr for any other
+static FFmpegAudioReader::SampleCopy sample_copy_for(int format)
 {
     switch (av_get_packed_sample_fmt(AVSampleFormat(format))) {
     case AV_SAMPLE_FMT_FLT:
+        return copy_samples<float, 0>;
     case AV_SAMPLE_FMT_DBL:
+        return copy_samples<double, 0>;
     case AV_SAMPLE_FMT_S32:
+        return copy_samples<int32_t, 31>;
     case AV_SAMPLE_FMT_S16:
-        return true;
+        return copy_samples<int16_t, 15>;
     default:
-        return false;
+        return nullptr;
     }
 }
 
@@ -193,7 +202,6 @@ static bool mp4_with_audio(TByteSource& source)
 
 bool FFmpegAudioReader::can_decode(TByteSource& source)
 {
-    silence_ffmpeg();
     char head[8]{};
     source.seek(0);
     source.read(head, sizeof(head));
@@ -220,7 +228,6 @@ FFmpegAudioReader::~FFmpegAudioReader()
 
 TAudioFileStatus FFmpegAudioReader::start()
 {
-    silence_ffmpeg();
     m_packet = av_packet_alloc();
     m_frameBuffer = av_frame_alloc();
     if (!m_packet || !m_frameBuffer) {
@@ -260,7 +267,7 @@ TAudioFileStatus FFmpegAudioReader::start()
     if (!counted) {
         return counted;
     }
-    if (m_sampleFormat >= 0 && !sample_format_read(m_sampleFormat)) {
+    if (m_sampleFormat >= 0 && !m_sampleCopy) {
         return open_error(QStringLiteral("samples as %1 are not read").arg(QString::fromUtf8(av_get_sample_fmt_name(AVSampleFormat(m_sampleFormat)))));
     }
     if (TAudioFileStatus sought = seek_frame(0); !sought) {
@@ -333,30 +340,33 @@ void FFmpegAudioReader::note_packet()
 void FFmpegAudioReader::note_format()
 {
     m_sampleFormat = m_frameBuffer->format;
+    m_sampleCopy = sample_copy_for(m_sampleFormat);
     m_channels = uint(m_frameBuffer->ch_layout.nb_channels);
     m_rate = uint(m_frameBuffer->sample_rate);
 }
 
 // Frame 0 lies at m_firstTimestamp; the first packet starts m_priming frames before it
-void FFmpegAudioReader::place_frame_zero(bool mp4)
+void FFmpegAudioReader::place_frame_zero()
 {
     const AVStream* stream = m_format->streams[m_stream];
-    const AVRational rate{1, int(m_rate)};
-    avcodec_flush_buffers(m_codec);
-    if (!mp4 && m_priming == 0 && m_codec->codec_id == AV_CODEC_ID_AAC && m_secondTimestamp != AV_NOPTS_VALUE) {
-        // ADTS has no word on priming and the decoder none either: one AAC frame,
-        // as FAAD leaves out
-        m_priming = av_rescale_q(m_firstDuration, stream->time_base, rate);
-        m_firstTimestamp = m_secondTimestamp;
-    } else {
-        // A first stamp that comes twice is already frame 0's
-        m_firstTimestamp = m_secondTimestamp == m_startTimestamp ? m_startTimestamp : m_startTimestamp + av_rescale_q(m_priming, rate, stream->time_base);
+    // A first stamp that comes twice is already frame 0's
+    m_firstTimestamp = m_startTimestamp;
+    if (m_secondTimestamp != m_startTimestamp) {
+        m_firstTimestamp += av_rescale_q(m_priming, AVRational{1, int(m_rate)}, stream->time_base);
     }
-    // Tables can give the first packet more than the decoder has: the audio runs on
-    // and every later stamp lies that much behind
-    if (const int64_t beyond = m_firstDuration - av_rescale_q(m_firstFrameSamples, rate, stream->time_base); mp4 && m_firstFrameSamples > 0 && beyond > 0) {
-        m_firstTimestamp += beyond;
+}
+
+// The frames the decoder has now: where they end, past end. None of the first packets
+// decoded: the file's format comes from here
+int64_t FFmpegAudioReader::take_frames(int64_t end)
+{
+    while (avcodec_receive_frame(m_codec, m_frameBuffer) == 0) {
+        end = position_of_frame() + m_frameBuffer->nb_samples;
+        if (m_sampleFormat < 0) {
+            note_format();
+        }
     }
+    return end;
 }
 
 // An MP4 knows its length: the header and the end of the tables, both from frame 0.
@@ -383,7 +393,13 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
     if (m_packetsSeen == 0) {
         return open_error(QStringLiteral("no audio in it"));
     }
-    place_frame_zero(true);
+    avcodec_flush_buffers(m_codec);
+    place_frame_zero();
+    // Tables can give the first packet more than the decoder has: the audio runs on
+    // and every later stamp lies that much behind
+    if (const int64_t beyond = m_firstDuration - av_rescale_q(m_firstFrameSamples, rate, stream->time_base); m_firstFrameSamples > 0 && beyond > 0) {
+        m_firstTimestamp += beyond;
+    }
     if (stream->duration == AV_NOPTS_VALUE) {
         return open_error(QStringLiteral("no length in the header"));
     }
@@ -402,15 +418,6 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
     }
     avcodec_flush_buffers(m_codec);
     int64_t decodedEnd = 0;
-    const auto take_frames = [&] {
-        while (avcodec_receive_frame(m_codec, m_frameBuffer) == 0) {
-            decodedEnd = position_of_frame() + m_frameBuffer->nb_samples;
-            // None of the first packets decoded: the file's format comes from here
-            if (m_sampleFormat < 0) {
-                note_format();
-            }
-        }
-    };
     while (av_read_frame(m_format, m_packet) >= 0) {
         if (m_packet->stream_index == m_stream) {
             if (m_packet->pts != AV_NOPTS_VALUE) {
@@ -418,12 +425,12 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
                 lastDuration = m_packet->duration;
             }
             avcodec_send_packet(m_codec, m_packet);
-            take_frames();
+            decodedEnd = take_frames(decodedEnd);
         }
         av_packet_unref(m_packet);
     }
     avcodec_send_packet(m_codec, nullptr);
-    take_frames();
+    decodedEnd = take_frames(decodedEnd);
 
     const int64_t packet = av_rescale_q(m_firstDuration, stream->time_base, rate);
     // The header's duration is a span: it starts at the track's first stamp, also
@@ -474,7 +481,15 @@ TAudioFileStatus FFmpegAudioReader::count_frames()
     if (m_packetsSeen == 0) {
         return open_error(QStringLiteral("no audio in it"));
     }
-    place_frame_zero(false);
+    avcodec_flush_buffers(m_codec);
+    if (m_priming == 0 && m_codec->codec_id == AV_CODEC_ID_AAC && m_secondTimestamp != AV_NOPTS_VALUE) {
+        // ADTS has no word on priming and the decoder none either: one AAC frame,
+        // as FAAD leaves out
+        m_priming = av_rescale_q(m_firstDuration, stream->time_base, rate);
+        m_firstTimestamp = m_secondTimestamp;
+    } else {
+        place_frame_zero();
+    }
     return take_length(av_rescale_q(duration, stream->time_base, rate) - m_priming - discarded);
 }
 
@@ -581,34 +596,15 @@ TAudioFileStatus FFmpegAudioReader::seek_frame(nframes_t frame)
 
 void FFmpegAudioReader::copy_decoded(TAudioBuffer& buffer, nframes_t at, int64_t first, nframes_t count)
 {
-    const AVSampleFormat format = AVSampleFormat(m_frameBuffer->format);
-    const bool planar = av_sample_fmt_is_planar(format);
+    Q_ASSERT(m_sampleCopy);
+    const bool planar = av_sample_fmt_is_planar(AVSampleFormat(m_frameBuffer->format));
     const int channels = int(m_channels);
     for (int channel = 0; channel < channels; ++channel) {
         audio_sample_t* out = buffer.get_channel_buffer(uint(channel)).get_data(at + count) + at;
         const uint8_t* data = m_frameBuffer->extended_data[planar ? channel : 0];
         const int step = planar ? 1 : channels;
         const int offset = planar ? 0 : channel;
-        for (nframes_t i = 0; i < count; ++i) {
-            const int64_t index = (first + i) * step + offset;
-            switch (av_get_packed_sample_fmt(format)) {
-            case AV_SAMPLE_FMT_FLT:
-                out[i] = reinterpret_cast<const float*>(data)[index];
-                break;
-            case AV_SAMPLE_FMT_DBL:
-                out[i] = float(reinterpret_cast<const double*>(data)[index]);
-                break;
-            case AV_SAMPLE_FMT_S32:
-                out[i] = float(reinterpret_cast<const int32_t*>(data)[index]) / 2147483648.0f;
-                break;
-            case AV_SAMPLE_FMT_S16:
-                out[i] = float(reinterpret_cast<const int16_t*>(data)[index]) / 32768.0f;
-                break;
-            default:
-                out[i] = 0.0f;
-                break;
-            }
-        }
+        m_sampleCopy(data, step, first * step + offset, count, out);
     }
 }
 
