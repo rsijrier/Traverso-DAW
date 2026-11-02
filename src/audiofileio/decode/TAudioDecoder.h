@@ -20,7 +20,7 @@ class TAudioBuffer;
 /**
  * @brief Reads the audio of one file at the file's own rate. One class per
  * library (SFAudioReader: libsndfile, WPAudioReader: WavPack, MpgAudioReader:
- * MPEG audio through libmpg123, FaadAudioReader: AAC), and TScenarioDecoder
+ * MPEG audio through libmpg123, FFmpegAudioReader: AAC and MP4), and TScenarioDecoder
  * for a test signal described in a scenario file; opened by
  * TAudioDecoderFactory::open_file().
  *
@@ -52,7 +52,7 @@ class TAudioBuffer;
  *    clears it, so a damaged part of a file can be skipped. A caller seeks
  *    again when the decoder is in its error state, also to next_frame().
  * 4. Audio that ends before frame_count() (a header that says more, a file
- *    cut short) is an error. A packet that does not decode (FAAD) stays
+ *    cut short) is an error. A packet that does not decode (AAC) stays
  *    silence, as the decoder decides: not an error.
  * 5. No stale audio: a caller never silences a buffer before a read, and
  *    never sees what the buffer held before; none reaches a ring buffer or
@@ -70,9 +70,8 @@ class TAudioBuffer;
  * what it read and what it decoded can be told apart: io_stats(). The libraries
  * pull their bytes themselves, in the middle of a decode, so the line between
  * reading and decoding runs below the decoders: libsndfile, libmpg123 and
- * WavPack through their virtual IO, FAAD directly. Small reads share the
- * source's block: the parsers of MP4 and ADTS read a few bytes at a time, tens
- * of thousands of times when a file opens.
+ * WavPack through their virtual IO, FFmpeg through an AVIOContext. Small reads share the
+ * source's block.
  *
  * Not for the audio thread: file IO, and the buffer may grow.
  */
@@ -113,7 +112,7 @@ public:
     TAudioFileResult read(TAudioBuffer& buffer, nframes_t count);
 
     // count frames from first: a seek only when next_frame() is elsewhere or the
-    // decoder is in its error state (a seek costs: mpg123 and FAAD decode
+    // decoder is in its error state (a seek costs: mpg123 and FFmpeg decode
     // frames before the target), then read(). At or past the end zeros and
     // 0, no error; where the decoder cannot seek to, zeros, 0 and the seek's
     // error.

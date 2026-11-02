@@ -854,9 +854,9 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T82 FFmpeg as the required decoder instead of FAAD** (Remon, 2026-11-01). An
   `FFmpegAudioReader` on libavformat and libavcodec, a required dependency, also
   when a distribution's build has fewer codecs. FAAD and the MP4 code of our own
-  go; no second AAC path, not per file and not per system. A PoC next to FAAD on
-  `ffmpeg-reader-poc`; no order to build it yet. Until then no large refactor of
-  `FaadAudioReader`.
+  go; no second AAC path, not per file and not per system. Built on `ffmpeg-aac`.
+  `FaadAudioReader` stays in the tree and is built, but nothing reaches it, until
+  Remon has spoken to Ben, whose code it is.
   - **To show**: exact seeks and length by the contract (`test_audio_decoders`,
     `audio_corpus`), access through `TByteSource` (`AVIOContext`), one lower bound
     without `#if`.
@@ -881,20 +881,29 @@ From the GPU waveform test program, clip edges in variant A (branch
     tables' end, both after the priming; one packet is the index's own packet length.
     - apart by at most one packet: the smallest of the two, healthy;
     - tables more than one packet below the header: open with the header's length,
-      damage, the read fails at the end;
+      damage, the read fails at the end; FFmpeg shortens the header to the tables
+      when it reads them (`mov.c`), so a table cut short reads as a shorter file:
+      what the tables hold is the file. Audio cut from the file keeps its length
+      and fails at the end;
     - tables more than one packet above the header: refuse with a reason;
     - header missing, zero, negative or above `nframes_t`: refuse with a reason;
-    - fragmented MP4 under the same rule; ADTS has no length and keeps counting.
+    - fragmented MP4 under the same rule, but FFmpeg walks every fragment at the
+      open, so its header says what the walk found and the open reads the whole
+      file (Remon, 2026-11-01: accepted); ADTS has no length and keeps counting.
     - the priming of an MP4 is what the decoder reports on its first frame
       (`AV_FRAME_DATA_SKIP_SAMPLES`), which fits every sample on 8.0 and 9.0; ADTS
-      reports nothing and keeps one AAC frame;
+      reports nothing and keeps one AAC frame; an MP4 without an edit list keeps
+      the encoder's delay, as FFmpeg's CLI does: such a file says nothing;
     - at the open the last packet is decoded and the length cut to what the decoder
       gives: a healthy file does not end in an error.
     - tables can give the first packet more than the decoder has (Opus in MP4 1008
       against 960, IAMF 15872 against 8192): the audio runs on, the stamps behind it
       are corrected at the open;
-    - only what has no length reads every packet at the open: an MP4 reads its first
-      packets and, from a little before the end, its last.
+    - only ADTS and fragmented MP4 read every packet at the open: an MP4 reads its
+      first packets and, from a little before the end, its last.
+    - a change of channels, sample format or rate inside a file is damage: the read
+      stops with an error there, as for MP3. A sample format the reader does not
+      convert is refused at the open.
   - **Other formats**: FFmpeg decodes APE, TTA and WMA; they come only when users ask
     (Remon, 2026-11-01). FLAC stays with libsndfile, measured through both readers
     on 17 files: the audio is bit exact, and FFmpeg gains only 32 bit FLAC. It reads
@@ -903,6 +912,23 @@ From the GPU waveform test program, clip edges in variant A (branch
     MP3 stays with libmpg123, measured through both readers on 63 files: normal audio
     the same and no gain in speed, but FFmpeg goes on silently over damage, which our
     T73 rules report, and keeps the decoder delay where no tag names it.
+- **T88 `can_read()` opens an MP4** (low; Fable, 2026-11-01): `avformat_open_input` for
+  every MP4, twice on the `can_read()` path, on the GUI thread; a fragmented one is
+  walked whole. The signature route could answer from the signature.
+- **T89 FFmpeg reader: more reasons** (low; Fable, 2026-11-01): "no audio in it" also
+  means that no packet came (`nero-chapters.m4b`); `truncated-64bit.mp4` says "cannot
+  seek to frame 0"; FFmpeg's bare text at the open; xHE-AAC on FFmpeg 8 says "the file
+  does not say enough" where the decoder refuses it.
+- **T91 FFmpeg reader: what the third review left** (low; Fable, 2026-11-02): ADTS behind
+  a tag of 1 MiB or more: `can_read()` yes, `open()` refuses, FFmpeg's probe stops there
+  (give it the `aac` demuxer when the check matched); the tail read of `mp4_length()`
+  loses a read error; a file of which no packet decodes at the open gets "the format
+  changes"; `count_frames()` subtracts an end skip nothing gives today;
+  `test_ffmpeg_refusals()` skips without a word; `avformat_find_stream_info()` runs
+  before the discard, so a video is read up to the probe size.
+- **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
+  a shorter healthy file, no error: the file has no length of its own. Document the
+  limit or find one.
 - **T76 Decoder leftovers** (low; Remon, 2026-10-31): FAAD's `m_openFailure`, set
   deep in its parsers where its functions could return the reason, and the opener
   every decoder carries while only WavPack's correction file needs it.

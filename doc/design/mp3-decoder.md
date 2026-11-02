@@ -9,7 +9,8 @@ Background and measurements: `reports/mp3-decoder-research.md` (not
 versioned, may be missing). This document is complete without it.
 
 Task T73 in `doc/status.md`. `MadAudioReader` (MAD, K3b code, 1031 lines)
-goes; `MpgAudioReader` on libmpg123 comes in its place, measured against
+12. Junk in front of the audio: the search for it stops at 1 MiB. A tag that names its
+    size is skipped by that size, whatever it is (Remon, 2026-11-02).
 the decoder contract in `TAudioDecoder.h` and `test_audio_decoders`, not
 against what MAD does. Built: about 450 lines with the header (estimated: 200 to 250). Everything below
 was measured in a throwaway prototype on Linux x86-64 with mpg123 1.33.3,
@@ -39,12 +40,12 @@ unless section 7 says otherwise.
    does.
 7. Threads: one process-wide mutex around our own `mpg123_new()`, and no
    mutex around `sf_open_virtual()`.
-8. Probe step 3 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
+8. Probe step 4 (section 3) with the result `SF_FORMAT_MPEG` gives no decoder.
 9. A WAV with MP3 in it (`WAV|MPEG_LAYER_III` according to libsndfile) goes
    to `MpgAudioReader`.
 10. The probe goes by content, never by file name: a table of fixed
-    signatures, the strict MP3 probe, libsndfile, then the existing probes
-    of WavPack and FAAD (section 3). A table entry holds fixed signatures
+    signatures, ADTS and MP4 (`FFmpegAudioReader`), the strict MP3 probe,
+    libsndfile, then WavPack's probe (section 3). A table entry holds fixed signatures
     only, no versions, subtypes or codecs; in doubt the library decides. A
     format that is not in the table keeps working through the later steps.
 11. No exception on the name: a scenario is known by its first line, `# tscenario
@@ -129,8 +130,11 @@ read fails where the audio ends, and the audio stays in place.
 length defect as plain MP3 (VBR: 79 % gone). mpg123 skips the RIFF header
 itself and reads them whole.
 
-**Why probe step 4.** ADTS, and WavPack behind an ID3 tag, have no table entry
-and libsndfile does not read them.
+**Why probe step 2 and 5.** ADTS, and WavPack behind an ID3 tag, have no table
+entry and libsndfile does not read them. ADTS comes before the MP3 probe (Remon,
+2026-11-01): its frames look like MPEG audio to the probes that search a MiB for
+it, which read 3.3 times a small file, and an MPEG frame is never ADTS: its layer
+bits are never 00.
 
 **Why a limit of 1 MiB.** A behaviour change against MAD, which refused none of
 the files with junk in front that were tried. `MPG123_RESYNC_LIMIT` can only
@@ -140,21 +144,23 @@ raise mpg123's 64 KiB, never lower it. Files with a signature pay nothing.
 
 1. The table below. A match goes to that decoder directly, whose open says why
    not. When libsndfile refuses a file of its table entries, the strict probe of
-   step 2 still gets it (`RIFF....RMP3`), a RIFF only with the form `WAVE` or
+   step 3 still gets it (`RIFF....RMP3`), a RIFF only with the form `WAVE` or
    `RMP3`: mpg123 walks any RIFF to its data chunk without a limit. No entries
    are added for that.
-2. `MpgAudioReader::can_decode()`, the strict probe.
-3. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
+2. `FFmpegAudioReader::can_decode()`: ADTS frames, or an MP4 with audio that does
+   not start with `ftyp`.
+3. `MpgAudioReader::can_decode()`, the strict probe.
+4. `SFAudioReader::format()`: `SF_FORMAT_MPEG` gives no decoder;
    `WAV|MPEG_LAYER_III` goes to `MpgAudioReader`. The second also holds on
    the RIFF route of the table: it is known after libsndfile opened the file.
-4. The existing probes of WavPack and FAAD.
+5. WavPack's probe.
 
 | Signature | Offset | Decoder |
 |---|---|---|
 | `RIFF`, `RF64`, `riff` (W64), `FORM`, `fLaC`, `OggS`, `caff`, `.snd` | 0 | libsndfile |
 | `wvpk` | 0 | WavPack |
 | `# ts` | 0 | `TScenarioDecoder` |
-| `ftyp` | 4 | FAAD |
+| `ftyp` | 4 | FFmpeg |
 
 Also fixed, not tried: `RIFX`, `dns.`. `ID3` is not in the table: a tag can
 precede MP3, FLAC or WavPack.

@@ -882,10 +882,8 @@ int main()
         // Through mpg123, not libsndfile: not compared with sf_open
         {"MP3", "mp3", 0, sndfile(SF_FORMAT_MPEG | SF_FORMAT_MPEG_LAYER_III)},
         {"WavPack float", "wv", 0, write_wavpack},
-#if defined(M4A_DECODE_SUPPORT)
         {"AAC in ADTS (ffmpeg)", "aac", 0, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac"), QStringLiteral("-f"), QStringLiteral("adts")})},
         {"AAC in M4A (ffmpeg)", "m4a", 0, ffmpeg({QStringLiteral("-c:a"), QStringLiteral("aac")})},
-#endif
     };
     for (const Format& format : formats) {
         test_format(dir, format);
