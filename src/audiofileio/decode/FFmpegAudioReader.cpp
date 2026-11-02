@@ -286,9 +286,8 @@ TAudioFileStatus FFmpegAudioReader::open_codec()
         avcodec_free_context(&codec);
         return open_error(words_of(error));
     }
-    // The skip at the start and the end is this reader's: by the stamps, the same
-    // after a seek as from the start
-    codec->flags2 |= AV_CODEC_FLAG2_SKIP_MANUAL;
+    // The decoder leaves out what the file asks to skip, and moves the stamps with it
+    codec->pkt_timebase = m_format->streams[m_stream]->time_base;
     // One decoder, one thread: the readers run where the disk IO runs
     codec->thread_count = 1;
     if (int error = avcodec_open2(codec, m_decoder, nullptr); error < 0) {
@@ -300,39 +299,30 @@ TAudioFileStatus FFmpegAudioReader::open_codec()
     return {};
 }
 
-// What the first packets of the file say: their stamps, and what the decoder wants
-// to skip, which it reports on its first frame
+// What the first packets of the file say: their stamps, and the first frame the
+// decoder gives, after what it left out
 void FFmpegAudioReader::note_packet()
 {
     if (m_packetsSeen == 0) {
         m_startTimestamp = m_packet->pts != AV_NOPTS_VALUE ? m_packet->pts : 0;
         m_startDts = m_packet->dts != AV_NOPTS_VALUE ? m_packet->dts : m_startTimestamp;
         m_firstDuration = m_packet->duration;
-        // The demuxer's word on the priming, also when this packet does not decode
         size_t size = 0;
         if (const uint8_t* side = av_packet_get_side_data(m_packet, AV_PKT_DATA_SKIP_SAMPLES, &size); side && size >= 4) {
-            uint32_t skip = 0;
-            std::memcpy(&skip, side, 4);
-            m_priming = skip;
+            std::memcpy(&m_packetSkip, side, 4);
         }
     } else if (m_packetsSeen == 1) {
         m_secondTimestamp = m_packet->pts;
     }
     ++m_packetsSeen;
-    if (m_skipKnown) {
+    if (m_firstFrameSamples > 0) {
         return;
     }
     avcodec_send_packet(m_codec, m_packet);
     if (avcodec_receive_frame(m_codec, m_frameBuffer) == 0) {
-        m_skipKnown = true;
         m_firstFrameSamples = m_frameBuffer->nb_samples;
+        m_firstFrameStamp = frame_stamp();
         note_format();
-        const AVFrameSideData* side = av_frame_get_side_data(m_frameBuffer, AV_FRAME_DATA_SKIP_SAMPLES);
-        if (side && side->size >= 4) {
-            uint32_t skip = 0;
-            std::memcpy(&skip, side->data, 4);
-            m_priming = std::max(m_priming, int64_t(skip));
-        }
     }
 }
 
@@ -343,17 +333,6 @@ void FFmpegAudioReader::note_format()
     m_sampleCopy = sample_copy_for(m_sampleFormat);
     m_channels = uint(m_frameBuffer->ch_layout.nb_channels);
     m_rate = uint(m_frameBuffer->sample_rate);
-}
-
-// Frame 0 lies at m_firstTimestamp; the first packet starts m_priming frames before it
-void FFmpegAudioReader::place_frame_zero()
-{
-    const AVStream* stream = m_format->streams[m_stream];
-    // A first stamp that comes twice is already frame 0's
-    m_firstTimestamp = m_startTimestamp;
-    if (m_secondTimestamp != m_startTimestamp) {
-        m_firstTimestamp += av_rescale_q(m_priming, AVRational{1, int(m_rate)}, stream->time_base);
-    }
 }
 
 // The frames the decoder has now: where they end, past end. None of the first packets
@@ -377,7 +356,7 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
 {
     AVStream* stream = m_format->streams[m_stream];
     const AVRational rate{1, int(m_rate)};
-    while (m_packetsSeen < 2 || (!m_skipKnown && m_packetsSeen < FirstFramePackets)) {
+    while (m_packetsSeen < 2 || (m_firstFrameSamples == 0 && m_packetsSeen < FirstFramePackets)) {
         const int error = av_read_frame(m_format, m_packet);
         if (error == AVERROR_EOF) {
             break;
@@ -394,10 +373,16 @@ TAudioFileStatus FFmpegAudioReader::mp4_length()
         return open_error(QStringLiteral("no audio in it"));
     }
     avcodec_flush_buffers(m_codec);
-    place_frame_zero();
+    // Frame 0 is where the file's skip ends, or else the decoder's first frame: a first
+    // packet that does not decode must not move the audio
+    if (m_packetSkip > 0) {
+        m_firstFrameStamp = m_startTimestamp + av_rescale_q(m_packetSkip, rate, stream->time_base);
+    }
+    m_firstTimestamp = m_firstFrameSamples > 0 || m_packetSkip > 0 ? m_firstFrameStamp : m_startTimestamp;
     // Tables can give the first packet more than the decoder has: the audio runs on
     // and every later stamp lies that much behind
-    if (const int64_t beyond = m_firstDuration - av_rescale_q(m_firstFrameSamples, rate, stream->time_base); m_firstFrameSamples > 0 && beyond > 0) {
+    const int64_t skipped = av_rescale_q(m_firstTimestamp - m_startTimestamp, stream->time_base, rate);
+    if (const int64_t beyond = m_firstDuration - av_rescale_q(m_firstFrameSamples + skipped, rate, stream->time_base); m_firstFrameSamples > 0 && beyond > 0) {
         m_firstTimestamp += beyond;
     }
     if (stream->duration == AV_NOPTS_VALUE) {
@@ -457,7 +442,6 @@ TAudioFileStatus FFmpegAudioReader::count_frames()
     const AVStream* stream = m_format->streams[m_stream];
     const AVRational rate{1, int(m_rate)};
     int64_t duration = 0;
-    int64_t discarded = 0;
     while (true) {
         const int error = av_read_frame(m_format, m_packet);
         if (error == AVERROR_EOF) {
@@ -469,12 +453,6 @@ TAudioFileStatus FFmpegAudioReader::count_frames()
         if (m_packet->stream_index == m_stream) {
             note_packet();
             duration += m_packet->duration;
-            size_t size = 0;
-            if (const uint8_t* side = av_packet_get_side_data(m_packet, AV_PKT_DATA_SKIP_SAMPLES, &size); side && size >= 8) {
-                uint32_t discard = 0;
-                std::memcpy(&discard, side + 4, 4);
-                discarded += discard;
-            }
         }
         av_packet_unref(m_packet);
     }
@@ -482,15 +460,14 @@ TAudioFileStatus FFmpegAudioReader::count_frames()
         return open_error(QStringLiteral("no audio in it"));
     }
     avcodec_flush_buffers(m_codec);
-    if (m_priming == 0 && m_codec->codec_id == AV_CODEC_ID_AAC && m_secondTimestamp != AV_NOPTS_VALUE) {
+    m_firstTimestamp = m_firstFrameStamp;
+    if (m_firstTimestamp == m_startTimestamp && m_codec->codec_id == AV_CODEC_ID_AAC && m_secondTimestamp != AV_NOPTS_VALUE) {
         // ADTS has no word on priming and the decoder none either: one AAC frame,
         // as FAAD leaves out
-        m_priming = av_rescale_q(m_firstDuration, stream->time_base, rate);
         m_firstTimestamp = m_secondTimestamp;
-    } else {
-        place_frame_zero();
     }
-    return take_length(av_rescale_q(duration, stream->time_base, rate) - m_priming - discarded);
+    m_firstFrameStamp = m_firstTimestamp;
+    return take_length(av_rescale_q(duration - (m_firstTimestamp - m_startTimestamp), stream->time_base, rate));
 }
 
 TAudioFileStatus FFmpegAudioReader::take_length(int64_t frames)
@@ -502,13 +479,22 @@ TAudioFileStatus FFmpegAudioReader::take_length(int64_t frames)
     return {};
 }
 
+int64_t FFmpegAudioReader::frame_stamp() const
+{
+    return m_frameBuffer->pts != AV_NOPTS_VALUE ? m_frameBuffer->pts : m_frameBuffer->best_effort_timestamp;
+}
+
 int64_t FFmpegAudioReader::position_of_frame() const
 {
     const AVStream* stream = m_format->streams[m_stream];
-    const int64_t timestamp = m_frameBuffer->pts != AV_NOPTS_VALUE ? m_frameBuffer->pts : m_frameBuffer->best_effort_timestamp;
+    const int64_t timestamp = frame_stamp();
     // No stamp: it follows the frame before
     if (timestamp == AV_NOPTS_VALUE) {
         return m_decodedFirst + m_decodedCount;
+    }
+    // The first frame is frame 0, whatever comes after it
+    if (timestamp == m_firstFrameStamp) {
+        return 0;
     }
     return av_rescale_q(av_sat_sub64(timestamp, m_firstTimestamp), stream->time_base, AVRational{1, int(m_rate)});
 }
@@ -523,12 +509,7 @@ bool FFmpegAudioReader::decode_next()
                 m_lastError = QStringLiteral("the audio's format changes inside the file");
                 return false;
             }
-            // The first packet's stamp can say nothing of its place: it can come
-            // twice at the start of a file. A later packet, when the first did not
-            // decode, has its own stamp
-            const bool firstPacket = m_frameBuffer->pts == m_startTimestamp || m_frameBuffer->best_effort_timestamp == m_startTimestamp;
-            m_decodedFirst = m_fromStart && firstPacket ? -m_priming : position_of_frame();
-            m_fromStart = false;
+            m_decodedFirst = position_of_frame();
             m_decodedCount = m_frameBuffer->nb_samples;
             return true;
         }
@@ -562,14 +543,14 @@ TAudioFileStatus FFmpegAudioReader::seek_frame(nframes_t frame)
     Q_ASSERT(frame < m_frames);
     const AVStream* stream = m_format->streams[m_stream];
     const AVRational rate{1, int(m_rate)};
-    m_fromStart = int64_t(frame) <= PreRollFrames;
-    const int64_t target = m_fromStart ? m_startDts : m_firstTimestamp + av_rescale_q(int64_t(frame) - PreRollFrames, rate, stream->time_base);
+    const bool fromStart = int64_t(frame) <= PreRollFrames;
+    const int64_t target = fromStart ? m_startDts : m_firstTimestamp + av_rescale_q(int64_t(frame) - PreRollFrames, rate, stream->time_base);
     if (int error = av_seek_frame(m_format, m_stream, target, AVSEEK_FLAG_BACKWARD); error < 0) {
         return seek_failed(frame, words_of(error));
     }
     // A flush leaves the window of the last block: the file's first frames would
     // differ from a read from the start
-    if (m_fromStart) {
+    if (fromStart) {
         if (TAudioFileStatus opened = open_codec(); !opened) {
             return seek_failed(frame, opened.error().detail);
         }
@@ -579,17 +560,10 @@ TAudioFileStatus FFmpegAudioReader::seek_frame(nframes_t frame)
     m_decoderDrained = false;
     m_decodedCount = 0;
     m_lastError.clear();
-    // From the file's start a gap is packets that did not decode: silence
-    bool landed = m_fromStart;
     while (m_decodedCount == 0 || m_decodedFirst + m_decodedCount <= int64_t(frame)) {
         if (!decode_next()) {
             return seek_failed(frame, m_lastError);
         }
-        // Past the frame already: the file has nothing before it to start from
-        if (!landed && m_decodedFirst > int64_t(frame)) {
-            return seek_failed(frame, QStringLiteral("no packet to start from"));
-        }
-        landed = true;
     }
     return seek_landed(frame);
 }
