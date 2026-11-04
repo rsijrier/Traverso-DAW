@@ -286,6 +286,10 @@ T29 onwards. (Not to confuse with the requirement numbers R1–R28 of
   + `rand()` seeded by seconds; collisions possible across seconds and between
   two instances. Investigate where uniqueness is assumed, then a stronger
   scheme (format change through the project converter).
+  2026-11-04: branch `object-ids` (`doc/design/object-ids.md`) gives tracks,
+  clips and songs new ids, saved as `objectid` next to the old `id`. Left of
+  T14: references between objects on the new ids, the project UUID, the
+  conversion of old projects (T42), then the old ids go.
 - **T15 (medium): each lib and a headless test on its own.** File format
   enums out of `support/defines.h` into audiofileio; the encode settings
   without dsp headers; the app without ALSA and lilv headers.
@@ -938,6 +942,37 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T93 Plugin order** (Remon, 2026-11-02): the order of plugins must be changeable,
   in the way it should be. `MovePlugin` was never finished: it moves the view, not
   the chain, and does not return in the controllers work. To design.
+- **T94 `--dump-shortcut-table` crashes at exit** (found 2026-11-04): the table is
+  written and identical, then the process ends with SIGSEGV, so
+  `tests/shortcut-parity/check.sh` stops with 139. Also with master's build of
+  2026-11-02; under gdb it does not crash. Not looked into.
+- **T95 The `TTrack` split and the processing node as composition** (Remon,
+  2026-11-04; after `object-ids`): `TTrack` the generic track, `TAudioMixerTrack`
+  with `audio()` on top, `TAudioTrack` and `TBusTrack` below it; `TAudioClip`
+  has its processing node instead of being one; the 13 places that can only fail
+  at run time become compiler-checked. Assessment kept locally.
+- **T96 The clips of a removed track or song stay in use** (Fable's fix review,
+  2026-11-04; Remon: a task): `TSession::private_remove_track()` and
+  `TProject::private_remove_sheet()` leave the clips in the `TAudioClipManager`
+  and do not mark them removed in `TResourcesManager`, so `is_clip_in_use()`
+  stays true. Read in the code, not seen at run time: the resources widget keeps
+  them black, the song's end (`update_last_frame()`) and probably the snap list
+  count them, they are saved as in use and stay in the file for good after the
+  next load (an unused clip writes its old DOM node back), and since `object-ids`
+  each gives an "owner does not exist" warning at every load. Proposal: removing
+  a track or song takes its clips out through `remove_clip()`, its undo puts them
+  back through `add_clip()`; old code with a new role, so to Remon first.
+- **T97 Lifetime of objects and the history stack** (Remon, 2026-11-04: should be
+  a task already, not found in `doc/status.md`, `doc/design` or the notes, so
+  written here; merge it if it turns up): who deletes a removed track, clip or
+  song, and when; what the history stack holds. With it the id questions: a
+  removed object stays in the pool as long as it lives (findable for undo, same
+  id after undo); removed clips that are not copies are saved and come back
+  after a reload, with no history left, as unused clips that are never deleted;
+  when such a clip, and its id, may go; T96's clips of a removed track or song.
+- **T98 The id log lines native in the log** (Remon, 2026-11-04): the summary and
+  the lines per song and track after a load are temporary code in `TProject.cpp`
+  (`log_object_ids()`, `log_track()`); they go once the log can do this itself.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.
