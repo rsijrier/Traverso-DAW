@@ -53,6 +53,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "SpectralMeter.h"
 #include "CorrelationMeter.h"
 #include "Debugger.h"
+#include "TAudioClip.h"
+
+// find() casts to the Object of the tag asked for: each exact tag's Object must
+// derive from the Object of every wider tag that accepts it. AudioMixerTrackTag
+// joins when TAudioMixerTrack exists
+static_assert(objects_fit<TrackTag, AudioTrackTag, BusTrackTag, SongMasterTag, ProjectMasterTag, BounceTrackTag>());
+static_assert(objects_fit<ClipTag, AudioClipTag>());
 
 #include "qapplication.h"
 #include "qthread.h"
@@ -111,7 +118,8 @@ TProject::TProject(TAudioDevice& device, const QString& title)
 
     m_exportSpecification = nullptr;
 
-    m_masterOutBusTrack = new MasterOutSubGroup(this, "");
+    // One to one with the project, which has no number: its id is derived on 0
+    m_masterOutBusTrack = m_objects.make_owned<MasterOutSubGroup, ProjectMasterTag>(0, this, "");
     // FIXME: m_masterOut is a Track, but at this point in time, Track can't
     // get a reference to us via pm().get_project();
     connect(m_masterOutBusTrack, &TBusTrack::routingConfigurationChanged, this, &TProject::track_property_changed);
@@ -184,7 +192,7 @@ int TProject::create(int sheetcount, int numtracks)
         // of them as one event when it ends.
         TRtTransaction transaction;
         for (int i=0; i< sheetcount; i++) {
-            TSheet* sheet = new TSheet(this, numtracks);
+            TSheet* sheet = m_objects.make<TSheet>(this, numtracks);
             m_sheets.add(sheet, transaction);
         }
     }
@@ -213,6 +221,39 @@ int TProject::create_audiosources_dir()
 
     return 1;
 
+}
+
+static void log_track(TTrack* track, const std::string& owner)
+{
+    const std::string id = TObjectIds::to_string(track->object_id().to_storage());
+    const std::string name = track->get_name().toStdString();
+    if (auto* audioTrack = qobject_cast<TAudioTrack*>(track)) {
+        TLOG_D("ids", "{} owner {} '{}', {} clips", id, owner, name, audioTrack->get_audioclips().size());
+    } else {
+        TLOG_D("ids", "{} owner {} '{}'", id, owner, name);
+    }
+}
+
+// After a load: one line for the summary, and in debug one per song and track,
+// to compare two loads of the same project. Temporary, with log_track(): goes
+// once the log can do this itself (T98)
+void TProject::log_object_ids(int warnings, bool invariantHolds) const
+{
+    TLOG_I("ids", "ids: {} objects, next {}, {} warnings, invariant {}", m_objectPool.count(), m_idGenerator.next(),
+           warnings, invariantHolds ? "holds" : "broken");
+    log_track(m_masterOutBusTrack, "-");
+    for (TTrack* track : get_tracks()) {
+        log_track(track, "-");
+    }
+    for (TSheet* sheet : m_sheets.gui_items()) {
+        const std::string song = TObjectIds::to_string(sheet->object_id().to_storage());
+        TLOG_D("ids", "{} '{}'", song, sheet->get_name().toStdString());
+        log_track(sheet->get_master_out_bus_track(), song);
+        log_track(sheet->get_bounce_track(), song);
+        for (TTrack* track : sheet->get_tracks()) {
+            log_track(track, song);
+        }
+    }
 }
 
 int TProject::load(const QString& projectfile)
@@ -283,6 +324,9 @@ int TProject::load(const QString& projectfile)
     m_rate = e.attribute( "rate", "" ).toUInt();
     m_bitDepth = e.attribute( "bitdepth", "" ).toUInt();
     set_id(e.attribute("id", "0").toLongLong());
+    // Before anything is loaded: an object of the file without an id gets a
+    // number above all saved ones
+    m_objects.restore_sequence(docElem, e);
     m_sheetsAreTrackFolder = e.attribute("sheeTSMPetrackfolder", "0").toInt();
     m_importDir = e.attribute("importdir", QDir::homePath());
 
@@ -365,6 +409,7 @@ int TProject::load(const QString& projectfile)
 
     QDomNode masterOutNode = docElem.firstChildElement("MasterOut");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
+    m_objects.check_owned<ProjectMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack), masterOutNode.firstChildElement(), 0);
     // Force the proper name for our Master Bus
     m_masterOutBusTrack->set_name(tr("Master"));
 
@@ -405,7 +450,7 @@ int TProject::load(const QString& projectfile)
         TRtTransaction transaction;
 
         while(!busTrackNode.isNull()) {
-            TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
+            TBusTrack* busTrack = m_objects.load<TBusTrack>(busTrackNode.toElement(), this, busTrackNode);
             busTrack->set_state(busTrackNode);
             private_add_track(busTrack, transaction);
 
@@ -424,7 +469,7 @@ int TProject::load(const QString& projectfile)
     // Load all the Sheets
     while(!sheetNode.isNull())
     {
-        TSheet* sheet = new TSheet(this, sheetNode);
+        TSheet* sheet = m_objects.load<TSheet>(sheetNode.toElement(), this, sheetNode);
         {
             // Joins the transaction TProjectManager::load_project() opens around
             // the load: a transaction opened while another one is open hands
@@ -449,6 +494,16 @@ int TProject::load(const QString& projectfile)
 
         workSheetNode = workSheetNode.nextSibling();
     }
+
+    // The load check: every owner reference against the file's structure, and
+    // every derived object with the owner its number names
+    m_objects.check_owner_references();
+    const QList<uint64_t> outOfPlace = m_objectPool.owners_out_of_place();
+    for (const uint64_t id : outOfPlace) {
+        TLOG_W("ids", "{} is not with the owner its id names", TObjectIds::to_string(id));
+    }
+    Q_ASSERT(outOfPlace.isEmpty());
+    log_object_ids(m_objects.take_warning_count(), outOfPlace.isEmpty());
 
 
     qint64 activeSheetId = e.attribute("currentsheetid", "0" ).toLongLong();
@@ -573,6 +628,7 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
         properties.setAttribute("title", "Template Project File!!");
     }
     properties.setAttribute("importdir", m_importDir);
+    m_objects.write_sequence(properties);
 
     projectNode.appendChild(properties);
 

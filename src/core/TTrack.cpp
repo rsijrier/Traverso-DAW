@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TTrack.h"
+#include "TObjectFactory.h"
 #include "TRtTransaction.h"
 
 #include "AudioBus.h"
@@ -59,6 +60,11 @@ TTrack::TTrack(TSession* session)
     }
 }
 
+QObject* TTrack::id_owner() const
+{
+    return m_session;
+}
+
 TTrack::~TTrack()
 {
     // FIXME, we delete ourselves, but audiodevice could still be
@@ -73,6 +79,10 @@ void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
 {
     if (! istemplate ) {
         node.setAttribute("id", get_id());
+        TObjectFactory::write(node, object_id());
+        if (TSheet* sheet = qobject_cast<TSheet*>(m_session)) {
+            TObjectFactory::write_owner(node, sheet->object_id());
+        }
     } else {
         node.setAttribute("id", TraversoDAW::Utils::create_id());
     }

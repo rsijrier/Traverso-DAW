@@ -31,6 +31,8 @@ class TBusTrack : public TTrack
     Q_OBJECT
 
 public:
+    using IdTag = BusTrackTag;
+
     TBusTrack(TSession* session, const QString& name, int channelCount);
     TBusTrack(TSession* session, const QDomNode node);
     ~TBusTrack();
@@ -56,6 +58,9 @@ class MasterOutSubGroup : public TBusTrack
     Q_OBJECT
 
 public:
+    // Two tags, the song's master and the project's: the maker names one
+    using IdTag = void;
+
     MasterOutSubGroup(TSession* session, const QString& name) : TBusTrack(session, name, 2) {}
     MasterOutSubGroup(TSession* session, const QDomNode node) : TBusTrack(session, node) {}
     ~MasterOutSubGroup() {}

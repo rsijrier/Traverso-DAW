@@ -29,6 +29,7 @@ This file is part of Traverso
 #include "TLog.h"
 #include "Debugger.h"
 #include "TDenormals.h"
+#include "TObjectIdTags.h"
 
 #include <QTimer>
 
@@ -45,6 +46,7 @@ Traverso::Traverso(int &argc, char **argv )
     qRegisterMetaType<TInformUserData>("InfoStruct");
     qRegisterMetaType<TTimeRef>("TTimeRef");
     qRegisterMetaType<QList<QObject*>>("QList<QObject*>");
+    register_object_id_names();
 
     tsmp();
     m_audioDevice = std::make_unique<TAudioDevice>();

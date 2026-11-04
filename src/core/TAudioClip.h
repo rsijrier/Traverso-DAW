@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "TAudioProcessingNode.h"
+#include "TObjectIdTags.h"
 #include "TProcessContext.h"
 #include "TRtList.h"
 #include "TSplitableTimeLineEntity.h"
@@ -48,6 +49,18 @@ public:
     TAudioClip(const QString& name);
     TAudioClip(const QDomNode& node);
     ~TAudioClip() override;
+
+    using IdTag = AudioClipTag;
+    // The id, given by TObjectFactory when it made or loaded the clip; a copy
+    // is a new clip with its own (doc/design/object-ids.md)
+    AudioClipId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+    // Its owner: the track it is on while it is in use, nullptr when on none. A
+    // removed clip is on none, also while it keeps its track for undo
+    QObject* id_owner() const;
 
     enum RecordingStatus {
         NO_RECORDING,
@@ -130,6 +143,8 @@ public:
     void removed_from_track();
 
 private:
+    friend class TObjectFactory;
+    AudioClipId m_objectId;
     TRtList<TFadeCurve>             m_fades;
     TSheet*                         m_sheet;
     TAudioTrack*                    m_track;

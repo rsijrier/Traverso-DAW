@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProcessContext.h"
 #include "TPeakBuildService.h"
 #include "TIOGroup.h"
+#include "TObjectIdTags.h"
 #include "TSession.h"
 #include <QDomNode>
 #include "TTypes.h"
@@ -56,8 +57,10 @@ class TSheet : public TSession
     Q_OBJECT
 
 public:
-    TSheet(TProject* project, int numtracks=0);
-    TSheet(TProject* project, const QDomNode &node);
+    // Made by TObjectFactory, which gives the id first: the sheet's master and
+    // bounce track derive theirs from it
+    TSheet(SongId id, TProject* project, int numtracks=0);
+    TSheet(SongId id, TProject* project, const QDomNode &node);
     ~TSheet();
 
     // Get functions
@@ -72,6 +75,18 @@ public:
     int get_audio_track_count() const {return m_audioTracks.gui_items().size();}
 
     TProject* get_project() const {return m_project;}
+
+    using IdTag = SongTag;
+    // The id, given by TObjectFactory when it made or loaded the song
+    // (doc/design/object-ids.md)
+    SongId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+    // Its owner is the project, which has no id
+    QObject* id_owner() const { return nullptr; }
+    TBounceTrack* get_bounce_track() const { return m_bounceTrack; }
     // The peak file of an audio source, built in this sheet's DiskIO idle
     // time (TPeakBuildService)
     TPeakBuild request_peak_build(const QString& audioPath, const QString& peakPath, uint rate, int channelCount, qint64 frames);
@@ -153,6 +168,8 @@ private:
     void push_recording_session();
     void drop_empty_take(TAudioClip* clip);
     TProject*            m_project;
+    friend class TObjectFactory;
+    SongId               m_objectId;
     TAudioDeviceClient*	m_audiodeviceClient{};
     AudioBus*           m_renderBus{};
     AudioBus*           m_clipRenderBus{};

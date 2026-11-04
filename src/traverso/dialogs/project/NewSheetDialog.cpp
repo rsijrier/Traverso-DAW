@@ -81,10 +81,10 @@ void NewSheetDialog::accept()
 	for (int i=0; i<count; ++i) {
 		TSheet* sheet;
 		if (usetemplate) {
-			sheet = new TSheet(m_project);
+			sheet = m_project->objects().make<TSheet>(m_project);
 			sheet->set_state(node);
 		} else {
-			sheet = new TSheet(m_project, trackcount);
+			sheet = m_project->objects().make<TSheet>(m_project, trackcount);
 		}
                 sheet->set_name(title);
 		group->add_command(m_project->add_sheet(sheet));

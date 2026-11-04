@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #pragma once
 
 #include "TAudioProcessingNode.h"
+#include "TObjectIdTags.h"
 #include "TRtList.h"
 #include "TRtValue.h"
 #include "TTypes.h"
@@ -42,13 +43,23 @@ public:
     TTrack (TSession* session=0);
     virtual ~TTrack ();
 
+    // The id, given by TObjectFactory when it made or loaded the track
+    // (doc/design/object-ids.md)
+    TrackId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+    // Its owner: the song or the project it was made in
+    QObject* id_owner() const;
+
     enum TRACKTYPE{
         AUDIO = 0,
         BUS = 1,
         BOUNCE = 2
     };
 
-    static const int INITIAL_HEIGHT = 90;
+    static constexpr int INITIAL_HEIGHT = 90;
 
     void get_state(QDomDocument& doc, QDomElement& element, bool istemplate=false);
     int get_sort_index() const;
@@ -128,6 +139,9 @@ protected:
     void set_input_bus(AudioBus* bus, TRtTransaction& transaction);
 
 private:
+    friend class TObjectFactory;
+    TrackId m_objectId;
+
     void process_send(TSend* send, nframes_t nframes);
     void private_add_post_send(TSend* postSend, TRtTransaction& transaction);
     void private_add_pre_send(TSend* preSend, TRtTransaction& transaction);

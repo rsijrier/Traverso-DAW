@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TInformUser.h"
 #include "TSheet.h"
 #include "TProject.h"
+#include "TObjectFactory.h"
 #include "TAudioTrack.h"
 #include "TAudioClip.h"
 #include "TExportSpecification.h"
@@ -78,9 +79,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 
-TSheet::TSheet(TProject* project, int numtracks)
+TSheet::TSheet(SongId id, TProject* project, int numtracks)
     : TSession(project->audio_device())
     , m_project(project)
+    , m_objectId(id)
 {
     PENTERCONS;
     m_name = tr("Sheet %1").arg(project->get_num_sheets() + 1);
@@ -93,16 +95,17 @@ TSheet::TSheet(TProject* project, int numtracks)
     for (int i=1; i <= numtracks; i++) {
         int height = TAudioTrack::INITIAL_HEIGHT;
         QString trackname = QString("Audio Track %1").arg(i);
-        TAudioTrack* track = new TAudioTrack(this, trackname, height);
+        TAudioTrack* track = m_project->objects().make<TAudioTrack>(this, trackname, height);
         private_add_track(track, transaction);
     }
 
     resize_buffers(audio_device().get_buffer_size());
 }
 
-TSheet::TSheet(TProject* project, const QDomNode& node)
+TSheet::TSheet(SongId id, TProject* project, const QDomNode& node)
     : TSession(project->audio_device())
     , m_project(project)
+    , m_objectId(id)
 {
     PENTERCONS;
 
@@ -170,10 +173,12 @@ void TSheet::init()
     busConfig.name = "Sheet Clip Render Bus";
     m_clipRenderBus = new AudioBus(audio_device(), busConfig);
 
-    m_masterOutBusTrack = new MasterOutSubGroup(this, tr("Sheet Master"));
+    // One to one with the sheet: their ids are derived from the sheet's
+    const uint64_t sequence = TObjectIds::sequence_of(object_id().to_storage());
+    m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(sequence, this, tr("Sheet Master"));
     m_masterOutBusTrack->set_gain(0.5);
 
-    m_bounceTrack = new TBounceTrack(this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(sequence, this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
     // TODO: only on export add and after export remove this post send
     // m_masterOutBusTrack->add_post_send(m_bounceTrack->get_input_bus());
 
@@ -227,12 +232,14 @@ int TSheet::set_state( const QDomNode & node )
     // Force the proper name for our Master Bus Track
     m_masterOutBusTrack->set_name("Sheet Master");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
+    m_project->objects().check_owned<SongMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack),
+                                                    masterOutNode.firstChildElement(), object_id().to_storage());
 
     QDomNode busTracksNode = node.firstChildElement("BusTracks");
     QDomNode busTrackNode = busTracksNode.firstChild();
 
     while(!busTrackNode.isNull()) {
-        TBusTrack* busTrack = new TBusTrack(this, busTrackNode);
+        TBusTrack* busTrack = m_project->objects().load<TBusTrack>(busTrackNode.toElement(), this, busTrackNode);
         busTrack->set_state(busTrackNode);
         private_add_track(busTrack, transaction);
 
@@ -243,7 +250,7 @@ int TSheet::set_state( const QDomNode & node )
     QDomNode trackNode = tracksNode.firstChild();
 
     while(!trackNode.isNull()) {
-        TAudioTrack* track = new TAudioTrack(this, trackNode);
+        TAudioTrack* track = m_project->objects().load<TAudioTrack>(trackNode.toElement(), this, trackNode);
         track->set_state(trackNode);
         private_add_track(track, transaction);
 
@@ -275,6 +282,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
 
     if (! istemplate) {
         sheetNode.setAttribute("id", get_id());
+        TObjectFactory::write(sheetNode, object_id());
     } else {
         sheetNode.setAttribute("id", TraversoDAW::Utils::create_id());
     }

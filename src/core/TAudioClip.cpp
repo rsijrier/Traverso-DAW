@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TContextItem.h"
 #include "TBufferedAudioStreamReader.h"
 #include "TAudioClip.h"
+#include "TObjectFactory.h"
 #include "TLocation.h"
 #include "TBufferedAudioStreamWriter.h"
 #include "TSheet.h"
@@ -85,6 +86,19 @@ TAudioClip::TAudioClip(const QString& name)
 
     update_global_configuration();
     connect(&config(), &TConfig::configChanged, this, &TAudioClip::update_global_configuration);
+}
+
+QObject* TAudioClip::id_owner() const
+{
+    // A removed clip keeps m_track for undo; its project's resources manager
+    // knows whether it is in use. Clips of a removed track or song still count
+    // as in use (T96). get_id() is not const as it makes a missing old id; a
+    // clip on a track has one, the resources manager holds it by it
+    const qint64 oldId = const_cast<TAudioClip*>(this)->get_id();
+    if (m_track && m_sheet->get_project()->get_audiosource_manager()->is_clip_in_use(oldId)) {
+        return m_track;
+    }
+    return nullptr;
 }
 
 TAudioClip::TAudioClip(const QDomNode& node)
@@ -209,6 +223,10 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     node.setAttribute("take", m_isTake);
     node.setAttribute("clipname", m_name );
     node.setAttribute("id", get_id() );
+    TObjectFactory::write(node, object_id());
+    if (id_owner()) {
+        TObjectFactory::write_owner(node, m_track->object_id());
+    }
     node.setAttribute("sheet", m_sheetId );
     node.setAttribute("locked", m_isLocked);
 
@@ -738,7 +756,7 @@ TAudioClip* TAudioClip::create_copy( )
     Q_ASSERT(m_track);
     QDomDocument doc("AudioClip");
     QDomNode clipState = get_state(doc);
-    auto clip = new TAudioClip(m_name);
+    auto clip = m_sheet->get_project()->objects().make<TAudioClip>(m_name);
     clip->set_sheet(m_sheet);
     clip->set_track(m_track);
     clip->set_state(clipState);

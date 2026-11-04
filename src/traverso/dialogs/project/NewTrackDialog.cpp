@@ -92,10 +92,10 @@ void NewTrackDialog::create_track()
         TTrack* track;
 
         if (isBusTrack->isChecked()) {
-                track = new TBusTrack(session, title, 2);
+                track = m_project->objects().make<TBusTrack>(session, title, 2);
 
         } else {
-                track = new TAudioTrack(sheet, title, TAudioTrack::INITIAL_HEIGHT);
+                track = m_project->objects().make<TAudioTrack>(sheet, title, TAudioTrack::INITIAL_HEIGHT);
         }
 
         int channelCount = 1;

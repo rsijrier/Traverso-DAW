@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TBufferedAudioStreamReader.h"
 #include "TInformUser.h"
 #include "TAudioClip.h"
+#include "TObjectFactory.h"
 #include "TProject.h"
 #include "TSheet.h"
 #include "Utils.h"
@@ -195,8 +196,11 @@ QDomNode TResourcesManager::get_state( QDomDocument doc )
 			audioClipsElement.appendChild(clip->get_state(doc));
 		} else {
 			// In case it wasn't we should use the 'old' domNode which 
-			// was set during set_state();
-			audioClipsElement.appendChild(clip->get_dom_node()); 
+			// was set during set_state(); with the id it got at the load, so
+			// that it keeps it at the next one
+			QDomElement element = clip->get_dom_node().toElement();
+			TObjectFactory::write(element, clip->object_id());
+			audioClipsElement.appendChild(element);
 		}
 	}
 	
@@ -225,7 +229,7 @@ int TResourcesManager::set_state( const QDomNode & node )
 	QDomNode clipsNode = node.firstChildElement("AudioClips").firstChild();
 	
 	while(!clipsNode.isNull()) {
-		TAudioClip* clip = new TAudioClip(clipsNode);
+		TAudioClip* clip = m_project->objects().load<TAudioClip>(clipsNode.toElement(), clipsNode);
 		ClipData* data = new ClipData();
 		data->clip = clip;
 		m_clips.insert(clip->get_id(), data);
@@ -393,7 +397,7 @@ TAudioClip* TResourcesManager::get_clip(qint64 id)
 TAudioClip* TResourcesManager::new_audio_clip(const QString& name)
 {
 	PENTER;
-	TAudioClip* clip = new TAudioClip(name);
+	TAudioClip* clip = m_project->objects().make<TAudioClip>(name);
 	ClipData* data = new ClipData();
 	data->clip = clip;
 	// In use from the start. Not through get_clip(): that sets the source a

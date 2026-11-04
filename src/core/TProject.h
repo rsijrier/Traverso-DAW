@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QList>
 #include <QDomNode>
 
+#include "TObjectFactory.h"
 #include "TSession.h"
 #include "TRtList.h"
 #include "TProcessContext.h"
@@ -92,6 +93,10 @@ public :
     TTimeRef get_transport_location() const T_REALTIME_SAFE;
 
     TResourcesManager* get_audiosource_manager() const;
+    // Makes and loads the objects with an id, and finds them by it
+    // (doc/design/object-ids.md)
+    TObjectFactory& objects() { return m_objects; }
+    TObjectPool& object_pool() { return m_objectPool; }
     TPeakBuildService* get_peak_builds() const { return m_peakBuilds.get(); }
     QString get_title() const;
     QString get_engineer() const;
@@ -174,6 +179,10 @@ private:
     TProject(TAudioDevice& device, const QString& title);
 
 
+    // First: everything made below gets its id from them
+    TObjectIdGenerator       m_idGenerator;
+    TObjectPool              m_objectPool{this};
+    TObjectFactory           m_objects{m_idGenerator, m_objectPool};
     TResourcesManager*       m_resourcesManager;
     std::unique_ptr<TPeakBuildService> m_peakBuilds;
     TRtList<TSheet>          m_sheets;
@@ -231,6 +240,7 @@ private:
     TAudioDeviceSetup m_audioDeviceSetup;
 
     void set_project_closed();
+    void log_object_ids(int warnings, bool invariantHolds) const;
 
     friend class TProjectManager;
     
