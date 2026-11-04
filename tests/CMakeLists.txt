@@ -17,6 +17,7 @@ add_subdirectory(streams)
 add_subdirectory(resampling)
 add_subdirectory(recording)
 add_subdirectory(routing)
+add_subdirectory(core)
 
 # Under ThreadSanitizer every test gets tests/tsan.supp (reports inside Qt and
 # glib, which are not instrumented; see the file), and no debuginfod: a

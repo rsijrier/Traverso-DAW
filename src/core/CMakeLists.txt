@@ -37,6 +37,9 @@ add_library(traversocore STATIC
     TBusTrack.cpp
     TSend.cpp
     TRoutingGraph.h
+    TObjectIdTags.h
+    TObjectPool.h
+    TObjectFactory.h
     TSession.cpp
     TSheet.cpp
     TTrack.cpp
