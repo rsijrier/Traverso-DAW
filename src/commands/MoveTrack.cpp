@@ -26,10 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSheetView.h"
 #include "TTrack.h"
 #include "TTrackView.h"
-#include "TProject.h"
-#include "TProjectManager.h"
 
-#include <QMenu>
 
 #include "Debugger.h"
 
@@ -137,42 +134,3 @@ void MoveTrack::to_top()
 
 
 // horribly broken :D
-void MoveTrack::move_to_sheet()
-{
-    TProject* project = pm().get_project();
-
-    if (!project) {
-        return;
-    }
-
-    QList<TSheet*> sheets = project->get_sheets();
-
-    QMenu menu;
-
-    foreach(TSheet* sheet, sheets) {
-        QAction* action = menu.addAction(sheet->get_name());
-        action->setData(sheet->get_id());
-    }
-
-    QAction* action = menu.exec(QCursor::pos());
-
-    if (!action) {
-        return;
-    }
-
-    qlonglong id = action->data().toLongLong();
-
-
-    TTrack* track = m_trackView->get_track();
-    TSheet* destination = project->get_sheet(id);
-    TSheet* orig = qobject_cast<TSheet*>(track->get_session());
-
-    if (!destination || !orig) {
-        return;
-    }
-
-    TCommand::process_command(orig->remove_track(track));
-    TCommand::process_command(destination->add_track(track));
-
-    m_sv->browse_to_track(track);
-}
