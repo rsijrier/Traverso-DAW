@@ -195,10 +195,11 @@ QDomNode TResourcesManager::get_state( QDomDocument doc )
 		if (data->inUse) {
 			audioClipsElement.appendChild(clip->get_state(doc));
 		} else {
-			// In case it wasn't we should use the 'old' domNode which 
+			// In case it wasn't we should use the 'old' domNode which
 			// was set during set_state(); with the id it got at the load, so
-			// that it keeps it at the next one
-			QDomElement element = clip->get_dom_node().toElement();
+			// that it keeps it at the next one. A copy in this document: the
+			// clip's own node stays untouched, its document may be gone
+			QDomElement element = doc.importNode(clip->get_dom_node(), true).toElement();
 			TObjectFactory::write(element, clip->object_id());
 			audioClipsElement.appendChild(element);
 		}
