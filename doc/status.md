@@ -1037,6 +1037,15 @@ From the GPU waveform test program, clip edges in variant A (branch
   (TInputEventDispatcher only, about 50 to 80 lines) in
   `reports/clip-processing-node-2026-11-05/fable-review.md`. Not to be
   planned twice: it is that point.
+- **Note for `TSplitEdit`** (Remon, 2026-11-06; the edit is designed in
+  `doc/design/controllers.md` on branch `controllers`, after the ids and the
+  composition): `TSplitableTimeLineEntity` inherits `TTimeLineEntity`
+  virtually, but there is no diamond (`TAudioClip` has the one path). The
+  virtual base makes casts down possible only with `dynamic_cast`: five in
+  `TSplitEntityController.cpp`, two in `TSheet.cpp:1348-1351` whose result goes
+  into a list unchecked. When Split is built again on ids, decide whether
+  "splitable" stays a base class or is something the edit asks of the object,
+  drop the `virtual`, and with it the `dynamic_cast`s.
 - **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
   invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
   turns what the function returns into the dispatcher's `TCommand*` at
