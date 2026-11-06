@@ -1037,18 +1037,22 @@ From the GPU waveform test program, clip edges in variant A (branch
   (TInputEventDispatcher only, about 50 to 80 lines) in
   `reports/clip-processing-node-2026-11-05/fable-review.md`. Not to be
   planned twice: it is that point.
-- **Note for `TSplitEdit`** (Remon, 2026-11-06; the edit is designed in
-  `doc/design/controllers.md` on branch `controllers`, after the ids and the
-  composition): `TSplitableTimeLineEntity` inherits `TTimeLineEntity`
-  virtually, but there is no diamond (`TAudioClip` has the one path). The
-  virtual base makes casts down possible only with `dynamic_cast`: five in
+- **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
+  brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
+  § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
+  `TClip` (id, position, length, track) → `TAudioClip`, later video and text;
+  `ClipTag::Object = TClip` with a `static_assert` that it is splitable; order:
+  ids, the composition (done), `TClip`, then `TSplitEdit`).
+  `TSplitableTimeLineEntity` inherits `TTimeLineEntity` virtually, but there
+  is no diamond, also not with `TClip` in the chain. The virtual base makes
+  casts down possible only with `dynamic_cast`: five in
   `TSplitEntityController.cpp`, two in `TSheet.cpp:1348-1351` whose result goes
-  into a list unchecked. Dropping the `virtual` alone does not remove them:
-  it only allows `static_cast`, which checks nothing. They go when the type is
-  not lost on the way: `TSplitEdit` takes typed ids (`pool.find()` gives a
-  `TAudioClip*`), and a split result says what it holds instead of
-  `QList<TTimeLineEntity*>`. Then decide whether "splitable" stays a base
-  class, and drop the `virtual` with it.
+  into a list unchecked. Dropping the `virtual` alone does not remove them: it
+  only allows `static_cast`, which checks nothing. They go when the type is
+  not lost on the way: `pool.find(ClipId)` gives a `TClip*`, the split is a
+  virtual function on `TClip`, its result holds `TClip*`s instead of
+  `QList<TTimeLineEntity*>`. `TClip` sets the chain up again: drop the
+  `virtual` there.
 - **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
   invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
   turns what the function returns into the dispatcher's `TCommand*` at
