@@ -143,6 +143,14 @@ class TGainBase : QObject
 {
     Q_OBJECT
 };
+class TGainShowAutomationBase : QObject
+{
+    Q_OBJECT
+};
+class TMuteBase : QObject
+{
+    Q_OBJECT
+};
 class TToggleVerticalBase : QObject
 {
     Q_OBJECT

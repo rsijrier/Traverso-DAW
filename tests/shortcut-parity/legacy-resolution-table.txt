@@ -16,12 +16,18 @@ AudioClipExternalProcessing	class=TAudioClip	base=	usesbase=0	plugin=TraversoCom
 AudioClipFadeLength	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Adjust Length	submenu=Fade	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 AudioClipFadeLengthBoth	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=16777248	ownkeys=F	ownmodifiers=16777248	description=Adjust Length Both	submenu=Fade	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=both
 AudioClipGain	class=TAudioClip	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=G	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipGainShowAutomation	class=TAudioClip	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioClipLock	class=TAudioClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Lock	submenu=Utilities	sortorder=11	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipMute	class=TAudioClip	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioClipSetAudioFile	class=TAudioClipView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=16777248	ownkeys=J	ownmodifiers=16777248	description=Reset Audio File	submenu=Utilities	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackGain	class=TAudioTrack	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackGainShowAutomation	class=TAudioTrack	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackInsertSilence	class=TAudioTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=	modifiers=	ownkeys=	ownmodifiers=	description=Insert Silence	submenu=	sortorder=50	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackMute	class=TAudioTrack	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackToggleRecord	class=TAudioTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Record: On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 BusTrackGain	class=TBusTrack	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackGainShowAutomation	class=TBusTrack	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackMute	class=TBusTrack	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ClipSelectionSelect	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=(De)Select	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=toggle_selected
 CopyClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=C;MOUSEBUTTONLEFT	modifiers=16777249	ownkeys=C;MOUSEBUTTONLEFT	ownmodifiers=16777249	description=Copy	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=copy
 CorrelationMeterToggleDisplayRange	class=CorrelationMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle display range	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -54,7 +60,7 @@ GainDecrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys
 GainIncrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
 GainNumericalInput	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Input dB value	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 GainReset	class=TFaderGroupCommand	base=ResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
-GainShowAutomation	class=TAudioProcessingNode	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainShowAutomationBase	class=TGainShowAutomationBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 GainToggleSelection	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=To Selection: On/Off	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ImportAudio	class=TAudioTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=I	modifiers=	ownkeys=I	ownmodifiers=	description=Import Audio	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MainWindowActivateTrackFinder	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=K	modifiers=	ownkeys=K	ownmodifiers=	description=Activate Track Finder	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -81,7 +87,7 @@ MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARR
 MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackUp	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
-Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MuteBase	class=TMuteBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToUpperContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=16777248	ownkeys=UPARROW	ownmodifiers=16777248	description=One Layer Up	submenu=Navigate	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -256,10 +262,10 @@ PlayHeadMove	NUMERICAL		MoveCommandSpeed
 SpectralMeterView	E	16777249	EditSpectralMeterProperties
 SpectralMeterView	L	16777249	SpectralMeterResetAverageCurve
 SpectralMeterView	M		SpectralMeterToggleDisplayRange
-TAudioClip	A		GainShowAutomation
+TAudioClip	A		AudioClipGainShowAutomation
 TAudioClip	G		AudioClipGain
 TAudioClip	L		AudioClipLock
-TAudioClip	M		Mute
+TAudioClip	M		AudioClipMute
 TAudioClip	N		NormalizeClip
 TAudioClip	P	16777249	AudioClipExternalProcessing
 TAudioClip	S		ClipSelectionSelect
@@ -283,12 +289,10 @@ TAudioPluginView	D		MovePlugin
 TAudioPluginView	E	16777249	EditPluginProperties
 TAudioPluginView	BKSPACE		RemovePlugin
 TAudioPluginView	DELETE		RemovePlugin
-TAudioProcessingNode	A		GainShowAutomation
-TAudioProcessingNode	M		Mute
-TAudioTrack	A		GainShowAutomation
+TAudioTrack	A		AudioTrackGainShowAutomation
 TAudioTrack	G		AudioTrackGain
 TAudioTrack	I		ImportAudio
-TAudioTrack	M		Mute
+TAudioTrack	M		AudioTrackMute
 TAudioTrack	O		Solo
 TAudioTrack	P		TrackPan
 TAudioTrack	R		AudioTrackToggleRecord
@@ -299,9 +303,9 @@ TAudioTrackView	D		MoveTrack
 TAudioTrackView	D	16777248+16777249	FoldTrack
 TAudioTrackView	E	16777249	EditTrackProperties
 TAudioTrackView	F5		TrackAddPlugin
-TBusTrack	A		GainShowAutomation
+TBusTrack	A		BusTrackGainShowAutomation
 TBusTrack	G		BusTrackGain
-TBusTrack	M		Mute
+TBusTrack	M		BusTrackMute
 TBusTrack	O		Solo
 TBusTrack	P		TrackPan
 TBusTrack	BKSPACE		RemoveTrack
@@ -352,6 +356,7 @@ TFaderGroupCommand	UPARROW		GainIncrease
 TFaderGroupCommand	DOWNARROW		GainDecrease
 TFaderGroupCommand	NUMERICAL		GainNumericalInput
 TGainBase	G		GainBase
+TGainShowAutomationBase	A		GainShowAutomationBase
 TMainWindow	MOUSEBUTTONLEFT		TransportSetPosition
 TMainWindow	MOUSEBUTTONRIGHT		ShowContextMenu
 TMainWindow	K		MainWindowActivateTrackFinder
@@ -376,6 +381,7 @@ TMoveCommand	DOWNARROW		MoveCommandDown
 TMoveCommand	PAGEUP		MoveCommandFaster
 TMoveCommand	PAGEDOWN		MoveCommandSlower
 TMoveCommand	NUMERICAL		MoveCommandSpeed
+TMuteBase	M		MuteBase
 TNavigationBaseDown	DOWNARROW		TNavigationBaseDown
 TNavigationBaseLeft	LEFTARROW		TNavigationBaseLeft
 TNavigationBaseRight	RIGHTARROW		TNavigationBaseRight
@@ -424,8 +430,6 @@ TTimeLineRulerView	BKSPACE		RemoveTimeLineRulerMarker
 TTimeLineRulerView	DELETE		RemoveTimeLineRulerMarker
 TToggleBypassBase	M		ToggleBypassBase
 TToggleVerticalBase	L		ToggleVerticalBase
-TTrack	A		GainShowAutomation
-TTrack	M		Mute
 TTrack	O		Solo
 TTrack	P		TrackPan
 TTrack	BKSPACE		RemoveTrack
@@ -495,12 +499,18 @@ AudioClipExternalProcessing	class=TAudioClip	base=	usesbase=0	plugin=TraversoCom
 AudioClipFadeLength	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=	ownkeys=F	ownmodifiers=	description=Adjust Length	submenu=Fade	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=
 AudioClipFadeLengthBoth	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=F	modifiers=16777248	ownkeys=F	ownmodifiers=16777248	description=Adjust Length Both	submenu=Fade	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=0	args=both
 AudioClipGain	class=TAudioClip	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipGainShowAutomation	class=TAudioClip	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioClipLock	class=TAudioClip	base=	usesbase=0	plugin=	alwayssafe=0	keys=L	modifiers=	ownkeys=L	ownmodifiers=	description=Lock	submenu=Utilities	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioClipMute	class=TAudioClip	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioClipSetAudioFile	class=TAudioClipView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=16777248	ownkeys=J	ownmodifiers=16777248	description=Reset Audio File	submenu=Utilities	sortorder=13	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackGain	class=TAudioTrack	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackGainShowAutomation	class=TAudioTrack	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackInsertSilence	class=TAudioTrackView	base=	usesbase=0	plugin=	alwayssafe=0	keys=J	modifiers=	ownkeys=J	ownmodifiers=	description=Insert Silence	submenu=	sortorder=50	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+AudioTrackMute	class=TAudioTrack	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 AudioTrackToggleRecord	class=TAudioTrack	base=	usesbase=0	plugin=	alwayssafe=1	keys=R	modifiers=	ownkeys=R	ownmodifiers=	description=Record: On/Off	submenu=	sortorder=4	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 BusTrackGain	class=TBusTrack	base=GainBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=G	modifiers=	ownkeys=	ownmodifiers=	description=Gain	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackGainShowAutomation	class=TBusTrack	base=GainShowAutomationBase	usesbase=1	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+BusTrackMute	class=TBusTrack	base=MuteBase	usesbase=1	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ClipSelectionSelect	class=TAudioClip	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=(De)Select	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=toggle_selected
 CopyClip	class=TAudioClipView	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=C;MOUSEBUTTONLEFT	modifiers=16777249	ownkeys=C;MOUSEBUTTONLEFT	ownmodifiers=16777249	description=Copy	submenu=	sortorder=9	autorepeat=0,-1,-1	repeatsonitself=0	usex=1	usey=1	args=copy
 CorrelationMeterToggleDisplayRange	class=CorrelationMeterView	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Toggle display range	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -533,7 +543,7 @@ GainDecrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys
 GainIncrease	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW;MOUSESCROLLVERTICALUP	modifiers=	ownkeys=UPARROW;MOUSESCROLLVERTICALUP	ownmodifiers=	description=Increase	submenu=	sortorder=0	autorepeat=1,40,200	repeatsonitself=0	usex=0	usey=0	args=
 GainNumericalInput	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=NUMERICAL	modifiers=	ownkeys=NUMERICAL	ownmodifiers=	description=Input dB value	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 GainReset	class=TFaderGroupCommand	base=ResetBase	usesbase=1	plugin=	alwayssafe=0	keys=R	modifiers=	ownkeys=	ownmodifiers=	description=Reset	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
-GainShowAutomation	class=TAudioProcessingNode	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+GainShowAutomationBase	class=TGainShowAutomationBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=A	modifiers=	ownkeys=A	ownmodifiers=	description=Gain Envelope	submenu=	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 GainToggleSelection	class=TFaderGroupCommand	base=	usesbase=0	plugin=	alwayssafe=0	keys=S	modifiers=	ownkeys=S	ownmodifiers=	description=To Selection: On/Off	submenu=	sortorder=10	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 ImportAudio	class=TAudioTrack	base=	usesbase=0	plugin=TraversoCommands	alwayssafe=0	keys=I	modifiers=	ownkeys=I	ownmodifiers=	description=Import Audio	submenu=	sortorder=8	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MainWindowActivateTrackFinder	class=TMainWindow	base=	usesbase=0	plugin=	alwayssafe=0	keys=K	modifiers=	ownkeys=K	ownmodifiers=	description=Activate Track Finder	submenu=	sortorder=0	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -560,7 +570,7 @@ MoveTrackDown	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARR
 MoveTrackToBottom	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=END	modifiers=	ownkeys=END	ownmodifiers=	description=To Bottom	submenu=	sortorder=3	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackToTop	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=HOME	modifiers=	ownkeys=HOME	ownmodifiers=	description=To Top	submenu=	sortorder=2	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 MoveTrackUp	class=MoveTrack	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=	ownkeys=UPARROW	ownmodifiers=	description=Move Up	submenu=	sortorder=0	autorepeat=1,50,200	repeatsonitself=0	usex=0	usey=0	args=
-Mute	class=TAudioProcessingNode	base=	usesbase=0	plugin=	alwayssafe=1	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
+MuteBase	class=TMuteBase	base=	usesbase=0	plugin=	alwayssafe=0	keys=M	modifiers=	ownkeys=M	ownmodifiers=	description=Mute	submenu=	sortorder=1	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToLowerContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=DOWNARROW	modifiers=16777248	ownkeys=DOWNARROW	ownmodifiers=16777248	description=One Layer Down	submenu=Navigate	sortorder=6	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToTimeLine	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=T	modifiers=	ownkeys=T	ownmodifiers=	description=To Timeline	submenu=Navigate	sortorder=7	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
 NavigateToUpperContext	class=TSheetView	base=	usesbase=0	plugin=	alwayssafe=0	keys=UPARROW	modifiers=16777248	ownkeys=UPARROW	ownmodifiers=16777248	description=One Layer Up	submenu=Navigate	sortorder=5	autorepeat=0,-1,-1	repeatsonitself=0	usex=0	usey=0	args=
@@ -735,10 +745,10 @@ PlayHeadMove	NUMERICAL		MoveCommandSpeed
 SpectralMeterView	E	16777249	EditSpectralMeterProperties
 SpectralMeterView	L		SpectralMeterResetAverageCurve
 SpectralMeterView	M		SpectralMeterToggleDisplayRange
-TAudioClip	A		GainShowAutomation
+TAudioClip	A		AudioClipGainShowAutomation
 TAudioClip	G		AudioClipGain
 TAudioClip	L		AudioClipLock
-TAudioClip	M		Mute
+TAudioClip	M		AudioClipMute
 TAudioClip	N		NormalizeClip
 TAudioClip	P	16777249	AudioClipExternalProcessing
 TAudioClip	S		ClipSelectionSelect
@@ -760,12 +770,10 @@ TAudioPluginView	MOUSEBUTTONLEFT		MovePlugin
 TAudioPluginView	D		MovePlugin
 TAudioPluginView	E	16777249	EditPluginProperties
 TAudioPluginView	DELETE		RemovePlugin
-TAudioProcessingNode	A		GainShowAutomation
-TAudioProcessingNode	M		Mute
-TAudioTrack	A		GainShowAutomation
+TAudioTrack	A		AudioTrackGainShowAutomation
 TAudioTrack	G		AudioTrackGain
 TAudioTrack	I		ImportAudio
-TAudioTrack	M		Mute
+TAudioTrack	M		AudioTrackMute
 TAudioTrack	O		Solo
 TAudioTrack	P		TrackPan
 TAudioTrack	R		AudioTrackToggleRecord
@@ -777,9 +785,9 @@ TAudioTrackView	D	16777248	FoldTrack
 TAudioTrackView	E	16777249	EditTrackProperties
 TAudioTrackView	J		AudioTrackInsertSilence
 TAudioTrackView	F5		TrackAddPlugin
-TBusTrack	A		GainShowAutomation
+TBusTrack	A		BusTrackGainShowAutomation
 TBusTrack	G		BusTrackGain
-TBusTrack	M		Mute
+TBusTrack	M		BusTrackMute
 TBusTrack	O		Solo
 TBusTrack	P		TrackPan
 TBusTrack	DELETE		RemoveTrack
@@ -828,6 +836,7 @@ TFaderGroupCommand	UPARROW		GainIncrease
 TFaderGroupCommand	DOWNARROW		GainDecrease
 TFaderGroupCommand	NUMERICAL		GainNumericalInput
 TGainBase	G		GainBase
+TGainShowAutomationBase	A		GainShowAutomationBase
 TMainWindow	MOUSEBUTTONRIGHT		ShowContextMenu
 TMainWindow	K		MainWindowActivateTrackFinder
 TMainWindow	Q		ShowContextMenu
@@ -851,6 +860,7 @@ TMoveCommand	DOWNARROW		MoveCommandDown
 TMoveCommand	PAGEUP		MoveCommandFaster
 TMoveCommand	PAGEDOWN		MoveCommandSlower
 TMoveCommand	NUMERICAL		MoveCommandSpeed
+TMuteBase	M		MuteBase
 TNavigationBaseDown	DOWNARROW		TNavigationBaseDown
 TNavigationBaseLeft	LEFTARROW		TNavigationBaseLeft
 TNavigationBaseRight	RIGHTARROW		TNavigationBaseRight
@@ -902,8 +912,6 @@ TTimeLineRulerView	V		TimeLinePlayheadToMarker
 TTimeLineRulerView	DELETE		RemoveTimeLineRulerMarker
 TToggleBypassBase	M		ToggleBypassBase
 TToggleVerticalBase	V		ToggleVerticalBase
-TTrack	A		GainShowAutomation
-TTrack	M		Mute
 TTrack	O		Solo
 TTrack	P		TrackPan
 TTrack	DELETE		RemoveTrack

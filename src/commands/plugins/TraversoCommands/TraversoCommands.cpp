@@ -193,6 +193,23 @@ void TraversoCommands::load(TShortCutManager* m)
     add_function(&TAudioTrack::staticMetaObject, TActions::AudioTrackGain, TActionGroups::GainBase, GainCommand);
     add_function(&TBusTrack::staticMetaObject, TActions::BusTrackGain, TActionGroups::GainBase, GainCommand);
 
+    m->add_group(TActionGroups::GainShowAutomationBase, &TGainShowAutomationBase::staticMetaObject);
+
+    add_function(&TAudioClip::staticMetaObject, TActions::AudioClipGainShowAutomation, TActionGroups::GainShowAutomationBase, GainShowAutomationCommand);
+    add_function(&TAudioTrack::staticMetaObject, TActions::AudioTrackGainShowAutomation, TActionGroups::GainShowAutomationBase, GainShowAutomationCommand);
+    add_function(&TBusTrack::staticMetaObject, TActions::BusTrackGainShowAutomation, TActionGroups::GainShowAutomationBase, GainShowAutomationCommand);
+
+    // Mute is the clip's or track's audio: an action per type, one key for all
+    // in the group, each rebindable on its own
+    m->add_group(TActionGroups::MuteBase, &TMuteBase::staticMetaObject);
+
+    m->add_function<TAudioClip>(TActions::AudioClipMute, TActionGroups::MuteBase,
+                                [](TAudioClip* clip) { return clip->audio()->mute(); }, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TAudioTrack>(TActions::AudioTrackMute, TActionGroups::MuteBase,
+                                 [](TAudioTrack* track) { return track->audio()->mute(); }, TDispatchRule::AlwaysSafeDuringHold);
+    m->add_function<TBusTrack>(TActions::BusTrackMute, TActionGroups::MuteBase,
+                               [](TBusTrack* track) { return track->audio()->mute(); }, TDispatchRule::AlwaysSafeDuringHold);
+
     m->add_group(TActionGroups::MoveBase, &TMoveBase::staticMetaObject);
 
     add_function(&TAudioClipView::staticMetaObject, TActions::MoveClip, TActionGroups::MoveBase, MoveClipCommand, USE_X, USE_Y, QVariantList() << "move");
@@ -221,7 +238,6 @@ void TraversoCommands::load(TShortCutManager* m)
     add_function(&TFadeCurveView::staticMetaObject, TActions::FadeCurveBend, FadeCurveBendCommand, NO_X, USE_Y);
     add_function(&TFadeCurveView::staticMetaObject, TActions::FadeCurveStrenght, FadeCurveStrengthCommand, USE_X, NO_Y);
 
-    add_function(&TAudioProcessingNode::staticMetaObject, TActions::GainShowAutomation, GainShowAutomationCommand);
 
     add_function(&TAudioTrack::staticMetaObject, TActions::ImportAudio, ImportAudioCommand);
 
@@ -263,7 +279,6 @@ void TraversoCommands::load(TShortCutManager* m)
     m->add_function<TAudioPlugin>(TActions::PluginToggleBypass, TActionGroups::ToggleBypassBase, &TAudioPlugin::toggle_bypass);
     m->add_function<TAudioPluginView>(TActions::EditPluginProperties, TActionGroups::EditPropertiesBase, &TAudioPluginView::edit_properties);
 
-    m->add_function<TAudioProcessingNode>(TActions::Mute, &TAudioProcessingNode::mute, TDispatchRule::AlwaysSafeDuringHold);
 
     m->add_function<TAudioTrack>(TActions::AudioTrackToggleRecord, &TAudioTrack::toggle_arm, TDispatchRule::AlwaysSafeDuringHold);
 
@@ -828,12 +843,11 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
             audioClip->get_track()->toggle_show_clip_volume_automation();
             return ied().succes();
         }
+        // Registered on clips and tracks only
         TTrack* track = qobject_cast<TTrack*>(obj);
-        if (track) {
-            track->toggle_show_gain_automation_curve();
-            return ied().succes();
-        }
-        return ied().failure();
+        Q_ASSERT(track);
+        track->toggle_show_gain_automation_curve();
+        return ied().succes();
     }
 
     case NoCommand:

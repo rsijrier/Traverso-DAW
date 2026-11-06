@@ -28,6 +28,12 @@ enum class TActionId : int {
     AudioClipGain,
     AudioTrackGain,
     BusTrackGain,
+    AudioClipMute,
+    AudioTrackMute,
+    BusTrackMute,
+    AudioClipGainShowAutomation,
+    AudioTrackGainShowAutomation,
+    BusTrackGainShowAutomation,
     MoveClip,
     MovePlugin,
     MoveCurveNodes,
@@ -47,7 +53,6 @@ enum class TActionId : int {
     AudioClipFadeLengthBoth,
     FadeCurveBend,
     FadeCurveStrenght,
-    GainShowAutomation,
     ImportAudio,
     NormalizeClip,
     CopyClip,
@@ -68,7 +73,6 @@ enum class TActionId : int {
     AudioClipSetAudioFile,
     PluginToggleBypass,
     EditPluginProperties,
-    Mute,
     AudioTrackToggleRecord,
     AudioTrackInsertSilence,
     CropClipAdjustLeft,
@@ -195,6 +199,12 @@ struct TActions
     static constexpr TAction AudioClipGain                         {TActionId::AudioClipGain, "AudioClipGain", ""};
     static constexpr TAction AudioTrackGain                        {TActionId::AudioTrackGain, "AudioTrackGain", ""};
     static constexpr TAction BusTrackGain                          {TActionId::BusTrackGain, "BusTrackGain", ""};
+    static constexpr TAction AudioClipMute                         {TActionId::AudioClipMute, "AudioClipMute", ""};
+    static constexpr TAction AudioTrackMute                        {TActionId::AudioTrackMute, "AudioTrackMute", ""};
+    static constexpr TAction BusTrackMute                          {TActionId::BusTrackMute, "BusTrackMute", ""};
+    static constexpr TAction AudioClipGainShowAutomation           {TActionId::AudioClipGainShowAutomation, "AudioClipGainShowAutomation", ""};
+    static constexpr TAction AudioTrackGainShowAutomation          {TActionId::AudioTrackGainShowAutomation, "AudioTrackGainShowAutomation", ""};
+    static constexpr TAction BusTrackGainShowAutomation            {TActionId::BusTrackGainShowAutomation, "BusTrackGainShowAutomation", ""};
     static constexpr TAction MoveClip                              {TActionId::MoveClip, "MoveClip", ""};
     static constexpr TAction MovePlugin                            {TActionId::MovePlugin, "MovePlugin", ""};
     static constexpr TAction MoveCurveNodes                        {TActionId::MoveCurveNodes, "MoveCurveNodes", QT_TRANSLATE_NOOP("TraversoCommands", "Move Curve Node(s)")};
@@ -214,7 +224,6 @@ struct TActions
     static constexpr TAction AudioClipFadeLengthBoth               {TActionId::AudioClipFadeLengthBoth, "AudioClipFadeLengthBoth", QT_TRANSLATE_NOOP("TraversoCommands", "Adjust Length Both")};
     static constexpr TAction FadeCurveBend                         {TActionId::FadeCurveBend, "FadeCurveBend", QT_TRANSLATE_NOOP("TraversoCommands", "Adjust Bend")};
     static constexpr TAction FadeCurveStrenght                     {TActionId::FadeCurveStrenght, "FadeCurveStrenght", QT_TRANSLATE_NOOP("TraversoCommands", "Adjust Strength")};
-    static constexpr TAction GainShowAutomation                    {TActionId::GainShowAutomation, "GainShowAutomation", QT_TRANSLATE_NOOP("TraversoCommands", "Gain Envelope")};
     static constexpr TAction ImportAudio                           {TActionId::ImportAudio, "ImportAudio", QT_TRANSLATE_NOOP("TraversoCommands", "Import Audio")};
     static constexpr TAction NormalizeClip                         {TActionId::NormalizeClip, "NormalizeClip", QT_TRANSLATE_NOOP("TraversoCommands", "Normalize Clip")};
     static constexpr TAction CopyClip                              {TActionId::CopyClip, "CopyClip", QT_TRANSLATE_NOOP("TraversoCommands", "Copy")};
@@ -235,7 +244,6 @@ struct TActions
     static constexpr TAction AudioClipSetAudioFile                 {TActionId::AudioClipSetAudioFile, "AudioClipSetAudioFile", QT_TRANSLATE_NOOP("TraversoCommands", "Reset Audio File")};
     static constexpr TAction PluginToggleBypass                    {TActionId::PluginToggleBypass, "PluginToggleBypass", ""};
     static constexpr TAction EditPluginProperties                  {TActionId::EditPluginProperties, "EditPluginProperties", ""};
-    static constexpr TAction Mute                                  {TActionId::Mute, "Mute", QT_TRANSLATE_NOOP("TraversoCommands", "Mute")};
     static constexpr TAction AudioTrackToggleRecord                {TActionId::AudioTrackToggleRecord, "AudioTrackToggleRecord", QT_TRANSLATE_NOOP("TraversoCommands", "Record: On/Off")};
     static constexpr TAction AudioTrackInsertSilence               {TActionId::AudioTrackInsertSilence, "AudioTrackInsertSilence", QT_TRANSLATE_NOOP("TraversoCommands", "Insert Silence")};
     static constexpr TAction CropClipAdjustLeft                    {TActionId::CropClipAdjustLeft, "CropClipAdjustLeft", QT_TRANSLATE_NOOP("TraversoCommands", "Adjust Left")};
@@ -342,6 +350,12 @@ struct TActions
         AudioClipGain,
         AudioTrackGain,
         BusTrackGain,
+        AudioClipMute,
+        AudioTrackMute,
+        BusTrackMute,
+        AudioClipGainShowAutomation,
+        AudioTrackGainShowAutomation,
+        BusTrackGainShowAutomation,
         MoveClip,
         MovePlugin,
         MoveCurveNodes,
@@ -361,7 +375,6 @@ struct TActions
         AudioClipFadeLengthBoth,
         FadeCurveBend,
         FadeCurveStrenght,
-        GainShowAutomation,
         ImportAudio,
         NormalizeClip,
         CopyClip,
@@ -382,7 +395,6 @@ struct TActions
         AudioClipSetAudioFile,
         PluginToggleBypass,
         EditPluginProperties,
-        Mute,
         AudioTrackToggleRecord,
         AudioTrackInsertSilence,
         CropClipAdjustLeft,
@@ -484,7 +496,9 @@ enum class TActionGroupId : int {
     DeleteBase,
     EditPropertiesBase,
     GainBase,
+    GainShowAutomationBase,
     MoveBase,
+    MuteBase,
     ResetBase,
     ToggleBypassBase,
     ToggleVerticalBase,
@@ -512,7 +526,9 @@ struct TActionGroups
     static constexpr TActionGroup DeleteBase           {TActionGroupId::DeleteBase, "DeleteBase", QT_TRANSLATE_NOOP("TraversoCommands", "Delete")};
     static constexpr TActionGroup EditPropertiesBase   {TActionGroupId::EditPropertiesBase, "EditPropertiesBase", QT_TRANSLATE_NOOP("TraversoCommands", "Edit Properties")};
     static constexpr TActionGroup GainBase             {TActionGroupId::GainBase, "GainBase", QT_TRANSLATE_NOOP("TraversoCommands", "Gain")};
+    static constexpr TActionGroup GainShowAutomationBase {TActionGroupId::GainShowAutomationBase, "GainShowAutomationBase", QT_TRANSLATE_NOOP("TraversoCommands", "Gain Envelope")};
     static constexpr TActionGroup MoveBase             {TActionGroupId::MoveBase, "MoveBase", QT_TRANSLATE_NOOP("TraversoCommands", "Move")};
+    static constexpr TActionGroup MuteBase             {TActionGroupId::MuteBase, "MuteBase", QT_TRANSLATE_NOOP("TraversoCommands", "Mute")};
     static constexpr TActionGroup ResetBase            {TActionGroupId::ResetBase, "ResetBase", QT_TRANSLATE_NOOP("TraversoCommands", "Reset")};
     static constexpr TActionGroup ToggleBypassBase     {TActionGroupId::ToggleBypassBase, "ToggleBypassBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Bypass")};
     static constexpr TActionGroup ToggleVerticalBase   {TActionGroupId::ToggleVerticalBase, "ToggleVerticalBase", QT_TRANSLATE_NOOP("TraversoCommands", "Toggle Vertical")};
@@ -525,7 +541,9 @@ struct TActionGroups
         DeleteBase,
         EditPropertiesBase,
         GainBase,
+        GainShowAutomationBase,
         MoveBase,
+        MuteBase,
         ResetBase,
         ToggleBypassBase,
         ToggleVerticalBase,

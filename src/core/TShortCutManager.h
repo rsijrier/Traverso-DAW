@@ -80,6 +80,21 @@ public:
         return add_typed_function<T>(action, &group, method, rule);
     }
 
+    // Registers a function on objects of class T in group: a lambda that gets
+    // the object, for an action that calls on a part of it (a clip's or a
+    // track's audio). A lambda that does not take a T*, or returns something
+    // else than void or TCommand*, does not compile. Member pointers are left
+    // out on purpose: they go through the overload above, which checks that
+    // the method belongs to T; a const method, which that one does not take,
+    // is then an error here too instead of slipping through
+    template <class T, class F>
+        requires(!std::is_member_function_pointer_v<F> && std::is_invocable_v<F, T*>)
+    TShortCutFunction* add_function(const TAction &action, const TActionGroup &group, F call,
+                                    TDispatchRule rule = TDispatchRule::Default)
+    {
+        return add_invoked_function<T>(action, &group, call, rule);
+    }
+
     QList<TShortCutFunction* > get_shortcut_functions_for_class(QString className);
     TShortCut* get_shortcut_for_key(const QString& key);
     TShortCut* get_shortcut_for_key(int key);
@@ -135,6 +150,15 @@ private:
                                           R (U::*method)(), TDispatchRule rule)
     {
         static_assert(std::is_base_of_v<U, T>, "the method does not belong to the class it is registered for");
+        return add_invoked_function<T>(action, group, [method](T* target) { return (target->*method)(); }, rule);
+    }
+
+    // The one place a shortcut function on class T gets its invoker: the
+    // object cast to T, then call on it
+    template <class T, class Call>
+    TShortCutFunction* add_invoked_function(const TAction &action, const TActionGroup *group, Call call, TDispatchRule rule)
+    {
+        using R = std::invoke_result_t<Call, T*>;
         static_assert(std::is_same_v<R, void> || std::is_same_v<R, TCommand*>,
                       "a shortcut function returns void or TCommand*");
 
@@ -143,14 +167,14 @@ private:
             function->set_group(group);
         }
 
-        function->set_invoker([method](QObject* object) -> TCommand* {
+        function->set_invoker([call](QObject* object) -> TCommand* {
             T* target = qobject_cast<T*>(object);
             Q_ASSERT(target);
             if constexpr (std::is_same_v<R, void>) {
-                (target->*method)();
+                call(target);
                 return nullptr;
             } else {
-                return (target->*method)();
+                return call(target);
             }
         }, rule == TDispatchRule::AlwaysSafeDuringHold);
 
