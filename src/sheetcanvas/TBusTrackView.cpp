@@ -46,7 +46,7 @@ TBusTrackView::TBusTrackView(TSheetView* sv, TBusTrack* group)
     pluginsLaneview->hide();
     add_lane_view(pluginsLaneview);
 
-    m_pluginChainView = new TAudioPluginChainView(m_sv, pluginsLaneview, m_track->get_plugin_chain());
+    m_pluginChainView = new TAudioPluginChainView(m_sv, pluginsLaneview, m_track->audio()->get_plugin_chain());
 
     m_panel = new TBusTrackPanelView(this);
     calculate_bounding_rect();

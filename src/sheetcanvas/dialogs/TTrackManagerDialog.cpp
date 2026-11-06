@@ -60,8 +60,8 @@ TTrackManagerDialog::TTrackManagerDialog(TTrack *track, QWidget *parent)
     update_routing_input_output_widget_view();
     update_pre_post_fader_plugins_widget_view();
 
-    trackPanSlider->setValue(int(m_track->get_pan() * 64));
-    trackGainSlider->setValue(int(TGain::to_dB(m_track->get_gain()) * 10.f));
+    trackPanSlider->setValue(int(m_track->audio()->get_pan() * 64));
+    trackGainSlider->setValue(int(TGain::to_dB(m_track->audio()->get_gain()) * 10.f));
 
     update_gain_indicator();
     update_pan_indicator();
@@ -93,10 +93,10 @@ TTrackManagerDialog::TTrackManagerDialog(TTrack *track, QWidget *parent)
         setEnabled(false);
     }
 
-    connect(m_track, &TTrack::panChanged, this, &TTrackManagerDialog::update_pan_indicator);
+    connect(m_track->audio(), &TAudioProcessingNode::panChanged, this, &TTrackManagerDialog::update_pan_indicator);
     connect(m_track, &TTrack::stateChanged, this, &TTrackManagerDialog::update_gain_indicator);
     connect(m_track, &TTrack::soloChanged, this, &TTrackManagerDialog::update_track_status_buttons);
-    connect(m_track, &TTrack::muteChanged, this, &TTrackManagerDialog::update_track_status_buttons);
+    connect(m_track->audio(), &TAudioProcessingNode::muteChanged, this, &TTrackManagerDialog::update_track_status_buttons);
     TAudioTrack* audiotrack = qobject_cast<TAudioTrack*>(m_track);
     if (audiotrack) {
         connect(audiotrack, &TAudioTrack::armedChanged, this, &TTrackManagerDialog::update_track_status_buttons);
@@ -401,7 +401,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
 void TTrackManagerDialog::update_pre_post_fader_plugins_widget_view()
 {
     postFaderPluginsListWidget->clear();
-    QList<TAudioPlugin*> postFaderPlugins = m_track->get_plugin_chain()->get_post_fader_plugins();
+    QList<TAudioPlugin*> postFaderPlugins = m_track->audio()->get_plugin_chain()->get_post_fader_plugins();
     for(TAudioPlugin* plugin : postFaderPlugins) {
         QListWidgetItem* item = new QListWidgetItem(postFaderPluginsListWidget);
         item->setText(plugin->get_name());
@@ -410,7 +410,7 @@ void TTrackManagerDialog::update_pre_post_fader_plugins_widget_view()
 
 
     preFaderPluginsListWidget->clear();
-    QList<TAudioPlugin*> preFaderPlugins = m_track->get_plugin_chain()->get_pre_fader_plugins();
+    QList<TAudioPlugin*> preFaderPlugins = m_track->audio()->get_plugin_chain()->get_pre_fader_plugins();
     for(TAudioPlugin* plugin : preFaderPlugins) {
         QListWidgetItem* item = new QListWidgetItem(preFaderPluginsListWidget);
         item->setText(plugin->get_name());
@@ -465,12 +465,12 @@ void TTrackManagerDialog::on_routingOutputRemoveButton_clicked()
 
 void TTrackManagerDialog::update_gain_indicator()
 {
-    gainLabel->setText(m_track->get_gain_db_string());
+    gainLabel->setText(m_track->audio()->get_gain_db_string());
 }
 
 void TTrackManagerDialog::update_pan_indicator()
 {
-    panLabel->setText(QByteArray::number(double(m_track->get_pan()), 'f', 2));
+    panLabel->setText(QByteArray::number(double(m_track->audio()->get_pan()), 'f', 2));
 }
 
 void TTrackManagerDialog::pre_sends_selection_changed()
@@ -511,13 +511,13 @@ void TTrackManagerDialog::track_gain_value_changed(int value)
 {
     float v = float(value) / 10;
     float gain = TGain::from_dB(v);
-    m_track->set_gain(gain);
+    m_track->audio()->set_gain(gain);
 }
 
 void TTrackManagerDialog::track_pan_value_changed(int value)
 {
     float pan = float(value) / 64;
-    m_track->set_pan(pan);
+    m_track->audio()->set_pan(pan);
 }
 
 void TTrackManagerDialog::pre_sends_gain_value_changed(int value)
@@ -571,7 +571,7 @@ void TTrackManagerDialog::post_sends_pan_value_changed(int value)
 
 void TTrackManagerDialog::on_muteButton_clicked()
 {
-    m_track->mute();
+    m_track->audio()->mute();
 }
 
 void TTrackManagerDialog::on_soloButton_clicked()
@@ -597,7 +597,7 @@ void TTrackManagerDialog::update_track_status_buttons(bool)
     QPalette defaultPalette = QApplication::style()->standardPalette();
     QPalette highlightedPalette = QApplication::style()->standardPalette();
 
-    if (m_track->is_muted()) {
+    if (m_track->audio()->is_muted()) {
         highlightedPalette.setColor(QPalette::Button, themer()->get_color("TrackPanel:muteled"));
         muteButton->setPalette(highlightedPalette);
     } else {

@@ -485,13 +485,13 @@ TCommand* TSession::toggle_mute()
 
 	bool hasMute = false;
     for(TAudioTrack* track : m_audioTracks.gui_items()) {
-        if (track->is_muted()) {
+        if (track->audio()->is_muted()) {
             hasMute = true;
         }
 	}
 
     for(TAudioTrack* track : m_audioTracks.gui_items()) {
-		track->set_muted(!hasMute);
+		track->audio()->set_muted(!hasMute);
 	}
 
     return nullptr;

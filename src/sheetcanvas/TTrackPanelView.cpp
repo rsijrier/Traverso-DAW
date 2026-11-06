@@ -68,10 +68,11 @@ TTrackPanelView::TTrackPanelView(TTrackView* view)
 	m_viewPort = m_sv->get_trackpanel_view_port();
     m_track = m_trackView->get_track();
 
-    m_infoLed = new TrackPanelLed(this, view, "E", "edit_properties");
-	m_soloLed = new TrackPanelLed(this, m_track, "S", "solo");
-	m_muteLed = new TrackPanelLed(this, m_track, "M", "mute");
-	m_preLedButton = new TrackPanelLed(this, m_track, "P", "toggle_presend");
+    TTrack* track = m_track;
+    m_infoLed = new TrackPanelLed(this, "E", [view]() { return view->edit_properties(); });
+    m_soloLed = new TrackPanelLed(this, "S", [track]() { return track->solo(); });
+    m_muteLed = new TrackPanelLed(this, "M", [track]() { return track->audio()->mute(); });
+    m_preLedButton = new TrackPanelLed(this, "P", [track]() { return track->toggle_presend(); });
 	m_panKnob = new TPanKnobView(this, m_track);
     m_gainKnob = new TGainKnobView(this, m_track);
     m_trackNameView = new TTextView(this);
@@ -96,7 +97,7 @@ TTrackPanelView::TTrackPanelView(TTrackView* view)
     if (m_track->is_solo()) {
         m_soloLed->ison_changed(true);
     }
-    if (m_track->is_muted()) {
+    if (m_track->audio()->is_muted()) {
         m_muteLed->ison_changed(true);
     }
     if (m_track->presend_on()) {
@@ -114,7 +115,7 @@ TTrackPanelView::TTrackPanelView(TTrackView* view)
     VUMETER_Y_POS = LED_Y_POS + LED_HEIGHT + PANEL_ITEM_SPACING;
 
     connect(m_track, &TTrack::soloChanged, m_soloLed, &TrackPanelLed::ison_changed);
-    connect(m_track, &TTrack::muteChanged, m_muteLed, &TrackPanelLed::ison_changed);
+    connect(m_track->audio(), &TAudioProcessingNode::muteChanged, m_muteLed, &TrackPanelLed::ison_changed);
     connect(m_track, &TTrack::preSendChanged, m_preLedButton, &TrackPanelLed::ison_changed);
 
     connect(m_track, &TTrack::stateChanged, this, &TTrackPanelView::update_name);
@@ -224,7 +225,8 @@ TAudioTrackPanelView::TAudioTrackPanelView(TAudioTrackView* trackView)
 	PENTERCONS;
 
     m_tv = trackView;
-    m_recLed = new TrackPanelLed(this, m_track, "R", "toggle_arm");
+    TAudioTrack* track = trackView->get_track();
+    m_recLed = new TrackPanelLed(this, "R", [track]() { return track->toggle_arm(); });
     m_recLed->set_bounding_rect(QRectF(0, 0, LED_WIDTH, LED_HEIGHT));
 
     m_ledViews.insert(4, m_recLed);
@@ -364,8 +366,8 @@ void TrackPanelGain::paint( QPainter * painter, const QStyleOptionGraphicsItem *
 
 
     int sliderWidth = int(m_boundingRect.width() - 75);
-        float gain = m_track->get_gain();
-    QString sgain = m_track->get_gain_db_string();
+        float gain = m_track->audio()->get_gain();
+    QString sgain = m_track->audio()->get_gain_db_string();
     float db = TGain::to_dB(gain);
 
 	if (db < -60) {
@@ -430,24 +432,23 @@ void TrackPanelGain::load_theme_data()
 
 TCommand* TrackPanelGain::gain_increment()
 {
-        m_track->set_gain(m_track->get_gain() + 0.05f);
+        m_track->audio()->set_gain(m_track->audio()->get_gain() + 0.05f);
         return nullptr;
 }
 
 TCommand* TrackPanelGain::gain_decrement()
 {
-        m_track->set_gain(m_track->get_gain() - 0.05f);
+        m_track->audio()->set_gain(m_track->audio()->get_gain() - 0.05f);
         return nullptr;
 }
 
 
-TrackPanelLed::TrackPanelLed(TTrackPanelView* view, QObject *obj, const QString& name, const QString& toggleslot)
+TrackPanelLed::TrackPanelLed(TTrackPanelView* view, const QString& name, std::function<TCommand*()> toggle)
         : TViewItem(view, nullptr)
 	, m_name(name)
-	, m_toggleslot(toggleslot)
+	, m_toggle(std::move(toggle))
 	, m_isOn(false)
 {
-    m_object = obj;
 }
 
 void TrackPanelLed::paint(QPainter* painter, const QStyleOptionGraphicsItem * /*option*/, QWidget * widget )
@@ -516,9 +517,7 @@ void TrackPanelLed::ison_changed(bool isOn)
 
 TCommand * TrackPanelLed::toggle()
 {
-    TCommand* com = nullptr;
-
-    QMetaObject::invokeMethod(m_object, QS_C(m_toggleslot), Qt::DirectConnection, Q_RETURN_ARG(TCommand*, com));
+    TCommand* com = m_toggle();
 
     Q_ASSERT(!com);
 

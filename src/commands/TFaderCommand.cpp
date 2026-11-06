@@ -17,9 +17,9 @@
  * @brief Manages the execution, tracking, and high-performance manipulation of an audio node's gain multiplier.
  */
 
-TFaderCommand::TFaderCommand(TAudioProcessingNode* context, const QVariantList& /*args*/)
-    : TCommand(context, "")
-    , m_audioProcessingNode(context)
+TFaderCommand::TFaderCommand(TContextItem* owner, TAudioProcessingNode* node, const QVariantList& /*args*/)
+    : TCommand(owner, "")
+    , m_audioProcessingNode(node)
 {
     m_newGain = m_origGain = m_audioProcessingNode->get_gain();
 
@@ -107,6 +107,12 @@ void TFaderCommand::set_new_gain(float newGain)
 void TFaderCommand::set_new_gain_numerical_input(float newGain)
 {
     apply_new_gain_to_object(newGain);
+}
+
+void TFaderCommand::set_target_gain(float gain)
+{
+    m_newGain = TGain::clamp(gain);
+    m_faderPosition = TFaderLaw::dB_to_position(TGain::to_dB(m_newGain));
 }
 
 int TFaderCommand::process_mouse_move(qreal diffY)

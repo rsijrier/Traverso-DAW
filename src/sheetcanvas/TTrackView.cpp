@@ -69,7 +69,7 @@ TTrackView::TTrackView(TSheetView* sv, TTrack * track)
 	m_volumeAutomationLaneView = new TTrackLaneView(this);
 	m_laneViews.append(m_volumeAutomationLaneView);
 
-	m_curveView = new TCurveView(m_sv, m_volumeAutomationLaneView, m_track->get_plugin_chain()->get_fader()->get_curve());
+	m_curveView = new TCurveView(m_sv, m_volumeAutomationLaneView, m_track->audio()->get_fader()->get_curve());
 	m_volumeAutomationLaneView->set_child_view(m_curveView);
 
 	m_visibleLanes = 1;
@@ -151,7 +151,7 @@ TCommand* TTrackView::add_new_plugin( )
         if (PluginSelectorDialog::instance()->exec() == QDialog::Accepted) {
                 TAudioPlugin* plugin = PluginSelectorDialog::instance()->get_selected_plugin();
                 if (plugin) {
-                    return m_track->add_plugin(plugin);
+                    return m_track->audio()->add_plugin(plugin);
                 }
         }
 

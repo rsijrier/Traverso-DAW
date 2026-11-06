@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TContextItem.h"
 #include "TInputEventDispatcher.h"
 #include "TCommand.h"
-#include "PCommand.h"
 #include "TMainWindow.h"
 #include "TShortCutManager.h"
 #include "TThemer.h"

@@ -111,7 +111,7 @@ int TBusTrack::process(TProcessContext &context) T_REALTIME_SAFE
 {
     // Real-time Accumulation Protection: If the bus is muted or resting at absolute silence,
     // we MUST evacuate the streaming buffers to prevent scaling explosions from incoming track sends.
-    if (m_isMuted || (TFloatCompare::equals_0(get_gain()))) {
+    if (m_audio.is_muted() || (TFloatCompare::equals_0(m_audio.get_gain()))) {
         if (m_processBus) {
             // Instantly wipe the shared summing bus clean for this hardware block duration
             m_processBus->silence_buffers();
@@ -126,23 +126,23 @@ int TBusTrack::process(TProcessContext &context) T_REALTIME_SAFE
 
     process_pre_sends(nframes);
 
-    m_pluginChain->process_pre_fader(m_processBus, nframes);
+    m_audio.get_plugin_chain()->process_pre_fader(m_processBus, nframes);
 
     float panFactor;
 
-    if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
-        panFactor = 1 - m_pan;
+    if ( (m_processBus->get_channel_count() >= 1) && (m_audio.get_pan() > 0) )  {
+        panFactor = 1 - m_audio.get_pan();
         m_processBus->get_buffer(0).apply_gain_to_buffer(nframes, panFactor);
     }
 
-    if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
-        panFactor = 1 + m_pan;
+    if ( (m_processBus->get_channel_count() >= 2) && (m_audio.get_pan() < 0) )  {
+        panFactor = 1 + m_audio.get_pan();
         m_processBus->get_buffer(1).apply_gain_to_buffer(nframes, panFactor);
     }
 
-    m_fader->process_gain(m_processBus, startLocation, endLocation, nframes, m_processBus->get_channel_count());
+    m_audio.get_fader()->process_gain(m_processBus, startLocation, endLocation, nframes, m_processBus->get_channel_count());
 
-    m_pluginChain->process_post_fader(m_processBus, nframes);
+    m_audio.get_plugin_chain()->process_post_fader(m_processBus, nframes);
 
     m_processBus->process_monitoring(m_vumonitors);
 

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "TAudioProcessingNode.h"
+#include "TContextItem.h"
 #include "TObjectIdTags.h"
 #include "TProcessContext.h"
 #include "TRtList.h"
@@ -42,14 +43,23 @@ class TAudioPluginChain;
 class TFadeCurve;
 class TRtTransaction;
 
-class TAudioClip : public TAudioProcessingNode, public TSplitableTimeLineEntity
+class TAudioClip : public TContextItem, public TSplitableTimeLineEntity
 {
     Q_OBJECT
+    // For QML: clip.audio
+    Q_PROPERTY(TAudioProcessingNode* audio READ audio CONSTANT)
 
 public:
     TAudioClip(const QString& name);
     TAudioClip(const QDomNode& node);
     ~TAudioClip() override;
+
+    // Its audio: gain, mute, pan and the plugin chain. A clip has a
+    // processing node, it is none (T95)
+    TAudioProcessingNode* audio() { return &m_audio; }
+
+    QString get_name() const { return m_name; }
+    void set_name(const QString& name);
 
     using IdTag = AudioClipTag;
     // The id, given by TObjectFactory when it made or loaded the clip; a copy
@@ -146,6 +156,8 @@ public:
 private:
     friend class TObjectFactory;
     AudioClipId m_objectId;
+    TAudioProcessingNode            m_audio;
+    QString                         m_name;
     TRtList<TFadeCurve>             m_fades;
     TSheet*                         m_sheet;
     TAudioTrack*                    m_track;
@@ -193,6 +205,8 @@ private:
     friend class TResourcesManager;
 
 signals:
+    // The clip's state: its name, or its gain (the node's gainChanged)
+    void stateChanged();
     void lockChanged();
     void fadeAdded(TFadeCurve*);
     void fadeRemoved(TFadeCurve*);

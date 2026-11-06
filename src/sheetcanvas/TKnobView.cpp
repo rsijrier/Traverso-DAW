@@ -147,25 +147,25 @@ TPanKnobView::TPanKnobView(TViewItem* parent, TTrack* track)
 	: TKnobView(parent)
 	, m_track(track)
 {
-	connect(m_track, &TTrack::panChanged, this, &TPanKnobView::track_pan_changed);
+	connect(m_track->audio(), &TAudioProcessingNode::panChanged, this, &TPanKnobView::track_pan_changed);
     set_title("PAN");
     track_pan_changed();
 }
 
 void TPanKnobView::track_pan_changed()
 {
-    set_value(double(m_track->get_pan()));
+    set_value(double(m_track->audio()->get_pan()));
 }
 
 TCommand* TPanKnobView::pan_left()
 {
-    m_track->set_pan(m_track->get_pan() - 0.05f);
+    m_track->audio()->set_pan(m_track->audio()->get_pan() - 0.05f);
     return nullptr;
 }
 
 TCommand* TPanKnobView::pan_right()
 {
-    m_track->set_pan(m_track->get_pan() + 0.05f);
+    m_track->audio()->set_pan(m_track->audio()->get_pan() + 0.05f);
     return nullptr;
 }
 
@@ -183,6 +183,6 @@ TGainKnobView::TGainKnobView(TViewItem* parent, TTrack* track)
 
 void TGainKnobView::track_gain_changed()
 {
-    set_value(double(m_track->get_gain()));
+    set_value(double(m_track->audio()->get_gain()));
 }
 

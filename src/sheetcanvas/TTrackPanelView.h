@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TViewItem.h"
 
+#include <functional>
+
 class TTrack;
 class TAudioTrack;
 class TTrackView;
@@ -64,15 +66,16 @@ class TrackPanelLed : public TViewItem
 {
 	Q_OBJECT
 public:
-    TrackPanelLed(TTrackPanelView* view, QObject* obj, const QString& name, const QString& toggleslot);
+    // toggle runs when the button is pressed: a call the compiler checks,
+    // not a slot found by its name
+    TrackPanelLed(TTrackPanelView* view, const QString& name, std::function<TCommand*()> toggle);
 	
 	void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 	void set_bounding_rect(QRectF rect);
 
 private:
-	QObject*  m_object;
         QString m_name;
-	QString m_toggleslot;
+        std::function<TCommand*()> m_toggle;
         bool    m_isOn;
 
 public slots:

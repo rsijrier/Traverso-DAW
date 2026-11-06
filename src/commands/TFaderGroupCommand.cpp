@@ -25,16 +25,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 #include "TContextPointer.h"
 
-TFaderGroupCommand::TFaderGroupCommand(TContextItem *context)
+TFaderGroupCommand::TFaderGroupCommand(TContextItem *context, TAudioProcessingNode* node, const QString& name)
     : TCommand (context)
-    , m_contextItem(context)
+    , m_node(node)
     , m_primaryGainOnly(false)
 {
+    Q_ASSERT(m_node);
     m_canvasCursorFollowsMouseCursor = false;
-
-    TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(context);
-    Q_ASSERT(node);
-    setText("Gain: " + node->get_name());
+    setText("Gain: " + name);
 }
 
 TFaderGroupCommand::~TFaderGroupCommand()
@@ -53,11 +51,8 @@ int TFaderGroupCommand::begin_hold()
 {
     m_origPos = m_contextPointer->scene_pos();
 
-    TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(m_contextItem);
-    if (node) {
-        float absoluteDb = TGain::to_dB(node->get_gain());
-        m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(absoluteDb));
-    }
+    float absoluteDb = TGain::to_dB(m_node->get_gain());
+    m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(absoluteDb));
 
     return 1;
 }
@@ -100,10 +95,7 @@ void TFaderGroupCommand::process_collected_number(const QString &collected)
     m_pendingNumericalValue = collected;
 
     if (collected.isEmpty()) {
-        TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(m_contextItem);
-        if (node) {
-            m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(node->get_gain())));
-        }
+        m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(m_node->get_gain())));
         return;
     }
 
@@ -145,10 +137,7 @@ int TFaderGroupCommand::jog()
 
     m_contextPointer->set_canvas_cursor_pos(m_origPos);
 
-    TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(m_contextItem);
-    if (node) {
-        m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(node->get_gain())));
-    }
+    m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(m_node->get_gain())));
 
     return 1;
 }
@@ -193,10 +182,10 @@ int TFaderGroupCommand::undo_action()
     return 1;
 }
 
-void TFaderGroupCommand::add_audio_processing_node(TAudioProcessingNode* audioProcessingNode, const QVariantList& args)
+void TFaderGroupCommand::add_audio_processing_node(TContextItem* owner, TAudioProcessingNode* audioProcessingNode, const QVariantList& args)
 {
-    Q_ASSERT(audioProcessingNode);
-    m_gainCommands.push_back(std::make_unique<TFaderCommand>(audioProcessingNode, args));
+    Q_ASSERT(owner && audioProcessingNode);
+    m_gainCommands.push_back(std::make_unique<TFaderCommand>(owner, audioProcessingNode, args));
 }
 
 void TFaderGroupCommand::increase_gain()
@@ -211,11 +200,8 @@ void TFaderGroupCommand::increase_gain()
         }
     }
 
-    TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(m_contextItem);
-    if (node) {
-        float absoluteDb = TGain::to_dB(node->get_gain());
-        m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(static_cast<float>(absoluteDb)));
-    }
+    float absoluteDb = TGain::to_dB(m_node->get_gain());
+    m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(static_cast<float>(absoluteDb)));
 }
 
 void TFaderGroupCommand::decrease_gain()
@@ -230,10 +216,7 @@ void TFaderGroupCommand::decrease_gain()
         }
     }
 
-    TAudioProcessingNode* node = qobject_cast<TAudioProcessingNode*>(m_contextItem);
-    if (node) {
-        m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(node->get_gain())));
-    }
+    m_contextPointer->set_canvas_cursor_data(QVariant::fromValue(TGain::to_dB(m_node->get_gain())));
 }
 
 void TFaderGroupCommand::reset_gain()

@@ -56,7 +56,7 @@ TAudioTrackView::TAudioTrackView(TSheetView* sv, TAudioTrack * track)
     pluginsLaneview->set_height(28);
     pluginsLaneview->hide();
     add_lane_view(pluginsLaneview);
-    m_pluginChainView = new TAudioPluginChainView(m_sv, pluginsLaneview, m_track->get_plugin_chain());
+    m_pluginChainView = new TAudioPluginChainView(m_sv, pluginsLaneview, m_track->audio()->get_plugin_chain());
 
     calculate_bounding_rect();
 

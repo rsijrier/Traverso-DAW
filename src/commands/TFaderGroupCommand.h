@@ -37,7 +37,9 @@ class TFaderGroupCommand : public TCommand
     Q_OBJECT
 
 public:
-    TFaderGroupCommand(TContextItem* context);
+    // context is the clip or track the gain is asked on, node its audio, name
+    // its name for the undo text
+    TFaderGroupCommand(TContextItem* context, TAudioProcessingNode* node, const QString& name);
     virtual ~TFaderGroupCommand() override;
 
     int begin_hold() override;
@@ -55,12 +57,13 @@ public:
 
     bool wants_cursor_position_to_be_restored() const override { return true; }
 
-    void add_audio_processing_node(TAudioProcessingNode *audioProcessingNode, const QVariantList& args);
+    // One more gain to change: owner is its clip or track, for the undo stack
+    void add_audio_processing_node(TContextItem* owner, TAudioProcessingNode* audioProcessingNode, const QVariantList& args);
 
 private:
     std::vector<std::unique_ptr<TFaderCommand>> m_gainCommands; // Fixed unique_ptr copy-on-write crash by migration to std::vector
     QPointF                                   m_origPos;
-    TContextItem*                             m_contextItem;
+    TAudioProcessingNode*                     m_node;
     bool                                      m_primaryGainOnly;
     QString                                   m_pendingNumericalValue; // Safely buffers user keystrokes during text processing
 

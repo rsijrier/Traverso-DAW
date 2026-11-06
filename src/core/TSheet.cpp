@@ -176,7 +176,7 @@ void TSheet::init()
     // One to one with the sheet: their ids are derived from the sheet's
     const uint64_t sequence = TObjectIds::sequence_of(object_id().to_storage());
     m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(sequence, this, tr("Sheet Master"));
-    m_masterOutBusTrack->set_gain(0.5);
+    m_masterOutBusTrack->audio()->set_gain(0.5);
 
     m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(sequence, this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
     // TODO: only on export add and after export remove this post send
@@ -409,7 +409,7 @@ void TSheet::set_gain(float gain)
 {
     gain = TGain::clamp(gain);
 
-    m_masterOutBusTrack->set_gain(gain);
+    m_masterOutBusTrack->audio()->set_gain(gain);
 
     emit stateChanged();
 }

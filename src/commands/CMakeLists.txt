@@ -17,7 +17,6 @@ add_library(traversocommands STATIC
     MoveMarker.cpp
     MovePlugin.cpp
     MoveTrack.cpp
-    PCommand.cpp
     TAudioClipDualTrimCommand.cpp
     TrackPan.cpp
     TZoomCommand.cpp

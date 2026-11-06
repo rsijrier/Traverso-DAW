@@ -6,34 +6,19 @@
 #include "TGain.h"
 #include "TAudioProcessingNode.h"
 #include <cmath>
-#include "TAudioClip.h"
 #include "TAudioPluginChain.h"
-#include "TSession.h"
 #include "GainEnvelope.h"
 #include "Debugger.h"
 
-TAudioProcessingNode::TAudioProcessingNode(TSession *session)
-    : TContextItem(session)
-    , m_session(session)
-    , m_processBus(nullptr)
+// A member of its owner, so it takes no QObject parent; the plugin chain is a
+// child of the owner
+TAudioProcessingNode::TAudioProcessingNode(TSession *session, TContextItem* owner)
+    : m_pluginChain(new TAudioPluginChain(owner, session))
+    , m_fader(m_pluginChain->get_fader())
 {
-    if (m_session) {
-        m_pluginChain = new TAudioPluginChain(this, m_session);
-        set_history_stack(m_session->get_history_stack());
-    } else {
-        m_pluginChain = new TAudioPluginChain(this);
-    }
-
-    m_processBus = nullptr;
+    Q_ASSERT(owner);
     m_isMuted = false;
     m_pan = 0.0f;
-    m_fader = m_pluginChain->get_fader();
-}
-
-void TAudioProcessingNode::set_name( const QString & name )
-{
-    m_name = name;
-    emit stateChanged();
 }
 
 void TAudioProcessingNode::set_pan(float pan)
@@ -59,7 +44,6 @@ void TAudioProcessingNode::set_muted( bool muted )
 {
     m_isMuted = muted;
     emit muteChanged(m_isMuted);
-    emit audibleStateChanged();
 }
 
 TCommand* TAudioProcessingNode::mute()
@@ -73,7 +57,6 @@ void TAudioProcessingNode::set_gain(float gain)
 {
     m_fader->set_gain(TGain::clamp(gain));
 
-    emit stateChanged();
     emit gainChanged();
 }
 

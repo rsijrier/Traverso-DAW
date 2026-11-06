@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #pragma once
 
 #include "TAudioProcessingNode.h"
+#include "TContextItem.h"
 #include "TObjectIdTags.h"
 #include "TRtList.h"
 #include "TRtValue.h"
@@ -30,18 +31,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QDomDocument>
 
+class AudioBus;
 class TSend;
 class TVUMonitor;
 class TProject;
 class TRtTransaction;
 
-class TTrack : public TAudioProcessingNode
+class TTrack : public TContextItem
 {
     Q_OBJECT
+    // For QML: track.audio
+    Q_PROPERTY(TAudioProcessingNode* audio READ audio CONSTANT)
 
 public:
     TTrack (TSession* session=0);
     virtual ~TTrack ();
+
+    // Its audio: gain, mute, pan and the plugin chain. A track has a
+    // processing node, it is none (T95)
+    TAudioProcessingNode* audio() { return &m_audio; }
+
+    TSession* get_session() const {return m_session;}
+    QString get_name() const {return m_name;}
 
     // The id, given by TObjectFactory when it made or loaded the track
     // (doc/design/object-ids.md)
@@ -116,6 +127,12 @@ public:
 
 
 protected:
+    TSession*           m_session;
+    QString             m_name;
+    // Routing, like the sends and the input bus: an audio track's is its
+    // sheet's render bus, a bus track owns its own
+    AudioBus*           m_processBus{nullptr};
+    TAudioProcessingNode m_audio;
     QList<TVUMonitor*>  m_vumonitors;
     int             m_sortIndex;
     int             m_type{};
@@ -153,6 +170,10 @@ public slots:
     TCommand* toggle_presend();
 
 signals:
+    // The track's state: its name, or its gain (the node's gainChanged)
+    void stateChanged();
+    // Whether it is heard: its mute (the node's muteChanged) or its solo state
+    void audibleStateChanged();
     void soloChanged(bool isSolo);
     void preSendChanged(bool preSendOn);
     void automationVisibilityChanged();

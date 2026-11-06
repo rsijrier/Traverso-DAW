@@ -140,7 +140,6 @@ void TraversoCommands::load(TShortCutManager* m)
     m->add_meta_object(&TPlayHeadView::staticMetaObject,             tr("Play Cursor"));
     m->add_meta_object(&TWorkCursorView::staticMetaObject,           tr("Work Cursor"));
     m->add_meta_object(&TPositionIndicator::staticMetaObject,    tr("Position Indicator"));
-    m->add_meta_object(&TAudioProcessingNode::staticMetaObject, tr("Audio Processing Node"));
 
     m->add_group(TActionGroups::TNavigationBaseUp, &TNavigationBaseUp::staticMetaObject);
     m->add_group(TActionGroups::TNavigationBaseDown, &TNavigationBaseDown::staticMetaObject);
@@ -501,35 +500,39 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
             contextItem = view->get_related_context_item();
         }
 
-        audioProcessingNode = qobject_cast<TAudioProcessingNode*>(contextItem);
-
-
-        if (!audioProcessingNode) {
-            PERROR("TraversoCommands: Supplied object was not a TAudioProcessingNode, "
-                   "GainCommand only works with TAudioProcessingNode objects!!");
-            return nullptr;
+        // The audio of the clip or the track
+        QString name;
+        TAudioClip* clip = qobject_cast<TAudioClip*>(contextItem);
+        if (clip) {
+            audioProcessingNode = clip->audio();
+            name = clip->get_name();
+        } else if (TTrack* track = qobject_cast<TTrack*>(contextItem)) {
+            audioProcessingNode = track->audio();
+            name = track->get_name();
         }
 
-        auto group = new TFaderGroupCommand(contextItem);
+        // Gain is registered on clips and tracks only
+        Q_ASSERT(audioProcessingNode);
 
-        TAudioClip* clip = qobject_cast<TAudioClip*>(contextItem);
+        auto group = new TFaderGroupCommand(contextItem, audioProcessingNode, name);
+
         if (clip && clip->is_selected()) {
 
             QList<TAudioClip* > selection;
             clip->get_sheet()->get_audioclip_manager()->get_selected_clips(selection);
 
             // always the contextitem first so it will be the primary gain object
-            group->add_audio_processing_node(audioProcessingNode, arguments);
+            group->add_audio_processing_node(clip, audioProcessingNode, arguments);
 
-            for(auto node : selection) {
+            for(TAudioClip* selected : selection) {
                 // only add the context item once
-                if (node == audioProcessingNode) {
+                if (selected == clip) {
                     continue;
                 }
-                group->add_audio_processing_node(node, arguments);
+                group->add_audio_processing_node(selected, selected->audio(), arguments);
             }
         } else {
-            group->add_audio_processing_node(audioProcessingNode, arguments);
+            group->add_audio_processing_node(contextItem, audioProcessingNode, arguments);
         }
 
 
@@ -734,23 +737,37 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
             return nullptr;
         }
 
+        QList<TAudioClip* > clips;
         if (audioClip->is_selected()) {
-            QList<TAudioClip* > selection;
-            audioClip->get_sheet()->get_audioclip_manager()->get_selected_clips(selection);
-
-            CommandGroup* group = new CommandGroup(audioClip, tr("Normalize Selected Clips"));
-
-            for(TAudioClip* selectedClip : selection) {
-                group->add_command(new PCommand(selectedClip, "set_gain",
-                                                selectedClip->calculate_normalization_factor(requestedNormFactor),
-                                                selectedClip->get_gain(),
-                                                tr("AudioClip: Normalize")));
-            }
-
-            return group;
+            audioClip->get_sheet()->get_audioclip_manager()->get_selected_clips(clips);
+        } else {
+            clips.append(audioClip);
         }
 
-        return new PCommand(audioClip, "set_gain", audioClip->calculate_normalization_factor(requestedNormFactor), audioClip->get_gain(), tr("AudioClip: Normalize"));
+        // One undo step, also for one clip: a TFaderCommand is no command of
+        // its own (it is a hold's part). A clip whose gain does not change,
+        // also after clamping, stays out: its prepare_actions() would make the
+        // group refuse
+        CommandGroup* group = new CommandGroup(audioClip, audioClip->is_selected() ? tr("Normalize Selected Clips") : tr("AudioClip: Normalize"));
+        int changed = 0;
+        for (TAudioClip* clip : std::as_const(clips)) {
+            auto command = new TFaderCommand(clip, clip->audio(), QVariantList());
+            command->set_target_gain(clip->calculate_normalization_factor(requestedNormFactor));
+            if (command->prepare_actions() == -1) {
+                delete command;
+                continue;
+            }
+            group->add_command(command);
+            ++changed;
+        }
+
+        // Nothing changes: no undo step. A refused command would not be
+        // deleted (T99)
+        if (changed == 0) {
+            delete group;
+            return nullptr;
+        }
+        return group;
     }
     case MoveMarkerCommand:
     {

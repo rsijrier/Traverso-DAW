@@ -63,11 +63,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 TAudioClip::TAudioClip(const QString& name)
     : TTimeLineEntity()
-    , TAudioProcessingNode()
+    , TContextItem()
+    , m_audio(nullptr, this)
 {
     PENTERCONS;
     m_name = name;
-    m_isMuted=false;
     m_readSourceId = m_sheetId = 0;
     QObject::tr("TAudioClip");
 
@@ -82,10 +82,18 @@ TAudioClip::TAudioClip(const QString& name)
     m_syncDuringDrag = false;
     m_fadeIn = nullptr;
     m_fadeOut = nullptr;
-    m_fader->automate_port(0, true);
+    m_audio.get_fader()->automate_port(0, true);
+    // Its state shows its gain
+    connect(&m_audio, &TAudioProcessingNode::gainChanged, this, &TAudioClip::stateChanged);
 
     update_global_configuration();
     connect(&config(), &TConfig::configChanged, this, &TAudioClip::update_global_configuration);
+}
+
+void TAudioClip::set_name(const QString& name)
+{
+    m_name = name;
+    emit stateChanged();
 }
 
 QObject* TAudioClip::id_owner() const
@@ -111,7 +119,7 @@ TAudioClip::TAudioClip(const QDomNode& node)
     m_readSourceId = e.attribute("source", "").toLongLong();
     m_sheetId = e.attribute("sheet", "0").toLongLong();
     m_name = e.attribute( "clipname", "" ) ;
-    m_isMuted =  e.attribute( "mute", "" ).toInt();
+    m_audio.set_muted(e.attribute( "mute", "" ).toInt());
     m_length = TTimeRef(e.attribute( "length", "0" ).toLongLong());
     m_sourceStartLocation = TTimeRef(e.attribute( "sourcestart", "" ).toLongLong());
 
@@ -156,11 +164,10 @@ int TAudioClip::set_state(const QDomNode& node)
     QDomElement e = node.toElement();
 
     m_isTake = e.attribute( "take", "").toInt();
-    set_gain( e.attribute( "gain", "" ).toFloat() );
     m_isLocked = e.attribute( "locked", "0" ).toInt();
     m_readSourceId = e.attribute("source", "").toLongLong();
     m_sheetId = e.attribute("sheet", "0").toLongLong();
-    m_isMuted =  e.attribute( "mute", "" ).toInt();
+    m_audio.set_muted(e.attribute( "mute", "" ).toInt());
 
     bool ok;
     m_sourceStartLocation = TTimeRef(e.attribute( "sourcestart", "" ).toLongLong(&ok));
@@ -201,7 +208,7 @@ int TAudioClip::set_state(const QDomNode& node)
 
     QDomNode pluginChainNode = node.firstChildElement("PluginChain");
     if (!pluginChainNode.isNull()) {
-        m_pluginChain->set_state(pluginChainNode);
+        m_audio.get_plugin_chain()->set_state(pluginChainNode);
     }
 
     // Curves rely on our start position, so only set the start location
@@ -219,7 +226,7 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     node.setAttribute("trackstart", get_location_start().universal_frame());
     node.setAttribute("sourcestart", m_sourceStartLocation.universal_frame());
     node.setAttribute("length", m_length.universal_frame());
-    node.setAttribute("mute", m_isMuted);
+    node.setAttribute("mute", m_audio.is_muted());
     node.setAttribute("take", m_isTake);
     node.setAttribute("clipname", m_name );
     node.setAttribute("id", get_id() );
@@ -240,7 +247,7 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     }
 
     QDomNode pluginChainNode = doc.createElement("PluginChain");
-    pluginChainNode.appendChild(m_pluginChain->get_state(doc));
+    pluginChainNode.appendChild(m_audio.get_plugin_chain()->get_state(doc));
     node.appendChild(pluginChainNode);
 
     return node;
@@ -296,7 +303,7 @@ void TAudioClip::toggle_mute()
 {
     PENTER;
 
-    TAudioProcessingNode::set_muted(!m_isMuted);
+    m_audio.set_muted(!m_audio.is_muted());
     set_sources_active_state();
 }
 
@@ -330,7 +337,7 @@ void TAudioClip::set_sources_active_state()
         stopSyncDueMove = false;
     }
 
-    if ( m_track->is_muted() || m_track->is_muted_by_solo() || is_muted() || stopSyncDueMove) {
+    if ( m_track->audio()->is_muted() || m_track->is_muted_by_solo() || m_audio.is_muted() || stopSyncDueMove) {
         m_readSource->set_active(false);
     } else {
         m_readSource->set_active(true);
@@ -447,7 +454,7 @@ void TAudioClip::move_to_location(const TTimeRef& location)
 
     m_location->set_start(location);
 
-    m_fader->get_curve()->set_start_offset(m_location->get_start());
+    m_audio.get_fader()->get_curve()->set_start_offset(m_location->get_start());
 
     // set_track_end_location will emit locationChanged(), so we
     // don't emit it in this function to avoid emitting it twice
@@ -524,7 +531,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
         return 0;
     }
 
-    if (m_isMuted || (TFloatCompare::equals_0(get_gain())) ) {
+    if (m_audio.is_muted() || (TFloatCompare::equals_0(m_audio.get_gain())) ) {
         return 0;
     }
 
@@ -594,7 +601,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
     TTimeRef faderEndLocation = fileLocation + TTimeRef(readFrames, outputRate);
 
     // FIXME: offset is no longer given to fader, so how to deal with partial buffer processing?
-    m_fader->process_gain(bus, fileLocation, faderEndLocation, readFrames, channelcount);
+    m_audio.get_fader()->process_gain(bus, fileLocation, faderEndLocation, readFrames, channelcount);
 
     AudioBus* processBus = m_track->get_process_bus();
 
@@ -920,7 +927,7 @@ void TAudioClip::set_sheet( TSheet * sheet )
     }
 
     set_history_stack(m_sheet->get_history_stack());
-    m_pluginChain->set_session(m_sheet);
+    m_audio.get_plugin_chain()->set_session(m_sheet);
 }
 
 
@@ -1001,19 +1008,19 @@ float TAudioClip::calculate_normalization_factor(float targetdB)
     audio_sample_t maxamp = m_waveform ? m_waveform->max_amplitude(m_sourceStartLocation, m_sourceEndLocation) : -1.0f;
     if (maxamp < 0.0f) {
         PWARN("AudioClip::normalization: the waveform's peak data is not ready yet");
-        return get_gain();
+        return m_audio.get_gain();
     }
 
     if (TFloatCompare::equals_0(maxamp)) {
         PWARN("AudioClip::normalization: max amplitude == 0");
         /* don't even try */
-        return get_gain();
+        return m_audio.get_gain();
     }
 
     if (TFloatCompare::compare(maxamp, target)) {
         PWARN("AudioClip::normalization: max amplitude == target amplitude");
         /* we can't do anything useful */
-        return get_gain();
+        return m_audio.get_gain();
     }
 
     /* compute scale factor */

@@ -47,7 +47,7 @@ TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
     PENTERCONS;
     m_name = name;
     sheet->set_track_height(get_id(), height);
-    m_pan = m_numtakes = 0;
+    m_numtakes = 0;
     m_showClipVolumeAutomation = false;
 
     m_busInName = "Capture 1-2";
@@ -257,7 +257,7 @@ int TAudioTrack::process(TProcessContext &context) T_REALTIME_SAFE
 {
     int processResult = 0;
 
-    if ( (m_isMuted || m_mutedBySolo) && ( ! m_isArmed) ) {
+    if ( (m_audio.is_muted() || m_mutedBySolo) && ( ! m_isArmed) ) {
         return 0;
     }
 
@@ -279,7 +279,7 @@ int TAudioTrack::process(TProcessContext &context) T_REALTIME_SAFE
     for(auto clip : m_clips.rt_items())
     {
         if (m_isArmed && clip->recording_state() == TAudioClip::NO_RECORDING) {
-            if (m_isMuted || m_mutedBySolo) {
+            if (m_audio.is_muted() || m_mutedBySolo) {
                 continue;
             }
         }
@@ -298,25 +298,25 @@ int TAudioTrack::process(TProcessContext &context) T_REALTIME_SAFE
 
 
     // Then apply the pre fader plugins;
-    m_pluginChain->process_pre_fader(m_processBus, nframes);
+    m_audio.get_plugin_chain()->process_pre_fader(m_processBus, nframes);
 
 
     // Apply PAN
-    if ( (m_processBus->get_channel_count() >= 1) && (m_pan > 0) )  {
-        panFactor = 1 - m_pan;
+    if ( (m_processBus->get_channel_count() >= 1) && (m_audio.get_pan() > 0) )  {
+        panFactor = 1 - m_audio.get_pan();
         m_processBus->get_buffer(0).apply_gain_to_buffer(nframes, panFactor);
     }
 
-    if ( (m_processBus->get_channel_count() >= 2) && (m_pan < 0) )  {
-        panFactor = 1 + m_pan;
+    if ( (m_processBus->get_channel_count() >= 2) && (m_audio.get_pan() < 0) )  {
+        panFactor = 1 + m_audio.get_pan();
         m_processBus->get_buffer(1).apply_gain_to_buffer(nframes, panFactor);
     }
 
     // Apply fader Gain/envelope
-    m_fader->process_gain(m_processBus, startLocation, endLocation, nframes, m_processBus->get_channel_count());
+    m_audio.get_fader()->process_gain(m_processBus, startLocation, endLocation, nframes, m_processBus->get_channel_count());
 
     // Post fader plugins now
-    processResult |= m_pluginChain->process_post_fader(m_processBus, nframes);
+    processResult |= m_audio.get_plugin_chain()->process_post_fader(m_processBus, nframes);
 
     // TODO: is there a situation where we still want to call process_post_sends
     // even if processresult == 0?
@@ -361,7 +361,7 @@ bool TAudioTrack::get_export_range(TTimeRef& trackExportStartLocation, TTimeRef&
     trackExportEndLocation = TTimeRef();
 
     for(TAudioClip* clip : m_clips.gui_items()) {
-        if (! clip->is_muted() ) {
+        if (! clip->audio()->is_muted() ) {
             if (clip->get_location_end() > trackExportEndLocation) {
                 trackExportEndLocation = clip->get_location_end();
             }

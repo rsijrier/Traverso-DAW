@@ -31,7 +31,9 @@ class TFaderCommand : public TCommand
     Q_OBJECT
 
 public :
-    TFaderCommand(TAudioProcessingNode *context, const QVariantList& args);
+    // owner is the context item of the command, for its undo stack; node the
+    // audio the gain belongs to
+    TFaderCommand(TContextItem* owner, TAudioProcessingNode* node, const QVariantList& args);
     ~TFaderCommand();
 
     int prepare_actions();
@@ -44,6 +46,8 @@ public :
     void decrease_gain();
     void set_new_gain(float newGain);
     void set_new_gain_numerical_input(float newGain);
+    // The gain do_action() sets, without setting it now
+    void set_target_gain(float gain);
 
 private :
     TAudioProcessingNode*        m_audioProcessingNode;

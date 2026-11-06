@@ -39,7 +39,6 @@
 #include <QDateTime>
 #include <TAddRemoveCommand.h>
 #include "TInformUser.h"
-#include "PCommand.h"
 #include "TLocation.h"
 
 MarkerDialog::MarkerDialog(QWidget * parent)
@@ -186,14 +185,6 @@ void MarkerDialog::position_changed(const QString &s)
 // 	editing the Markers from here ?
 // 	But the realtime thing plays not nice, what about only
 // 	calling this function when the user hits enter ?
-
-// 	TTimeRef newpos = TTimeRef::cd_to_timeref(s);
-// 	TTimeRef oldpos = m_marker->get_location()->get_start();
-// 	QVariant newv, oldv;
-// 	newv.setValue(newpos);
-// 	oldv.setValue(oldpos);
-// 	PCommand* command = new PCommand(m_marker, "set_when", oldv, newv, tr("Move Marker (from Marker Editor)"));
-// 	Command::process_command(command);
 
 	TTimeRef location = TTimeRef::cd_to_timeref_including_hours(s);
 	m_marker->set_when(location);

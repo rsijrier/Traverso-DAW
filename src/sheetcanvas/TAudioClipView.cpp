@@ -87,7 +87,7 @@ TAudioClipView::TAudioClipView(TSheetView* sv, TAudioTrackView* parent, TAudioCl
         add_new_fade_curve_view(m_clip->get_fade_out());
     }
 
-    m_gainCurveView = new TCurveView(m_sv, this, m_clip->get_plugin_chain()->get_fader()->get_curve());
+    m_gainCurveView = new TCurveView(m_sv, this, m_clip->audio()->get_fader()->get_curve());
     // CurveViews don't 'get' their start offset, it's only a property for AudioClips.
     // So to be sure the CurveNodeViews start offset get updated as well,
     // we call curveviews calculate_bounding_rect() function!
@@ -95,8 +95,8 @@ TAudioClipView::TAudioClipView(TSheetView* sv, TAudioTrackView* parent, TAudioCl
     connect(m_gainCurveView, &TCurveView::curveModified, m_sv, &TSheetView::stop_follow_play_head);
     connect(m_gainCurveView, &TCurveView::curveUpdated, this, [this](int startx, int endx) { update(QRectF(startx - 2, 0, endx - startx + 4, m_height)); });
 
-    connect(m_clip, &TAudioClip::muteChanged, this, [this](bool a){(void)a; update();});
-    connect(m_clip, &TAudioClip::muteChanged, this, &TAudioClipView::repaint_clip);
+    connect(m_clip->audio(), &TAudioProcessingNode::muteChanged, this, [this](bool a){(void)a; update();});
+    connect(m_clip->audio(), &TAudioProcessingNode::muteChanged, this, &TAudioClipView::repaint_clip);
     connect(m_clip, &TAudioClip::edgeMoved, this, &TAudioClipView::repaint_edge);
     connect(m_clip, &TAudioClip::stateChanged, this, &TAudioClipView::clip_state_changed);
     connect(m_clip, &TAudioClip::activeContextChanged, this, &TAudioClipView::active_context_changed);
@@ -173,7 +173,7 @@ void TAudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *op
             if (m_clip->is_selected()) {
                 if (mousehover) painter->fillRect(fillRect, m_brushBgSelectedHover);
                 else            painter->fillRect(fillRect, m_brushBgSelected);
-            } else if (m_clip->is_muted()) {
+            } else if (m_clip->audio()->is_muted()) {
                 if (mousehover) painter->fillRect(fillRect, m_brushBgMutedHover);
                 else            painter->fillRect(fillRect, m_brushBgMuted);
             } else {
@@ -183,7 +183,7 @@ void TAudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *op
         }
     }
 
-    if (m_clip->is_muted()) {
+    if (m_clip->audio()->is_muted()) {
         m_waveBrush = m_brushFgMuted;
     } else {
         if (mousehover) m_waveBrush = m_brushFgHover;
@@ -703,14 +703,14 @@ void TAudioClipView::connect_interaction_controller(TSplitEntityController* cont
 
 void TAudioClipView::fill_gain(const TTimeRef& clipLocalStart, const TTimeRef& columnWidth, int count, float* gain)
 {
-    const float clipGain = m_clip->get_gain();
+    const float clipGain = m_clip->audio()->get_gain();
     std::fill(gain, gain + count, clipGain);
 
     const double width = double(columnWidth.universal_frame());
     TChannelBuffer buffer{nframes_t(count)};
 
     // The clip's gain curve, in source time
-    TCurve* clipCurve = m_clip->get_plugin_chain()->get_fader()->get_curve();
+    TCurve* clipCurve = m_clip->audio()->get_fader()->get_curve();
     if (clipCurve) {
         if (clipCurve->is_trivial()) {
             const float trivial = clipCurve->get_trivial_gain();
@@ -870,7 +870,7 @@ void TAudioClipView::draw_columns(QPainter* painter, qreal xstart, int pixelcoun
     top.reserve(columns);
     bottom.reserve(columns);
     QPainter outlinePainter(&image);
-    outlinePainter.setPen(QPen(themer()->get_color(m_clip->is_muted() ? "AudioClip:wavemacroview:outline:muted"
+    outlinePainter.setPen(QPen(themer()->get_color(m_clip->audio()->is_muted() ? "AudioClip:wavemacroview:outline:muted"
                                                                        : "AudioClip:wavemacroview:outline"), 0));
 
     for (int drawn = 0; drawn < drawnChannels; ++drawn) {

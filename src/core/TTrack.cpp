@@ -41,11 +41,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 TTrack::TTrack(TSession* session)
-    : TAudioProcessingNode(session)
+    : TContextItem(session)
+    , m_session(session)
+    , m_audio(session, this)
     , m_rtInputBus([this]() { return std::make_shared<AudioBus*>(m_inputBus); }, std::make_shared<AudioBus*>(nullptr))
 {
+    if (m_session) {
+        set_history_stack(m_session->get_history_stack());
+    }
+    // Its state shows its gain; being heard follows its mute and its solo
+    connect(&m_audio, &TAudioProcessingNode::gainChanged, this, &TTrack::stateChanged);
+    connect(&m_audio, &TAudioProcessingNode::muteChanged, this, &TTrack::audibleStateChanged);
+
     m_sortIndex = -1;
-    m_isSolo = m_mutedBySolo = m_isMuted = false;
+    m_isSolo = m_mutedBySolo = false;
     m_showTrackVolumeAutomation = false;
     m_preSendOn = false;
     m_channelCount = 2;
@@ -87,8 +96,8 @@ void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
         node.setAttribute("id", TraversoDAW::Utils::create_id());
     }
     node.setAttribute("name", m_name);
-    node.setAttribute("pan", m_pan);
-    node.setAttribute("mute", m_isMuted);
+    node.setAttribute("pan", m_audio.get_pan());
+    node.setAttribute("mute", m_audio.is_muted());
     node.setAttribute("solo", m_isSolo);
     node.setAttribute("mutedbysolo", m_mutedBySolo);
     node.setAttribute("showtrackvolumeautomation", m_showTrackVolumeAutomation);
@@ -96,7 +105,7 @@ void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
     node.setAttribute("height", m_session->get_track_height(get_id()));
 
     QDomNode pluginChainNode = doc.createElement("PluginChain");
-    pluginChainNode.appendChild(m_pluginChain->get_state(node.toDocument()));
+    pluginChainNode.appendChild(m_audio.get_plugin_chain()->get_state(node.toDocument()));
     node.appendChild(pluginChainNode);
 
     QDomNode sendsNode = doc.createElement("Sends");
@@ -123,16 +132,16 @@ int TTrack::set_state( const QDomNode & node )
     if (m_name.isEmpty()) {
         m_name = e.attribute( "name", "" );
     }
-    set_muted(e.attribute( "mute", "" ).toInt());
+    m_audio.set_muted(e.attribute( "mute", "" ).toInt());
     set_solo(e.attribute( "solo", "" ).toInt());
     set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
-    set_pan( e.attribute( "pan", "" ).toFloat() );
+    m_audio.set_pan( e.attribute( "pan", "" ).toFloat() );
     set_id(e.attribute("id", "0").toLongLong());
     m_session->set_track_height(get_id(), e.attribute( "height", "90" ).toInt());
 
     QDomNode m_pluginChainNode = node.firstChildElement("PluginChain");
     if (!m_pluginChainNode.isNull()) {
-        m_pluginChain->set_state(m_pluginChainNode);
+        m_audio.get_plugin_chain()->set_state(m_pluginChainNode);
     }
 
 
@@ -261,7 +270,8 @@ void TTrack::set_sort_index( int index )
 
 void TTrack::set_name( const QString & name )
 {
-    TAudioProcessingNode::set_name(name);
+    m_name = name;
+    emit stateChanged();
 
     // 'broadcast' our name change
     if (pm().get_project()) {

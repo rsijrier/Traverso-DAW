@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDir>
 #include <QTextStream>
 
-#include "PCommand.h"
 #include "TContextItem.h"
 #include "TInformUser.h"
 #include "Utils.h"
@@ -615,7 +614,7 @@ QString TShortCutManager::get_translation_for(const QString &entry)
 	return m_translations.value(key);
 }
 
-QString TShortCutManager::create_html_for_class(const QString& className, QObject* object)
+QString TShortCutManager::create_html_for_class(const QString& className, QObject* /*object*/)
 {
 	QString holdKeyFact = "";
 
@@ -632,13 +631,8 @@ QString TShortCutManager::create_html_for_class(const QString& className, QObjec
 	      "</style>\n"
 	      "</head>\n<body>\n").arg(QApplication::palette().color(QPalette::AlternateBase).darker(105).name()).arg(alternateBaseColor);
 
-	if (object && object->inherits("PCommand")) {
-        PCommand* pc = static_cast<PCommand*>(object);
-        html += "<table><tr class=\"object\">\n<td width=220 align=\"center\">" + pc->text() + "</td></tr>\n";
-	} else {
-		html += "<table><tr class=\"object\">\n<td colspan=\"2\" align=\"center\"><b>" + name + "</b><font style=\"font-size: 11px;\">&nbsp;&nbsp;&nbsp;" + holdKeyFact + "</font></td></tr>\n";
-		html += "<tr><td width=110 class=\"description\">" +tr("Description") + "</td><td width=110 class=\"description\">" + tr("Shortcut") + "</td></tr>\n";
-	}
+	html += "<table><tr class=\"object\">\n<td colspan=\"2\" align=\"center\"><b>" + name + "</b><font style=\"font-size: 11px;\">&nbsp;&nbsp;&nbsp;" + holdKeyFact + "</font></td></tr>\n";
+	html += "<tr><td width=110 class=\"description\">" +tr("Description") + "</td><td width=110 class=\"description\">" + tr("Shortcut") + "</td></tr>\n";
 
 	QStringList result;
 	int j=0;
