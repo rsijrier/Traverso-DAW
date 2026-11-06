@@ -647,9 +647,9 @@ TCommand * TAudioClipView::set_audio_file()
 
 
     // // FIXME This is a hack. When a ReadSource didn't have a valid file it wasn't added
-    // // to DiskIO in AudioClip::set_sheet(). So when resetting the audiofile this solves it,
+    // // to DiskIO in AudioClip::attach_to_sheet(). So when resetting the audiofile this solves it,
     // // but it's not the proper place to do so!!
-    // m_clip->set_sheet(m_sheet);
+    // m_clip->attach_to_sheet();
 
     // tInformUser().information(tr("Succesfully set AudioClip file to %1").arg(fileName));
 

@@ -551,6 +551,7 @@ int TSheet::process(TProcessContext &context) T_REALTIME_SAFE
 
     nframes_t nframes = context.get_nframes_to_process();
     context.set_ringbuffer_read_bus(m_clipRenderBus);
+    context.set_curve_buffer(&m_curveProcessBuffer);
 
     // Process all Tracks.
     for(TAudioTrack* track : m_audioTracks.rt_items()) {

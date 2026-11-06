@@ -143,8 +143,8 @@ int TAudioTrack::set_state( const QDomNode & node )
                 break;
             }
 
-            clip->set_sheet(m_sheet);
             clip->set_track(this);
+            clip->attach_to_sheet();
             clip->set_state(clip->get_dom_node());
             m_sheet->get_audioclip_manager()->add_clip(clip);
 
@@ -201,8 +201,8 @@ TAudioClip* TAudioTrack::init_recording()
     QString name = 	m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(++m_numtakes);
 
     TAudioClip* clip = resources_manager()->new_audio_clip(name);
-    clip->set_sheet(m_sheet);
     clip->set_track(this);
+    clip->attach_to_sheet();
     clip->move_to_location(m_sheet->get_transport_location());
 
     if (clip->init_recording() < 0) {

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTypes.h"
 
 class AudioBus;
+class TChannelBuffer;
 
 class TProcessContext {
 
@@ -46,6 +47,15 @@ public:
     }
     void set_ringbuffer_write_bus(AudioBus* bus) {
         m_ringBufferWriteBus = bus;
+    }
+
+    // The scratch buffer of the sheet being processed, for the clips' fades
+    void set_curve_buffer(TChannelBuffer* buffer) {
+        m_curveBuffer = buffer;
+    }
+    TChannelBuffer& get_curve_buffer() const {
+        Q_ASSERT(m_curveBuffer);
+        return *m_curveBuffer;
     }
     void set_start_location(const TTimeRef& location) {
         m_startLocation = location;
@@ -80,6 +90,7 @@ public:
 private:
     AudioBus*   m_ringBufferReadBus;
     AudioBus*   m_ringBufferWriteBus;
+    TChannelBuffer* m_curveBuffer{nullptr};
     nframes_t   m_nFramesToProcess;
     TTimeRef    m_startLocation;
     TTimeRef    m_endLocation;

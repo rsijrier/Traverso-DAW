@@ -94,7 +94,10 @@ public:
     void set_fade_in_length(const TTimeRef& length);
     void set_fade_out_length(const TTimeRef& length);
     void set_track(TAudioTrack* track);
-    void set_sheet(TSheet* sheet);
+    // After set_track() where the clip is placed: its read source into its
+    // track's sheet's disk io, its waveform's peak file, the sheet's undo stack
+    // for it and its plugin chain
+    void attach_to_sheet();
     void reset_fade_in();
     void reset_fade_out();
 
@@ -136,7 +139,7 @@ public:
     bool is_take() const;
     bool is_selected();
     bool is_locked() const {return m_isLocked;}
-    bool has_sheet() const;
+    bool has_track() const;
     bool is_readsource_invalid() const {return !m_isReadSourceValid;}
     // A finished take whose writer put no frames in its file
     bool is_empty_take() const {return m_emptyTake;}
@@ -159,7 +162,6 @@ private:
     TAudioProcessingNode            m_audio;
     QString                         m_name;
     TRtList<TFadeCurve>             m_fades;
-    TSheet*                         m_sheet;
     TAudioTrack*                    m_track;
     TBufferedAudioStreamReader*     m_readSource;
     TBufferedAudioStreamWriter*     m_writer;

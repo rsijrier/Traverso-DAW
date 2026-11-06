@@ -56,8 +56,8 @@ TAudioClip* TAudioClipFactory::create_for_source(TAudioTrack* track,
 
     TAudioClip* clip = resources_manager()->new_audio_clip(name);
     resources_manager()->set_source_for_clip(clip, source);
-    clip->set_sheet(track->get_sheet());
     clip->set_track(track);
+    clip->attach_to_sheet();
     clip->move_to_location(location);
 
     if (length > TTimeRef()) {

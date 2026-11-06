@@ -70,7 +70,6 @@ TAudioClip::TAudioClip(const QString& name)
     m_readSourceId = m_sheetId = 0;
     QObject::tr("TAudioClip");
 
-    m_sheet = nullptr;
     m_track = nullptr;
     m_readSource = nullptr;
     m_writer = nullptr;
@@ -103,7 +102,7 @@ QObject* TAudioClip::id_owner() const
     // as in use (T96). get_id() is not const as it makes a missing old id; a
     // clip on a track has one, the resources manager holds it by it
     const qint64 oldId = const_cast<TAudioClip*>(this)->get_id();
-    if (m_track && m_sheet->get_project()->get_audiosource_manager()->is_clip_in_use(oldId)) {
+    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(oldId)) {
         return m_track;
     }
     return nullptr;
@@ -133,14 +132,14 @@ TAudioClip::~TAudioClip()
 {
     PENTERDES;
     if (m_readSource) {
-        Q_ASSERT(m_sheet);
-        m_sheet->remove_audio_source_from_diskio(m_readSource);
+        Q_ASSERT(m_track);
+        get_sheet()->remove_audio_source_from_diskio(m_readSource);
     }
     // A project closed while a recording still finished its file (between
     // finish_recording() and finish_write_source())
     if (m_writer) {
-        Q_ASSERT(m_sheet);
-        m_sheet->remove_audio_source_from_diskio(m_writer);
+        Q_ASSERT(m_track);
+        get_sheet()->remove_audio_source_from_diskio(m_writer);
     }
 
     delete m_waveform;
@@ -159,7 +158,7 @@ int TAudioClip::set_state(const QDomNode& node)
 {
     PENTER;
 
-    Q_ASSERT(m_sheet);
+    Q_ASSERT(m_track);
 
     QDomElement e = node.toElement();
 
@@ -274,10 +273,10 @@ TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitL
     Q_ASSERT(leftClip && rightClip);
 
     for (TAudioClip* c : {leftClip, rightClip}) {
-        // The copy got its read source after its sheet was set, set the sheet again
-        // so the read source is added to the sheet's disk io.
-        c->set_sheet(m_sheet);
+        // The copy got its read source after it was attached to its sheet,
+        // attach it again so the read source is added to the sheet's disk io.
         c->set_track(m_track);
+        c->attach_to_sheet();
     }
 
     TTimeRef distanceToSplit = splitLocation - get_location_start();
@@ -460,8 +459,8 @@ void TAudioClip::set_track_end_location(const TTimeRef& location)
 {
     m_location->set_end(location);
 
-    if ( (!is_moving()) && m_sheet) {
-        m_sheet->get_snap_list()->mark_dirty();
+    if ( (!is_moving()) && m_track) {
+        get_sheet()->get_snap_list()->mark_dirty();
         m_track->clip_position_changed(this);
     }
 }
@@ -531,7 +530,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
         return 0;
     }
 
-    Q_ASSERT(m_sheet);
+    Q_ASSERT(m_track);
     Q_ASSERT(m_readSource);
 
     TTimeRef fileLocation;
@@ -587,7 +586,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
     Q_ASSERT(readFrames == nframes - offset);
 
     for (TFadeCurve* fade : m_fades.rt_items()) {
-        fade->process(context, m_sheet->get_curve_buffer(), bus, startLocation, endLocation, nframes);
+        fade->process(context, context.get_curve_buffer(), bus, startLocation, endLocation, nframes);
     }
 
     TTimeRef faderEndLocation = fileLocation + TTimeRef(readFrames, outputRate);
@@ -638,7 +637,6 @@ void TAudioClip::process_capture(TProcessContext &context) T_REALTIME_SAFE
 
 int TAudioClip::init_recording()
 {
-    Q_ASSERT(m_sheet);
     Q_ASSERT(m_track);
 
     AudioBus* bus = m_track->get_input_bus();
@@ -653,7 +651,7 @@ int TAudioClip::init_recording()
     // What is played comes in the capture plus the playback latency after
     // the moment it belongs to: the writer drops that many frames first, so
     // the take lines up with what was heard (doc/design/recording-latency.md)
-    TAudioDevice& device = m_sheet->audio_device();
+    TAudioDevice& device = get_sheet()->audio_device();
     const uint rate = device.get_sample_rate();
     m_captureCompensation = TRecordingLatency::compensation_frames(
         device.get_capture_latency_frames(), device.get_playback_latency_frames(),
@@ -667,8 +665,8 @@ int TAudioClip::init_recording()
     m_recordingStatus = RECORDING;
 
     TBufferedAudioStreamReader* rs = resources_manager()->create_recording_source(
-                m_sheet->get_audio_sources_dir(),
-                m_name, channelcount, m_sheet->get_id());
+                get_sheet()->get_audio_sources_dir(),
+                m_name, channelcount, get_sheet()->get_id());
 
     resources_manager()->set_source_for_clip(this, rs);
 
@@ -676,7 +674,7 @@ int TAudioClip::init_recording()
 
     auto spec = new TExportSpecification;
 
-    spec->set_export_dir(m_sheet->get_audio_sources_dir());
+    spec->set_export_dir(get_sheet()->get_audio_sources_dir());
 
     QString fileFormat = config().get_property("Recording", "FileFormat", "wav").toString();
     if (fileFormat == "wavpack") {
@@ -695,7 +693,7 @@ int TAudioClip::init_recording()
     spec->set_recording_state(TExportSpecification::RecordingState::RECORDING);
     spec->set_block_size(device.get_buffer_size());
     spec->set_channel_count(channelcount);
-    spec->set_sample_rate(m_sheet->get_project()->project_rate());
+    spec->set_sample_rate(get_sheet()->get_project()->project_rate());
     spec->set_export_start_location(TTimeRef());
     spec->set_export_end_location(TTimeRef());
     spec->set_export_file_name(m_name + "-" + sourceid);
@@ -717,11 +715,11 @@ int TAudioClip::init_recording()
     delete m_waveform;
     m_waveform = new TWaveform(m_writer->get_peaks());
 
-    m_sheet->add_audio_source_to_diskio(m_writer);
+    get_sheet()->add_audio_source_to_diskio(m_writer);
 
     // Writers fileFinished() signal comes from DiskIO thread, so we have to connect by Qt::QueuedConnection
     connect(m_writer, &TBufferedAudioStreamWriter::fileFinished, this, &TAudioClip::finish_write_source, Qt::QueuedConnection);
-    connect(m_sheet, &TSheet::transportStopped, this, &TAudioClip::finish_recording);
+    connect(get_sheet(), &TSheet::transportStopped, this, &TAudioClip::finish_recording);
 
     return 1;
 }
@@ -751,13 +749,12 @@ void TAudioClip::reset_fade_out()
 TAudioClip* TAudioClip::create_copy( )
 {
     PENTER;
-    Q_ASSERT(m_sheet);
     Q_ASSERT(m_track);
     QDomDocument doc("AudioClip");
     QDomNode clipState = get_state(doc);
-    auto clip = m_sheet->get_project()->objects().make<TAudioClip>(m_name);
-    clip->set_sheet(m_sheet);
+    auto clip = get_sheet()->get_project()->objects().make<TAudioClip>(m_name);
     clip->set_track(m_track);
+    clip->attach_to_sheet();
     clip->set_state(clipState);
     return clip;
 }
@@ -806,9 +803,9 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
             // Built in the idle time of this clip's sheet's DiskIO
             m_waveform = new TWaveform(rs, [this](const QString& audioPath, const QString& peakPath, uint rate, int channelCount,
                                                   qint64 frames) {
-                return m_sheet ? m_sheet->request_peak_build(audioPath, peakPath, rate, channelCount, frames) : TPeakBuild{};
+                return m_track ? get_sheet()->request_peak_build(audioPath, peakPath, rate, channelCount, frames) : TPeakBuild{};
             });
-            if (m_sheet) {
+            if (m_track) {
                 m_waveform->prepare();
             }
         }
@@ -837,7 +834,7 @@ void TAudioClip::finish_write_source()
     // before the file waveform below asks for its peak file: that one joins
     // the job and shows level 0 meanwhile.
     if (const std::shared_ptr<TPeakStream> peaks = m_writer->get_peaks(); peaks && !peaks->write_failed()) {
-        m_sheet->post_process_peaks(peaks);
+        get_sheet()->post_process_peaks(peaks);
     }
 
     // No frames in the file: stopped at once, or within the latency
@@ -850,12 +847,12 @@ void TAudioClip::finish_write_source()
             PERROR("Setting file for ReadSource failed after finishing recording");
         }
     } else {
-        m_sheet->add_audio_source_to_diskio(m_readSource);
+        get_sheet()->add_audio_source_to_diskio(m_readSource);
         // re-inits the lenght from the audiofile due calling rsm->set_source_for_clip()
         m_length = TTimeRef();
     }
 
-    m_sheet->remove_audio_source_from_diskio(m_writer);
+    get_sheet()->remove_audio_source_from_diskio(m_writer);
 
     m_writer = nullptr;
 
@@ -873,7 +870,7 @@ void TAudioClip::finish_recording()
     m_recordingStatus = FINISHING_RECORDING;
     m_writer->set_recording(false);
 
-    disconnect(m_sheet, &TSheet::transportStopped, this, &TAudioClip::finish_recording);
+    disconnect(get_sheet(), &TSheet::transportStopped, this, &TAudioClip::finish_recording);
 }
 
 uint TAudioClip::get_channel_count( ) const T_REALTIME_SAFE
@@ -892,8 +889,8 @@ uint TAudioClip::get_channel_count( ) const T_REALTIME_SAFE
 
 TSheet* TAudioClip::get_sheet( ) const
 {
-    Q_ASSERT(m_sheet);
-    return m_sheet;
+    Q_ASSERT(m_track);
+    return m_track->get_sheet();
 }
 
 TAudioTrack* TAudioClip::get_track( ) const
@@ -902,15 +899,19 @@ TAudioTrack* TAudioClip::get_track( ) const
     return m_track;
 }
 
-void TAudioClip::set_sheet( TSheet * sheet )
+// Not done by set_track(): the track calls that on every add, undo, redo and
+// move, and the read source would be added to the disk io again
+void TAudioClip::attach_to_sheet()
 {
-    m_sheet = sheet;
+    Q_ASSERT(m_track);
+    TSheet* sheet = m_track->get_sheet();
+
     if (m_readSource && m_isReadSourceValid) {
-        m_sheet->add_audio_source_to_diskio(m_readSource);
+        sheet->add_audio_source_to_diskio(m_readSource);
     } else {
-        PWARN("AudioClip::set_sheet() : Setting Sheet, but no ReadSource available!!");
+        PWARN("AudioClip::attach_to_sheet() : no ReadSource available!!");
     }
-    
+
     m_sheetId = sheet->get_id();
 
     // The peak file is needed before the clip is ever seen
@@ -918,8 +919,8 @@ void TAudioClip::set_sheet( TSheet * sheet )
         m_waveform->prepare();
     }
 
-    set_history_stack(m_sheet->get_history_stack());
-    m_audio.get_plugin_chain()->set_session(m_sheet);
+    set_history_stack(sheet->get_history_stack());
+    m_audio.get_plugin_chain()->set_session(sheet);
 }
 
 
@@ -940,8 +941,8 @@ void TAudioClip::set_track( TAudioTrack * track )
 
 bool TAudioClip::is_selected( )
 {
-    Q_ASSERT(m_sheet);
-    return m_sheet->get_audioclip_manager()->is_clip_in_selection(this);
+    Q_ASSERT(m_track);
+    return get_sheet()->get_audioclip_manager()->is_clip_in_selection(this);
 }
 
 bool TAudioClip::is_take( ) const
@@ -955,8 +956,8 @@ uint TAudioClip::get_bitdepth( ) const
         return m_readSource->get_bit_depth();
     }
 
-    Q_ASSERT_X(m_sheet, "TAudioClip::get_bitdepth", "a clip without a source answers its sheet's device");
-    return m_sheet->audio_device().get_bit_depth();
+    Q_ASSERT_X(m_track, "TAudioClip::get_bitdepth", "a clip without a source answers its sheet's device");
+    return get_sheet()->audio_device().get_bit_depth();
 
 }
 
@@ -969,8 +970,8 @@ uint TAudioClip::get_rate( ) const
 
     // No source yet (a take being recorded): the rate it is written at,
     // its sheet's project's
-    Q_ASSERT_X(m_sheet, "TAudioClip::get_rate", "a clip without a source answers its sheet's project rate");
-    return m_sheet->get_project()->project_rate();
+    Q_ASSERT_X(m_track, "TAudioClip::get_rate", "a clip without a source answers its sheet's project rate");
+    return get_sheet()->get_project()->project_rate();
 }
 
 TTimeRef TAudioClip::get_source_length( ) const
@@ -1076,9 +1077,9 @@ QDomNode TAudioClip::get_dom_node() const
     return m_domNode;
 }
 
-bool TAudioClip::has_sheet() const
+bool TAudioClip::has_track() const
 {
-    return m_sheet != nullptr;
+    return m_track != nullptr;
 }
 
 void TAudioClip::set_as_moving(bool moving)

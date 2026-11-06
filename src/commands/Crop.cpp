@@ -90,18 +90,17 @@ int CropClip::prepare_actions()
 	leftClip = resources_manager()->get_clip(m_clip->get_id());
 	rightClip = resources_manager()->get_clip(m_clip->get_id());
 
-	leftClip->set_sheet(m_clip->get_sheet());
+    leftClip->set_track(m_track);
+    leftClip->attach_to_sheet();
     leftClip->move_to_location(m_clip->get_location_start());
     leftClip->set_right_edge(TTimeRef(x1 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location_start());
     leftClip->reset_fade_out();
 
-	rightClip->set_sheet(m_clip->get_sheet());
+    rightClip->set_track(m_track);
+    rightClip->attach_to_sheet();
     rightClip->set_left_edge(TTimeRef(x2 * m_cv->get_sheetview()->timeref_scalefactor) + m_clip->get_location_start());
     rightClip->move_to_location(leftClip->get_location_end());
     rightClip->reset_fade_in();
-
-    leftClip->set_track(m_track);
-    rightClip->set_track(m_track);
 
     // The two cropped clips replace the original as one real-time change
     m_mutation.reset(m_track->get_sheet()->create_command_mutate_clips({leftClip, rightClip}, {m_clip}, text()));

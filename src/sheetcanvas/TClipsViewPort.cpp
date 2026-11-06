@@ -139,10 +139,10 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 	foreach(qint64 id, m_resourcesImport) {
 		TAudioClip* clip = resources_manager()->get_clip(id);
 		if (clip) {
-			bool hadSheet = clip->has_sheet();
-            clip->set_sheet(m_sw->get_sheet());
+			bool hadTrack = clip->has_track();
 			clip->set_track(m_importTrack);
-			if (!hadSheet) {
+			clip->attach_to_sheet();
+			if (!hadTrack) {
 				clip->set_state(clip->get_dom_node());
 			}
             clip->move_to_location(startpos);
@@ -154,8 +154,8 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 		if (source) {
 			clip = resources_manager()->new_audio_clip(source->get_short_name());
             resources_manager()->set_source_for_clip(clip, source);
-			clip->set_sheet(m_importTrack->get_sheet());
 			clip->set_track(m_importTrack);
+			clip->attach_to_sheet();
 			clip->move_to_location(startpos);
             startpos = clip->get_location_end();
             clips.append(clip);

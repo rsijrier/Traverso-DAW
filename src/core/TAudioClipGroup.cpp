@@ -133,8 +133,8 @@ QList<TAudioClip*> TAudioClipGroup::copy_clips()
 
     for(auto& clip : m_clips) {
         TAudioClip* newclip = resources_manager()->get_clip(clip->get_id());
-        newclip->set_sheet(clip->get_sheet());
         newclip->set_track(clip->get_track());
+        newclip->attach_to_sheet();
         newclip->move_to_location(clip->get_location_start());
         newclips.append(newclip);
     }
