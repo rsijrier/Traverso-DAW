@@ -219,7 +219,6 @@ public slots:
     void set_left_edge(const TTimeRef &location);
     void set_right_edge(const TTimeRef &location);
     void track_audible_state_changed();
-    void toggle_mute();
     void toggle_lock();
 
     TCommand* lock();

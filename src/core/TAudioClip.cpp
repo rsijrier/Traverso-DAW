@@ -83,8 +83,9 @@ TAudioClip::TAudioClip(const QString& name)
     m_fadeIn = nullptr;
     m_fadeOut = nullptr;
     m_audio.get_fader()->automate_port(0, true);
-    // Its state shows its gain
+    // Its state shows its gain; muted, it reads nothing from disk until unmuted
     connect(&m_audio, &TAudioProcessingNode::gainChanged, this, &TAudioClip::stateChanged);
+    connect(&m_audio, &TAudioProcessingNode::muteChanged, this, &TAudioClip::set_sources_active_state);
 
     update_global_configuration();
     connect(&config(), &TConfig::configChanged, this, &TAudioClip::update_global_configuration);
@@ -298,14 +299,6 @@ TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitL
     return result;
 }
 
-
-void TAudioClip::toggle_mute()
-{
-    PENTER;
-
-    m_audio.set_muted(!m_audio.is_muted());
-    set_sources_active_state();
-}
 
 void TAudioClip::toggle_lock()
 {
