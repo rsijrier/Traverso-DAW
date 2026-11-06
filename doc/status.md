@@ -1037,6 +1037,14 @@ From the GPU waveform test program, clip edges in variant A (branch
   (TInputEventDispatcher only, about 50 to 80 lines) in
   `reports/clip-processing-node-2026-11-05/fable-review.md`. Not to be
   planned twice: it is that point.
+- **T104 A removed clip dropped again from the resources window is set up a
+  second time** (Fable, 2026-11-06, reviewing the `tclip` plan; not checked at
+  run time): `get_clip()` hands out the removed clip itself, not a copy
+  (`TResourcesManager.cpp:368, 389-390`), and `set_audio_source()` runs again:
+  a second `TWaveform`, a second `locationChanged` connect
+  (`TAudioClip.cpp:785`) and, in `attach_to_sheet()`, a second `add_stream`
+  of a stream `removed_from_track()` only deactivated (`TClipsViewPort.cpp:139-147`;
+  the assert at `TIOScheduler.cpp:154-155`, in release a duplicate stream).
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
