@@ -942,13 +942,14 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T93 Plugin order** (Remon, 2026-11-02): the order of plugins must be changeable,
   in the way it should be. `MovePlugin` was never finished: it moves the view, not
   the chain, and does not return in the controllers work. To design.
-- **T94 `--dump-shortcut-table` crashes at exit** (found 2026-11-04): the table is
-  written and identical, then the process ends with SIGSEGV, so
-  `tests/shortcut-parity/check.sh` stops with 139. Also with master's build of
-  2026-11-02; under gdb it does not crash. Not looked into.
-  Once fixed, `tests/shortcut-parity/check.sh` goes into ctest (Remon,
-  2026-11-05): the resolution table is the proof that every key reaches the
-  same function, and today it is compared by hand.
+- **T94 `--dump-shortcut-table` crashed at exit: fixed 2026-11-06.** The dump
+  returned from `main()` without stopping the audio thread, which runs from
+  the start; the statics' destruction then took `tsmp()`'s queue from under
+  a running cycle (valgrind: an invalid read in
+  `TAudioThreadMessageQueue::process_posted_gui_events()`), 4 times in 10.
+  The dump now quits as an ordinary exit does (`delete traverso`), and
+  `check.sh` runs in ctest as `shortcut_parity`. The kind of bug, a static
+  gone while a thread uses it, is what T58 removes for good.
 - **T95 The `TTrack` split and the processing node as composition** (Remon,
   2026-11-04; after `object-ids`): `TTrack` the generic track, `TAudioMixerTrack`
   with `audio()` on top, `TAudioTrack` and `TBusTrack` below it; `TAudioClip`
@@ -1066,6 +1067,10 @@ From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
+  2026-11-06: T94 was one such case: the statics' destruction at exit took
+  `tsmp()`'s queue while the audio thread still ran a cycle. Fixed in the
+  dump path by quitting as an ordinary exit; with the device owning its
+  queue (below) and Traverso.cpp owning the device, it cannot happen at all.
   - Safety net first: a headless test with the Dummy driver (start, add a
     client, cycles, remove, switch driver, shut down). **Done 2026-10-28**
     (`test_audio_device`, merged `73dad650`).

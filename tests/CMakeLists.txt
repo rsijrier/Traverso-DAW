@@ -19,6 +19,11 @@ add_subdirectory(recording)
 add_subdirectory(routing)
 add_subdirectory(core)
 
+# Every key resolves to the same function as in the reference table, and the
+# built-in keymaps have no new problems: the app itself, offscreen, with an
+# empty configuration (tests/shortcut-parity/check.sh)
+add_test(NAME shortcut_parity COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/shortcut-parity/check.sh $<TARGET_FILE:traverso>)
+
 # Under ThreadSanitizer every test gets tests/tsan.supp (reports inside Qt and
 # glib, which are not instrumented; see the file), and no debuginfod: a
 # report's symbolizer waiting on a download stalls the audio thread long

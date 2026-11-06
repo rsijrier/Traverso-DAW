@@ -103,6 +103,9 @@ public :
     ~TMainWindow();
 
     static TMainWindow* instance();
+    // Whether instance() made the window already: the dump of the shortcut
+    // table never does
+    static bool has_instance() { return m_instance != nullptr; }
 
     void select_fade_in_shape();
     void select_fade_out_shape();

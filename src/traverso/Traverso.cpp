@@ -75,7 +75,9 @@ Traverso::~Traverso()
     // application's schedulers end now
     pm().stop_schedulers();
     audiodevice().shutdown();
-    delete TMainWindow::instance();
+    if (TMainWindow::has_instance()) {
+        delete TMainWindow::instance();
+    }
     delete themer();
     config().save();
 }

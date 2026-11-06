@@ -172,23 +172,30 @@ int main( int argc, char **argv )
 	traverso = new Traverso(argc, argv);
 
 	// Writes the shortcut resolution table for both built-in keymaps and quits,
-	// used to verify that shortcut handling keeps behaving the same
+	// used to verify that shortcut handling keeps behaving the same. It quits
+	// the way an ordinary exit does: the audio thread runs from the start and
+	// must stop before the statics it uses are gone
 	for (int i=1; i<argc-1; i++) {
 		if (strcmp(argv[i],"--dump-shortcut-table")==0) {
+			int result = 0;
 			QFile file(QString::fromLocal8Bit(argv[i+1]));
-			if (!file.open(QFile::WriteOnly | QFile::Truncate)) {
-				return 1;
+			if (file.open(QFile::WriteOnly | QFile::Truncate)) {
+				QTextStream out(&file);
+				QVariant simplified = config().get_property("InputEventDispatcher", "UseSimplifiedShortcuts", true);
+				for (bool useSimplified : {true, false}) {
+					config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", useSimplified);
+					tShortCutManager().load_shortcuts();
+					out << "## KEYMAP " << (useSimplified ? "simplified" : "advanced") << "\n";
+					tShortCutManager().write_resolution_table(out);
+				}
+				config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", simplified);
+			} else {
+				TLOG_E("app", "cannot write the shortcut table to {}", argv[i+1]);
+				result = 1;
 			}
-			QTextStream out(&file);
-			QVariant simplified = config().get_property("InputEventDispatcher", "UseSimplifiedShortcuts", true);
-			for (bool useSimplified : {true, false}) {
-				config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", useSimplified);
-				tShortCutManager().load_shortcuts();
-				out << "## KEYMAP " << (useSimplified ? "simplified" : "advanced") << "\n";
-				tShortCutManager().write_resolution_table(out);
-			}
-			config().set_property("InputEventDispatcher", "UseSimplifiedShortcuts", simplified);
-			return 0;
+			delete traverso;
+			TLog::stop();
+			return result;
 		}
 	}
 	
