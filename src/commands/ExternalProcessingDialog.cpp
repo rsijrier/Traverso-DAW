@@ -202,7 +202,7 @@ void ExternalProcessingDialog::process_finished(int exitcode, QProcess::ExitStat
 	
 	QString result = m_processor->readAllStandardOutput();
 	// print anything on command line we didn't catch
-	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "output:  %s", QS_C(result));
+	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "output:  %s", qUtf8Printable(result));
 		
 	TBufferedAudioStreamReader* source = resources_manager()->import_source(dir, m_filename);
 	if (!source) {

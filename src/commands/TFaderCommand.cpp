@@ -8,7 +8,7 @@
 #include "TAudioProcessingNode.h"
 #include "TFaderLaw.h"
 #include "TGain.h"
-#include "Utils.h"
+#include "TMousePermission.h"
 #include "Debugger.h"
 #include "TFloatCompare.h"
 
@@ -118,7 +118,7 @@ void TFaderCommand::set_target_gain(float gain)
 int TFaderCommand::process_mouse_move(qreal diffY)
 {
 #if defined(Q_OS_MAC)
-    if (!TraversoDAW::Utils::can_set_mouse_pos()) {
+    if (!t_may_move_mouse()) {
         // Evaluate condition against an absolute linear silence coefficient baseline to bypass layout jump errors
         if (m_origGain == 0.0f) {
             m_faderPosition = 0.0f;

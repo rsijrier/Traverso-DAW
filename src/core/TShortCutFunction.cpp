@@ -25,7 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QTranslator>
 #include "Debugger.h"
-#include "Utils.h"
 #include "qmetaobject.h"
 
 TShortCutFunction::TShortCutFunction(const QMetaObject *metaObject, const TActionGroup &group)

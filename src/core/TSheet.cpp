@@ -355,7 +355,7 @@ bool TSheet::get_cd_export_range(TTimeRef &startLocation, TTimeRef &endLocation)
     if (m_timeLineRuler->get_start_location(startLocation)) {
         // round down to the start of the CD frame (75th of a sec)
         startLocation = TTimeRef::cd_to_timeref(TTimeRef::timeref_to_cd(startLocation));
-        PMESG("Start marker found at %s", QS_C(TTimeRef::timeref_to_cd(startLocation)));
+        PMESG("Start marker found at %s", qUtf8Printable(TTimeRef::timeref_to_cd(startLocation)));
     } else {
         PMESG("No start marker found");
         return false;
@@ -363,7 +363,7 @@ bool TSheet::get_cd_export_range(TTimeRef &startLocation, TTimeRef &endLocation)
 
     if (m_timeLineRuler->get_end_location(endLocation)) {
         endLocation = TTimeRef::cd_to_timeref(TTimeRef::timeref_to_cd(endLocation));
-        PMESG("End marker found at %s", QS_C(TTimeRef::timeref_to_cd(endLocation)));
+        PMESG("End marker found at %s", qUtf8Printable(TTimeRef::timeref_to_cd(endLocation)));
     } else {
         PMESG("No end marker found");
         return false;
@@ -1133,7 +1133,7 @@ qreal TSheet::minimum_hzoom() const
 void TSheet::clip_finished_recording(TAudioClip * clip)
 {
     if (!m_recordingClips.removeAll(clip)) {
-        //		PERROR("clip %s was not in recording clip list, cannot remove it!", QS_C(clip->get_name()));
+        //		PERROR("clip %s was not in recording clip list, cannot remove it!", qUtf8Printable(clip->get_name()));
     }
 
     if (clip->is_empty_take()) {

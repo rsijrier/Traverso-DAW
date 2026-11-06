@@ -19,7 +19,6 @@
  */
 
 #include "TJackDriver.h"
-#include "Utils.h"
 
 #include <jack/jack.h>
 
@@ -108,7 +107,7 @@ int TJackDriver::setup(QList<AudioChannel* > channels, const QString &projectNam
 
     TLOG_I("jack", "connecting to the JACK server as {}", clientName);
 
-    if ( (m_jackClient = jack_client_open(QS_C(clientName), JackNoStartServer, nullptr)) == nullptr) {
+    if ( (m_jackClient = jack_client_open(qUtf8Printable(clientName), JackNoStartServer, nullptr)) == nullptr) {
         emit driverSetupMessage("Jack", tr("Couldn't connect to the jack server, is jack running?"), TAudioDevice::DRIVER_SETUP_FAILURE);
         return -1;
     }

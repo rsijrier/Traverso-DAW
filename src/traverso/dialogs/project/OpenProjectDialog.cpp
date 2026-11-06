@@ -20,6 +20,7 @@
 */
 
 #include "OpenProjectDialog.h"
+#include "Utils.h"
 
 #include <QDir>
 #include <QStringList>

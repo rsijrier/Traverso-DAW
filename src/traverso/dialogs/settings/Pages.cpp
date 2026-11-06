@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 */
 
+#include <QTranslator>
+#include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -58,6 +60,30 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 /*            AudioDriver               */
 /****************************************/
 
+
+
+// The translations built in, as qm files
+static QStringList find_qm_files()
+{
+	QDir dir(":/translations");
+	QStringList fileNames = dir.entryList(QStringList("*.qm"), QDir::Files, QDir::Name);
+	QMutableStringListIterator i(fileNames);
+	while (i.hasNext()) {
+		i.next();
+		i.setValue(dir.filePath(i.value()));
+	}
+	return fileNames;
+}
+
+// The name a translation gives its own language
+static QString language_name_from_qm_file(const QString& lang)
+{
+	QTranslator translator;
+	if (translator.load(lang)) {
+		return translator.translate("LanguageName", "English", "The name of this Language, e.g. German would be Deutch");
+	}
+	return QString("Failed to load language name from qm file");
+}
 
 AudioDriverConfigPage::AudioDriverConfigPage(QWidget *parent)
     : ConfigPage(parent)
@@ -701,8 +727,8 @@ AppearenceConfigPage::AppearenceConfigPage(QWidget * parent)
         m_colorModifierDialog = 0;
 
     languageComboBox->addItem(tr("Default Language"), "");
-    foreach(const QString &lang, TraversoDAW::Utils::find_qm_files()) {
-        languageComboBox->addItem(TraversoDAW::Utils::language_name_from_qm_file(lang), lang);
+    foreach(const QString &lang, find_qm_files()) {
+        languageComboBox->addItem(language_name_from_qm_file(lang), lang);
     }
 
     load_config();

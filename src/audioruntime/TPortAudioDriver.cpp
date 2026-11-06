@@ -216,7 +216,7 @@ int TPortAudioDriver::host_index_for_host_api(const QString& hostapi)
     }
 
     if (hostIndex >= 0) {
-        TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "PADriver:: Found %s host api", QS_C(hostapi));
+        TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "PADriver:: Found %s host api", qUtf8Printable(hostapi));
     }
 
     return hostIndex;

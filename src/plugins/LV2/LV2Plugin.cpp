@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "PluginManager.h"
 #include "AudioBus.h"
 #include "TAudioDevice.h"
-#include "Utils.h"
 
 #if defined Q_OS_MAC
 	#include <cmath>
@@ -198,12 +197,12 @@ int LV2Plugin::init()
 	lilv_instance_activate(m_instance);
 	
 	if (m_audioInputPorts.size() == 0) {
-//		PERROR("Plugin %s has no audio input ports set!!", QS_C(get_name()));
+//		PERROR("Plugin %s has no audio input ports set!!", qUtf8Printable(get_name()));
 		return -1;
 	}
 
 	if (m_audioOutputPorts.size() == 0) {
-//		PERROR("Plugin %s has no audio output ports set!!", QS_C(get_name()));
+//		PERROR("Plugin %s has no audio output ports set!!", qUtf8Printable(get_name()));
 		return -1;
 	}
 	
@@ -219,9 +218,9 @@ int LV2Plugin::init()
 
 int LV2Plugin::create_instance()
 {
-// 	printf("URI:\t%s\n", QS_C(m_pluginUri));
+// 	printf("URI:\t%s\n", qUtf8Printable(m_pluginUri));
 
-	LilvNode* plugin_uri = lilv_new_uri(PluginManager::instance()->get_lilv_world(), QS_C(m_pluginUri));
+	LilvNode* plugin_uri = lilv_new_uri(PluginManager::instance()->get_lilv_world(), qUtf8Printable(m_pluginUri));
 	m_plugin = lilv_plugins_get_by_uri(PluginManager::instance()->get_lilv_plugins(), plugin_uri);
 	lilv_node_free(plugin_uri);
 

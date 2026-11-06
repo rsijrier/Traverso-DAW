@@ -30,7 +30,6 @@
 #include "TProjectManager.h"
 #include "TInformUser.h"
 #include "TSheet.h"
-#include "Utils.h"
 
 
 #if defined (Q_OS_WIN)
@@ -410,7 +409,7 @@ void CDWritingDialog::write_to_cd()
 	
 	arguments << m_exportSpec->tocFileName;
 	
-	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s arguments: %s", QS_C(burnprogram), QS_C(arguments.join(" ")));
+	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s arguments: %s", qUtf8Printable(burnprogram), qUtf8Printable(arguments.join(" ")));
 
 #if defined (Q_OS_MAC)
 	m_burnprocess->start(qApp->applicationDirPath() + "/cdrdao", arguments);
@@ -613,7 +612,7 @@ void CDWritingDialog::read_standard_output()
 	}
 	
 	// Write out only the unhandled cdrdao lines
-	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "CD Writing: %s", QS_C(sout.trimmed()));
+	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "CD Writing: %s", qUtf8Printable(sout.trimmed()));
 }
 
 void CDWritingDialog::closeEvent(QCloseEvent * event)

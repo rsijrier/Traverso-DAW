@@ -20,7 +20,6 @@
 */
 
 #include "TInformUser.h"
-#include "Utils.h"
 #include "TAudioDevice.h"
 #include "TChannelBuffer.h"
 
@@ -83,7 +82,7 @@ void TInformUser::information( const QString & mes )
         TInformUserData s;
         s.message = mes;
         s.type = INFO;
-	PMESG("Information::information %s", QS_C(mes));
+	PMESG("Information::information %s", qUtf8Printable(mes));
 	emit message(s);
 }
 
@@ -102,7 +101,7 @@ void TInformUser::critical( const QString & mes )
         TInformUserData s;
         s.message = mes;
         s.type = CRITICAL;
-//	PERROR("Information::critical %s", QS_C(mes));
+//	PERROR("Information::critical %s", qUtf8Printable(mes));
 	emit message(s);
 }
 

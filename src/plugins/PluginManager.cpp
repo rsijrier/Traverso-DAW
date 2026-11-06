@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioPlugin.h"
 #include "CorrelationMeter.h"
 #include "SpectralMeter.h"
-#include "Utils.h"
 #include "TInformUser.h"
 
 #if defined (LV2_SUPPORT)
@@ -104,7 +103,7 @@ TAudioPlugin* PluginManager::get_plugin(const  QDomNode& node )
             plugin = nullptr;
 		}
 	} else {
-//		PERROR("PluginManager couldn't create Plugin ???? (%s)", QS_C(type));
+//		PERROR("PluginManager couldn't create Plugin ???? (%s)", qUtf8Printable(type));
 	}
 
 	return plugin;
@@ -120,7 +119,7 @@ const LilvPlugins* PluginManager::get_lilv_plugins()
 TAudioPlugin* PluginManager::create_lv2_plugin(const QString& uri)
 {
         TSession* session = pm().get_project()->get_current_session();
-        LV2Plugin* plugin = new LV2Plugin(session, QS_C(uri));
+        LV2Plugin* plugin = new LV2Plugin(session, qUtf8Printable(uri));
 	
 	if (plugin->init() < 0) {
 		tInformUser().warning(QObject::tr("Plugin %1 initialization failed!").arg(uri));

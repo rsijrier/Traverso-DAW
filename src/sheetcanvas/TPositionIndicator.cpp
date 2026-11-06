@@ -22,7 +22,6 @@
 #include "TPositionIndicator.h"
 
 #include <QColor>
-#include "Utils.h"
 #include "TThemer.h"
 
 TPositionIndicator::TPositionIndicator(TViewItem* parentView)

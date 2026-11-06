@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TShortCut.h"
 #include "TShortCutFunction.h"
 #include "TRtTransaction.h"
-#include "Utils.h"
 #include "TShortCutManager.h"
 #include "TConfig.h"
 #include "TTimeRef.h"
@@ -127,7 +126,7 @@ int TInputEventDispatcher::dispatch_shortcut_from_contextmenu(TShortCutFunction*
     TShortCut* shortCut = m_shortCutManager->get_shortcut_for_key(keys.first());
 
     if (! shortCut) {
-        //		PERROR("ContextMenu keySequence doesn't apply to any InputEngine knows off!! (%s)", QS_C(keys.first()));
+        //		PERROR("ContextMenu keySequence doesn't apply to any InputEngine knows off!! (%s)", qUtf8Printable(keys.first()));
         return -1;
     }
 
@@ -173,7 +172,7 @@ int TInputEventDispatcher::dispatch_shortcut(TShortCut* shortCut, bool fromConte
         }
 
         PMESG("Function found for metaobject %s", metaObject->className());
-        PMESG("setting pluginname to %s", QS_C(shortCutFunction->get_plugin_name()));
+        PMESG("setting pluginname to %s", qUtf8Printable(shortCutFunction->get_plugin_name()));
         PMESG("setting commandname to %s", shortCutFunction->get_command_name());
 
         TCommand* command = nullptr;
@@ -337,7 +336,7 @@ TCommand *TInputEventDispatcher::create_command_from_plugin(QObject* contextItem
     const TAction* action = shortCutFunction->get_action();
     Q_ASSERT(action);
     if (action && plug->implements(action->id)) {
-        PMESG("InputEventDispatcher:: Using plugin %s for command %s", QS_C(pluginname), action->name);
+        PMESG("InputEventDispatcher:: Using plugin %s for command %s", qUtf8Printable(pluginname), action->name);
         return plug->create(contextItem, action->id, shortCutFunction->get_arguments());
     } else {
         tInformUser().critical(tr("Plugin %1 doesn't implement Command %2").arg(pluginname, shortCutFunction->get_command_name()));
@@ -864,7 +863,7 @@ bool TInputEventDispatcher::check_number_collection(int eventcode)
     if (((eventcode >= Qt::Key_0) && (eventcode <= Qt::Key_9)) ||
         (eventcode == Qt::Key_Comma) || (eventcode == Qt::Key_Period)) {
         set_numerical_input(m_sCollectedNumber + QChar(eventcode));
-        PMESG("Collected %s so far...", QS_C(m_sCollectedNumber) ) ;
+        PMESG("Collected %s so far...", qUtf8Printable(m_sCollectedNumber) ) ;
         return true;
     }
     if (eventcode == Qt::Key_Backspace) {

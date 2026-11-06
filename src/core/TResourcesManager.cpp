@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TObjectFactory.h"
 #include "TProject.h"
 #include "TSheet.h"
-#include "Utils.h"
 #include "TAudioDevice.h"
 #include "TConfig.h"
 #include "TLog.h"
@@ -58,7 +57,7 @@ TResourcesManager::~TResourcesManager()
 	PENTERDES;
     for(SourceData* data : std::as_const(m_sources)) {
         if (data->clipCount == 0) {
-            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "Unused source file: %s", QS_C(data->stream->get_dir()));
+            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "Unused source file: %s", qUtf8Printable(data->stream->get_dir()));
         }
         if (! data->stream->ref()) {
             delete data->stream;
@@ -329,7 +328,7 @@ TBufferedAudioStreamReader * TResourcesManager::get_readsource(qint64 id)
 	// When the AudioSource is "get", do a ref counting.
 	// If the source allready was ref counted, create a deep copy
 	if (source->ref()) {
-		PMESG("Creating deep copy of ReadSource: %s", QS_C(source->get_name()));
+		PMESG("Creating deep copy of ReadSource: %s", qUtf8Printable(source->get_name()));
 		source = source->deep_copy();
 		source->ref();
 	}
@@ -367,7 +366,7 @@ TAudioClip* TResourcesManager::get_clip(qint64 id)
 	TAudioClip* clip = data->clip;
 	
 	if (data->inUse && !data->removed) {
-		PMESG("Creating deep copy of Clip %s", QS_C(clip->get_name()));
+		PMESG("Creating deep copy of Clip %s", qUtf8Printable(clip->get_name()));
 		clip = clip->create_copy();
 		
 		// It is NOT possible for 2 clips to have the same ID

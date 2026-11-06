@@ -34,7 +34,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TContextItem.h"
 #include "TInformUser.h"
-#include "Utils.h"
 #include "TCommandPlugin.h"
 #include "TConfig.h"
 
@@ -301,7 +300,7 @@ void TShortCutManager::load_shortcuts()
         else if (defaultGroups.contains(function->get_command_name())) { // no user setting available, fallback to default
 			settings = &defaultSettings;
         }else { // huh ?
-            PWARN(QS_C(QString("No shortcut definition for function %1").arg(function->get_command_name())));
+            PWARN(qUtf8Printable(QString("No shortcut definition for function %1").arg(function->get_command_name())));
 			continue;
 		}
 
@@ -398,7 +397,7 @@ void TShortCutManager::load_shortcuts()
     QStringList problems = check_keymap(userSettings, false);
     problems << check_ambiguous_bindings();
     if (!problems.isEmpty()) {
-        PWARN(QS_C(problems.join("\n")));
+        PWARN(qUtf8Printable(problems.join("\n")));
         tInformUser().warning(tr("Shortcuts: %1").arg(problems.join(", ")));
     }
 
@@ -945,7 +944,7 @@ bool TShortCutManager::keyboard_key_string_to_numerical_value(const QString &tex
                         } else if (text == ".") {
                             value = Qt::Key_Period;
                         } else {
-                            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "KeyStringToValue: No value found for key %s", QS_C(text));
+                            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "KeyStringToValue: No value found for key %s", qUtf8Printable(text));
                             return false;
                         }
                     }

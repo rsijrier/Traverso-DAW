@@ -45,7 +45,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TPeakStream.h"
 #include "TWaveform.h"
 #include "TProject.h"
-#include "Utils.h"
 #include "TConfig.h"
 #include "TRecordingLatency.h"
 #include "TAudioPluginChain.h"

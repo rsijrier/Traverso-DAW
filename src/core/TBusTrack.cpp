@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "AudioBus.h"
 #include "TAudioPluginChain.h"
-#include "Utils.h"
 #include "TSession.h"
 #include "TAudioDevice.h"
 #include "TFloatCompare.h"

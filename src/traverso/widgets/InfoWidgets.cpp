@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSheet.h"
 #include "TThemer.h"
 #include "TAudioTrack.h"
-#include "Utils.h"
 #include "TFloatCompare.h"
 
 #include <QPainter>
@@ -364,7 +363,7 @@ void HDDSpaceInfo::update_status( )
 #else
 	
 	struct statfs fs;
-	statfs(QS_C(m_project->get_root_dir()), &fs);
+	statfs(qUtf8Printable(m_project->get_root_dir()), &fs);
 	space = floor (fs.f_bavail * (fs.f_bsize / 1048576.0));
 #endif
 #endif

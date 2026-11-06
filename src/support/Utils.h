@@ -26,20 +26,15 @@
 
 class QDateTime;
 
-#define QS_C(x) x.toUtf8().data()
 
 namespace TraversoDAW {
 
 class Utils
 {
 public:
-    static double randomNumberBetween(int start, int end);
 
     static QDateTime extract_date_time(qint64 id);
     static qint64 create_id();
-    static QStringList find_qm_files();
-    static QString language_name_from_qm_file(const QString& lang);
-    static bool can_set_mouse_pos();
 };
 
 } // namespace TraversoDAW

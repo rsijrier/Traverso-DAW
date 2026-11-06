@@ -43,7 +43,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioDevice.h"
 #include "TConfig.h"
 #include "TContextPointer.h"
-#include "Utils.h"
 #include <TAddRemoveCommand.h>
 #include "TRtTransaction.h"
 #include "FileHelpers.h"
@@ -169,7 +168,7 @@ TProject::~TProject()
 int TProject::create(int sheetcount, int numtracks)
 {
     PENTER;
-    PMESG("Creating new project %s  NumSheets=%d", QS_C(m_name), sheetcount);
+    PMESG("Creating new project %s  NumSheets=%d", qUtf8Printable(m_name), sheetcount);
 
     QDir dir;
     if (!dir.mkdir(m_rootDir)) {

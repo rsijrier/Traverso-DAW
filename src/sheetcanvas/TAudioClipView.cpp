@@ -130,7 +130,7 @@ void TAudioClipView::paint(QPainter* painter, const QStyleOptionGraphicsItem *op
     PENTER2;
     Q_UNUSED(widget);
 
-    //        printf("AudioClipView:: %s PAINT :: exposed rect is: x=%f, y=%f,? w=%f, h=%f\n", QS_C(m_clip->get_name()), option->exposedRect.x(), option->exposedRect.y(), option->exposedRect.width(), option->exposedRect.height());
+    //        printf("AudioClipView:: %s PAINT :: exposed rect is: x=%f, y=%f,? w=%f, h=%f\n", qUtf8Printable(m_clip->get_name()), option->exposedRect.x(), option->exposedRect.y(), option->exposedRect.width(), option->exposedRect.height());
 
     //	printf("x, w %f, %f\n", option->exposedRect.x(), option->exposedRect.width());
     qreal xstart = option->exposedRect.x();

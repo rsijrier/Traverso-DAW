@@ -5,7 +5,6 @@
 #include "TProject.h"
 #include "TSheet.h"
 #include "TTimeLineRuler.h"
-#include "Utils.h"
 
 #include <bit>
 #include <QDir>
@@ -151,13 +150,13 @@ void TExportSpecification::set_export_start_location(const TTimeRef &startLocati
     m_exportStartLocation = startLocation;
     m_exportLocation = startLocation;
     m_progress = 0;
-    PMESG("Setting Start Location to (minutes:seconds) %s", QS_C(TTimeRef::timeref_to_ms_3(m_exportStartLocation)));
+    PMESG("Setting Start Location to (minutes:seconds) %s", qUtf8Printable(TTimeRef::timeref_to_ms_3(m_exportStartLocation)));
 }
 
 void TExportSpecification::set_export_end_location(const TTimeRef &endLocation)
 {
     m_exportEndLocation = endLocation;
-    PMESG("Setting End Location to (minutes:seconds) %s", QS_C(TTimeRef::timeref_to_ms_3(m_exportEndLocation)));
+    PMESG("Setting End Location to (minutes:seconds) %s", qUtf8Printable(TTimeRef::timeref_to_ms_3(m_exportEndLocation)));
 }
 
 void TExportSpecification::add_exported_range(const TTimeRef& time)
@@ -208,7 +207,7 @@ void TExportSpecification::set_file_format(TraversoDAW::FileFormat fileFormat)
     }
 
     PMESG("TExportSpecification: FileFormat updated, automatically synced WriterType to %s",
-          QS_C(writer_type_to_string(m_writerType)));
+          qUtf8Printable(writer_type_to_string(m_writerType)));
 }
 
 QString TExportSpecification::get_file_extension() const
@@ -315,18 +314,18 @@ void TExportSpecification::print_export_data() const
     PMESG("Starting export, samplerate %d, bitdepth %d, file extension %s",
           get_sample_rate(),
           get_bit_depth(),
-          QS_C(get_file_extension()) );
+          qUtf8Printable(get_file_extension()) );
     PMESG("Export State:");
-    PMESG("Start Location %s", QS_C(TTimeRef::timeref_to_hms(m_exportStartLocation)));
-    PMESG("End Location (minutes:seconds) %s", QS_C(TTimeRef::timeref_to_ms(m_exportEndLocation)));
-    PMESG("Export Location (minutes:seconds) %s", QS_C(TTimeRef::timeref_to_ms(m_exportLocation)));
+    PMESG("Start Location %s", qUtf8Printable(TTimeRef::timeref_to_hms(m_exportStartLocation)));
+    PMESG("End Location (minutes:seconds) %s", qUtf8Printable(TTimeRef::timeref_to_ms(m_exportEndLocation)));
+    PMESG("Export Location (minutes:seconds) %s", qUtf8Printable(TTimeRef::timeref_to_ms(m_exportLocation)));
     PMESG("Sample Rate %d", m_sampleRate);
     PMESG("Channel Count %d", m_channelCount);
     PMESG("Block Size %d", m_blockSize);
-    PMESG("Writer Type %s", QS_C(writer_type_to_string(m_writerType)));
+    PMESG("Writer Type %s", qUtf8Printable(writer_type_to_string(m_writerType)));
     PMESG("Is CD Export %s", m_isCdExport ? "Yes" : "No");
-    PMESG("Export Directory %s", QS_C(m_exportDir));
-    PMESG("Export File Name %s", QS_C(m_exportFileName));
+    PMESG("Export Directory %s", qUtf8Printable(m_exportDir));
+    PMESG("Export File Name %s", qUtf8Printable(m_exportFileName));
     PMESG("Progress %d", m_progress);
 }
 
@@ -444,7 +443,7 @@ int TExportSpecification::create_cdrdao_toc(TProject* project, TExportSpecificat
         QFile file(filename);
 
         if (file.open(QFile::WriteOnly)) {
-            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "Saving cdrdao toc-file to %s", QS_C(spec->tocFileName));
+            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "Saving cdrdao toc-file to %s", qUtf8Printable(spec->tocFileName));
             QTextStream out(&file);
             out << output;
             file.close();

@@ -28,7 +28,6 @@
 #include "FileHelpers.h"
 #include "TAudioFileMerger.h"
 #include "TBufferedAudioStreamReader.h"
-#include "Utils.h"
 #include "TTypes.h"
 
 
@@ -79,7 +78,7 @@ void TProjectConverter::set_project(const QString & rootdir, const QString & nam
 	QFile file(filename);
 		
 	if (!file.open(QIODevice::ReadOnly)) {
-		TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "filename '%s' could not be opened!", QS_C(filename));
+		TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "filename '%s' could not be opened!", qUtf8Printable(filename));
 		return;
 	}
 		
@@ -88,7 +87,7 @@ void TProjectConverter::set_project(const QString & rootdir, const QString & nam
     QDomDocument::ParseResult result = doc.setContent(file.readAll());
     if (!result) {
 		QString error = tr("Project %1: Failed to parse project.tpf file! (Reason: %2)").arg(m_projectname).arg(result.errorMessage);
-		TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s", QS_C(error));
+		TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s", qUtf8Printable(error));
 		return;
 	}
 	
@@ -288,10 +287,10 @@ int TProjectConverter::save_converted_document()
 	
 	QString errorstring;
 	if (!TFileHelper::save_document(m_document, filename, &errorstring)) {
-		TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "%s", QS_C(tr("Couldn't write the Project properties file! (File %1. Reason: %2)").arg(filename).arg(errorstring)));
+		TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "%s", qUtf8Printable(tr("Couldn't write the Project properties file! (File %1. Reason: %2)").arg(filename).arg(errorstring)));
 		return -1;
 	}
-	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s", QS_C(tr("Project %1 converted").arg(m_projectname)));
+	TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "%s", qUtf8Printable(tr("Project %1 converted").arg(m_projectname)));
 	emit message(tr("Saving converted project.tpf file.... Done!"));
 	
 	return 1;

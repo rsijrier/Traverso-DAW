@@ -11,6 +11,7 @@ add_library(traversosupport STATIC
     TClock.h
     TFloatCompare.h
     TLog.h TLog.cpp
+    TMousePermission.h
     TObjectId.h TObjectId.cpp
     TPlatform.h
     TRealTime.h

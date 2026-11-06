@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 */
 
+#include <QRandomGenerator>
 #include "TBufferedAudioStreamReader.h"
 #include "TAudioReader.h"
 
@@ -27,7 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "AudioBus.h"
 #include "TAudioBuffer.h"
 #include "TQueueBufferSlot.h"
-#include "Utils.h"
 #include "Debugger.h"
 #include "TLog.h"
 
@@ -116,7 +116,9 @@ void TBufferedAudioStreamReader::private_init()
     m_refcount = 0;
     m_errorCode = 0;
 
-    m_aboutOneToFourSecondsTime = TTimeRef::UNIVERSAL_SAMPLE_RATE * (TraversoDAW::Utils::randomNumberBetween(0, 3) + 1.0);
+    // Each stream starts reading between 1 and 4 seconds before its clip, so
+    // that many clips starting at once do not read from disk at once
+    m_aboutOneToFourSecondsTime = TTimeRef::UNIVERSAL_SAMPLE_RATE * (QRandomGenerator::global()->bounded(3.0) + 1.0);
 }
 
 TBufferedAudioStreamReader::~TBufferedAudioStreamReader()
@@ -245,7 +247,7 @@ void TBufferedAudioStreamReader::set_output_rate_and_resampler(int outputRate, c
 
 void TBufferedAudioStreamReader::set_source_start_location(const TTimeRef &sourceStartLocation)
 {
-    // printf("ReadSource::set_source_start_location: %s\n", QS_C(TTimeRef::timeref_to_ms_3(sourceStartLocation)));
+    // printf("ReadSource::set_source_start_location: %s\n", qUtf8Printable(TTimeRef::timeref_to_ms_3(sourceStartLocation)));
     m_sourceStartLocation = sourceStartLocation;
 }
 
@@ -336,7 +338,7 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
         seekTransportLocation = m_streamStart;
 
         // printf("transport location before clip start position, adjusting to clip start position %s\n",
-        //        QS_C(TTimeRef::timeref_to_ms_3(seekTransportLocation)));
+        //        qUtf8Printable(TTimeRef::timeref_to_ms_3(seekTransportLocation)));
     }
 
     TQueueBufferSlot* slot;
@@ -355,8 +357,8 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
     // location to the seek transport location to file location calculation.
     TTimeRef fileLocation = seekTransportLocation - m_streamStart + m_sourceStartLocation;
     // printf("ReadSource::rb_seek_to_transport_location: seeking to location transport: %s, file: %s\n",
-    //        QS_C(TTimeRef::timeref_to_ms_3(transportLocation)),
-    //        QS_C(TTimeRef::timeref_to_ms_3(fileLocation)));
+    //        qUtf8Printable(TTimeRef::timeref_to_ms_3(transportLocation)),
+    //        qUtf8Printable(TTimeRef::timeref_to_ms_3(fileLocation)));
 
 
     // Since the seek transport location and our own start location don't have to align
@@ -379,7 +381,7 @@ void TBufferedAudioStreamReader::rb_seek_to_transport_location(TAudioBuffer &fil
         // slot position offset, the frame nearest to modulus (the same
         // rounding of the same time as TAudioClip::process())
         nframes_t offset = TTimeRef::to_nframes(TTimeRef::frame_nearest(modulus, m_outputRate));
-        // printf("file location after adjustment %s, offset nframes %d\n", QS_C(TTimeRef::timeref_to_ms_3(fileLocation)), offset);
+        // printf("file location after adjustment %s, offset nframes %d\n", qUtf8Printable(TTimeRef::timeref_to_ms_3(fileLocation)), offset);
 
         // A clip whose first frame rounds into the next slot has none in this
         // one: TAudioClip::process() rounds the same time the same way and

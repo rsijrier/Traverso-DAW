@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "TCurveSnapshot.h"
-#include "Utils.h"
+
+#include <QtGlobal>
 #include "TFloatCompare.h"
 
 #include <algorithm>

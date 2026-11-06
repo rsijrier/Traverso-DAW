@@ -178,7 +178,7 @@ int TAlsaDriver::setup(bool capture, bool playback, const QString& devicename, c
     alsa_name_capture = pcmName;
 
     if (playback) {
-        if (snd_pcm_open (&playback_handle, QS_C(alsa_name_playback), SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) < 0) {
+        if (snd_pcm_open (&playback_handle, qUtf8Printable(alsa_name_playback), SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) < 0) {
             switch (errno) {
             case EBUSY:
                 emit driverSetupMessage("ALSA", tr("The playback device '%1'' is already in use. Please stop the "
@@ -204,7 +204,7 @@ int TAlsaDriver::setup(bool capture, bool playback, const QString& devicename, c
     }
 
     if (capture) {
-        if (snd_pcm_open (&capture_handle, QS_C(alsa_name_capture), SND_PCM_STREAM_CAPTURE,  SND_PCM_NONBLOCK) < 0) {
+        if (snd_pcm_open (&capture_handle, qUtf8Printable(alsa_name_capture), SND_PCM_STREAM_CAPTURE,  SND_PCM_NONBLOCK) < 0) {
             switch (errno) {
             case EBUSY:
                 emit driverSetupMessage("ALSA", tr("The Capture Device %1 is already in use. Please stop the"
@@ -525,7 +525,7 @@ int TAlsaDriver::configure_stream(const QString &device_name,
         if ((err = snd_pcm_hw_params_set_format ( handle, hw_params, formats[format].format)) < 0) {
 
             if (( (sample_width == 4) ? (format++ >= int(NUMFORMATS) - 1) : (format-- <= 0))) {
-                TLog::write_printf(TLogLevel::Warning, "alsa", "the audio interface \"%s\" supports none of the hardware sample formats the ALSA driver can use", QS_C(device_name));
+                TLog::write_printf(TLogLevel::Warning, "alsa", "the audio interface \"%s\" supports none of the hardware sample formats the ALSA driver can use", qUtf8Printable(device_name));
                 return -1;
             }
         } else {
@@ -1381,7 +1381,7 @@ again:
 void TAlsaDriver::print_alsa_error_messages(QStringList &list)
 {
     for (const QString &string : list) {
-        TLog::write_printf(TLogLevel::Info, "alsa", "ALSA: %s", QS_C(string));
+        TLog::write_printf(TLogLevel::Info, "alsa", "ALSA: %s", qUtf8Printable(string));
     }
     list.clear();
 }

@@ -92,24 +92,24 @@ void TThemer::load()
     // QFile file(m_themefile);
 
     // if (!file.exists()) {
-    //     printf("Themer:: Warning: Theme resource %s not found. Resetting to traversolight.xml\n", QS_C(m_themefile));
+    //     printf("Themer:: Warning: Theme resource %s not found. Resetting to traversolight.xml\n", qUtf8Printable(m_themefile));
     //     m_currentTheme = "traversolight";
     //     m_themefile = ":/ui/palettes/traversolight.xml";
     //     config().set_property("Themer", "currenttheme", m_currentTheme);
     //     file.setFileName(m_themefile);
     // }
 
-    // printf("Themer:: Successfully targeted unified palette resource: %s\n", QS_C(m_themefile));
+    // printf("Themer:: Successfully targeted unified palette resource: %s\n", qUtf8Printable(m_themefile));
 
     // if (!file.open(QIODevice::ReadOnly)) {
-    //     printf("Themer:: Critical Error: Cannot open resource file %s\n", QS_C(m_themefile));
+    //     printf("Themer:: Critical Error: Cannot open resource file %s\n", qUtf8Printable(m_themefile));
     //     return;
     // }
 
     // QDomDocument::ParseResult result = doc.setContent(file.readAll());
     // if (!result) {
     //     file.close();
-    //     printf("Themer:: Critical Error: Cannot set XML content (%s)\n", QS_C(result.errorMessage));
+    //     printf("Themer:: Critical Error: Cannot set XML content (%s)\n", qUtf8Printable(result.errorMessage));
     //     return;
     // }
     // file.close();
@@ -426,7 +426,7 @@ void TThemer::use_builtin_theme(const QString & theme)
 QColor TThemer::get_default_color(const QString & name)
 {
     if (!m_defaultColors.contains(name)) {
-        TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "Default color %s was requested, but no such default color does exist, please add it to the themer!", QS_C(name));
+        TLog::write_printf(TLogLevel::Warning, TLOG_FILE_CATEGORY, "Default color %s was requested, but no such default color does exist, please add it to the themer!", qUtf8Printable(name));
         return QColor(Qt::blue);
     }
 
