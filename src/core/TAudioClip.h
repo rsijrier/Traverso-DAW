@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QString>
 #include <QList>
+#include <QDomDocument>
 #include <QDomNode>
 
 #include "TAudioProcessingNode.h"
@@ -153,6 +154,10 @@ private:
     TWaveform*                      m_waveform{nullptr};
     TFadeCurve*                     m_fadeIn;
     TFadeCurve*                     m_fadeOut;
+    // The clip's state as it was loaded, set or saved when the clip is first
+    // used; in a document of its own, as the project file's document is gone
+    // after the load. The document is declared first, so it goes last
+    QDomDocument                    m_domDocument;
     QDomNode                        m_domNode;
 
     TTimeRef m_sourceEndLocation;

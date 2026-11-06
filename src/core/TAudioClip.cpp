@@ -117,7 +117,7 @@ TAudioClip::TAudioClip(const QDomNode& node)
 
     m_sourceEndLocation = m_sourceStartLocation + m_length;
     TTimeRef location(e.attribute( "trackstart", "" ).toLongLong());
-    m_domNode = node.cloneNode();
+    m_domNode = m_domDocument.importNode(node, true);
     move_to_location(location);
 }
 
