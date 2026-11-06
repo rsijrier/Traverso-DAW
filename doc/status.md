@@ -946,11 +946,27 @@ From the GPU waveform test program, clip edges in variant A (branch
   written and identical, then the process ends with SIGSEGV, so
   `tests/shortcut-parity/check.sh` stops with 139. Also with master's build of
   2026-11-02; under gdb it does not crash. Not looked into.
+  Once fixed, `tests/shortcut-parity/check.sh` goes into ctest (Remon,
+  2026-11-05): the resolution table is the proof that every key reaches the
+  same function, and today it is compared by hand.
 - **T95 The `TTrack` split and the processing node as composition** (Remon,
   2026-11-04; after `object-ids`): `TTrack` the generic track, `TAudioMixerTrack`
   with `audio()` on top, `TAudioTrack` and `TBusTrack` below it; `TAudioClip`
   has its processing node instead of being one; the 13 places that can only fail
   at run time become compiler-checked. Assessment kept locally.
+  2026-11-04: step 1, the clip, on branch `clip-processing-node`. Left for the
+  track step: the gain factory's second way (a track as the node); the plugin
+  chain's parent, now the node, becomes the owner once the node is no
+  `TContextItem`; `Mute` and `GainShowAutomation` are registered on the node
+  type, so a clip lost them: how one key reaches clips and tracks is Remon's
+  decision (`reports/clip-processing-node-2026-11-05/night-status.md`).
+  2026-11-05: step B, the track, built (without the split of `TTrack`).
+  Mute and Gain Envelope are actions per type in the groups `MuteBase` and
+  `GainShowAutomationBase` (Remon, his rule of 2026-10-13: the action per
+  entity is the unit of binding); a dispatch to compositions was built and
+  removed again the same day. Open: the copy test (copy a clip, paste it on
+  another track, undo, reload: a new id and the new track as its owner; open
+  from `object-ids`).
 - **T96 The clips of a removed track or song stay in use** (Fable's fix review,
   2026-11-04; Remon: a task): `TSession::private_remove_track()` and
   `TProject::private_remove_sheet()` leave the clips in the `TAudioClipManager`
@@ -973,6 +989,60 @@ From the GPU waveform test program, clip edges in variant A (branch
 - **T98 The id log lines native in the log** (Remon, 2026-11-04): the summary and
   the lines per song and track after a load are temporary code in `TProject.cpp`
   (`log_object_ids()`, `log_track()`); they go once the log can do this itself.
+- **T99 A command refused by `prepare_actions()` is not deleted** (Fable,
+  2026-11-05, on `clip-processing-node`): `TCommand::process_command()` neither
+  deletes nor reports it. Normalize avoids it by returning no command when no
+  clip changes; other commands that can refuse are not checked. Old code, so to
+  Remon: `delete` there, and whether the user hears why (peaks not ready yet).
+- **T100 The panel knobs: gain does not start the fader, the wheel does nothing
+  on pan and gain** (Remon, 2026-11-05, found testing `clip-processing-node`;
+  his estimate: 2 to 4 weeks old, so not from that branch). Read in the code,
+  not traced: `TGainKnobView` has no shortcut functions and no related context
+  item; the wheel functions `TrackPanelGainIncrement`/`Decrement` and the gain
+  factory's special case are on `TrackPanelGain`, which the panel no longer
+  makes (since 2019, `TGainKnobView`); `TPanKnobView` does have its wheel
+  functions registered and the wheel still does nothing, so the wheel may not
+  reach the dispatcher over the panel. Candidates by date, unverified: the
+  wheel zoom changes of 2026-10-17, `TViewPortInterface` of 2026-10-12, the
+  compile-time `TActionId` of 2026-10-14. A bisect between builds of
+  2026-10-08 and 2026-10-22 would settle it.
+- **T101 `TShortCutManager` testable** (Remon, 2026-11-05: he recalled it as a
+  task; not found in this list, T58 covers the audio singletons only, the
+  Foundations row of the shortcut system has no number): no singleton
+  (`tShortCutManager()`, 44 callers in `src`), and what else a headless test
+  needs, so the dispatch, the groups and `check_ambiguous_bindings()` get
+  tests of their own instead of
+  the deferred list.
+  Order (Remon, 2026-11-05): not on its own. First T94 and `check.sh` in
+  ctest, the cheap net that runs by itself; T101 itself with the redesign of
+  the shortcut system or the headless runner of branch 3
+  (`run(action, id, args)` goes through the manager's registry), as that
+  rewrites the dispatcher anyway. A manager test would not catch T100 either:
+  that is before the manager, in the viewport's events.
+- **T102 A mouse button pressed during a hold stays held** (Remon, 2026-11-05,
+  found testing `clip-processing-node`; the code is the same on `object-ids`,
+  so probably since the hold context menu of 2026-10-14): the right button
+  during a hold opens the context menu (`ShowContextMenu`, by design, with
+  Accept and Reject); its release goes to the popup, not the dispatcher, so
+  key 2 stays in `m_holdModifierKeys`, and every later key of the same hold
+  dispatches it again: the menu opens on any key. Fix proposed: take the
+  button out of `m_holdModifierKeys` when the context menu opens.
+- **T103 A context menu entry runs on the object it was built for** (Remon,
+  2026-11-05): today the menu re-sends the function's first key, so the first
+  item under the cursor that binds it wins (Mute in the Audio Track part of
+  the menu mutes the clip on it), and a function without a key cannot run.
+  Planned already: `doc/design/input-controllers.md` §4 point 6, open
+  question 9, with the shortcut task; Fable's sketch of the smallest change
+  (TInputEventDispatcher only, about 50 to 80 lines) in
+  `reports/clip-processing-node-2026-11-05/fable-review.md`. Not to be
+  planned twice: it is that point.
+- **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
+  invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
+  turns what the function returns into the dispatcher's `TCommand*` at
+  compile time (`void` to nullptr, `TCommand*` as it is). If, while building
+  the controllers, another return form (a result with a reason, a
+  controller's undo step) makes the architecture simpler, it is one more
+  `if constexpr` branch there; keymaps and dispatcher stay as they are.
 - **T86 A fragmented MP4 cut before the open** (low; Fable, 2026-11-01): it reads as
   a shorter healthy file, no error: the file has no length of its own. Document the
   limit or find one.
