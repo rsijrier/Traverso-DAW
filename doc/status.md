@@ -1053,6 +1053,13 @@ From the GPU waveform test program, clip edges in variant A (branch
   virtual function on `TClip`, its result holds `TClip*`s instead of
   `QList<TTimeLineEntity*>`. `TClip` sets the chain up again: drop the
   `virtual` there.
+  Also look again at `TAudioClipFactory` there (2026-10-14, 5c4107b8): its own
+  work is placing a clip (sheet, track, location, length); making, registering
+  and its source are the resources manager's, through the global
+  `resources_manager()` (the current project, not the track's). Making a clip
+  is likely an edit's job then (an import edit on ids); fold it into that or
+  into the resources manager, and the name next to `TObjectFactory` goes
+  (Remon: not now).
 - **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
   invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
   turns what the function returns into the dispatcher's `TCommand*` at
