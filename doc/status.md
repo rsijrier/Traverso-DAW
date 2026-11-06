@@ -1043,9 +1043,12 @@ From the GPU waveform test program, clip edges in variant A (branch
   virtually, but there is no diamond (`TAudioClip` has the one path). The
   virtual base makes casts down possible only with `dynamic_cast`: five in
   `TSplitEntityController.cpp`, two in `TSheet.cpp:1348-1351` whose result goes
-  into a list unchecked. When Split is built again on ids, decide whether
-  "splitable" stays a base class or is something the edit asks of the object,
-  drop the `virtual`, and with it the `dynamic_cast`s.
+  into a list unchecked. Dropping the `virtual` alone does not remove them:
+  it only allows `static_cast`, which checks nothing. They go when the type is
+  not lost on the way: `TSplitEdit` takes typed ids (`pool.find()` gives a
+  `TAudioClip*`), and a split result says what it holds instead of
+  `QList<TTimeLineEntity*>`. Then decide whether "splitable" stays a base
+  class, and drop the `virtual` with it.
 - **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
   invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
   turns what the function returns into the dispatcher's `TCommand*` at
