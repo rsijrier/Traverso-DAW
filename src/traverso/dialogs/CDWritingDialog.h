@@ -73,7 +73,7 @@ private:
 	};
 	
 	int m_writingState;
-	qint64 m_lastSheetExported;
+	TSheet* m_lastSheetExported{nullptr};
 	bool m_wasClosed{};
 	// bool m_wodimAvailable;
 	int m_copyNumber{};

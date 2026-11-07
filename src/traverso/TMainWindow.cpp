@@ -1646,7 +1646,7 @@ TCommand* TMainWindow::show_add_child_session_dialog()
     TTrackSelector selector(this, parentSession, session);
     if (selector.exec() == QDialog::Accepted) {
         parentSession->add_child_session(session);
-        m_project->set_current_session(session->get_id());
+        m_project->set_current_session(session);
     } else {
         delete session;
     }

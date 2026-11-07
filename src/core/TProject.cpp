@@ -87,7 +87,6 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_spectralMeter = nullptr;
     m_correlationMeter = nullptr;
     m_activeSession = nullptr;
-    m_activeSessionId = m_activeSheetId = -1;
     engineer = "";
     m_keyboardArrowNavigationSpeed = 4;
     m_projectClosed = false;
@@ -197,7 +196,7 @@ int TProject::create(int sheetcount, int numtracks)
     }
 
     if (!m_sheets.gui_items().isEmpty()) {
-        set_current_session(m_sheets.gui_items().first()->get_id());
+        set_current_session(m_sheets.gui_items().first());
     }
 
     m_importDir = QDir::homePath();
@@ -505,20 +504,19 @@ int TProject::load(const QString& projectfile)
     log_object_ids(m_objects.take_warning_count(), outOfPlace.isEmpty());
 
 
-    qint64 activeSheetId = e.attribute("currentsheetid", "0" ).toLongLong();
-    qint64 activeSessionId = e.attribute("activesessionid", "0" ).toLongLong();
+    // The file names them by old id
+    TSession* activeSheet = get_session(e.attribute("currentsheetid", "0").toLongLong());
+    TSession* activeSession = get_session(e.attribute("activesessionid", "0").toLongLong());
 
-    if ( activeSheetId == 0) {
-        if (!m_sheets.gui_items().isEmpty()) {
-            activeSheetId = m_sheets.gui_items().first()->get_id();
-        }
+    if (!activeSheet && !m_sheets.gui_items().isEmpty()) {
+        activeSheet = m_sheets.gui_items().first();
     }
 
-    if (activeSheetId == activeSessionId) {
-        set_current_session(activeSheetId);
-    } else {
-        set_current_session(activeSheetId);
-        set_current_session(activeSessionId);
+    if (activeSheet) {
+        set_current_session(activeSheet);
+    }
+    if (activeSession && activeSession != activeSheet) {
+        set_current_session(activeSession);
     }
 
     tInformUser().information( tr("Project %1 loaded").arg(m_name) );
@@ -615,8 +613,8 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
     properties.setAttribute("arranger", m_arranger);
     properties.setAttribute("songwriter", m_songwriter);
     properties.setAttribute("message", m_message);
-    properties.setAttribute("currentsheetid", m_activeSheetId);
-    properties.setAttribute("activesessionid", m_activeSessionId);
+    properties.setAttribute("currentsheetid", m_activeSheet ? m_activeSheet->get_id() : -1);
+    properties.setAttribute("activesessionid", m_activeSession ? m_activeSession->get_id() : -1);
     properties.setAttribute("rate", m_rate);
     properties.setAttribute("bitdepth", m_bitDepth);
     properties.setAttribute("projectfileversion", PROJECT_FILE_VERSION);
@@ -1173,20 +1171,6 @@ TCommand* TProject::remove_sheet(TSheet* sheet, bool historable)
 
 
 
-TSheet* TProject::get_sheet(qint64 id) const
-{
-    TSheet* current = nullptr;
-
-    foreach(TSheet* sheet, m_sheets.gui_items()) {
-        if (sheet->get_id() == id) {
-            current = sheet;
-            break;
-        }
-    }
-
-    return current;
-}
-
 TSession* TProject::get_session(qint64 id)
 {
     QList<TSession*> sessions = get_sessions();
@@ -1200,34 +1184,23 @@ TSession* TProject::get_session(qint64 id)
     return nullptr;
 }
 
-void TProject::set_current_session(qint64 id)
+void TProject::set_current_session(TSession* session)
 {
     PENTER;
+    Q_ASSERT(session);
 
     // check if this session is allready current
-    if (m_activeSession && m_activeSession->get_id() == id) {
+    if (m_activeSession == session) {
         emit sessionIsAlreadyCurrent(m_activeSession);
-        return;
-    }
-
-    TSession* session = get_session(id);
-
-    if (!session) {
-        qDebug("id %lld doesn't match any known sessions???", id);
         return;
     }
 
     m_activeSession = session;
 
-    if (m_activeSession) {
-        m_activeSessionId = m_activeSession->get_id();
-    }
-
     TSheet* sheet = qobject_cast<TSheet*>(m_activeSession);
 
     if (sheet && (m_activeSheet != sheet)) {
         m_activeSheet = sheet;
-        m_activeSheetId = sheet->get_id();
         set_parent_session(m_activeSheet);
     }
 
@@ -1257,7 +1230,7 @@ int TProject::export_project()
         if (sheet->is_transport_rolling()) {
             sheet->start_transport();
         }
-        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet->get_id())) +"-" + sheet->get_name());
+        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet)) +"-" + sheet->get_name());
 
         TTimeRef exportStartLocation, exportEndLocation;
         bool exportRangeAvailable = false;
@@ -1380,30 +1353,14 @@ QList<TSheet* > TProject::get_sheets( ) const
     return m_sheets.gui_items();
 }
 
-int TProject::get_sheet_index(qint64 id)
+int TProject::get_sheet_index(const TSheet* sheet) const
 {
-    const QList<TSheet*>& sheets = m_sheets.gui_items();
-    for (int i=0; i<sheets.size(); ++i) {
-        TSheet* sheet = sheets.at(i);
-        if (sheet->get_id() == id) {
-            return i + 1;
-        }
-    }
-
-    return 0;
+    return int(m_sheets.gui_items().indexOf(const_cast<TSheet*>(sheet))) + 1;
 }
 
-int TProject::get_session_index(qint64 id)
+int TProject::get_session_index(const TSession* session)
 {
-    QList<TSession*> sessions = get_sessions();
-
-    for(int i=0; i<sessions.size(); ++i) {
-        if (sessions.at(i)->get_id() == id) {
-            return i;
-        }
-    }
-
-    return -1;
+    return int(get_sessions().indexOf(const_cast<TSession*>(session)));
 }
 
 QList<TSession*> TProject::get_sessions()
@@ -1419,11 +1376,6 @@ QList<TSession*> TProject::get_sessions()
     }
 
     return sessions;
-}
-
-qint64 TProject::get_current_sheet_id( ) const
-{
-    return m_activeSheetId;
 }
 
 int TProject::get_num_sheets( ) const
@@ -1603,7 +1555,7 @@ void TProject::private_remove_sheet(TSheet* sheet, TRtTransaction& transaction)
     m_sheets.remove(sheet, transaction);
 
     if (!m_sheets.gui_items().isEmpty()) {
-        set_current_session(m_sheets.gui_items().last()->get_id());
+        set_current_session(m_sheets.gui_items().last());
     }
 
     emit sheetRemoved(sheet);
@@ -1771,7 +1723,7 @@ TCommand* TProject::remove_child_session()
 
     parentSession->remove_child_session(toBeRemoved);
 
-    set_current_session(parentSession->get_id());
+    set_current_session(parentSession);
 
 
     delete toBeRemoved;

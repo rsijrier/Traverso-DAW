@@ -251,19 +251,18 @@ void ResourcesWidget::sheet_combo_box_index_changed(int index)
         if (!m_project) {
                 return;
         }
-	qint64 id = sheetComboBox->itemData(index).toLongLong();
-	TSheet* sheet = m_project->get_sheet(id);
+	TSheet* sheet = qobject_cast<TSheet*>(sheetComboBox->itemData(index).value<QObject*>());
     set_current_session(sheet);
 }
 
 void ResourcesWidget::sheet_added(TSheet * sheet)
 {
-	sheetComboBox->addItem("Sheet " + QString::number(m_project->get_sheet_index(sheet->get_id())), sheet->get_id());
+	sheetComboBox->addItem("Sheet " + QString::number(m_project->get_sheet_index(sheet)), QVariant::fromValue<QObject*>(sheet));
 }
 
 void ResourcesWidget::sheet_removed(TSheet * sheet)
 {
-	int index = sheetComboBox->findData(sheet->get_id());
+	int index = sheetComboBox->findData(QVariant::fromValue<QObject*>(sheet));
 	sheetComboBox->removeItem(index);
 }
 
@@ -279,7 +278,7 @@ void ResourcesWidget::set_current_session(TSession * session)
 	}
 	
 	if (sheet) {
-		int index = sheetComboBox->findData(sheet->get_id());
+		int index = sheetComboBox->findData(QVariant::fromValue<QObject*>(sheet));
 		if (index != -1) {
 			sheetComboBox->setCurrentIndex(index);
 		}

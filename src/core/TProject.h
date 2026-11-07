@@ -80,7 +80,6 @@ public :
 
 
     // Get functions
-    qint64 get_current_sheet_id() const;
     int get_num_sheets() const;
     uint get_rate() const;
     // The project's rate: the user's wish, which recordings and exports are
@@ -115,13 +114,14 @@ public :
     QList<TSheet* > get_sheets() const;
     // Every sheet's undone recording sessions, before the project closes
     void discard_undone_recordings();
+    // By old id, for the load only (the file names the active sheet and
+    // session by old id)
     TSession* get_session(qint64 id);
     QList<TSession*> get_sessions();
     TSession* get_current_session() const ;
     TSheet* get_active_sheet() const {return m_activeSheet;}
-    TSheet* get_sheet(qint64 id) const;
-    int get_sheet_index(qint64 id);
-    int get_session_index(qint64 id);
+    int get_sheet_index(const TSheet* sheet) const;
+    int get_session_index(const TSession* session);
     int get_keyboard_arrow_key_navigation_speed() const {return m_keyboardArrowNavigationSpeed;}
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
 
@@ -138,7 +138,7 @@ public :
     void set_upc_ean(const QString& pUPC);
     void set_genre(int pGenre);
     void set_sheet_export_progress(int pogress);
-    void set_current_session(qint64 id);
+    void set_current_session(TSession* session);
     void set_import_dir(const QString& dir);
     void set_sheets_are_tracks_folder(bool isFolder);
     void set_work_at(const TTimeRef &worklocation, bool isFolder);
@@ -228,8 +228,6 @@ private:
 
 
 
-    qint64 		m_activeSheetId;
-    qint64      m_activeSessionId;
 
     int create(int sheetcount, int numtracks);
     int create_audiosources_dir();

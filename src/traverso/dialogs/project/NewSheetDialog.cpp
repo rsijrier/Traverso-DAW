@@ -68,7 +68,7 @@ void NewSheetDialog::accept()
 	QDomNode node;
 	if (useTemplateCheckBox->isChecked() && index >= 0) {
 		usetemplate = true;
-		TSheet* templatesheet = m_project->get_sheet(templateComboBox->itemData(index).toLongLong());
+		TSheet* templatesheet = qobject_cast<TSheet*>(templateComboBox->itemData(index).value<QObject*>());
 		Q_ASSERT(templatesheet);
 		QDomDocument doc("Sheet");
 		node = templatesheet->get_state(doc, usetemplate);
@@ -97,7 +97,7 @@ void NewSheetDialog::accept()
 	TCommand::process_command(group);
 	
 	if (firstNewSheet) {
-		m_project->set_current_session(firstNewSheet->get_id());
+		m_project->set_current_session(firstNewSheet);
 	}
 	
 	hide();
@@ -128,10 +128,10 @@ void NewSheetDialog::update_template_combo()
 	templateComboBox->clear();
 	
 	foreach(TSheet* sheet, m_project->get_sheets()) {
-		QString text = "Sheet " + QString::number(m_project->get_sheet_index(sheet->get_id())) +
+		QString text = "Sheet " + QString::number(m_project->get_sheet_index(sheet)) +
                                 " " + sheet->get_name();
 		
-		templateComboBox->addItem(text, sheet->get_id());
+		templateComboBox->addItem(text, QVariant::fromValue<QObject*>(sheet));
 
                 // FIXME ? Maybe the dialog should be modal, and be recreated each time it is shown
                 // to avoid code complexity like this?

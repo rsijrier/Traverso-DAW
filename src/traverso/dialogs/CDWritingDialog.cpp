@@ -61,7 +61,6 @@ CDWritingDialog::CDWritingDialog( QWidget * parent )
 	env << "LC_ALL=C";
 	m_burnprocess->setEnvironment(env);
 	m_writingState = NO_STATE;
-	m_lastSheetExported = -1;
 	
     refreshButton->setIcon(QIcon(TMainWindow::find_pixmap(":/refresh-16")));
 	refreshButton->setMaximumHeight(26);
@@ -291,7 +290,7 @@ void CDWritingDialog::cd_render()
 	}
 	
 	// FIXME: We should instead check export wav file timestamps/revision numbers as a dirty test
-	if (! cdAllSheetsButton->isChecked() && m_lastSheetExported != m_project->get_current_sheet_id()) {
+	if (! cdAllSheetsButton->isChecked() && m_lastSheetExported != m_project->get_active_sheet()) {
         // m_exportSpec->renderfinished = false;
 	}
 	
@@ -341,7 +340,7 @@ void CDWritingDialog::cd_render()
 		
 		disable_ui_interaction();
         m_project->export_project();
-		m_lastSheetExported = m_project->get_current_sheet_id();
+		m_lastSheetExported = m_project->get_active_sheet();
 	} else {
 		if (cdDiskExportOnlyCheckBox->isChecked()) {
 			return;
