@@ -35,7 +35,7 @@ void TLocation::set_snappable(bool snap)
     emit locationChanged();
 }
 
-void TLocation::set_location(const TTimeRef &start, const TTimeRef &end)
+void TLocation::set_range(const TTimeRef &start, const TTimeRef &end)
 {
     if (m_start == start && m_end == end) return;
     m_start = start;

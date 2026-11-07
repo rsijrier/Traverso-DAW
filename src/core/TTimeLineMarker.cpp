@@ -32,7 +32,7 @@ TTimeLineMarker::TTimeLineMarker(TTimeLineRuler* tl, const TTimeRef when, Marker
     QObject::tr("TTimeLineMarker");
     set_history_stack(m_timeline->get_history_stack());
 
-    m_location->set_location(when, when);
+    m_location->set_range(when, when);
 
     m_description = "";
     m_performer = "";
@@ -56,7 +56,7 @@ TTimeLineMarker::TTimeLineMarker(TTimeLineRuler * tl, const QDomNode& node)
 
 void TTimeLineMarker::move_to_location(const TTimeRef& newStartLocation)
 {
-    m_location->set_location(newStartLocation, newStartLocation);
+    m_location->set_range(newStartLocation, newStartLocation);
 }
 
 QDomNode TTimeLineMarker::get_state(QDomDocument doc)
@@ -97,7 +97,7 @@ int TTimeLineMarker::set_state(const QDomNode & node)
     QString tp = e.attribute("type", "CDTRACK");
     TTimeRef location = TTimeRef(e.attribute("position", "0").toLongLong());
 
-    m_location->set_location(location, location);
+    m_location->set_range(location, location);
     set_id(e.attribute("id", "0").toLongLong());
     m_performer = e.attribute("performer", "");
     m_composer = e.attribute("composer", "");
@@ -116,7 +116,7 @@ int TTimeLineMarker::set_state(const QDomNode & node)
 
 void TTimeLineMarker::set_when(const TTimeRef& when)
 {
-    m_location->set_location(when, when);
+    m_location->set_range(when, when);
 }
 
 void TTimeLineMarker::set_description(const QString &s)

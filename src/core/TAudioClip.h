@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomDocument>
 #include <QDomNode>
 
+#include <atomic>
+
 #include "TAudioProcessingNode.h"
 #include "TContextItem.h"
 #include "TObjectIdTags.h"
@@ -121,7 +123,9 @@ public:
     bool has_fade_out() const {return m_fadeOut != nullptr;}
 
     TTimeRef get_source_length() const;
-    TTimeRef get_length() const {return m_length;}
+    // The location's length; while recording, what was captured so far
+    // past the latency compensation
+    TTimeRef get_length() const;
     TTimeRef get_source_start_location() const {return m_sourceStartLocation;}
     TTimeRef get_source_end_location() const {return m_sourceEndLocation;}
     TTimeRef extandable_length_right() const;
@@ -180,10 +184,10 @@ private:
     // (TRecordingLatency), the frames captured so far, and their rate (the
     // device's, which the source's rate need not be until the file is read)
     qint64 m_captureCompensation{0};
-    qint64 m_capturedFrames{0};
+    std::atomic<qint64> m_capturedFrames{0};
+    static_assert(std::atomic<qint64>::is_always_lock_free, "written in the audio thread");
     uint m_captureRate{0};
     TTimeRef m_sourceLength;
-    TTimeRef m_length;
 
     bool            m_isTake;
     bool            m_emptyTake{false};
@@ -201,6 +205,8 @@ private:
     void set_source_end_location(const TTimeRef& location);
     void set_source_start_location(const TTimeRef& location);
     void set_track_end_location(const TTimeRef& location);
+    void location_set();
+    TTimeRef source_range_length() const {return m_sourceEndLocation - m_sourceStartLocation;}
     void set_sources_active_state();
     void process_capture(TProcessContext &context) T_REALTIME_SAFE;
 

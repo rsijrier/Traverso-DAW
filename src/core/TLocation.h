@@ -46,7 +46,8 @@ public:
     inline TTimeRef get_end() const { return m_end; }
     TTimeRef get_length() const { return m_end - m_start; }
 
-    void set_location(const TTimeRef& start, const TTimeRef& end = TTimeRef());
+    // Start and end at once, with one locationChanged()
+    void set_range(const TTimeRef& start, const TTimeRef& end);
     void set_start(const TTimeRef& start);
     void set_end(const TTimeRef& end);
     void set_moving(bool moving);

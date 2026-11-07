@@ -119,10 +119,10 @@ TAudioClip::TAudioClip(const QDomNode& node)
     m_sheetId = e.attribute("sheet", "0").toLongLong();
     m_name = e.attribute( "clipname", "" ) ;
     m_audio.set_muted(e.attribute( "mute", "" ).toInt());
-    m_length = TTimeRef(e.attribute( "length", "0" ).toLongLong());
+    const TTimeRef length(e.attribute( "length", "0" ).toLongLong());
     m_sourceStartLocation = TTimeRef(e.attribute( "sourcestart", "" ).toLongLong());
 
-    m_sourceEndLocation = m_sourceStartLocation + m_length;
+    m_sourceEndLocation = m_sourceStartLocation + length;
     TTimeRef location(e.attribute( "trackstart", "" ).toLongLong());
     m_domNode = m_domDocument.importNode(node, true);
     move_to_location(location);
@@ -170,8 +170,8 @@ int TAudioClip::set_state(const QDomNode& node)
 
     bool ok;
     m_sourceStartLocation = TTimeRef(e.attribute( "sourcestart", "" ).toLongLong(&ok));
-    m_length = TTimeRef(e.attribute( "length", "0" ).toLongLong(&ok));
-    m_sourceEndLocation = m_sourceStartLocation + m_length;
+    const TTimeRef length(e.attribute( "length", "0" ).toLongLong(&ok));
+    m_sourceEndLocation = m_sourceStartLocation + length;
 
     emit stateChanged();
 
@@ -224,7 +224,7 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     QDomElement node = doc.createElement("Clip");
     node.setAttribute("trackstart", get_location_start().universal_frame());
     node.setAttribute("sourcestart", m_sourceStartLocation.universal_frame());
-    node.setAttribute("length", m_length.universal_frame());
+    node.setAttribute("length", get_length().universal_frame());
     node.setAttribute("mute", m_audio.is_muted());
     node.setAttribute("take", m_isTake);
     node.setAttribute("clipname", m_name );
@@ -363,7 +363,7 @@ void TAudioClip::set_left_edge(const TTimeRef &location)
         move_to_location(get_location_start() - movingToLeft);
     } else if (newLeftLocation > get_location_start()) {
 
-        TTimeRef availableTimeRight = m_length;
+        TTimeRef availableTimeRight = source_range_length();
 
         TTimeRef movingToRight = newLeftLocation - get_location_start();
 
@@ -400,7 +400,7 @@ void TAudioClip::set_right_edge(const TTimeRef &location)
 
     } else if (newRightLocation < m_location->get_end()) {
 
-        TTimeRef availableTimeLeft = m_length;
+        TTimeRef availableTimeLeft = source_range_length();
 
         TTimeRef movingToLeft = get_location_end() - newRightLocation;
 
@@ -430,35 +430,33 @@ void TAudioClip::set_source_start_location(const TTimeRef& location)
 
     m_sourceStartLocation = location;
     m_readSource->set_source_start_location(location);
-    m_length = m_sourceEndLocation - m_sourceStartLocation;
 }
 
 void TAudioClip::set_source_end_location(const TTimeRef& location)
 {
     m_sourceEndLocation = location;
-    m_length = m_sourceEndLocation - m_sourceStartLocation;
 }
 
 void TAudioClip::move_to_location(const TTimeRef& location)
 {
     PENTER2;
 
-    m_location->set_start(location);
+    // Start and end at once: a reader of the length between the two would
+    // see the old end with the new start
+    m_audio.get_fader()->get_curve()->set_start_offset(location);
+    m_location->set_range(location, location + source_range_length());
 
-    m_audio.get_fader()->get_curve()->set_start_offset(m_location->get_start());
-
-    // set_track_end_location will emit locationChanged(), so we
-    // don't emit it in this function to avoid emitting it twice
-    // (although it seems more logical to emit it here, there are
-    // situations where only set_track_end_location() is called, and
-    // then we also want to emit locationChanged())
-    set_track_end_location(m_location->get_start() + m_length);
+    location_set();
 }
 
 void TAudioClip::set_track_end_location(const TTimeRef& location)
 {
     m_location->set_end(location);
+    location_set();
+}
 
+void TAudioClip::location_set()
+{
     if ( (!is_moving()) && m_track) {
         get_sheet()->get_snap_list()->mark_dirty();
         m_track->clip_position_changed(this);
@@ -623,11 +621,8 @@ void TAudioClip::process_capture(TProcessContext &context) T_REALTIME_SAFE
     context.set_ringbuffer_write_bus(bus);
     nframes_t written = m_writer->ringbuffer_write(context);
 
-    // The take grows past the frames the writer drops only
-    const qint64 before = TRecordingLatency::visible_frames(m_capturedFrames, m_captureCompensation);
-    m_capturedFrames += written;
-    const qint64 after = TRecordingLatency::visible_frames(m_capturedFrames, m_captureCompensation);
-    m_length.add_frames(nframes_t(after - before), m_captureRate);
+    // The only writer; get_length() reads it in the GUI thread
+    m_capturedFrames.fetch_add(written, std::memory_order_relaxed);
 
     nframes_t toWrite = context.get_nframes_to_process();
     if (written != toWrite) {
@@ -657,7 +652,7 @@ int TAudioClip::init_recording()
         device.get_capture_latency_frames(), device.get_playback_latency_frames(),
         config().get_property("Recording", "ExtraLatency", 0.0).toDouble(), rate,
         bus->get_bus_type() == AudioBus::BusIsHardware, config().get_property("Recording", "LatencyCompensation", true).toBool());
-    m_capturedFrames = 0;
+    m_capturedFrames.store(0, std::memory_order_relaxed);
     m_captureRate = rate;
     m_sourceStartLocation = TTimeRef();
     TLOG_I("recording", "{}: compensating {} frames of latency", m_name.toStdString(), m_captureCompensation);
@@ -781,13 +776,12 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
     sync_location_to_stream();
     connect(m_location.get(), &TLocation::locationChanged, this, &TAudioClip::sync_location_to_stream);
 
-    // If m_length isn't set yet, it means we are importing stuff instead of reloading from project file.
+    // An empty source range means we are importing stuff instead of reloading from project file.
     // it's a bit weak this way, hopefull I'll get up something better in the future.
     // The positioning-length-offset and such stuff is still a bit weak :(
-    // NOTE: don't change, audio recording (finish_writesource()) assumes there is checked for length == 0 !!!
-    if (m_length == TTimeRef()) {
+    // NOTE: don't change, audio recording (finish_write_source()) empties the range for this check !!!
+    if (m_sourceEndLocation == m_sourceStartLocation) {
         m_sourceEndLocation = rs->get_length();
-        m_length = m_sourceEndLocation;
     }
 
     set_sources_active_state();
@@ -812,7 +806,7 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
     }
 
     // This will also emit locationChanged() which is more or less what we want.
-    set_track_end_location(m_location->get_start() + m_sourceLength - m_sourceStartLocation);
+    set_track_end_location(m_location->get_start() + source_range_length());
 }
 
 void TAudioClip::sync_location_to_stream()
@@ -849,7 +843,7 @@ void TAudioClip::finish_write_source()
     } else {
         get_sheet()->add_audio_source_to_diskio(m_readSource);
         // re-inits the lenght from the audiofile due calling rsm->set_source_for_clip()
-        m_length = TTimeRef();
+        m_sourceEndLocation = m_sourceStartLocation;
     }
 
     get_sheet()->remove_audio_source_from_diskio(m_writer);
@@ -885,6 +879,15 @@ uint TAudioClip::get_channel_count( ) const T_REALTIME_SAFE
 
 
     return 0;
+}
+
+TTimeRef TAudioClip::get_length() const
+{
+    if (m_recordingStatus == NO_RECORDING) {
+        return m_location->get_length();
+    }
+    const qint64 visible = TRecordingLatency::visible_frames(m_capturedFrames.load(std::memory_order_relaxed), m_captureCompensation);
+    return TTimeRef(uint64_t(visible), m_captureRate);
 }
 
 TSheet* TAudioClip::get_sheet( ) const
