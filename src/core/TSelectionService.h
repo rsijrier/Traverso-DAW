@@ -6,7 +6,6 @@
 #pragma once
 
 #include <QObject>
-#include <QHash>
 #include <QList>
 #include "TTimeLineEntity.h"
 #include "TSelectionTimeBounds.h"
@@ -25,16 +24,17 @@ public:
     void deselect(TTimeLineEntity* entity);
     void clear();
 
-    bool is_selected(qint64 id) const { return m_registry.contains(id); }
+    bool is_selected(const TTimeLineEntity* entity) const { return m_registry.contains(entity); }
     int get_selection_count() const { return m_registry.size(); }
     bool has_selection() const { return !m_registry.isEmpty(); }
 
-    QList<TTimeLineEntity*> get_selected_entities() const { return m_registry.values(); }
+    QList<TTimeLineEntity*> get_selected_entities() const { return m_registry; }
     TSelectionTimeBounds get_selection_time_bounds() const;
 
 signals:
     void selectionChanged();
 
 private:
-    QHash<qint64, TTimeLineEntity*> m_registry;
+    // In the order they were selected
+    QList<TTimeLineEntity*> m_registry;
 };

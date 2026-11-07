@@ -6,7 +6,6 @@
 #include "TSelectionService.h"
 
 #include <QVariant>
-#include "TContextItem.h"
 #include "TSelectionTimeBounds.h"
 #include <QObject>
 
@@ -19,12 +18,8 @@ void TSelectionService::select(TTimeLineEntity* entity)
 {
     if (!entity) return;
 
-    auto* contextItem = dynamic_cast<TContextItem*>(entity);
-    if (!contextItem) return;
-
-    qint64 id = contextItem->get_id();
-    if (!m_registry.contains(id)) {
-        m_registry.insert(id, entity);
+    if (!m_registry.contains(entity)) {
+        m_registry.append(entity);
 
         if (auto* qobj = dynamic_cast<QObject*>(entity)) {
             qobj->setProperty("selected", true);
@@ -38,11 +33,7 @@ void TSelectionService::deselect(TTimeLineEntity* entity)
 {
     if (!entity) return;
 
-    auto* contextItem = dynamic_cast<TContextItem*>(entity);
-    if (!contextItem) return;
-
-    qint64 id = contextItem->get_id();
-    if (m_registry.remove(id) > 0) {
+    if (m_registry.removeAll(entity) > 0) {
         if (auto* qobj = dynamic_cast<QObject*>(entity)) {
             qobj->setProperty("selected", false);
         }

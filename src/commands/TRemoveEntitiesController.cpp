@@ -26,8 +26,7 @@ TCommitResult TRemoveEntitiesController::commit()
 {
     PENTER;
 
-    auto* targetItem = dynamic_cast<TContextItem*>(m_target);
-    const bool removingSelection = m_selection && targetItem && m_selection->is_selected(targetItem->get_id());
+    const bool removingSelection = m_selection && m_selection->is_selected(m_target);
 
     QList<TTimeLineEntity*> entities;
 
