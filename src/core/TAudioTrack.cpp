@@ -45,7 +45,7 @@ TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
 {
     PENTERCONS;
     m_name = name;
-    sheet->set_track_height(get_id(), height);
+    sheet->set_track_height(this, height);
     m_numtakes = 0;
     m_showClipVolumeAutomation = false;
 

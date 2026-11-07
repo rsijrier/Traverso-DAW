@@ -40,7 +40,7 @@ TBusTrack::TBusTrack(TSession* session, const QString& name, int channelCount)
         m_processBus->set_id(get_id());
         m_processBus->set_name(m_name);
 
-        session->set_track_height(get_id(), INITIAL_HEIGHT);
+        session->set_track_height(this, INITIAL_HEIGHT);
 }
 
 TBusTrack::TBusTrack(TSession *session, QDomNode /*node*/)

@@ -85,7 +85,7 @@ public:
 	TTimeLineRuler* get_timeline_ruler() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
-	int get_track_height(qint64 trackId) const {return m_trackHeights.value(trackId, 150);}
+	int get_track_height(const TTrack* track) const {return m_trackHeights.value(track, 150);}
 
 	TBusTrack* get_master_out_bus_track() const;
 	virtual QList<TTrack*> get_tracks() const;
@@ -109,7 +109,7 @@ public:
     bool is_project_session() const {return m_isProjectSession;}
 	bool is_child_session() const;
 	void set_name(const QString& name);
-	void set_track_height(qint64 trackId, int height) {m_trackHeights.insert(trackId, height);}
+	void set_track_height(const TTrack* track, int height) {m_trackHeights.insert(track, height);}
 
     TCommand* add_track(TTrack* track, bool historable=true);
     TCommand* remove_track(TTrack* track, bool historable=true);
@@ -131,7 +131,7 @@ protected:
 	QHash<qint64, TTrack* >	m_tracks;
     TBusTrack*              m_masterOutBusTrack;
     TBounceTrack*           m_bounceTrack;
-    QHash<qint64, int>      m_trackHeights;
+    QHash<const TTrack*, int> m_trackHeights;
 
     TSnapList*           m_snaplist;
     TLocation*          m_workSnap{nullptr};

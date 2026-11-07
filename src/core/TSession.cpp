@@ -137,7 +137,7 @@ int TSession::set_state( const QDomNode & node )
             // add_track(track) should not return a TCommand object
             // but directly add track and return nullptr, this is by design
             Q_ASSERT(!cmd);
-            set_track_height(track->get_id(), e.attribute("height", "90").toInt());
+            set_track_height(track, e.attribute("height", "90").toInt());
 		}
 
 		trackNode = trackNode.nextSibling();
@@ -162,7 +162,7 @@ QDomNode TSession::get_state(QDomDocument doc)
 		QDomElement trackNode = doc.createElement("Track");
 
 		trackNode.setAttribute("id", track->get_id() );
-		trackNode.setAttribute("height", get_track_height(track->get_id()));
+		trackNode.setAttribute("height", get_track_height(track));
 		tracksNode.appendChild(trackNode);
 	}
 
@@ -530,7 +530,7 @@ TCommand* TSession::start_transport()
 TCommand* TSession::add_track(TTrack* track, bool historable)
 {
     if (is_child_session()) {
-        set_track_height(track->get_id(), m_parentSession->get_track_height(track->get_id()));
+        set_track_height(track, m_parentSession->get_track_height(track));
         TRtTransaction transaction;
         private_add_track(track, transaction);
         return nullptr;
