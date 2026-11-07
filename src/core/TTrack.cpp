@@ -381,16 +381,13 @@ void TTrack::add_pre_send(qint64 busId)
     emit routingConfigurationChanged();
 }
 
-void TTrack::remove_post_sends(QList<qint64> sendIds)
+void TTrack::remove_post_sends(const QList<TSend*>& sends)
 {
     QList<TSend*> sendsToBeRemoved;
 
-    for(qint64 id : sendIds)
-    {
-        for (TSend* send : m_postSends.gui_items()) {
-            if (send->get_id() == id) {
-                sendsToBeRemoved.append(send);
-            }
+    for (TSend* send : m_postSends.gui_items()) {
+        if (sends.contains(send)) {
+            sendsToBeRemoved.append(send);
         }
     }
 
@@ -429,15 +426,13 @@ void TTrack::remove_all_post_sends()
     emit routingConfigurationChanged();
 }
 
-void TTrack::remove_pre_sends(QList<qint64> sendIds)
+void TTrack::remove_pre_sends(const QList<TSend*>& sends)
 {
     QList<TSend*> sendsToBeRemoved;
 
-    for(qint64 id : sendIds) {
-        for (TSend* send : m_preSends.gui_items()) {
-            if (send->get_id() == id) {
-                sendsToBeRemoved.append(send);
-            }
+    for (TSend* send : m_preSends.gui_items()) {
+        if (sends.contains(send)) {
+            sendsToBeRemoved.append(send);
         }
     }
 
@@ -576,22 +571,6 @@ bool TTrack::has_post_send(qint64 busId) const
     return false;
 }
 
-TSend* TTrack::get_send(qint64 sendId)
-{
-    for (TSend* send : m_postSends.gui_items()) {
-        if (send->get_id() == sendId) {
-            return send;
-        }
-    }
-    for (TSend* send : m_preSends.gui_items()) {
-        if (send->get_id() == sendId) {
-            return send;
-        }
-    }
-
-    return 0;
-}
-
 bool TTrack::connect_to_jack(bool inports, bool outports)
 {
 
@@ -674,10 +653,10 @@ bool TTrack::disconnect_from_jack(bool inports, bool outports)
     }
 
     if (outports) {
-        QList<qint64> jackSends;
+        QList<TSend*> jackSends;
         for (TSend* send : m_postSends.gui_items()) {
             if (send->get_bus()->get_bus_type() == AudioBus::BusIsSoftware) {
-                jackSends.append(send->get_id());
+                jackSends.append(send);
                 project->remove_software_audio_bus(send->get_bus());
             }
         }

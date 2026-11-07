@@ -121,17 +121,6 @@ void TTimeLineRuler::private_remove_marker(TTimeLineMarker * marker)
 	index_markers();
 }
 
-TTimeLineMarker * TTimeLineRuler::get_marker(qint64 id)
-{
-	foreach(TTimeLineMarker* marker, m_markers) {
-		if (marker->get_id() == id) {
-			return marker;
-		}
-	}
-	
-	return 0;
-}
-
 bool TTimeLineRuler::get_end_location(TTimeRef& location)
 {
     for(TTimeLineMarker* marker : m_markers) {

@@ -99,10 +99,11 @@ public:
     void add_post_send(qint64 busId);
     void add_post_send(AudioBus* bus);
     void add_pre_send(qint64 busId);
-    void remove_post_sends(QList<qint64> sendIds);
+    // Those of sends that are this track's; the others are left alone
+    void remove_post_sends(const QList<TSend*>& sends);
     void remove_all_post_sends();
     void remove_post_send(TSend* send);
-    void remove_pre_sends(QList<qint64> sendIds);
+    void remove_pre_sends(const QList<TSend*>& sends);
     void add_input_bus(qint64 busId);
 
     bool connect_to_jack(bool inports, bool outports);
@@ -118,7 +119,6 @@ public:
 
     QList<TSend*> get_post_sends() const;
     QList<TSend*> get_pre_sends() const;
-    TSend* get_send(qint64 sendId);
     bool has_post_send(qint64 busId) const;
     // True when a send from this track to the bus busId would close a
     // feedback loop (T64): such a send is refused

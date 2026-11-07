@@ -126,8 +126,7 @@ void NewTrackDialog::create_track()
                 // of AudioTrack.
                 // If AudioTrack already had any post sends then we remove it by default here
                 if (busTrack) {
-                    qint64 audioTrackId = item->data(Qt::UserRole).toLongLong();
-                    TAudioTrack* inputAudioTrack = qobject_cast<TAudioTrack*>(pm().get_project()->get_track(audioTrackId));
+                    TAudioTrack* inputAudioTrack = qobject_cast<TAudioTrack*>(item->data(Qt::UserRole).value<QObject*>());
                     if (inputAudioTrack) {
                         inputAudioTrack->remove_all_post_sends();
                         inputAudioTrack->add_post_send(busTrack->get_process_bus());
@@ -240,7 +239,7 @@ void NewTrackDialog::update_buses_comboboxes()
             foreach(TAudioTrack* at, sheet->get_audio_tracks()) {
                 QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                 item->setText(at->get_name());
-                item->setData(Qt::UserRole, at->get_id());
+                item->setData(Qt::UserRole, QVariant::fromValue<QObject*>(at));
             }
         }
 

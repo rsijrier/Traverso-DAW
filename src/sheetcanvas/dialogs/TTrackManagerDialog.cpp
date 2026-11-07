@@ -186,7 +186,7 @@ void TTrackManagerDialog::create_routing_input_menu()
                 continue;
             }
             QAction* action = m_routingInputMenu->addAction(track->get_name());
-            action->setData(track->get_id());
+            action->setData(QVariant::fromValue<QObject*>(track));
         }
     }
 
@@ -317,8 +317,7 @@ void TTrackManagerDialog::routingInputMenuActionTriggered(QAction *action)
     }
 
     if (m_track->get_type() == TTrack::BUS) {
-        qint64 senderId = action->data().toLongLong();
-        TTrack* sender = project->get_track(senderId);
+        TTrack* sender = qobject_cast<TTrack*>(action->data().value<QObject*>());
         if (sender) {
             sender->add_post_send(m_track->get_id());
         }
@@ -351,7 +350,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
         foreach(TSend* send, inputs) {
             QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
             item->setText(send->get_from_name());
-            item->setData(Qt::UserRole, send->get_id());
+            item->setData(Qt::UserRole, QVariant::fromValue<QObject*>(send));
         }
     }
 
@@ -381,7 +380,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
         } else {
             item->setText(bus->get_name());
         }
-        item->setData(Qt::UserRole, send->get_id());
+        item->setData(Qt::UserRole, QVariant::fromValue<QObject*>(send));
     }
 
     preSendsListWidget->clear();
@@ -394,7 +393,7 @@ void TTrackManagerDialog::update_routing_input_output_widget_view()
         } else {
             item->setText(bus->get_name());
         }
-        item->setData(Qt::UserRole, send->get_id());
+        item->setData(Qt::UserRole, QVariant::fromValue<QObject*>(send));
     }
 }
 
@@ -405,7 +404,6 @@ void TTrackManagerDialog::update_pre_post_fader_plugins_widget_view()
     for(TAudioPlugin* plugin : postFaderPlugins) {
         QListWidgetItem* item = new QListWidgetItem(postFaderPluginsListWidget);
         item->setText(plugin->get_name());
-        item->setData(Qt::UserRole, plugin->get_id());
     }
 
 
@@ -414,18 +412,16 @@ void TTrackManagerDialog::update_pre_post_fader_plugins_widget_view()
     for(TAudioPlugin* plugin : preFaderPlugins) {
         QListWidgetItem* item = new QListWidgetItem(preFaderPluginsListWidget);
         item->setText(plugin->get_name());
-        item->setData(Qt::UserRole, plugin->get_id());
     }
 }
 
 void TTrackManagerDialog::on_routingInputRemoveButton_clicked()
 {
     QList<QListWidgetItem*> selectedItems = routingInputListWidget->selectedItems();
-    QList<qint64> toBeRemoved;
+    QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        qint64 id = item->data(Qt::UserRole).toLongLong();
-        toBeRemoved.append(id);
+        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
     }
 
     QList<TTrack*> tracks = pm().get_project()->get_sheet_tracks();
@@ -439,11 +435,10 @@ void TTrackManagerDialog::on_routingInputRemoveButton_clicked()
 void TTrackManagerDialog::on_preSendsRemoveButton_clicked()
 {
     QList<QListWidgetItem*> selectedItems = preSendsListWidget->selectedItems();
-    QList<qint64> toBeRemoved;
+    QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        qint64 id = item->data(Qt::UserRole).toLongLong();
-        toBeRemoved.append(id);
+        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
     }
 
     m_track->remove_pre_sends(toBeRemoved);
@@ -452,11 +447,10 @@ void TTrackManagerDialog::on_preSendsRemoveButton_clicked()
 void TTrackManagerDialog::on_routingOutputRemoveButton_clicked()
 {
     QList<QListWidgetItem*> selectedItems = routingOutputListWidget->selectedItems();
-    QList<qint64> toBeRemoved;
+    QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        qint64 id = item->data(Qt::UserRole).toLongLong();
-        toBeRemoved.append(id);
+        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
     }
 
     m_track->remove_post_sends(toBeRemoved);
@@ -478,8 +472,7 @@ void TTrackManagerDialog::pre_sends_selection_changed()
     QList<QListWidgetItem*> selectedItems = preSendsListWidget->selectedItems();
     if (selectedItems.size()) {
         preSendsGainPanGroupBox->setEnabled(true);
-        qint64 sendId = selectedItems.first()->data(Qt::UserRole).toLongLong();
-        m_selectedPreSend = m_track->get_send(sendId);
+        m_selectedPreSend = qobject_cast<TSend*>(selectedItems.first()->data(Qt::UserRole).value<QObject*>());
         if (m_selectedPreSend) {
             preSendsGainSlider->setValue(int(TGain::to_dB(m_selectedPreSend->get_gain()) * 10.f));
             postSendsPanSlider->setValue(int(m_selectedPreSend->get_pan() * 64));
@@ -495,8 +488,7 @@ void TTrackManagerDialog::post_sends_selection_changed()
     QList<QListWidgetItem*> selectedItems = routingOutputListWidget->selectedItems();
     if (selectedItems.size()) {
         postSendsGainPanGroupBox->setEnabled(true);
-        qint64 sendId = selectedItems.first()->data(Qt::UserRole).toLongLong();
-        m_selectedPostSend = m_track->get_send(sendId);
+        m_selectedPostSend = qobject_cast<TSend*>(selectedItems.first()->data(Qt::UserRole).value<QObject*>());
         if (m_selectedPostSend) {
             postSendsGainSlider->setValue(int(TGain::to_dB(m_selectedPostSend->get_gain()) * 10));
             postSendsPanSlider->setValue(int(m_selectedPostSend->get_pan() * 64));

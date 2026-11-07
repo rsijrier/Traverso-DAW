@@ -108,7 +108,7 @@ void MarkerDialog::update_marker_treeview()
 		QTreeWidgetItem* item = new QTreeWidgetItem(markersTreeWidget);
 		item->setText(0, pos.simplified());
 		item->setText(1, name);
-		item->setData(0, Qt::UserRole, marker->get_id());
+		item->setData(0, Qt::UserRole, QVariant::fromValue<QObject*>(marker));
 	}
 
 	if (currentIndex >= markersTreeWidget->topLevelItemCount()) {
@@ -125,14 +125,14 @@ void MarkerDialog::item_changed(QTreeWidgetItem * current, QTreeWidgetItem * pre
 		return;
 	}
 
-	m_marker = get_marker(current->data(0, Qt::UserRole).toLongLong());
+	m_marker = get_marker(current);
 
 	if (!m_marker) {
 		return;
 	}
 
 	if (previous) {
-		TTimeLineMarker *marker = get_marker(previous->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *marker = get_marker(previous);
 		marker->set_when(TTimeRef::cd_to_timeref_including_hours(lineEditPosition->text()));
 		marker->set_description(lineEditTitle->text());
 		marker->set_performer(lineEditPerformer->text());
@@ -191,17 +191,11 @@ void MarkerDialog::position_changed(const QString &s)
 	markersTreeWidget->sortItems(0, Qt::AscendingOrder);
 }
 
-// find the marker based on it's id.
-TTimeLineMarker * MarkerDialog::get_marker(qint64 id)
+// The item's marker, while the ruler still has it
+TTimeLineMarker * MarkerDialog::get_marker(QTreeWidgetItem* item)
 {
-        TTimeLineRuler* tl = m_session->get_timeline_ruler();
-
-	foreach(TTimeLineMarker* marker, tl->get_markers()) {
-		if (marker->get_id() == id) {
-			return marker;
-		}
-	}
-	return nullptr;
+	TTimeLineMarker* marker = qobject_cast<TTimeLineMarker*>(item->data(0, Qt::UserRole).value<QObject*>());
+	return m_session->get_timeline_ruler()->get_markers().contains(marker) ? marker : nullptr;
 }
 
 void MarkerDialog::apply()
@@ -286,7 +280,7 @@ void MarkerDialog::title_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_description(str);
 		it->setText(1, str);
 	}
@@ -305,7 +299,7 @@ void MarkerDialog::performer_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_performer(str);
 	}
 }
@@ -323,7 +317,7 @@ void MarkerDialog::composer_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_composer(str);
 	}
 }
@@ -341,7 +335,7 @@ void MarkerDialog::arranger_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_arranger(str);
 	}
 }
@@ -359,7 +353,7 @@ void MarkerDialog::songwriter_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_songwriter(str);
 	}
 }
@@ -377,7 +371,7 @@ void MarkerDialog::message_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_message(str);
 	}
 }
@@ -400,7 +394,7 @@ void MarkerDialog::copy_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_copyprotect(checkBoxCopy->isChecked());
 	}
 }
@@ -423,7 +417,7 @@ void MarkerDialog::pemph_all()
 
 	for (int i = 0; i < markersTreeWidget->topLevelItemCount(); ++i) {
 		QTreeWidgetItem *it = markersTreeWidget->topLevelItem(i);
-		TTimeLineMarker *m = get_marker(it->data(0, Qt::UserRole).toLongLong());
+		TTimeLineMarker *m = get_marker(it);
 		m->set_preemphasis(checkBoxPreEmph->isChecked());
 	}
 }

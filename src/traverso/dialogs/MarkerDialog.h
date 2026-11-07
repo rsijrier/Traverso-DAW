@@ -41,7 +41,7 @@ private:
 	TTimeLineMarker* m_marker{};
         TSession* m_session;
 
-	TTimeLineMarker* get_marker(qint64);
+	TTimeLineMarker* get_marker(QTreeWidgetItem* item);
 	void next_item(QLineEdit *);
 
 private slots:

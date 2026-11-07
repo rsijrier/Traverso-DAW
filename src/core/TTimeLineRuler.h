@@ -46,7 +46,6 @@ public:
     QList<TTimeLineMarker*> get_cd_layout(bool & endmarker);
     TSession *get_sheet() const {return m_sheet;}
 
-    TTimeLineMarker* get_marker(qint64 id);
     TTimeLineMarker* get_end_marker();
     bool get_end_location(TTimeRef& location);
     bool get_start_location(TTimeRef& location);
