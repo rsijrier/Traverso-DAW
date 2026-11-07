@@ -81,7 +81,11 @@ public:
     // transport location
     TTimeRef get_heard_transport_location(uint64_t nowNanoseconds);
 	virtual TSnapList* get_snap_list() const;
+	// By old id, for the load of a workspace's tracks only (until the project
+	// file references tracks by their new id)
 	TTrack* get_track(qint64 id) const;
+	// One of its tracks or its master
+	bool has_track(const TTrack* track) const;
 	TTimeLineRuler* get_timeline_ruler() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
@@ -128,7 +132,6 @@ protected:
 	QList<TSession*>        m_childSessions;
     TRtList<TAudioTrack>    m_audioTracks;
     TRtList<TBusTrack>      m_busTracks;
-	QHash<qint64, TTrack* >	m_tracks;
     TBusTrack*              m_masterOutBusTrack;
     TBounceTrack*           m_bounceTrack;
     QHash<const TTrack*, int> m_trackHeights;

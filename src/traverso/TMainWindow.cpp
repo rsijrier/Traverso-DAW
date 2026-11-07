@@ -1884,7 +1884,7 @@ TCommand* TMainWindow::show_track_finder()
         tracks.append(m_project->get_master_out_bus_track());
         foreach(TTrack* track, tracks) {
             QStandardItem* sItem = new QStandardItem(track->get_name());
-            sItem->setData(track->get_id(), Qt::UserRole);
+            sItem->setData(QVariant::fromValue<QObject*>(track), Qt::UserRole);
             QList<QStandardItem*> items;
             items.append(sItem);
             sItem = new QStandardItem(sheet->get_name());
@@ -1904,13 +1904,15 @@ TCommand* TMainWindow::show_track_finder()
 
 void TMainWindow::track_finder_model_index_changed(const QModelIndex& index)
 {
-    qlonglong id = index.data(Qt::UserRole).toLongLong();
+    // The model is rebuilt each time the finder opens, and cleared with the
+    // project: the track lives as long as the model holds it
+    TTrack* track = qobject_cast<TTrack*>(index.data(Qt::UserRole).value<QObject*>());
+    Q_ASSERT(track);
 
     foreach(TSheetWidget* sw, m_sheetWidgets) {
         TSession* session = sw->get_session();
         if (!session) return;
-        TTrack* track = session->get_track(id);
-        if (track) {
+        if (session->has_track(track)) {
             show_session(session);
             sw->setFocus();
             sw->get_sheetview()->browse_to_track(track);

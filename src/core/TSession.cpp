@@ -209,7 +209,17 @@ TTrack* TSession::get_track(qint64 id) const
 		return m_masterOutBusTrack;
 	}
 
-	return m_tracks.value(id);
+	for (TTrack* track : get_tracks()) {
+		if (track->get_id() == id) {
+			return track;
+		}
+	}
+	return nullptr;
+}
+
+bool TSession::has_track(const TTrack* track) const
+{
+	return track == m_masterOutBusTrack || get_tracks().contains(const_cast<TTrack*>(track));
 }
 
 
@@ -582,7 +592,6 @@ void TSession::private_add_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
 	}
 
-	m_tracks.insert(track->get_id(), track);
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->connect_to_jack(true, true);
@@ -604,7 +613,6 @@ void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");
 	}
 
-	m_tracks.remove(track->get_id());
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->disconnect_from_jack(true, true);
