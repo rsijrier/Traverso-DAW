@@ -61,8 +61,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
  */
 
 TAudioClip::TAudioClip(const QString& name)
-    : TTimeLineEntity()
-    , TContextItem()
+    : TClip()
     , m_audio(nullptr, this)
 {
     PENTERCONS;

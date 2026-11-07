@@ -239,7 +239,7 @@ undo tests once there are edits (`TSplitEdit`).
 | | 3 | `SongMasterTag` | `MasterOutSubGroup` of a song | derived |
 | | 4 | `ProjectMasterTag` | `MasterOutSubGroup` of the project | derived, number 0 |
 | | 5 | `BounceTrackTag` | `TBounceTrack` | derived |
-| 2 clip | all | `ClipTag` | `TAudioClip` until `TClip` exists | |
+| 2 clip | all | `ClipTag` | `TClip` | |
 | | 1 | `AudioClipTag` | `TAudioClip` | counter |
 | 3 song | 1 | `SongTag` | `TSheet`: a sheet is a song. A session, a container of tracks (to be named workspace), has no id yet | counter |
 
@@ -286,7 +286,7 @@ of old projects come later (T14, T42).
 
 ## Related
 
-- Composition of `TAudioProcessingNode` (separate branch, before `TClip`):
-  `ClipTag::Object` is `TAudioClip` until then, `TClip` after.
+- Composition of `TAudioProcessingNode` (separate branch, before `TClip`,
+  merged 2026-11-06); `ClipTag::Object` is `TClip` since branch `tclip`.
 - Concepts for tools, edits and the virtual cursor: the ids are what edits,
   JSON and agent tests address objects by.

@@ -1102,6 +1102,14 @@ From the GPU waveform test program, clip edges in variant A (branch
   `TClip` (id, position, length, track) → `TAudioClip`, later video and text;
   `ClipTag::Object = TClip` with a `static_assert` that it is splitable; order:
   ids, the composition (done), `TClip`, then `TSplitEdit`).
+  **Done on branch `tclip` (2026-11-07):** `TClip : TContextItem,
+  TSplitableTimeLineEntity` with `Q_OBJECT`, the id once as `ClipId`,
+  `ClipTag::Object = TClip` with the `static_assert`, the `virtual` base
+  dropped. Before it, `m_sheet` and `m_length` left `TAudioClip`. Not in it, by
+  Remon's decisions: the track (with `TSplitEdit`, which also brings the typed
+  split result and removes the casts below), `get_length()`. Later, with the
+  controllers (branch 3) and T106: `TContextItem` out of `TClip`; nearly all
+  of it is interaction state (active context, related item, history stack).
   `TSplitableTimeLineEntity` inherits `TTimeLineEntity` virtually, but there
   is no diamond, also not with `TClip` in the chain. The virtual base makes
   casts down possible only with `dynamic_cast`: five in

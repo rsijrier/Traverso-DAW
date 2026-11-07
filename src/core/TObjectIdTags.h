@@ -121,15 +121,14 @@ struct BounceTrackTag
     using Object = TBounceTrack;
 };
 
-// Clips: ClipId > AudioClipId. ClipTag's Object is TAudioClip until TClip
-// exists (after the composition of the processing node)
+// Clips: ClipId > AudioClipId
 
 struct ClipTag
 {
     static constexpr uint8_t Kind = ClipKind;
     static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes;
     static constexpr const char* Name = "clip";
-    using Object = TAudioClip;
+    using Object = TClip;
 };
 
 struct AudioClipTag

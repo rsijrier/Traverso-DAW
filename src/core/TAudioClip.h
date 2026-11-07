@@ -28,11 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <atomic>
 
 #include "TAudioProcessingNode.h"
-#include "TContextItem.h"
-#include "TObjectIdTags.h"
+#include "TClip.h"
 #include "TProcessContext.h"
 #include "TRtList.h"
-#include "TSplitableTimeLineEntity.h"
 #include "TTimeRef.h"
 
 class TSheet;
@@ -45,7 +43,7 @@ class TAudioPluginChain;
 class TFadeCurve;
 class TRtTransaction;
 
-class TAudioClip : public TContextItem, public TSplitableTimeLineEntity
+class TAudioClip : public TClip
 {
     Q_OBJECT
     // For QML: clip.audio
@@ -63,14 +61,8 @@ public:
     QString get_name() const { return m_name; }
     void set_name(const QString& name);
 
+    // Its id is TClip's; a copy is a new clip with its own
     using IdTag = AudioClipTag;
-    // The id, given by TObjectFactory when it made or loaded the clip; a copy
-    // is a new clip with its own (doc/design/object-ids.md)
-    AudioClipId object_id() const
-    {
-        Q_ASSERT(m_objectId.is_valid());
-        return m_objectId;
-    }
     // Its owner: the track it is on while it is in use, nullptr when on none. A
     // removed clip is on none, also while it keeps its track for undo
     QObject* id_owner() const;
@@ -161,8 +153,6 @@ public:
     void removed_from_track();
 
 private:
-    friend class TObjectFactory;
-    AudioClipId m_objectId;
     TAudioProcessingNode            m_audio;
     QString                         m_name;
     TRtList<TFadeCurve>             m_fades;

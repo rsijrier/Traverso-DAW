@@ -3,6 +3,7 @@
 # Qt's AUTOMOC to parse its meta-object macros and generate the required vtable symbols.
 add_library(traversocore STATIC
     TAudioClip.cpp
+    TClip.h
     TAudioClipGroup.cpp
     TAudioClipManager.cpp
     TAudioClipFactory.h TAudioClipFactory.cpp

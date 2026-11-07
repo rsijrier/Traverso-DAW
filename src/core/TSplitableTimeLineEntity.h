@@ -14,7 +14,7 @@ struct TSplitMutationResult {
     inline bool isEmpty() const { return toAdd.isEmpty() && toRemove.isEmpty(); }
 };
 
-class TSplitableTimeLineEntity : virtual public TTimeLineEntity
+class TSplitableTimeLineEntity : public TTimeLineEntity
 {
 public:
     virtual ~TSplitableTimeLineEntity() override = default;

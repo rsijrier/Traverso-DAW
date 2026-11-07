@@ -571,7 +571,7 @@ void TShortCutManager::add_meta_object(const QMetaObject* mo, const QString& tra
 
     while(mo) {
 		QString objectName = mo->className();
-        if (objectName == "ContextItem" || objectName == "QObject") {
+        if (objectName == "TContextItem" || objectName == "QObject") {
 			return;
 		}
         register_item_class(coreClassName, objectName);
