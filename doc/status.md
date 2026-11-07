@@ -1045,6 +1045,50 @@ From the GPU waveform test program, clip edges in variant A (branch
   (`TAudioClip.cpp:785`) and, in `attach_to_sheet()`, a second `add_stream`
   of a stream `removed_from_track()` only deactivated (`TClipsViewPort.cpp:139-147`;
   the assert at `TIOScheduler.cpp:154-155`, in release a duplicate stream).
+- **T105 The recording state is read in the audio thread without an atomic**
+  (Fable, 2026-11-07, reviewing the `tclip` length change): `TAudioClip::m_recordingStatus`
+  is written in the GUI thread (`init_recording()`, `finish_recording()`,
+  `finish_write_source()`) and read in `TAudioClip::process()`; a plain enum,
+  a data race of the same kind as the recording length had.
+- **T106 SyncDuringDrag and `m_isMoving` out of `TAudioClip`, into the move
+  tool** (Remon, 2026-11-07). Mainly a note for making `TAudioClip` free of
+  singletons (with T58), for when `TMoveTool` / `TMoveEdit` exist and use
+  these functions; Fable reviews it before it is carried out. Today `TAudioClip` reads the global setting
+  `AudioClip/SyncDuringDrag` from `config()` (`update_global_configuration()`),
+  connects every clip to `TConfig::configChanged`, and keeps `m_isMoving` to
+  switch its read source off while being dragged (`set_sources_active_state()`).
+  This is interaction state in the model. Target:
+  - The move tool reads the setting once, at the start of a drag. It is a
+    user preference, like preview or live.
+  - "Is this clip being dragged" is state of the tool, not of the clip.
+  - `TAudioClip` gets two named functions, no bool parameter:
+    `suspend_playback()` and `resume_playback()`. Not saved, no undo, not the
+    same as mute.
+  - The tool always resumes, also on cancel or an interrupted hold: a small
+    RAII guard in the tool.
+  - Removed from `TAudioClip`: `m_syncDuringDrag`,
+    `update_global_configuration()`, the connect to `config()`, and
+    `m_isMoving` if nothing else needs it.
+  - `PlayHeadMove.cpp:40` reads the same setting; check whether it belongs to
+    the same tool decision.
+  Depends on: the move tool (`TMoveTool` / `TMoveEdit`).
+  Found when this was written down (tclip, 2026-11-07), for the design:
+  `m_isMoving` has three more users. `set_as_moving()` takes the clip out of
+  snapping (`m_location->set_snappable(!moving)`, read by
+  `TSnapList.cpp:71`); while moving, `location_set()` skips marking the snap
+  list dirty and `clip_position_changed()`, which `set_as_moving(false)` then
+  sends once; `TAudioClipView.cpp:167` paints a moving clip as hovered. The
+  tool would own these too. `set_as_moving(true)` does not call
+  `m_location->set_moving(true)`, only the end calls `set_moving(false)`.
+  `PlayHeadMove` uses the setting for something else: seek during the drag of
+  the play head instead of once at the end (`PlayHeadMove.cpp:40-46`); the
+  settings page shows one check box for both (`Pages.cpp:862, 891`).
+  The other singletons in `TAudioClip.cpp` (2026-11-07): `config()` for
+  `LockByDefault` in the constructor; `config()` (five reads) and
+  `resources_manager()` in `init_recording()` and `finish_write_source()`,
+  which go with the recording to `TRecordingSession`; `resources_manager()`
+  twice in `calculate_split_mutation()` for the two copies, which goes with
+  `TSplitEdit`.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
@@ -1068,6 +1112,14 @@ From the GPU waveform test program, clip edges in variant A (branch
   is likely an edit's job then (an import edit on ids); fold it into that or
   into the resources manager, and the name next to `TObjectFactory` goes
   (Remon: not now).
+  The id (Remon, 2026-11-07): `TClip` keeps it once, as `ClipId`, like
+  `TTrack` its `TrackId`; `TAudioClip` only names its `IdTag`. For when a
+  user needs the exact id (not before): a plain
+  `AudioClipId TAudioClip::audio_clip_id() const` that narrows the id of
+  `TClip` with a `Q_ASSERT` (the factory always makes a `TAudioClip` under the
+  audio subtype), on a small explicit narrowing in `TObjectId`:
+  `std::optional<TObjectId<Narrow>> as<Narrow>() const`. No virtual, no second
+  copy of the id.
 - **Note for branch 3** (Remon, 2026-11-06): every shortcut function's
   invoker is built in `TShortCutManager::add_invoked_function<T>()`, which
   turns what the function returns into the dispatcher's `TCommand*` at
