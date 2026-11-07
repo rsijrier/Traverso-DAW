@@ -87,8 +87,8 @@ CropClip::~CropClip()
 
 int CropClip::prepare_actions()
 {
-	leftClip = resources_manager()->get_clip(m_clip->get_id());
-	rightClip = resources_manager()->get_clip(m_clip->get_id());
+	leftClip = resources_manager()->get_clip(m_clip->object_id());
+	rightClip = resources_manager()->get_clip(m_clip->object_id());
 
     leftClip->set_track(m_track);
     leftClip->attach_to_sheet();

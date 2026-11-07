@@ -137,7 +137,10 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 	TTimeRef startpos = TTimeRef(qRound(mapToScene(dropPos).x()) * m_sw->get_sheetview()->timeref_scalefactor);
 	
 	foreach(qint64 id, m_resourcesImport) {
-		TAudioClip* clip = resources_manager()->get_clip(id);
+		// A clip's item holds its new id, a source's its old one: the kind
+		// tells them apart (old ids have no kind of the new ones)
+		const std::optional<ClipId> clipId = ClipId::from_storage(uint64_t(id));
+		TAudioClip* clip = clipId ? resources_manager()->get_clip(*clipId) : nullptr;
 		if (clip) {
 			bool hadTrack = clip->has_track();
 			clip->set_track(m_importTrack);

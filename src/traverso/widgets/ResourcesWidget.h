@@ -106,7 +106,7 @@ private:
 	TProject* m_project;
 	TSheet* m_currentSheet;
 	FileWidget* m_filewidget;
-	QHash<qint64, ClipTreeItem*> m_clipindices;
+	QHash<const TAudioClip*, ClipTreeItem*> m_clipindices;
 	QHash<qint64, SourceTreeItem*> m_sourceindices;
 	
 	void update_clip_state(TAudioClip* clip);

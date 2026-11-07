@@ -309,7 +309,7 @@ void ResourcesWidget::filter_on_current_sheet()
 
 void ResourcesWidget::add_clip(TAudioClip * clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip->get_id());
+	ClipTreeItem* item = m_clipindices.value(clip);
 	
 	if (!item) {
 		SourceTreeItem* sourceitem = m_sourceindices.value(clip->get_readsource_id());
@@ -317,7 +317,7 @@ void ResourcesWidget::add_clip(TAudioClip * clip)
 		if (! sourceitem ) return;
 	
 		ClipTreeItem* clipitem = new ClipTreeItem(sourceitem, clip);
-		m_clipindices.insert(clip->get_id(), clipitem);
+		m_clipindices.insert(clip, clipitem);
 		
 		clipitem->setTextAlignment(1, Qt::AlignHCenter);
 		clipitem->setTextAlignment(2, Qt::AlignHCenter);
@@ -331,7 +331,7 @@ void ResourcesWidget::add_clip(TAudioClip * clip)
 
 void ResourcesWidget::remove_clip(TAudioClip * clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip->get_id());
+	ClipTreeItem* item = m_clipindices.value(clip);
 	
 	if (!item) {
 		 return;
@@ -378,7 +378,7 @@ void ResourcesWidget::remove_source(TBufferedAudioStreamReader * source)
 
 void ResourcesWidget::update_clip_state(TAudioClip* clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip->get_id());
+	ClipTreeItem* item = m_clipindices.value(clip);
 	Q_ASSERT(item);
 	
 	item->clip_state_changed();
@@ -397,14 +397,15 @@ ClipTreeItem::ClipTreeItem(SourceTreeItem * parent, TAudioClip * clip)
 	: QTreeWidgetItem(parent)
 	, m_clip(clip)
 {
-	setData(0, Qt::UserRole, clip->get_id());
+	// The clip's new id: a drop tells it from a source's old id by its kind
+	setData(0, Qt::UserRole, QVariant::fromValue<quint64>(clip->object_id().to_storage()));
     connect(clip, &TAudioClip::recordingFinished, this, &ClipTreeItem::clip_state_changed);
 	connect(clip, &TAudioClip::stateChanged, this, &ClipTreeItem::clip_state_changed);
 }
 
 void ClipTreeItem::clip_state_changed()
 {
-	if (resources_manager()->is_clip_in_use(m_clip->get_id())) {
+	if (resources_manager()->is_clip_in_use(m_clip->object_id())) {
 		for (int i=0; i<5; ++i) {
 			setForeground(i, QColor(Qt::black));
 		}

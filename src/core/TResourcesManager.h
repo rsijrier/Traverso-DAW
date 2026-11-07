@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTimeRef.h"
 #include <QString>
 #include <QHash>
+
+#include "TObjectIdTags.h"
 #include <QList>
 #include <QDomDocument>
 #include <QObject>
@@ -53,7 +55,10 @@ public:
 	TBufferedAudioStreamReader* import_source(const QString& dir, const QString& name);
 	TBufferedAudioStreamReader* get_silent_readsource();
 	TAudioClip* new_audio_clip(const QString& name);
-	TAudioClip* get_clip(qint64 id);
+	TAudioClip* get_clip(ClipId id);
+	// By old id, for the load of a track's clip list only (until the project
+	// file references clips by their new id)
+	TAudioClip* get_clip_for_old_id(qint64 oldId);
 
 	void mark_clip_removed(TAudioClip* clip);
 	void mark_clip_added(TAudioClip* clip);
@@ -64,7 +69,7 @@ public slots:
 	void remove_source(TBufferedAudioStreamReader* source);
 
 public:
-	bool is_clip_in_use(qint64) const;
+	bool is_clip_in_use(ClipId id) const;
 	bool is_source_in_use(qint64 id) const;
 
 	TBufferedAudioStreamReader* get_readsource(qint64 id);
@@ -106,7 +111,8 @@ private:
 
 	TProject* m_project;
 	QHash<qint64, SourceData* >	m_sources;
-	QHash<qint64, ClipData* >	m_clips;
+	// By the clip's ClipId value
+	QHash<uint64_t, ClipData* >	m_clips;
     // Taken out of the project by discard_takes(), freed with the project:
     // a take may have just left its track, and the audio thread lets go of
     // it only in a later cycle; once the project is off the audio device

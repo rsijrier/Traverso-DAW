@@ -136,7 +136,7 @@ int TAudioTrack::set_state( const QDomNode & node )
             QDomElement clipElement = clipNode.toElement();
             qint64 id = clipElement.attribute("id", "").toLongLong();
 
-            TAudioClip* clip = resources_manager()->get_clip(id);
+            TAudioClip* clip = resources_manager()->get_clip_for_old_id(id);
             if (!clip) {
                 tInformUser().critical(tr("Track: AudioClip with id %1 not "
                                    "found in Resources database!").arg(id));

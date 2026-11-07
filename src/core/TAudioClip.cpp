@@ -98,10 +98,8 @@ QObject* TAudioClip::id_owner() const
 {
     // A removed clip keeps m_track for undo; its project's resources manager
     // knows whether it is in use. Clips of a removed track or song still count
-    // as in use (T96). get_id() is not const as it makes a missing old id; a
-    // clip on a track has one, the resources manager holds it by it
-    const qint64 oldId = const_cast<TAudioClip*>(this)->get_id();
-    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(oldId)) {
+    // as in use (T96)
+    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(object_id())) {
         return m_track;
     }
     return nullptr;
@@ -267,8 +265,8 @@ TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitL
     // get_clip() returns copies of this clip, including gain and lock state, each
     // with its own read source. Clips must not share a read source: it holds the
     // clip's source start and location window.
-    TAudioClip* leftClip = resources_manager()->get_clip(get_id());
-    TAudioClip* rightClip = resources_manager()->get_clip(get_id());
+    TAudioClip* leftClip = resources_manager()->get_clip(object_id());
+    TAudioClip* rightClip = resources_manager()->get_clip(object_id());
     Q_ASSERT(leftClip && rightClip);
 
     for (TAudioClip* c : {leftClip, rightClip}) {
