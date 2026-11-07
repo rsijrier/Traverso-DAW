@@ -1089,6 +1089,13 @@ From the GPU waveform test program, clip edges in variant A (branch
   which go with the recording to `TRecordingSession`; `resources_manager()`
   twice in `calculate_split_mutation()` for the two copies, which goes with
   `TSplitEdit`.
+- **T107 Edits on a clip that is still recording are not refused** (Fable,
+  2026-11-07, reviewing the `tclip` length change; not a regression): no
+  command or canvas code checks `recording_state()` before an edit. Trimming
+  an edge of a take while it records gives nonsense: today it clamped against
+  the growing length and could drive the source range negative, since
+  `tclip` it clamps against the empty source range
+  (`TAudioClip::set_left_edge()`, `set_right_edge()`).
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
