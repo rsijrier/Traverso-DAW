@@ -47,10 +47,10 @@ struct TObjectIds
     static void register_name(uint16_t tag, const char* name);
     // The registered name, "id" when the tag has none
     static const char* name_of(uint16_t tag);
-    // "audiotrack:0101000000000005": the tag's name and the whole value in hex.
+    // "audiotrack:0301000000000005": the tag's name and the whole value in hex.
     // Also the form for JSON and QML, which hold only 53 bits exact in a number
     static std::string to_string(uint64_t value);
-    // "0101000000000005": the value alone, the form of the project file
+    // "0301000000000005": the value alone, the form of the project file
     static std::string to_hex(uint64_t value);
 };
 

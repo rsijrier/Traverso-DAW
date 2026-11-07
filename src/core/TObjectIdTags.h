@@ -28,11 +28,14 @@ class TClip;
 class TAudioClip;
 class TSheet;
 
-// Kind 0 is no kind
+// Kind 0 is no kind. The numbers follow the tree, so an id reads as where it
+// stands in it: project, song, track, clip (doc/design/object-ids.md); the
+// project's own id comes with ProjectTag
 enum : uint8_t {
-    TrackKind = 1,
-    ClipKind = 2,
-    SongKind = 3,
+    ProjectKind = 1,
+    SongKind = 2,
+    TrackKind = 3,
+    ClipKind = 4,
 };
 
 // The masters and the bounce track have their own subtype: an agent and the

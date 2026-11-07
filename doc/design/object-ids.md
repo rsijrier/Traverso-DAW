@@ -25,7 +25,8 @@ in creation order, and are the same for the same steps in a test. No clock.
 | Sequence | 1 to 2^48 − 1 | Per project, increasing from 1; 0 only in an id derived from the project (its master) |
 
 The value 0 is the invalid id. The fields are byte-aligned on purpose: the hex
-form reads directly (`0101000000000005` = kind 1, subtype 1, number 5).
+form reads directly (`0301000000000005` = kind 3, subtype 1, number 5: an
+audio track).
 
 ## Rules
 
@@ -37,9 +38,14 @@ form reads directly (`0101000000000005` = kind 1, subtype 1, number 5).
    `created` field.
 4. Ids are made in the GUI thread, never in the real-time path. The audio thread
    that needs a new object asks the GUI thread through the message queue.
-5. Kind and subtype numbers are part of the project file: never renumber them,
-   never reuse a number that was given up.
-6. In JSON and QML an id is always a string (`"audiotrack:0101000000000005"`):
+5. Kind and subtype numbers are part of the project file. The kinds follow
+   the tree (project, song, track, clip, curve, marker), so an id reads as
+   where it stands in it. Renumbered once on 2026-11-07 (Remon), when only
+   development projects held ids: their load check gives a new id with a
+   warning where a tag no longer fits its element, and a save makes them
+   clean. **Frozen at the foundations release:** from then on never renumber
+   them, never reuse a number that was given up.
+6. In JSON and QML an id is always a string (`"audiotrack:0301000000000005"`):
    JavaScript numbers hold only 53 bits exactly.
 
 ## Tags
@@ -232,16 +238,19 @@ undo tests once there are edits (`TSplitEdit`).
 
 | Kind | Subtype | Tag | Object | Id |
 |---|---|---|---|---|
-| 1 track | all | `TrackTag` | `TTrack` | |
+| 1 project | 1 | `ProjectTag` (comes with `TSplitEdit`) | `TProject` | fixed, number 0: `project:0101000000000000`, not saved |
+| 2 song | 1 | `SongTag` | `TSheet`: a sheet is a song. A session, a container of tracks (to be named workspace), has no id yet | counter |
+| 3 track | all | `TrackTag` | `TTrack` | |
 | | 1 to 5 | `AudioMixerTrackTag` | `TAudioMixerTrack` (from the next branch) | |
 | | 1 | `AudioTrackTag` | `TAudioTrack` | counter |
 | | 2 | `BusTrackTag` | `TBusTrack` | counter |
 | | 3 | `SongMasterTag` | `MasterOutSubGroup` of a song | derived |
 | | 4 | `ProjectMasterTag` | `MasterOutSubGroup` of the project | derived, number 0 |
 | | 5 | `BounceTrackTag` | `TBounceTrack` | derived |
-| 2 clip | all | `ClipTag` | `TClip` | |
+| 4 clip | all | `ClipTag` | `TClip` | |
 | | 1 | `AudioClipTag` | `TAudioClip` | counter |
-| 3 song | 1 | `SongTag` | `TSheet`: a sheet is a song. A session, a container of tracks (to be named workspace), has no id yet | counter |
+| 5 curve | | planned (gain curve, fades) | | derived |
+| 6 marker | | planned, when markers get ids | | |
 
 ## Saved now, next to the old ids
 
