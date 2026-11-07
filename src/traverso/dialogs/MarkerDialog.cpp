@@ -194,8 +194,13 @@ void MarkerDialog::position_changed(const QString &s)
 // The item's marker, while the ruler still has it
 TTimeLineMarker * MarkerDialog::get_marker(QTreeWidgetItem* item)
 {
-	TTimeLineMarker* marker = qobject_cast<TTimeLineMarker*>(item->data(0, Qt::UserRole).value<QObject*>());
-	return m_session->get_timeline_ruler()->get_markers().contains(marker) ? marker : nullptr;
+	QObject* object = item->data(0, Qt::UserRole).value<QObject*>();
+	for (TTimeLineMarker* marker : m_session->get_timeline_ruler()->get_markers()) {
+		if (marker == object) {
+			return marker;
+		}
+	}
+	return nullptr;
 }
 
 void MarkerDialog::apply()

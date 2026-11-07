@@ -1355,12 +1355,12 @@ QList<TSheet* > TProject::get_sheets( ) const
 
 int TProject::get_sheet_index(const TSheet* sheet) const
 {
-    return int(m_sheets.gui_items().indexOf(const_cast<TSheet*>(sheet))) + 1;
+    return int(m_sheets.gui_items().indexOf(sheet)) + 1;
 }
 
 int TProject::get_session_index(const TSession* session)
 {
-    return int(get_sessions().indexOf(const_cast<TSession*>(session)));
+    return int(get_sessions().indexOf(session));
 }
 
 QList<TSession*> TProject::get_sessions()

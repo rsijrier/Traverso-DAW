@@ -219,7 +219,7 @@ TTrack* TSession::get_track(qint64 id) const
 
 bool TSession::has_track(const TTrack* track) const
 {
-	return track == m_masterOutBusTrack || get_tracks().contains(const_cast<TTrack*>(track));
+	return track == m_masterOutBusTrack || get_tracks().contains(track);
 }
 
 

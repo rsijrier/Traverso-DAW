@@ -309,7 +309,7 @@ void ResourcesWidget::filter_on_current_sheet()
 
 void ResourcesWidget::add_clip(TAudioClip * clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip);
+	ClipTreeItem* item = m_clipindices.value(clip->object_id().to_storage());
 	
 	if (!item) {
 		SourceTreeItem* sourceitem = m_sourceindices.value(clip->get_readsource_id());
@@ -317,7 +317,7 @@ void ResourcesWidget::add_clip(TAudioClip * clip)
 		if (! sourceitem ) return;
 	
 		ClipTreeItem* clipitem = new ClipTreeItem(sourceitem, clip);
-		m_clipindices.insert(clip, clipitem);
+		m_clipindices.insert(clip->object_id().to_storage(), clipitem);
 		
 		clipitem->setTextAlignment(1, Qt::AlignHCenter);
 		clipitem->setTextAlignment(2, Qt::AlignHCenter);
@@ -331,7 +331,7 @@ void ResourcesWidget::add_clip(TAudioClip * clip)
 
 void ResourcesWidget::remove_clip(TAudioClip * clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip);
+	ClipTreeItem* item = m_clipindices.value(clip->object_id().to_storage());
 	
 	if (!item) {
 		 return;
@@ -378,7 +378,7 @@ void ResourcesWidget::remove_source(TBufferedAudioStreamReader * source)
 
 void ResourcesWidget::update_clip_state(TAudioClip* clip)
 {
-	ClipTreeItem* item = m_clipindices.value(clip);
+	ClipTreeItem* item = m_clipindices.value(clip->object_id().to_storage());
 	Q_ASSERT(item);
 	
 	item->clip_state_changed();
@@ -397,8 +397,8 @@ ClipTreeItem::ClipTreeItem(SourceTreeItem * parent, TAudioClip * clip)
 	: QTreeWidgetItem(parent)
 	, m_clip(clip)
 {
-	// The clip's new id: a drop tells it from a source's old id by its kind
-	setData(0, Qt::UserRole, QVariant::fromValue<quint64>(clip->object_id().to_storage()));
+	// A clip's new id in a role of its own; Qt::UserRole is a source's old id
+	setData(0, ResourcesClipIdRole, QVariant::fromValue<quint64>(clip->object_id().to_storage()));
     connect(clip, &TAudioClip::recordingFinished, this, &ClipTreeItem::clip_state_changed);
 	connect(clip, &TAudioClip::stateChanged, this, &ClipTreeItem::clip_state_changed);
 }

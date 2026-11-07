@@ -136,8 +136,7 @@ void TTrackManagerDialog::create_routing_input_menu()
     if (m_track->get_type() == TTrack::AUDIO) {
         foreach(AudioBus* bus, pm().get_project()->get_hardware_buses()) {
             if (bus->is_input() && bus->is_valid()) {
-                QAction* action = m_routingInputMenu->addAction(bus->get_name());
-                action->setData(bus->get_id());
+                m_routingInputMenu->addAction(bus->get_name());
             }
         }
     }
@@ -421,7 +420,9 @@ void TTrackManagerDialog::on_routingInputRemoveButton_clicked()
     QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
+        TSend* send = qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>());
+        Q_ASSERT(send);
+        toBeRemoved.append(send);
     }
 
     QList<TTrack*> tracks = pm().get_project()->get_sheet_tracks();
@@ -438,7 +439,9 @@ void TTrackManagerDialog::on_preSendsRemoveButton_clicked()
     QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
+        TSend* send = qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>());
+        Q_ASSERT(send);
+        toBeRemoved.append(send);
     }
 
     m_track->remove_pre_sends(toBeRemoved);
@@ -450,7 +453,9 @@ void TTrackManagerDialog::on_routingOutputRemoveButton_clicked()
     QList<TSend*> toBeRemoved;
 
     for(QListWidgetItem* item : selectedItems) {
-        toBeRemoved.append(qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>()));
+        TSend* send = qobject_cast<TSend*>(item->data(Qt::UserRole).value<QObject*>());
+        Q_ASSERT(send);
+        toBeRemoved.append(send);
     }
 
     m_track->remove_post_sends(toBeRemoved);

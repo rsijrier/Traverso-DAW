@@ -87,11 +87,15 @@ void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 		
 		while (!stream.atEnd()) {
 			stream >> r >> c >> v;
+			if (const std::optional<ClipId> clip = ClipId::from_storage(v.value(ResourcesClipIdRole).toULongLong())) {
+				m_resourcesImport.append({*clip, 0});
+				continue;
+			}
 			qint64 id = v.value(Qt::UserRole).toLongLong();
 			if (!id) {
 				continue;
 			}
-			m_resourcesImport.append(id);
+			m_resourcesImport.append({ClipId(), id});
 		}
 	}
 	
@@ -136,11 +140,8 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
 	QPoint dropPos = event->position().toPoint();
 	TTimeRef startpos = TTimeRef(qRound(mapToScene(dropPos).x()) * m_sw->get_sheetview()->timeref_scalefactor);
 	
-	foreach(qint64 id, m_resourcesImport) {
-		// A clip's item holds its new id, a source's its old one: the kind
-		// tells them apart (old ids have no kind of the new ones)
-		const std::optional<ClipId> clipId = ClipId::from_storage(uint64_t(id));
-		TAudioClip* clip = clipId ? resources_manager()->get_clip(*clipId) : nullptr;
+	for (const ResourceImport& import : std::as_const(m_resourcesImport)) {
+		TAudioClip* clip = import.clip.is_valid() ? resources_manager()->get_clip(import.clip) : nullptr;
 		if (clip) {
 			bool hadTrack = clip->has_track();
 			clip->set_track(m_importTrack);
@@ -153,7 +154,7 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
             clips.append(clip);
             continue;
 		}
-		TBufferedAudioStreamReader* source = resources_manager()->get_readsource(id);
+		TBufferedAudioStreamReader* source = import.clip.is_valid() ? nullptr : resources_manager()->get_readsource(import.sourceId);
 		if (source) {
 			clip = resources_manager()->new_audio_clip(source->get_short_name());
             resources_manager()->set_source_for_clip(clip, source);

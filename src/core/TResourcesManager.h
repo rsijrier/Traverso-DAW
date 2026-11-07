@@ -36,6 +36,11 @@ class TBufferedAudioStreamReader;
 class TAudioClip;
 class TProject;
 
+
+// The role of a clip's new id in the resources window's items, read by a
+// drop on the canvas; Qt::UserRole there is a source's old id
+inline constexpr int ResourcesClipIdRole = Qt::UserRole + 1;
+
 class TResourcesManager : public QObject
 {
 	Q_OBJECT
@@ -113,6 +118,9 @@ private:
 	QHash<qint64, SourceData* >	m_sources;
 	// By the clip's ClipId value
 	QHash<uint64_t, ClipData* >	m_clips;
+	// The loaded clips by the old id the file names them by, for
+	// get_clip_for_old_id() during the load
+	QHash<qint64, ClipId>		m_clipOfOldId;
     // Taken out of the project by discard_takes(), freed with the project:
     // a take may have just left its track, and the audio thread lets go of
     // it only in a later cycle; once the project is off the audio device

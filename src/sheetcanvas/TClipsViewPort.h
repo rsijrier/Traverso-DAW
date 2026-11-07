@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "TObjectIdTags.h"
+
 #include <QGraphicsScene>
 #include <QList>
 #include <QStringList>
@@ -47,6 +49,11 @@ protected:
 private:
     TSheetWidget*                   m_sw;
     QStringList                     m_importFiles;
-    QList<qint64>                   m_resourcesImport;
+    // From the resources window: a clip by its new id, or a source by its old id
+    struct ResourceImport {
+        ClipId clip;
+        qint64 sourceId;
+    };
+    QList<ResourceImport>           m_resourcesImport;
     TAudioTrack*                    m_importTrack{nullptr};
 };

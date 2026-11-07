@@ -233,6 +233,7 @@ int TResourcesManager::set_state( const QDomNode & node )
 		ClipData* data = new ClipData();
 		data->clip = clip;
 		m_clips.insert(clip->object_id().to_storage(), data);
+		m_clipOfOldId.insert(clipsNode.toElement().attribute("id", "").toLongLong(), clip->object_id());
 		clipsNode = clipsNode.nextSibling();
 	}
 	
@@ -357,12 +358,8 @@ TBufferedAudioStreamReader * TResourcesManager::get_readsource(qint64 id)
  */
 TAudioClip* TResourcesManager::get_clip_for_old_id(qint64 oldId)
 {
-	for (ClipData* data : std::as_const(m_clips)) {
-		if (data->clip->get_id() == oldId) {
-			return get_clip(data->clip->object_id());
-		}
-	}
-	return nullptr;
+	const auto it = m_clipOfOldId.constFind(oldId);
+	return it == m_clipOfOldId.cend() ? nullptr : get_clip(*it);
 }
 
 TAudioClip* TResourcesManager::get_clip(ClipId id)
