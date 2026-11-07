@@ -97,7 +97,7 @@ void TSnapList::update_snaplist_algorithm()
     TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "SnapList::update_snaplist_algorithm completed in: %ld ns", totaltime);
 }
 
-TRichSnapResult TSnapList::get_snap_context(const TTimeRef& mouseLocation, qint64 scaleFactor, SnapFilters activeFilters)
+TRichSnapResult TSnapList::get_snap_context(const TTimeRef& mouseLocation, qint64 scaleFactor)
 {
     if (m_isDirty) {
         update_snaplist_algorithm();
@@ -107,7 +107,7 @@ TRichSnapResult TSnapList::get_snap_context(const TTimeRef& mouseLocation, qint6
     result.snappedLocation = mouseLocation;
     result.didSnap = false;
 
-    if (activeFilters == NoSnap || m_uniqueSnapPositions.isEmpty()) {
+    if (m_uniqueSnapPositions.isEmpty()) {
         return result;
     }
 
@@ -133,13 +133,8 @@ TRichSnapResult TSnapList::get_snap_context(const TTimeRef& mouseLocation, qint6
         QList<QObject*> validatedTargets;
 
         for (auto &target : potentialTargets) {
-            if (target.isNull()) continue;
-
-            if (auto* entity = dynamic_cast<TTimeLineEntity*>(target.data())) {
-
-                if (entity->get_timeline_entity_type() & activeFilters) {
-                    validatedTargets.append(target.data());
-                }
+            if (!target.isNull()) {
+                validatedTargets.append(target.data());
             }
         }
 
@@ -155,7 +150,7 @@ TRichSnapResult TSnapList::get_snap_context(const TTimeRef& mouseLocation, qint6
 
 TTimeRef TSnapList::get_snap_value(const TTimeRef& location)
 {
-    TRichSnapResult res = get_snap_context(location, 1, SnapAll);
+    TRichSnapResult res = get_snap_context(location, 1);
     return res.snappedLocation;
 }
 

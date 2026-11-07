@@ -1096,6 +1096,35 @@ From the GPU waveform test program, clip edges in variant A (branch
   the growing length and could drive the source range negative, since
   `tclip` it clamps against the empty source range
   (`TAudioClip::set_left_edge()`, `set_right_edge()`).
+- **T108 Core links without commands, sheetcanvas and the app** (Remon,
+  2026-11-07, from the `TSplitEdit` analysis; before `TSplitTool`): no test
+  can link `traversocore` today. Core includes command headers
+  (`TAddRemoveCommand.h` in `TFadeCurve.cpp`, `TSession.cpp`,
+  `TTimeLineRuler.cpp`, `TTrack.cpp`; `Fade.h` in `TFadeCurve.cpp`;
+  `ClipSelection.h` in `TAudioClipManager.cpp`; `CommandGroup.h` in
+  `TTimeLineRuler.cpp`; `TMoveCommand.h` in `TInputEventDispatcher.cpp`),
+  `TConfig.cpp:26,59` makes `TraversoCommands`, and core uses
+  `traversoplugins` (plugin chain, `GainEnvelope`) without linking it while
+  the plugins include `TAddRemoveCommand.h`; commands reach sheetcanvas and
+  the app. A headless `TAudioClip` also needs `config()` and a `TSheet` with a
+  `TProject`, resources manager and io schedulers. Then the edit test of
+  `TSplitEdit` with a real sheet (Dummy driver, `test_audio_device`
+  pattern). Likely makes T101 (a testable `TShortCutManager`) easier too.
+- **T109 The gain curve of the right piece of a split is wrong** (Remon,
+  2026-11-07, runtime test of `split-edit` step 0; also on d9728974, before
+  `tclip`): its nodes stand at the wrong place. The gain curve of a clip has
+  three time axes: the audio reads it in source time (`process_gain()` with
+  `fileLocation`, `TAudioClip::process()`), the view draws the nodes from the
+  source start (`TAudioClipView.cpp:94, 482`), and the model gets the clip's
+  timeline position as its offset (`TAudioClip::move_to_location()`), used by
+  `TCurveView.cpp:562, 577` and `TSheetView.cpp:1060`. They part as soon as
+  the source start is not 0. Likely with `TSplitEdit`: the curve splits with
+  its clip.
+- **T110 No snap on a single press of split** (Remon, 2026-11-07, runtime
+  test of `split-edit` step 0; also before `tclip`): only a hold calls
+  `TSplitEntityController::update()`, where the snap is; a single press finds
+  `m_splitLocation` unset and `commit()` takes the mouse position unsnapped
+  (`TSplitEntityController.cpp:132-136`). With `TSplitTool`.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin

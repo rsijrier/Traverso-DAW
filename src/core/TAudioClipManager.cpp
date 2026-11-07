@@ -151,10 +151,7 @@ void TAudioClipManager::add_to_selection( TAudioClip * clip )
         clip->set_selected( true );
 
         if (m_sheet && m_sheet->get_selection_service()) {
-            m_sheet->get_selection_service()->select_with_context(
-                clip,
-                TSelectionService::ContextTrackLane
-                );
+            m_sheet->get_selection_service()->select(clip);
         }
     }
 }

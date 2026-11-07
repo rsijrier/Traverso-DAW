@@ -72,7 +72,6 @@ public:
     int get_index() {return m_index;}
 
     void move_to_location(const TTimeRef& newStartLocation) final;
-    unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeMarker; }
 
 public slots:
     void set_when (const TTimeRef& when);

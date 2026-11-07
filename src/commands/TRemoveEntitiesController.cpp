@@ -32,12 +32,7 @@ TCommitResult TRemoveEntitiesController::commit()
     QList<TTimeLineEntity*> entities;
 
     if (removingSelection) {
-        // Only entities of the target's type, the selection may contain others
-        for (TTimeLineEntity* entity : m_selection->get_selected_entities()) {
-            if (entity->get_timeline_entity_type() == m_target->get_timeline_entity_type()) {
-                entities.append(entity);
-            }
-        }
+        entities = m_selection->get_selected_entities();
     } else {
         entities.append(m_target);
     }

@@ -78,7 +78,6 @@ public:
     int process(TProcessContext &context) T_REALTIME_SAFE;
 
     void move_to_location(const TTimeRef& location) final;
-    unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeAudioClip; }
 
     bool validate_split_boundary(const TTimeRef& splitLocation) const final;
     TSplitMutationResult calculate_split_mutation(const TTimeRef& splitLocation) final;

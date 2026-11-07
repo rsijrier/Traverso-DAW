@@ -38,19 +38,10 @@ struct TRichSnapResult {
 class TSnapList
 {
 public:
-    enum SnapType {
-        NoSnap      = 0x00,
-        AudioClips  = 0x01,
-        Markers     = 0x02,
-        WorkCursor  = 0x04,
-        SnapAll     = 0xFF
-    };
-    Q_DECLARE_FLAGS(SnapFilters, SnapType)
-
     explicit TSnapList(TSession* session);
     ~TSnapList() = default;
 
-    TRichSnapResult get_snap_context(const TTimeRef& mouseLocation, qint64 scaleFactor, SnapFilters activeFilters);
+    TRichSnapResult get_snap_context(const TTimeRef& mouseLocation, qint64 scaleFactor);
 
     TTimeRef get_snap_value(const TTimeRef& location);
     TTimeRef next_snap_pos(const TTimeRef& location);
@@ -72,5 +63,3 @@ private:
 
     void update_snaplist_algorithm();
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(TSnapList::SnapFilters)

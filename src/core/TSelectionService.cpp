@@ -15,21 +15,9 @@ TSelectionService::TSelectionService(QObject* parent)
 {
 }
 
-void TSelectionService::select_with_context(TTimeLineEntity* entity, SelectionContext activeContext)
+void TSelectionService::select(TTimeLineEntity* entity)
 {
     if (!entity) return;
-
-    if (activeContext == ContextTrackLane) {
-        if (entity->get_timeline_entity_type() != TTimeLineEntity::TypeAudioClip &&
-            entity->get_timeline_entity_type() != TTimeLineEntity::TypeVideoClip) {
-            return;
-        }
-    }
-    else if (activeContext == ContextAutomation) {
-        if (entity->get_timeline_entity_type() != TTimeLineEntity::TypeCurveNode) {
-            return;
-        }
-    }
 
     auto* contextItem = dynamic_cast<TContextItem*>(entity);
     if (!contextItem) return;

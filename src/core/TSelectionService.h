@@ -18,17 +18,10 @@ class TSelectionService final : public QObject
     Q_PROPERTY(bool hasSelection READ has_selection NOTIFY selectionChanged)
 
 public:
-    enum SelectionContext {
-        ContextAll,
-        ContextTrackLane,
-        ContextAutomation
-    };
-    Q_ENUM(SelectionContext)
-
     explicit TSelectionService(QObject* parent = nullptr);
     ~TSelectionService() override = default;
 
-    void select_with_context(TTimeLineEntity* entity, SelectionContext activeContext);
+    void select(TTimeLineEntity* entity);
     void deselect(TTimeLineEntity* entity);
     void clear();
 

@@ -1344,7 +1344,7 @@ QUndoCommand* TSheet::create_command_split_entities(const QList<TSplitableTimeLi
 
         TSplitMutationResult entityResult = entity->calculate_split_mutation(splitLocation);
 
-        if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeAudioClip) {
+        if (dynamic_cast<TAudioClip*>(entity)) {
             for (TTimeLineEntity* e : entityResult.toRemove) {
                 totalClipsToRemove.append(dynamic_cast<TAudioClip*>(e));
             }
@@ -1352,7 +1352,6 @@ QUndoCommand* TSheet::create_command_split_entities(const QList<TSplitableTimeLi
                 totalClipsToAdd.append(dynamic_cast<TAudioClip*>(e));
             }
         }
-        // else if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeVideoClip) { ... }
     }
 
     if (totalClipsToAdd.isEmpty()) {

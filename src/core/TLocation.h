@@ -24,12 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTimeRef.h"
 #include <QObject>
 
-enum SnapType {
-    SnapAudioClips = 0x01,
-    SnapMarkers    = 0x02,
-    SnapWorkCursor = 0x04
-};
-
 class TLocation : public QObject
 {
     Q_OBJECT
