@@ -7,6 +7,7 @@
 // checked against the structure, and the sequence goes on above every number
 // in the file from before the load on.
 
+#include "TObjectIdTestAccess.h"
 #include "TObjectFactory.h"
 
 #include <QCoreApplication>
@@ -41,7 +42,7 @@ class Item : public QObject
 public:
     using IdTag = ItemTag;
     explicit Item(int value = 0) : value(value) {}
-    uint64_t id() const { return m_objectId.to_storage(); }
+    uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
     QObject* id_owner() const { return owner; }
     int value;
     QObject* owner{};
@@ -58,7 +59,7 @@ class Part : public QObject
 public:
     using IdTag = void;
     explicit Part(QObject* owner) : owner(owner) {}
-    uint64_t id() const { return m_objectId.to_storage(); }
+    uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
     QObject* id_owner() const { return owner; }
     QObject* owner;
 
@@ -75,16 +76,16 @@ public:
     Owner(TObjectId<OwnerTag> id, TObjectFactory& objects)
         : m_objectId(id)
     {
-        const uint64_t number = TObjectIds::sequence_of(id.to_storage());
-        part = objects.make_owned<Part, PartTag>(number, this);
-        otherPart = objects.make_owned<Part, OtherPartTag>(number, this);
+        part = objects.make_owned<Part, PartTag>(id, this);
+        otherPart = objects.make_owned<Part, OtherPartTag>(id, this);
     }
     ~Owner() override
     {
         delete part;
         delete otherPart;
     }
-    uint64_t id() const { return m_objectId.to_storage(); }
+    uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
+    TObjectId<OwnerTag> object_id() const { return m_objectId; }
     QObject* id_owner() const { return nullptr; }
     Part* part{};
     Part* otherPart{};
@@ -140,8 +141,8 @@ int main(int argc, char** argv)
         check(pool.find_raw(a->id()) == a, "a made object is in the pool");
 
         QDomElement saved = doc.createElement("Item");
-        TObjectFactory::write(saved, TObjectId<ItemTag>::from_storage(a->id()).value());
-        TObjectFactory::write_owner(saved, TObjectId<ItemTag>::from_storage(b->id()).value());
+        TObjectFactory::write(saved, TObjectIdTestAccess::from_value<TObjectId<ItemTag>>(a->id()).value());
+        TObjectFactory::write_owner(saved, TObjectIdTestAccess::from_value<TObjectId<ItemTag>>(b->id()).value());
         check(saved.attribute("objectid") == "0101000000000001" && saved.attribute("owner") == "0101000000000002",
               "write() and write_owner() give bare hex");
         delete a;
@@ -241,17 +242,17 @@ int main(int argc, char** argv)
 
         // A saved derived id that does not follow from the owner: the owner wins
         QDomElement saved = element_with(doc, hex(value(3, 77)), hex(value(1, 77)));
-        check(objects.check_owned<PartTag>(first->part, saved, first->id()) == 2, "a wrong saved id and owner: two warnings");
+        check(objects.check_owned<PartTag>(first->part, saved, first->object_id()) == 2, "a wrong saved id and owner: two warnings");
         check(first->part->id() == value(3, firstNumber), "the derived id stays");
         QDomElement right = element_with(doc, hex(first->part->id()), hex(first->id()));
-        check(objects.check_owned<PartTag>(first->part, right, first->id()) == 0, "a right saved id and owner: no warning");
+        check(objects.check_owned<PartTag>(first->part, right, first->object_id()) == 0, "a right saved id and owner: no warning");
 
         // Hung on another owner by hand: the invariant finds it
         first->part->owner = second;
         check(pool.owners_out_of_place() == QList<uint64_t>{first->part->id()}, "a part hung on another owner is found");
         first->part->owner = first;
 
-        Part* projectPart = objects.make_owned<Part, PartTag>(0, &project);
+        Part* projectPart = objects.make_owned<Part, PartTag>(TObjectId<OwnerTag>::root(), &project);
         check(projectPart->id() == value(3, 0) && pool.find_owner(projectPart->id()) == &project,
               "an owner without a number: number 0, owned by the root");
         delete projectPart;

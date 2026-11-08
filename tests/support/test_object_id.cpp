@@ -5,9 +5,13 @@
 // which (by the compiler), what a raw value is accepted as, and that a
 // project's sequence gives the same ids for the same steps.
 
+#include "TObjectIdTestAccess.h"
 #include "TObjectId.h"
 
+#include <QByteArray>
 #include <QCoreApplication>
+#include <QDataStream>
+#include <QIODevice>
 
 #include <cstdio>
 #include <unordered_set>
@@ -76,10 +80,10 @@ int main(int argc, char** argv)
     const BId b = BId::create(ids);
     const OtherId other = OtherId::create(ids);
 
-    check(!AId().is_valid() && AId().to_storage() == 0, "the default id is invalid and 0");
-    check(a.to_storage() == 0x0101000000000001ull, "the first id: kind 1, subtype 1, number 1");
-    check(b.to_storage() == 0x0102000000000002ull, "the second: kind 1, subtype 2, number 2");
-    check(other.to_storage() == 0x0201000000000003ull, "the third, of another kind: number 3");
+    check(!AId().is_valid() && TObjectIdTestAccess::value(AId()) == 0, "the default id is invalid and 0");
+    check(TObjectIdTestAccess::value(a) == 0x0101000000000001ull, "the first id: kind 1, subtype 1, number 1");
+    check(TObjectIdTestAccess::value(b) == 0x0102000000000002ull, "the second: kind 1, subtype 2, number 2");
+    check(TObjectIdTestAccess::value(other) == 0x0201000000000003ull, "the third, of another kind: number 3");
 
     // The same steps in another project give the same ids
     TObjectIdGenerator again;
@@ -87,23 +91,41 @@ int main(int argc, char** argv)
     const BId b2 = BId::create(again);
     check(a2 == a && b2 == b, "the same steps give the same ids");
 
-    const uint64_t raw = a.to_storage();
-    check(AId::accepts(raw) && LayerId::accepts(raw) && AnyId::accepts(raw), "a's value fits a, the layer and the kind");
-    check(!BId::accepts(raw) && !CId::accepts(raw) && !OtherId::accepts(raw), "a's value fits no other exact tag and no other kind");
-    check(!AnyId::accepts(0), "0 is no id of any tag");
-    check(AId::accepts(0x0101000000000000ull), "a tag on number 0 is an id: one derived from an owner without a number");
-    check(!AnyId::accepts(0x0140000000000001ull), "subtype 64 (a reserved bit) is refused");
-    check(!AnyId::accepts(other.to_storage()), "an id of another kind is refused by the kind");
-    check(!LayerId::accepts(CId::create(ids).to_storage()), "an exact id outside the layer is refused by it");
+    const uint64_t raw = TObjectIdTestAccess::value(a);
+    check(TObjectIdTestAccess::accepts<AId>(raw) && TObjectIdTestAccess::accepts<LayerId>(raw) && TObjectIdTestAccess::accepts<AnyId>(raw), "a's value fits a, the layer and the kind");
+    check(!TObjectIdTestAccess::accepts<BId>(raw) && !TObjectIdTestAccess::accepts<CId>(raw) && !TObjectIdTestAccess::accepts<OtherId>(raw), "a's value fits no other exact tag and no other kind");
+    check(!TObjectIdTestAccess::accepts<AnyId>(0), "0 is no id of any tag");
+    check(TObjectIdTestAccess::accepts<AId>(0x0101000000000000ull), "a tag on number 0 is an id: one derived from an owner without a number");
+    check(!TObjectIdTestAccess::accepts<AnyId>(0x0140000000000001ull), "subtype 64 (a reserved bit) is refused");
+    check(!TObjectIdTestAccess::accepts<AnyId>(TObjectIdTestAccess::value(other)), "an id of another kind is refused by the kind");
+    check(!TObjectIdTestAccess::accepts<LayerId>(TObjectIdTestAccess::value(CId::create(ids))), "an exact id outside the layer is refused by it");
 
-    const std::optional<AId> back = AId::from_storage(raw);
+    const std::optional<AId> back = TObjectIdTestAccess::from_value<AId>(raw);
     check(back.has_value() && *back == a, "from_storage() gives the same id back");
-    check(!BId::from_storage(raw).has_value(), "from_storage() refuses a value of another tag");
+    check(!TObjectIdTestAccess::from_value<BId>(raw).has_value(), "from_storage() refuses a value of another tag");
 
     const LayerId layer = a;
     const AnyId any = layer;
-    check(layer.to_storage() == raw && any.to_storage() == raw, "conversions keep the value");
+    check(TObjectIdTestAccess::value(layer) == raw && TObjectIdTestAccess::value(any) == raw, "conversions keep the value");
     check(any == AnyId(a), "ids compare equal after a conversion");
+
+    check(TObjectIdTestAccess::value(AId::root()) == 0x0101000000000000ull, "root() is the exact tag on number 0");
+    check(qHash(a) == qHash(TObjectIdTestAccess::from_value<AId>(raw).value()) && qHash(a) != qHash(b), "qHash() follows the value");
+
+    // A drag carries an id as item data through a QDataStream
+    QByteArray bytes;
+    {
+        QDataStream out(&bytes, QIODevice::WriteOnly);
+        out << a << other;
+    }
+    AId read;
+    AId notAnA = a;
+    {
+        QDataStream in(bytes);
+        in >> read >> notAnA;
+    }
+    check(read == a, "an id read back from a stream is the same");
+    check(!notAnA.is_valid(), "a value of another tag reads as the invalid id");
 
     std::unordered_set<AId> hashed{a, a, AId::create(ids)};
     check(hashed.size() == 2, "ids hash as their value");
@@ -115,7 +137,7 @@ int main(int argc, char** argv)
     uint64_t previous = 0;
     bool increasing = true;
     for (int i = 0; i < 10000; ++i) {
-        const uint64_t next = TObjectIds::sequence_of(AId::create(ids).to_storage());
+        const uint64_t next = TObjectIds::sequence_of(TObjectIdTestAccess::value(AId::create(ids)));
         increasing = increasing && next > previous;
         previous = next;
     }

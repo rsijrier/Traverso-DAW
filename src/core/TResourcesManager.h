@@ -116,8 +116,7 @@ private:
 
 	TProject* m_project;
 	QHash<qint64, SourceData* >	m_sources;
-	// By the clip's ClipId value
-	QHash<uint64_t, ClipData* >	m_clips;
+	QHash<ClipId, ClipData* >	m_clips;
 	// The loaded clips by the old id the file names them by, for
 	// get_clip_for_old_id() during the load
 	QHash<qint64, ClipId>		m_clipOfOldId;

@@ -117,7 +117,7 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_exportSpecification = nullptr;
 
     // One to one with the project, which has no number: its id is derived on 0
-    m_masterOutBusTrack = m_objects.make_owned<MasterOutSubGroup, ProjectMasterTag>(0, this, "");
+    m_masterOutBusTrack = m_objects.make_owned<MasterOutSubGroup, ProjectMasterTag>(object_id(), this, "");
     // FIXME: m_masterOut is a Track, but at this point in time, Track can't
     // get a reference to us via pm().get_project();
     connect(m_masterOutBusTrack, &TBusTrack::routingConfigurationChanged, this, &TProject::track_property_changed);
@@ -223,7 +223,7 @@ int TProject::create_audiosources_dir()
 
 static void log_track(TTrack* track, const std::string& owner)
 {
-    const std::string id = TObjectIds::to_string(track->object_id().to_storage());
+    const std::string id = track->object_id().to_string();
     const std::string name = track->get_name().toStdString();
     if (auto* audioTrack = qobject_cast<TAudioTrack*>(track)) {
         TLOG_D("ids", "{} owner {} '{}', {} clips", id, owner, name, audioTrack->get_audioclips().size());
@@ -244,7 +244,7 @@ void TProject::log_object_ids(int warnings, bool invariantHolds) const
         log_track(track, "-");
     }
     for (TSheet* sheet : m_sheets.gui_items()) {
-        const std::string song = TObjectIds::to_string(sheet->object_id().to_storage());
+        const std::string song = sheet->object_id().to_string();
         TLOG_D("ids", "{} '{}'", song, sheet->get_name().toStdString());
         log_track(sheet->get_master_out_bus_track(), song);
         log_track(sheet->get_bounce_track(), song);
@@ -407,7 +407,7 @@ int TProject::load(const QString& projectfile)
 
     QDomNode masterOutNode = docElem.firstChildElement("MasterOut");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
-    m_objects.check_owned<ProjectMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack), masterOutNode.firstChildElement(), 0);
+    m_objects.check_owned<ProjectMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack), masterOutNode.firstChildElement(), object_id());
     // Force the proper name for our Master Bus
     m_masterOutBusTrack->set_name(tr("Master"));
 

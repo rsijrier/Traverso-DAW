@@ -5,6 +5,7 @@
 // refused, a destroyed object out of both indexes, derived ids outside the
 // numbers, find_owner() and the owner invariant.
 
+#include "TObjectIdTestAccess.h"
 #include "TObjectPool.h"
 
 #include <QCoreApplication>
@@ -59,16 +60,16 @@ int main(int argc, char** argv)
     check(pool.add(aId, a.get()) && pool.add(ownerId, &owner), "two objects go in");
     check(!pool.add(aId, a.get()), "the same id a second time is refused");
     NodeB sameNumber;
-    const uint64_t bWithANumber = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(aId.to_storage());
-    check(!pool.add(NodeBId::from_storage(bWithANumber).value(), &sameNumber), "another tag with a number in use is refused");
+    const uint64_t bWithANumber = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(aId));
+    check(!pool.add(TObjectIdTestAccess::from_value<NodeBId>(bWithANumber).value(), &sameNumber), "another tag with a number in use is refused");
     check(pool.find(aId) == a.get() && pool.find(NodeId(ownerId)) == &owner, "found by the exact id and by the id of the kind");
     check(pool.find(NodeAId()) == nullptr, "the invalid id finds nothing");
-    check(pool.id_of(&owner) == ownerId.to_storage(), "id_of() gives the id of an object");
+    check(pool.id_of(&owner) == TObjectIdTestAccess::value(ownerId), "id_of() gives the id of an object");
 
     // b derived from owner: its tag on the owner's number
-    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(ownerId.to_storage());
+    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(ownerId));
     QObject* bOwner = &owner;
-    check(pool.add_owned(NodeBId::from_storage(derived).value(), &b, [&bOwner]() { return bOwner; }), "a derived object goes in");
+    check(pool.add_owned(TObjectIdTestAccess::from_value<NodeBId>(derived).value(), &b, [&bOwner]() { return bOwner; }), "a derived object goes in");
     check(pool.find_owner(derived) == &owner, "find_owner() gives the owner from the number");
     check(pool.find_owner(TObjectIds::make_tag(1, 2) * (1ull << TObjectIds::SequenceBits)) == &root, "number 0 is the root's");
     check(pool.owners_out_of_place().isEmpty(), "the invariant holds");
@@ -79,7 +80,7 @@ int main(int argc, char** argv)
     bOwner = &owner;
 
     a.reset();
-    check(!pool.contains(aId.to_storage()) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
+    check(!pool.contains(TObjectIdTestAccess::value(aId)) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
     check(pool.id_of(nullptr) == 0, "no id for no object");
     check(pool.count() == 2, "no empty entry stays");
 

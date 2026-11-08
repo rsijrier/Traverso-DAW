@@ -75,6 +75,14 @@ across kinds. The compiler enforces this.
 `Tag::Object` is the class `TObjectPool::find()` returns, through a
 `static_cast` from `QObject*`. Every `Tag::Object` is therefore a `QObject`.
 
+The value of an id is an `object_id_value_t`. Only the project file and the
+pool's index see it (`TObjectFactory`, `TObjectPool`, and the tests through
+`TObjectIdTestAccess`): `from_storage()`, `to_storage()` and `accepts()` are
+private. Everyone else holds a `TObjectId`: as a `QHash` key (`qHash()`), as
+item data in a drag (`QDataStream`; a value of another tag reads as the
+invalid id), and as text (`to_string()`, `to_hex()`). The project's own id is
+`TObjectId::root()`: its exact tag on number 0.
+
 ## Generator
 
 One `TObjectIdGenerator` per project, owned by the project (no singleton).
@@ -83,9 +91,9 @@ One `TObjectIdGenerator` per project, owned by the project (no singleton).
 class TObjectIdGenerator
 {
 public:
-    uint64_t create(uint16_t tag);                              // mutex, m_next++
-    void restore(uint64_t savedNext, uint64_t highestLoaded);   // at load
-    uint64_t next() const;                                      // for save
+    object_id_value_t create(uint16_t tag);                     // mutex, m_next++
+    void restore(object_id_value_t savedNext, object_id_value_t highestLoaded);   // at load
+    object_id_value_t next() const;                             // for save
 };
 ```
 

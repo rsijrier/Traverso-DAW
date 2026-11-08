@@ -16,6 +16,8 @@
 
 #include "TObjectId.h"
 
+#include <QMetaType>
+
 #include <cstdint>
 
 class TTrack;
@@ -27,10 +29,10 @@ class TBounceTrack;
 class TClip;
 class TAudioClip;
 class TSheet;
+class TProject;
 
 // Kind 0 is no kind. The numbers follow the tree, so an id reads as where it
-// stands in it: project, song, track, clip (doc/design/object-ids.md); the
-// project's own id comes with ProjectTag
+// stands in it: project, song, track, clip (doc/design/object-ids.md)
 enum : uint8_t {
     ProjectKind = 1,
     SongKind = 2,
@@ -54,6 +56,10 @@ enum : uint8_t {
 
 enum : uint8_t {
     SongSubtype = 1,
+};
+
+enum : uint8_t {
+    ProjectSubtype = 1,
 };
 
 // Tracks: TrackId > AudioMixerTrackId > AudioTrackId, BusTrackId, the two
@@ -160,6 +166,18 @@ struct SongTag
     using Object = TSheet;
 };
 
+// The project: one fixed id, on number 0 (TObjectId::root()), the owner of the
+// project master. Not saved: it is the same in every project
+
+struct ProjectTag
+{
+    static constexpr uint8_t Kind = ProjectKind;
+    static constexpr uint64_t Subtypes = TObjectIds::subtype(ProjectSubtype);
+    static constexpr const char* Name = "project";
+    using Object = TProject;
+};
+
+using ProjectId = TObjectId<ProjectTag>;
 using ClipId = TObjectId<ClipTag>;
 using AudioClipId = TObjectId<AudioClipTag>;
 using SongId = TObjectId<SongTag>;
@@ -175,4 +193,8 @@ inline void register_object_id_names()
     TObjectIds::register_name(TObjectIds::make_tag(TrackKind, BounceTrackSubtype), BounceTrackTag::Name);
     TObjectIds::register_name(TObjectIds::make_tag(ClipKind, AudioClipSubtype), AudioClipTag::Name);
     TObjectIds::register_name(TObjectIds::make_tag(SongKind, SongSubtype), SongTag::Name);
+    TObjectIds::register_name(TObjectIds::make_tag(ProjectKind, ProjectSubtype), ProjectTag::Name);
+    // A clip id travels as item data in a drag from the resources window: the
+    // stream of a QVariant names its type, which the reading side must know
+    qRegisterMetaType<ClipId>();
 }

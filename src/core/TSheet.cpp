@@ -174,11 +174,10 @@ void TSheet::init()
     m_clipRenderBus = new AudioBus(audio_device(), busConfig);
 
     // One to one with the sheet: their ids are derived from the sheet's
-    const uint64_t sequence = TObjectIds::sequence_of(object_id().to_storage());
-    m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(sequence, this, tr("Sheet Master"));
+    m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(object_id(), this, tr("Sheet Master"));
     m_masterOutBusTrack->audio()->set_gain(0.5);
 
-    m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(sequence, this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(object_id(), this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
     // TODO: only on export add and after export remove this post send
     // m_masterOutBusTrack->add_post_send(m_bounceTrack->get_input_bus());
 
@@ -233,7 +232,7 @@ int TSheet::set_state( const QDomNode & node )
     m_masterOutBusTrack->set_name("Sheet Master");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
     m_project->objects().check_owned<SongMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack),
-                                                    masterOutNode.firstChildElement(), object_id().to_storage());
+                                                    masterOutNode.firstChildElement(), object_id());
 
     QDomNode busTracksNode = node.firstChildElement("BusTracks");
     QDomNode busTrackNode = busTracksNode.firstChild();

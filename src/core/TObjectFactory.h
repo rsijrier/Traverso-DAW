@@ -45,7 +45,7 @@ class TObjectFactory
 {
 public:
     // A loaded id this close to the end of the sequence is refused as damaged
-    static constexpr uint64_t SequenceReserve = 1ull << 32;
+    static constexpr object_id_value_t SequenceReserve = 1ull << 32;
 
     TObjectFactory(TObjectIdGenerator& ids, TObjectPool& pool)
         : m_ids(ids)
@@ -86,15 +86,15 @@ public:
     }
 
     // An object that belongs one to one to its owner in a fixed role: its id is
-    // the role's tag on the owner's number (0 for the project, which has none).
-    // Unique, as only this role uses this subtype and each owner's number is
-    // unique; the same after every load, as it follows from the owner. The
-    // owner gives its number, as it is not in the pool yet while it makes its
-    // parts in its constructor
-    template <typename T, typename Tag, typename... Args>
-    T* make_owned(uint64_t ownerNumber, Args&&... args)
+    // the role's tag on the owner's number (0 for the project). Unique, as only
+    // this role uses this subtype and each owner's number is unique; the same
+    // after every load, as it follows from the owner. The owner gives its id,
+    // as it is not in the pool yet while it makes its parts in its constructor
+    template <typename T, typename Tag, typename OwnerTag, typename... Args>
+    T* make_owned(TObjectId<OwnerTag> owner, Args&&... args)
         requires(Tag::FromOwner && std::has_single_bit(Tag::Subtypes))
     {
+        const object_id_value_t ownerNumber = TObjectIds::sequence_of(owner.to_storage());
         const std::optional<TObjectId<Tag>> id = TObjectId<Tag>::from_storage(owned_value<Tag>(ownerNumber));
         Q_ASSERT(id);
         T* object = construct<T>(*id, std::forward<Args>(args)...);
@@ -105,18 +105,18 @@ public:
 
     // At load, for a derived object the structure placed: its saved id and
     // owner only check it. The owner wins: a difference is a warning, the id
-    // stays derived. ownerId is 0 for the project. The number of warnings
-    template <typename Tag, typename T>
-    int check_owned(T* object, const QDomElement& element, uint64_t ownerId)
+    // stays derived. The number of warnings
+    template <typename Tag, typename T, typename OwnerTag>
+    int check_owned(T* object, const QDomElement& element, TObjectId<OwnerTag> owner)
     {
         int warnings = 0;
-        const uint64_t own = object->m_objectId.to_storage();
+        const object_id_value_t own = object->m_objectId.to_storage();
         if (element.hasAttribute(ObjectIdAttribute) && read_value(element, ObjectIdAttribute) != own) {
             TLOG_W("ids", "the saved id {} of a {} does not follow from its owner: it stays {}",
                    text_of(element, ObjectIdAttribute), Tag::Name, TObjectIds::to_hex(own));
             ++warnings;
         }
-        if (element.hasAttribute(OwnerAttribute) && read_value(element, OwnerAttribute) != ownerId) {
+        if (element.hasAttribute(OwnerAttribute) && read_value(element, OwnerAttribute) != owner.to_storage()) {
             TLOG_W("ids", "the owner {} of a {} in the project file is not the one it belongs to",
                    text_of(element, OwnerAttribute), Tag::Name);
             ++warnings;
@@ -133,7 +133,7 @@ public:
     {
         int warnings = 0;
         for (const OwnerReference& reference : std::as_const(m_ownerReferences)) {
-            const uint64_t named = read_value_text(reference.text);
+            const object_id_value_t named = read_value_text(reference.text);
             QObject* actual = reference.owner();
             if (named == 0 || !m_pool.contains(named)) {
                 TLOG_W("ids", "the owner {} of {} does not exist: the reference is dropped", reference.text,
@@ -158,7 +158,7 @@ public:
     void restore_sequence(const QDomElement& root, const QDomElement& properties)
     {
         bool isNumber = false;
-        uint64_t savedNext = properties.attribute(NextObjectIdAttribute).toULongLong(&isNumber);
+        object_id_value_t savedNext = properties.attribute(NextObjectIdAttribute).toULongLong(&isNumber);
         if (properties.hasAttribute(NextObjectIdAttribute) && (!isNumber || savedNext > SequenceMask - SequenceReserve)) {
             TLOG_W("ids", "the next object id '{}' in the project file is damaged: ignored",
                    text_of(properties, NextObjectIdAttribute));
@@ -194,7 +194,7 @@ private:
     static constexpr const char* ObjectIdAttribute = "objectid";
     static constexpr const char* OwnerAttribute = "owner";
     static constexpr const char* NextObjectIdAttribute = "nextobjectid";
-    static constexpr uint64_t SequenceMask = TObjectIds::SequenceMask;
+    static constexpr object_id_value_t SequenceMask = TObjectIds::SequenceMask;
 
     struct OwnerReference
     {
@@ -204,10 +204,10 @@ private:
     };
 
     template <typename Tag>
-    static constexpr uint64_t owned_value(uint64_t ownerNumber)
+    static constexpr object_id_value_t owned_value(object_id_value_t ownerNumber)
     {
         const uint8_t subtype = uint8_t(std::countr_zero(Tag::Subtypes));
-        return (uint64_t(TObjectIds::make_tag(Tag::Kind, subtype)) << TObjectIds::SequenceBits) | ownerNumber;
+        return (object_id_value_t(TObjectIds::make_tag(Tag::Kind, subtype)) << TObjectIds::SequenceBits) | ownerNumber;
     }
 
     template <typename T, typename Tag, typename... Args>
@@ -238,19 +238,19 @@ private:
     }
 
     // A bare hex id, or one with a prefix; 0 when it is no id
-    static uint64_t raw_value(const QString& value)
+    static object_id_value_t raw_value(const QString& value)
     {
         bool ok = false;
-        const uint64_t raw = value.mid(value.indexOf(':') + 1).toULongLong(&ok, 16);
+        const object_id_value_t raw = value.mid(value.indexOf(':') + 1).toULongLong(&ok, 16);
         return ok ? raw : 0;
     }
 
     // The highest number of an objectid under element, ids within the reserve
     // left out
-    static uint64_t highest_saved_number(const QDomElement& element)
+    static object_id_value_t highest_saved_number(const QDomElement& element)
     {
-        const uint64_t number = TObjectIds::sequence_of(raw_value(element.attribute(ObjectIdAttribute)));
-        uint64_t highest = number <= SequenceMask - SequenceReserve ? number : 0;
+        const object_id_value_t number = TObjectIds::sequence_of(raw_value(element.attribute(ObjectIdAttribute)));
+        object_id_value_t highest = number <= SequenceMask - SequenceReserve ? number : 0;
         for (QDomElement child = element.firstChildElement(); !child.isNull(); child = child.nextSiblingElement()) {
             highest = std::max(highest, highest_saved_number(child));
         }
@@ -259,11 +259,11 @@ private:
 
     // A bare hex id. A prefix ("audiotrack:", the form of the log and the
     // agent) is checked against the id's tag and then ignored. 0 when it is no id
-    uint64_t read_value_text(const std::string& text)
+    object_id_value_t read_value_text(const std::string& text)
     {
         const QString value = QString::fromStdString(text);
         const qsizetype colon = value.indexOf(':');
-        const uint64_t raw = raw_value(value);
+        const object_id_value_t raw = raw_value(value);
         if (raw == 0) {
             return 0;
         }
@@ -274,7 +274,7 @@ private:
         return raw;
     }
 
-    uint64_t read_value(const QDomElement& element, const char* attribute)
+    object_id_value_t read_value(const QDomElement& element, const char* attribute)
     {
         return read_value_text(text_of(element, attribute));
     }
@@ -282,7 +282,7 @@ private:
     template <typename Tag>
     std::optional<TObjectId<Tag>> read(const QDomElement& element, const char* attribute)
     {
-        const uint64_t value = read_value(element, attribute);
+        const object_id_value_t value = read_value(element, attribute);
         if (TObjectIds::sequence_of(value) > SequenceMask - SequenceReserve) {
             return std::nullopt;
         }

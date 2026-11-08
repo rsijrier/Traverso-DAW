@@ -87,8 +87,8 @@ void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 		
 		while (!stream.atEnd()) {
 			stream >> r >> c >> v;
-			if (const std::optional<ClipId> clip = ClipId::from_storage(v.value(ResourcesClipIdRole).toULongLong())) {
-				m_resourcesImport.append({*clip, 0});
+			if (const ClipId clip = v.value(ResourcesClipIdRole).value<ClipId>(); clip.is_valid()) {
+				m_resourcesImport.append({clip, 0});
 				continue;
 			}
 			qint64 id = v.value(Qt::UserRole).toLongLong();

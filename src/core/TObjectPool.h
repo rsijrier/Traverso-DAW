@@ -66,7 +66,7 @@ public:
     void remove(TObjectId<Tag> id)
     {
         Q_ASSERT(QThread::isMainThread());
-        const uint64_t value = id.to_storage();
+        const object_id_value_t value = id.to_storage();
         disconnect(m_destroyed.take(value));
         erase(value);
     }
@@ -80,29 +80,29 @@ public:
     }
 
     // Without a domain, for QML and the log: the caller checks the tag
-    QObject* find_raw(uint64_t value) const { return m_byId.value(value); }
+    QObject* find_raw(object_id_value_t value) const { return m_byId.value(value); }
 
     // The owner of an id derived from it: the object with that number, the
     // root for number 0
-    QObject* find_owner(uint64_t value) const
+    QObject* find_owner(object_id_value_t value) const
     {
-        const uint64_t number = TObjectIds::sequence_of(value);
+        const object_id_value_t number = TObjectIds::sequence_of(value);
         return number == 0 ? m_root : m_byNumber.value(number);
     }
 
     // The id of an object in the pool, 0 when it has none
-    uint64_t id_of(const QObject* object) const { return m_idOf.value(object); }
+    object_id_value_t id_of(const QObject* object) const { return m_idOf.value(object); }
 
-    bool contains(uint64_t value) const { return m_byId.contains(value); }
+    bool contains(object_id_value_t value) const { return m_byId.contains(value); }
     // Whether an object with a counter id already has this value's number
-    bool has_number(uint64_t value) const { return m_byNumber.contains(TObjectIds::sequence_of(value)); }
+    bool has_number(object_id_value_t value) const { return m_byNumber.contains(TObjectIds::sequence_of(value)); }
     qsizetype count() const { return m_byId.size(); }
 
     // The derived ids whose object is not with the owner its number names: the
     // invariant find_owner(id) == owner(), for the load check and the tests
-    QList<uint64_t> owners_out_of_place() const
+    QList<object_id_value_t> owners_out_of_place() const
     {
-        QList<uint64_t> wrong;
+        QList<object_id_value_t> wrong;
         for (auto it = m_ownerOf.cbegin(); it != m_ownerOf.cend(); ++it) {
             if (find_owner(it.key()) != it.value()()) {
                 wrong.append(it.key());
@@ -112,7 +112,7 @@ public:
     }
 
 private:
-    bool insert(uint64_t value, QObject* object)
+    bool insert(object_id_value_t value, QObject* object)
     {
         Q_ASSERT(QThread::isMainThread());
         if (value == 0 || object == nullptr || m_byId.contains(value)) {
@@ -131,12 +131,12 @@ private:
 
     // Removing an id that is not there is a no-op: remove() may come for an
     // object that already left by its destruction
-    void erase(uint64_t value)
+    void erase(object_id_value_t value)
     {
         if (QObject* object = m_byId.take(value)) {
             m_idOf.remove(object);
             m_ownerOf.remove(value);
-            const uint64_t number = TObjectIds::sequence_of(value);
+            const object_id_value_t number = TObjectIds::sequence_of(value);
             if (m_byNumber.value(number) == object) {
                 m_byNumber.remove(number);
             }
@@ -144,9 +144,9 @@ private:
     }
 
     QObject* m_root;
-    QHash<uint64_t, QObject*> m_byId;
-    QHash<uint64_t, QObject*> m_byNumber;
-    QHash<const QObject*, uint64_t> m_idOf;
-    QHash<uint64_t, std::function<QObject*()>> m_ownerOf;
-    QHash<uint64_t, QMetaObject::Connection> m_destroyed;
+    QHash<object_id_value_t, QObject*> m_byId;
+    QHash<object_id_value_t, QObject*> m_byNumber;
+    QHash<const QObject*, object_id_value_t> m_idOf;
+    QHash<object_id_value_t, std::function<QObject*()>> m_ownerOf;
+    QHash<object_id_value_t, QMetaObject::Connection> m_destroyed;
 };

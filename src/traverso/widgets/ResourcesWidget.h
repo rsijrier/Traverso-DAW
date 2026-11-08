@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QWidget>
 #include <QTreeWidgetItem>
 #include "TSession.h"
+#include "TObjectIdTags.h"
 #include "ui_ResourcesWidget.h"
 
 class TProject;
@@ -106,8 +107,7 @@ private:
 	TProject* m_project;
 	TSheet* m_currentSheet;
 	FileWidget* m_filewidget;
-	// By the clip's ClipId value
-	QHash<uint64_t, ClipTreeItem*> m_clipindices;
+	QHash<ClipId, ClipTreeItem*> m_clipindices;
 	QHash<qint64, SourceTreeItem*> m_sourceindices;
 	
 	void update_clip_state(TAudioClip* clip);

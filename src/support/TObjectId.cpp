@@ -13,7 +13,7 @@
 #include <atomic>
 #include <cstdio>
 
-uint64_t TObjectIdGenerator::create(uint16_t tag)
+object_id_value_t TObjectIdGenerator::create(uint16_t tag)
 {
     // The contract (doc/design/object-ids.md): the GUI thread makes ids. The
     // mutex keeps the sequence whole if that is ever broken in a release build
@@ -26,17 +26,17 @@ uint64_t TObjectIdGenerator::create(uint16_t tag)
         Q_ASSERT(false);
         return 0;
     }
-    return (uint64_t(tag) << TObjectIds::SequenceBits) | m_next++;
+    return (object_id_value_t(tag) << TObjectIds::SequenceBits) | m_next++;
 }
 
-void TObjectIdGenerator::restore(uint64_t savedNext, uint64_t highestLoaded)
+void TObjectIdGenerator::restore(object_id_value_t savedNext, object_id_value_t highestLoaded)
 {
     Q_ASSERT(QThread::isMainThread());
     std::lock_guard<std::mutex> lock(m_mutex);
     m_next = std::max({m_next, savedNext, highestLoaded + 1});
 }
 
-uint64_t TObjectIdGenerator::next() const
+object_id_value_t TObjectIdGenerator::next() const
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     return m_next;
@@ -65,14 +65,14 @@ const char* TObjectIds::name_of(uint16_t tag)
     return name ? name : "id";
 }
 
-std::string TObjectIds::to_string(uint64_t value)
+std::string TObjectIds::to_string(object_id_value_t value)
 {
     char text[64];
     std::snprintf(text, sizeof(text), "%s:%016llx", name_of(tag_of(value)), static_cast<unsigned long long>(value));
     return text;
 }
 
-std::string TObjectIds::to_hex(uint64_t value)
+std::string TObjectIds::to_hex(object_id_value_t value)
 {
     char text[24];
     std::snprintf(text, sizeof(text), "%016llx", static_cast<unsigned long long>(value));

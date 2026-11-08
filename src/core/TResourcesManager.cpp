@@ -93,7 +93,7 @@ void TResourcesManager::discard_takes(const QList<TAudioClip*>& takes)
     QList<TAudioClip*> discarded;
     QStringList names;
     for (TAudioClip* take : takes) {
-        ClipData* clip = m_clips.value(take->object_id().to_storage());
+        ClipData* clip = m_clips.value(take->object_id());
         SourceData* source = m_sources.value(take->get_readsource_id());
         if (!clip || !clip->removed || !source || source->clipCount > 0) {
             TLOG_I("recording", "keeping take {}: still in use", take->get_name().toStdString());
@@ -128,7 +128,7 @@ void TResourcesManager::drop_empty_take(TAudioClip* take)
 void TResourcesManager::delete_takes(const QList<TAudioClip*>& takes)
 {
     for (TAudioClip* take : takes) {
-        ClipData* clip = m_clips.take(take->object_id().to_storage());
+        ClipData* clip = m_clips.take(take->object_id());
         SourceData* source = m_sources.take(take->get_readsource_id());
         if (!clip || !source) {
             continue;
@@ -232,7 +232,7 @@ int TResourcesManager::set_state( const QDomNode & node )
 		TAudioClip* clip = m_project->objects().load<TAudioClip>(clipsNode.toElement(), clipsNode);
 		ClipData* data = new ClipData();
 		data->clip = clip;
-		m_clips.insert(clip->object_id().to_storage(), data);
+		m_clips.insert(clip->object_id(), data);
 		m_clipOfOldId.insert(clipsNode.toElement().attribute("id", "").toLongLong(), clip->object_id());
 		clipsNode = clipsNode.nextSibling();
 	}
@@ -364,7 +364,7 @@ TAudioClip* TResourcesManager::get_clip_for_old_id(qint64 oldId)
 
 TAudioClip* TResourcesManager::get_clip(ClipId id)
 {
-	ClipData* data = m_clips.value(id.to_storage());
+	ClipData* data = m_clips.value(id);
 	 
     if (!data) {
         return nullptr;
@@ -380,12 +380,12 @@ TAudioClip* TResourcesManager::get_clip(ClipId id)
 		// check for this, since it's absolutely crucial, and 
 		// indicates a design error somewhere ! (most likely in 
 		// AudioClip::create_copy();
-		Q_ASSERT( ! m_clips.contains(clip->object_id().to_storage()) );
+		Q_ASSERT( ! m_clips.contains(clip->object_id()) );
 		ClipData* copy = new ClipData();
 		copy->clip = clip;
 		copy->isCopy = true;
 		
-		m_clips.insert(clip->object_id().to_storage(), copy);
+		m_clips.insert(clip->object_id(), copy);
 		
 		// Now that we have created a copy of the audioclip, start
 		// the usual get_clip routine again to properly init the clip
@@ -410,7 +410,7 @@ TAudioClip* TResourcesManager::new_audio_clip(const QString& name)
 	// In use from the start. Not through get_clip(): that sets the source a
 	// loaded clip refers to, a new clip has none yet, the caller sets it
 	data->inUse = true;
-	m_clips.insert(clip->object_id().to_storage(), data);
+	m_clips.insert(clip->object_id(), data);
 	return clip;
 }
 
@@ -438,7 +438,7 @@ QList< TAudioClip * > TResourcesManager::get_all_clips() const
 
 void TResourcesManager::mark_clip_removed(TAudioClip * clip)
 {
-	ClipData* data = m_clips.value(clip->object_id().to_storage());
+	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
 //		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
@@ -457,7 +457,7 @@ void TResourcesManager::mark_clip_removed(TAudioClip * clip)
 
 void TResourcesManager::mark_clip_added(TAudioClip * clip)
 {
-	ClipData* clipdata = m_clips.value(clip->object_id().to_storage());
+	ClipData* clipdata = m_clips.value(clip->object_id());
 	if (!clipdata) {
 //		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
@@ -477,7 +477,7 @@ void TResourcesManager::mark_clip_added(TAudioClip * clip)
 
 bool TResourcesManager::is_clip_in_use(ClipId id) const
 {
-	ClipData* data = m_clips.value(id.to_storage());
+	ClipData* data = m_clips.value(id);
 	if (!data) {
 //		PERROR("Clip with id %lld is not in my database!", id);
 		return false;
@@ -517,11 +517,11 @@ TResourcesManager::ClipData::ClipData()
 
 void TResourcesManager::destroy_clip(TAudioClip * clip)
 {
-	ClipData* data = m_clips.value(clip->object_id().to_storage());
+	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
 //		PERROR("Clip with id %lld not in database", clip->get_id());
 	} else {
-		m_clips.remove(clip->object_id().to_storage());
+		m_clips.remove(clip->object_id());
 		delete data;
 		delete clip;
 	}

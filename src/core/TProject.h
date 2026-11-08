@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomNode>
 
 #include "TObjectFactory.h"
+#include "TObjectIdTags.h"
 #include "TSession.h"
 #include "TRtList.h"
 #include "TProcessContext.h"
@@ -96,6 +97,8 @@ public :
     // (doc/design/object-ids.md)
     TObjectFactory& objects() { return m_objects; }
     TObjectPool& object_pool() { return m_objectPool; }
+    // The same in every project (ProjectTag)
+    ProjectId object_id() const { return ProjectId::root(); }
     TPeakBuildService* get_peak_builds() const { return m_peakBuilds.get(); }
     QString get_title() const;
     QString get_engineer() const;
