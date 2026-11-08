@@ -1125,6 +1125,16 @@ From the GPU waveform test program, clip edges in variant A (branch
   `TSplitEntityController::update()`, where the snap is; a single press finds
   `m_splitLocation` unset and `commit()` takes the mouse position unsnapped
   (`TSplitEntityController.cpp:132-136`). With `TSplitTool`.
+- **T112 The project file in JSON, with a flat structure** (Remon,
+  2026-11-08; an idea for the future, nothing decided): from XML to JSON,
+  which needs a flat structure: the objects side by side by their id,
+  references by id instead of nesting. `get_state()`/`set_state()` per class
+  may then go, serialisation is done in one place. Making objects can then be
+  central too, so no one asks for the factory through its parent and project
+  (now `m_sheet->get_project()->objects()` in `TTimeLineRuler`, for example).
+  With T58 (the singletons: an object made without its parent, or with fewer
+  dependencies) and T14, T42 (ids, the converter). It fits the ids: every
+  object stands on its id already, and `owner` is a reference by id.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
@@ -1194,6 +1204,8 @@ From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
+  See also T112 (2026-11-08): with fewer dependencies an object can be made
+  without its parent, and making objects can be central.
   2026-11-06: T94 was one such case: the statics' destruction at exit took
   `tsmp()`'s queue while the audio thread still ran a cycle. Fixed in the
   dump path by quitting as an ordinary exit; with the device owning its
