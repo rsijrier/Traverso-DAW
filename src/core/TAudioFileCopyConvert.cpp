@@ -141,7 +141,8 @@ out:
     }
     delete writesource;
     writesource = nullptr;
-    resources_manager()->remove_source(task.readsource);
+    QMetaObject::invokeMethod(resources_manager(), "remove_source", Qt::QueuedConnection,
+                              Q_ARG(TBufferedAudioStreamReader*, task.readsource));
 
     if (m_stopProcessing) {
         exit(0);

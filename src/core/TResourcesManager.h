@@ -59,8 +59,11 @@ public:
 	void mark_clip_added(TAudioClip* clip);
     void set_source_for_clip(TAudioClip* clip, TBufferedAudioStreamReader *source);
 	void destroy_clip(TAudioClip* clip);
+
+public slots:
 	void remove_source(TBufferedAudioStreamReader* source);
-	
+
+public:
 	bool is_clip_in_use(qint64) const;
 	bool is_source_in_use(qint64 id) const;
 
