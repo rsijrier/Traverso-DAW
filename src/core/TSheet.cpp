@@ -1281,13 +1281,13 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
     QMap<TAudioTrack*, TrackMutation> mutationsPerTrack;
 
     for (TAudioClip* clip : clipsToRemove) {
-        if (clip && clip->get_track()) {
+        if (clip && clip->has_track()) {
             mutationsPerTrack[clip->get_track()].toRemove.append(clip);
         }
     }
 
     for (TAudioClip* clip : clipsToAdd) {
-        if (clip && clip->get_track()) {
+        if (clip && clip->has_track()) {
             mutationsPerTrack[clip->get_track()].toAdd.append(clip);
         }
     }

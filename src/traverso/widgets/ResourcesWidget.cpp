@@ -431,8 +431,8 @@ void ClipTreeItem::apply_filter(TSheet * sheet)
 	// The song of its track; a clip on no track has the song of its take, an
 	// import belongs to the project and shows under every song
 	bool belongs;
-	if (TAudioTrack* track = m_clip->get_track()) {
-		belongs = track->get_sheet() == sheet;
+	if (m_clip->has_track()) {
+		belongs = m_clip->get_track()->get_sheet() == sheet;
 	} else {
 		TBufferedAudioStreamReader* source = m_clip->get_readsource();
 		const SongId origin = source ? source->get_orig_sheet_id() : SongId();
