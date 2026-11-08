@@ -149,7 +149,7 @@ void ProjectManagerDialog::update_sheet_list( )
 	treeSheetWidget->clear();
 	foreach(TSheet* sheet, m_project->get_sheets()) {
 
-		QString sheetNr = QString::number(m_project->get_sheet_index(sheet));
+		QString sheetNr = QString::number(m_project->get_sheet_index(sheet->object_id()));
                 QString sheetName = "Sheet " + sheetNr + " - " + sheet->get_name();
 		QString numberOfTracks = QString::number(sheet->get_audio_track_count());
 		QString sheetLength = TTimeRef::timeref_to_ms_2(sheet->get_last_location());
@@ -163,7 +163,7 @@ void ProjectManagerDialog::update_sheet_list( )
 		item->setText(1, numberOfTracks);
 		item->setText(2, sheetLength);
 		
-		item->setData(0, Qt::UserRole, QVariant::fromValue<QObject*>(sheet));
+		item->setData(0, Qt::UserRole, QVariant::fromValue(sheet->object_id()));
 	}
 }
 
@@ -175,7 +175,7 @@ void ProjectManagerDialog::sheetitem_clicked( QTreeWidgetItem* item, int)
 
 	TSheet* sheet;
 
-	sheet = qobject_cast<TSheet*>(item->data(0, Qt::UserRole).value<QObject*>());
+	sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 
 	Q_ASSERT(sheet);
 		
@@ -196,7 +196,7 @@ void ProjectManagerDialog::on_renameSheetButton_clicked( )
 		return;
 	}
 	
-	TSheet* sheet = qobject_cast<TSheet*>(item->data(0, Qt::UserRole).value<QObject*>());
+	TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 	
 	Q_ASSERT(sheet);
 	
@@ -220,7 +220,7 @@ void ProjectManagerDialog::on_deleteSheetButton_clicked( )
 		return;
 	}
 	
-	TSheet* sheet = qobject_cast<TSheet*>(item->data(0, Qt::UserRole).value<QObject*>());
+	TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 	Q_ASSERT(sheet);
 	
 	TCommand::process_command(m_project->remove_sheet(sheet));
@@ -335,7 +335,7 @@ void ProjectManagerDialog::on_sheetAudioSourcesPushButton_clicked()
                 return;
         }
 
-        TSheet* sheet = qobject_cast<TSheet*>(item->data(0, Qt::UserRole).value<QObject*>());
+        TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 
         if (!sheet) {
                 return;

@@ -44,8 +44,8 @@ class TAudioTrack : public TTrack
 public :
     using IdTag = AudioTrackTag;
 
-    TAudioTrack(TSheet* sheet, const QString& name, int height);
-    TAudioTrack(TSheet* sheet, const QDomNode node);
+    TAudioTrack(TrackId id, TSheet* sheet, const QString& name, int height);
+    TAudioTrack(TrackId id, TSheet* sheet, const QDomNode node);
     ~TAudioTrack();
 
     TAudioClip* init_recording();
@@ -120,7 +120,7 @@ class TBounceTrack : public TAudioTrack
 public:
     using IdTag = BounceTrackTag;
 
-    TBounceTrack(TSheet* sheet, const QString& name, int height);
+    TBounceTrack(TrackId id, TSheet* sheet, const QString& name, int height);
     ~TBounceTrack();
 
 private:

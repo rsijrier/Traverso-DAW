@@ -270,4 +270,9 @@ inline void register_object_id_names()
     // A clip id travels as item data in a drag from the resources window: the
     // stream of a QVariant names its type, which the reading side must know
     qRegisterMetaType<ClipId>();
+    // Ids in the item data of lists and menus (QVariant)
+    qRegisterMetaType<SongId>();
+    qRegisterMetaType<TrackId>();
+    qRegisterMetaType<SendId>();
+    qRegisterMetaType<MarkerId>();
 }

@@ -24,6 +24,8 @@
 #include "ui_CDWritingDialog.h"
 
 #include <QDialog>
+
+#include "TObjectIdTags.h"
 #include <QCloseEvent>
 #include <QProcess>
 
@@ -73,7 +75,7 @@ private:
 	};
 	
 	int m_writingState;
-	TSheet* m_lastSheetExported{nullptr};
+	SongId m_lastSheetExported;
 	bool m_wasClosed{};
 	// bool m_wodimAvailable;
 	int m_copyNumber{};

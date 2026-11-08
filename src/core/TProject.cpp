@@ -1234,7 +1234,7 @@ int TProject::export_project()
         if (sheet->is_transport_rolling()) {
             sheet->start_transport();
         }
-        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet)) +"-" + sheet->get_name());
+        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet->object_id())) +"-" + sheet->get_name());
 
         TTimeRef exportStartLocation, exportEndLocation;
         bool exportRangeAvailable = false;
@@ -1357,9 +1357,36 @@ QList<TSheet* > TProject::get_sheets( ) const
     return m_sheets.gui_items();
 }
 
-int TProject::get_sheet_index(const TSheet* sheet) const
+TSheet* TProject::get_sheet(SongId id) const
 {
-    return int(m_sheets.gui_items().indexOf(sheet)) + 1;
+    TSheet* current = nullptr;
+
+    foreach(TSheet* sheet, m_sheets.gui_items()) {
+        if (sheet->object_id() == id) {
+            current = sheet;
+            break;
+        }
+    }
+
+    return current;
+}
+
+int TProject::get_sheet_index(SongId id) const
+{
+    const QList<TSheet*>& sheets = m_sheets.gui_items();
+    for (int i=0; i<sheets.size(); ++i) {
+        TSheet* sheet = sheets.at(i);
+        if (sheet->object_id() == id) {
+            return i + 1;
+        }
+    }
+
+    return 0;
+}
+
+SongId TProject::get_current_sheet_id( ) const
+{
+    return m_activeSheet ? m_activeSheet->object_id() : SongId();
 }
 
 int TProject::get_session_index(const TSession* session)

@@ -44,7 +44,7 @@ class TTrack : public TContextItem
     Q_PROPERTY(TAudioProcessingNode* audio READ audio CONSTANT)
 
 public:
-    TTrack (TSession* session=0);
+    TTrack(TrackId id, TSession* session);
     virtual ~TTrack ();
 
     // Its audio: gain, mute, pan and the plugin chain. A track has a

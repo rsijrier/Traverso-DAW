@@ -138,7 +138,7 @@ int TSession::set_state( const QDomNode & node )
             // add_track(track) should not return a TCommand object
             // but directly add track and return nullptr, this is by design
             Q_ASSERT(!cmd);
-            set_track_height(track, e.attribute("height", "90").toInt());
+            set_track_height(track->object_id(), e.attribute("height", "90").toInt());
 		}
 
 		trackNode = trackNode.nextSibling();
@@ -163,7 +163,7 @@ QDomNode TSession::get_state(QDomDocument doc)
 		QDomElement trackNode = doc.createElement("Track");
 
 		trackNode.setAttribute("id", track->get_id() );
-		trackNode.setAttribute("height", get_track_height(track));
+		trackNode.setAttribute("height", get_track_height(track->object_id()));
 		tracksNode.appendChild(trackNode);
 	}
 
@@ -218,9 +218,13 @@ TTrack* TSession::get_track(qint64 id) const
 	return nullptr;
 }
 
-bool TSession::has_track(const TTrack* track) const
+TTrack* TSession::get_track(TrackId id) const
 {
-	return track == m_masterOutBusTrack || get_tracks().contains(track);
+	if (m_masterOutBusTrack && m_masterOutBusTrack->object_id() == id) {
+		return m_masterOutBusTrack;
+	}
+
+	return m_tracks.value(id);
 }
 
 
@@ -548,7 +552,7 @@ TCommand* TSession::start_transport()
 TCommand* TSession::add_track(TTrack* track, bool historable)
 {
     if (is_child_session()) {
-        set_track_height(track, m_parentSession->get_track_height(track));
+        set_track_height(track->object_id(), m_parentSession->get_track_height(track->object_id()));
         TRtTransaction transaction;
         private_add_track(track, transaction);
         return nullptr;
@@ -600,6 +604,7 @@ void TSession::private_add_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
 	}
 
+	m_tracks.insert(track->object_id(), track);
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->connect_to_jack(true, true);
@@ -621,6 +626,7 @@ void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");
 	}
 
+	m_tracks.remove(track->object_id());
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->disconnect_from_jack(true, true);

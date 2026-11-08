@@ -38,14 +38,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 
-TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
-    : TTrack(sheet)
+TAudioTrack::TAudioTrack(TrackId id, TSheet* sheet, const QString& name, int height )
+    : TTrack(id, sheet)
     , m_sheet(sheet)
     , m_clips(TSplitableTimeLineEntity::starts_before)
 {
     PENTERCONS;
     m_name = name;
-    sheet->set_track_height(this, height);
+    sheet->set_track_height(id, height);
     m_numtakes = 0;
     m_showClipVolumeAutomation = false;
 
@@ -54,8 +54,8 @@ TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
     init();
 }
 
-TAudioTrack::TAudioTrack( TSheet * sheet, const QDomNode node)
-    : TTrack(sheet)
+TAudioTrack::TAudioTrack(TrackId id, TSheet * sheet, const QDomNode node)
+    : TTrack(id, sheet)
     , m_sheet(sheet)
     , m_clips(TSplitableTimeLineEntity::starts_before)
 {
@@ -468,8 +468,8 @@ void TAudioTrack::toggle_show_clip_volume_automation()
     emit automationVisibilityChanged();
 }
 
-TBounceTrack::TBounceTrack(TSheet *sheet, const QString &name, int height)
-    : TAudioTrack(sheet, name, height)
+TBounceTrack::TBounceTrack(TrackId id, TSheet *sheet, const QString &name, int height)
+    : TAudioTrack(id, sheet, name, height)
 {
     m_type = TTrack::TRACKTYPE::BOUNCE;
     TAudioBusConfiguration busConfig;

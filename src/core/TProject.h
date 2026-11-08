@@ -124,7 +124,9 @@ public :
     QList<TSession*> get_sessions();
     TSession* get_current_session() const ;
     TSheet* get_active_sheet() const {return m_activeSheet;}
-    int get_sheet_index(const TSheet* sheet) const;
+    SongId get_current_sheet_id() const;
+    TSheet* get_sheet(SongId id) const;
+    int get_sheet_index(SongId id) const;
     int get_session_index(const TSession* session);
     int get_keyboard_arrow_key_navigation_speed() const {return m_keyboardArrowNavigationSpeed;}
     QDomNode get_state(QDomDocument doc, bool istemplate=false);

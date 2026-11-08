@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <optional>
 #include "TContextItem.h"
+#include "TObjectIdTags.h"
 
 #include <QDomNode>
 #include <QHash>
@@ -86,15 +87,14 @@ public:
 	// The project it belongs to: a song's, the project itself, a workspace's
 	// parent's. Its objects get their ids from that project's factory
 	virtual TProject* get_project() const;
+	TTrack* get_track(TrackId id) const;
 	// By old id, for the load of a workspace's tracks only (until the project
 	// file references tracks by their new id)
 	TTrack* get_track(qint64 id) const;
-	// One of its tracks or its master
-	bool has_track(const TTrack* track) const;
 	TTimeLineRuler* get_timeline_ruler() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
-	int get_track_height(const TTrack* track) const {return m_trackHeights.value(track, 150);}
+	int get_track_height(TrackId trackId) const {return m_trackHeights.value(trackId, 150);}
 
 	TBusTrack* get_master_out_bus_track() const;
 	virtual QList<TTrack*> get_tracks() const;
@@ -118,7 +118,7 @@ public:
     bool is_project_session() const {return m_isProjectSession;}
 	bool is_child_session() const;
 	void set_name(const QString& name);
-	void set_track_height(const TTrack* track, int height) {m_trackHeights.insert(track, height);}
+	void set_track_height(TrackId trackId, int height) {m_trackHeights.insert(trackId, height);}
 
     TCommand* add_track(TTrack* track, bool historable=true);
     TCommand* remove_track(TTrack* track, bool historable=true);
@@ -139,7 +139,8 @@ protected:
     TRtList<TBusTrack>      m_busTracks;
     TBusTrack*              m_masterOutBusTrack;
     TBounceTrack*           m_bounceTrack;
-    QHash<const TTrack*, int> m_trackHeights;
+    QHash<TrackId, TTrack*> m_tracks;
+    QHash<TrackId, int>     m_trackHeights;
 
     TSnapList*           m_snaplist;
     TLocation*          m_workSnap{nullptr};

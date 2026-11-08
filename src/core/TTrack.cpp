@@ -40,11 +40,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Debugger.h"
 
-TTrack::TTrack(TSession* session)
+TTrack::TTrack(TrackId id, TSession* session)
     : TContextItem(session)
     , m_session(session)
     , m_audio(session, this)
     , m_rtInputBus([this]() { return std::make_shared<AudioBus*>(m_inputBus); }, std::make_shared<AudioBus*>(nullptr))
+    , m_objectId(id)
 {
     if (m_session) {
         set_history_stack(m_session->get_history_stack());
@@ -102,7 +103,7 @@ void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
     node.setAttribute("mutedbysolo", m_mutedBySolo);
     node.setAttribute("showtrackvolumeautomation", m_showTrackVolumeAutomation);
     node.setAttribute("sortindex", m_sortIndex);
-    node.setAttribute("height", m_session->get_track_height(this));
+    node.setAttribute("height", m_session->get_track_height(object_id()));
 
     QDomNode pluginChainNode = doc.createElement("PluginChain");
     pluginChainNode.appendChild(m_audio.get_plugin_chain()->get_state(node.toDocument()));
@@ -137,7 +138,7 @@ int TTrack::set_state( const QDomNode & node )
     set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
     m_audio.set_pan( e.attribute( "pan", "" ).toFloat() );
     set_id(e.attribute("id", "0").toLongLong());
-    m_session->set_track_height(this, e.attribute( "height", "90" ).toInt());
+    m_session->set_track_height(object_id(), e.attribute( "height", "90" ).toInt());
 
     QDomNode m_pluginChainNode = node.firstChildElement("PluginChain");
     if (!m_pluginChainNode.isNull()) {
