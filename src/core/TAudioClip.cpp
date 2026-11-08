@@ -583,7 +583,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
     Q_ASSERT(readFrames == nframes - offset);
 
     for (TFadeCurve* fade : m_fades.rt_items()) {
-        fade->process(context, context.get_curve_buffer(), bus, startLocation, endLocation, nframes);
+        fade->process(context);
     }
 
     TTimeRef faderEndLocation = fileLocation + TTimeRef(readFrames, outputRate);

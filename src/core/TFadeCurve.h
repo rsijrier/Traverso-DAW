@@ -82,7 +82,7 @@ public:
 
     // Audio thread
     // context: the cycle (its rate is the rate the device was granted)
-    void process(const TProcessContext& context, const TChannelBuffer &curveBuffer, AudioBus* bus, const TTimeRef &startLocation, const TTimeRef &endLocation, nframes_t nframes) T_REALTIME_SAFE;
+    void process(const TProcessContext& context) T_REALTIME_SAFE;
 
     // GUI thread
 

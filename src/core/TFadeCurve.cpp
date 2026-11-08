@@ -111,9 +111,9 @@ int TFadeCurve::set_state( const QDomNode & node )
 }
 
 
-void TFadeCurve::process(const TProcessContext& context, const TChannelBuffer &curveBuffer, AudioBus *bus, const TTimeRef& startLocation, const TTimeRef& endLocation, nframes_t nframes) T_REALTIME_SAFE
+void TFadeCurve::process(const TProcessContext& context) T_REALTIME_SAFE
 {
-    Q_ASSERT(bus->get_channel_count() == 2);
+    Q_ASSERT(context.get_ringbuffer_read_bus()->get_channel_count() == 2);
     Q_ASSERT(m_parentTimeLineEntity != nullptr);
     Q_ASSERT(m_parentTimeLineEntity->get_location() != nullptr);
 
@@ -124,12 +124,12 @@ void TFadeCurve::process(const TProcessContext& context, const TChannelBuffer &c
 
     TLocation* parentLocation = m_parentTimeLineEntity->get_location();
     uint outputRate = context.get_sample_rate();
-    uint framesToProcess = nframes;
-    uint channelCount = bus->get_channel_count();
+    uint framesToProcess = context.get_nframes_to_process();
+    uint channelCount = context.get_ringbuffer_read_bus()->get_channel_count();
 
     TTimeRef fadeStartLocation, fadeEndLocation, fadeLocation;
     TTimeRef fadeRange = state->length;
-    TTimeRef upperRange = startLocation + TTimeRef(nframes, outputRate);
+    TTimeRef upperRange = context.get_start_location() + TTimeRef(context.get_nframes_to_process(), outputRate);
 
     if (m_type == FadeIn) {
         fadeStartLocation = parentLocation->get_start();
@@ -139,19 +139,19 @@ void TFadeCurve::process(const TProcessContext& context, const TChannelBuffer &c
 
     fadeEndLocation = fadeStartLocation + fadeRange;
 
-    if ((startLocation >= fadeEndLocation || (endLocation <= fadeStartLocation))) {
+    if ((context.get_start_location() >= fadeEndLocation || (context.get_end_location() <= fadeStartLocation))) {
         return;
     }
 
     nframes_t offset = 0;
 
-    if (startLocation < fadeStartLocation) {
-        offset = TTimeRef::to_nframes(TTimeRef::frame_nearest(fadeStartLocation - startLocation, outputRate));
-        Q_ASSERT(offset <= nframes);
+    if (context.get_start_location() < fadeStartLocation) {
+        offset = TTimeRef::to_nframes(TTimeRef::frame_nearest(fadeStartLocation - context.get_start_location(), outputRate));
+        Q_ASSERT(offset <= context.get_nframes_to_process());
         fadeLocation = TTimeRef();
         framesToProcess = framesToProcess - offset;
     } else {
-        fadeLocation = (startLocation - fadeStartLocation);
+        fadeLocation = (context.get_start_location() - fadeStartLocation);
     }
 
     if (fadeEndLocation < upperRange) {
@@ -166,10 +166,10 @@ void TFadeCurve::process(const TProcessContext& context, const TChannelBuffer &c
 
     // The shape runs from 0 to 1 over the length of the fade
     state->shape->get_vector(fadeLocation / state->length, upperRange / state->length,
-                             curveBuffer.get_data(framesToProcess), framesToProcess, m_rtLookupCache);
+                             context.get_curve_buffer().get_data(framesToProcess), framesToProcess, m_rtLookupCache);
 
     for (uint chan = 0; chan < channelCount; ++chan) {
-        bus->get_buffer(chan).multiply(offset, framesToProcess, curveBuffer);
+        context.get_ringbuffer_read_bus()->get_buffer(chan).multiply(offset, framesToProcess, context.get_curve_buffer());
     }
 }
 
