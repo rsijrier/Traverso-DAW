@@ -6,9 +6,11 @@
 #pragma once
 
 #include <QObject>
+#include <QHash>
 #include <QList>
 #include "TTimeLineEntity.h"
 #include "TSelectionTimeBounds.h"
+#include "TObjectIdTags.h"
 
 class TSelectionService final : public QObject
 {
@@ -24,17 +26,16 @@ public:
     void deselect(TTimeLineEntity* entity);
     void clear();
 
-    bool is_selected(const TTimeLineEntity* entity) const { return m_registry.contains(entity); }
+    bool is_selected(ClipId id) const { return m_registry.contains(id); }
     int get_selection_count() const { return m_registry.size(); }
     bool has_selection() const { return !m_registry.isEmpty(); }
 
-    QList<TTimeLineEntity*> get_selected_entities() const { return m_registry; }
+    QList<TTimeLineEntity*> get_selected_entities() const { return m_registry.values(); }
     TSelectionTimeBounds get_selection_time_bounds() const;
 
 signals:
     void selectionChanged();
 
 private:
-    // In the order they were selected
-    QList<TTimeLineEntity*> m_registry;
+    QHash<ClipId, TTimeLineEntity*> m_registry;
 };

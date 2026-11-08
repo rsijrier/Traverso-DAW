@@ -6,6 +6,7 @@
 #include "TSelectionService.h"
 
 #include <QVariant>
+#include "TClip.h"
 #include "TSelectionTimeBounds.h"
 #include <QObject>
 
@@ -16,10 +17,14 @@ TSelectionService::TSelectionService(QObject* parent)
 
 void TSelectionService::select(TTimeLineEntity* entity)
 {
-    if (!entity) return;
+    Q_ASSERT(entity);
 
-    if (!m_registry.contains(entity)) {
-        m_registry.append(entity);
+    auto* clip = dynamic_cast<TClip*>(entity);
+    Q_ASSERT(clip);
+
+    const ClipId id = clip->object_id();
+    if (!m_registry.contains(id)) {
+        m_registry.insert(id, entity);
 
         if (auto* qobj = dynamic_cast<QObject*>(entity)) {
             qobj->setProperty("selected", true);
@@ -31,9 +36,13 @@ void TSelectionService::select(TTimeLineEntity* entity)
 
 void TSelectionService::deselect(TTimeLineEntity* entity)
 {
-    if (!entity) return;
+    Q_ASSERT(entity);
 
-    if (m_registry.removeAll(entity) > 0) {
+    auto* clip = dynamic_cast<TClip*>(entity);
+    Q_ASSERT(clip);
+
+    const ClipId id = clip->object_id();
+    if (m_registry.remove(id) > 0) {
         if (auto* qobj = dynamic_cast<QObject*>(entity)) {
             qobj->setProperty("selected", false);
         }
