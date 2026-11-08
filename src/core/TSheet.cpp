@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSheet.h"
 #include "TProject.h"
 #include "TObjectFactory.h"
+#include "TWorkspace.h"
 #include "TAudioTrack.h"
 #include "TAudioClip.h"
 #include "TExportSpecification.h"
@@ -109,7 +110,6 @@ TSheet::TSheet(SongId id, TProject* project, const QDomNode& node)
 {
     PENTERCONS;
 
-    set_id(node.toElement().attribute("id", "0").toLongLong());
     init();
 }
 
@@ -232,8 +232,6 @@ int TSheet::set_state( const QDomNode & node )
     // Force the proper name for our Master Bus Track
     m_masterOutBusTrack->set_name("Sheet Master");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
-    m_project->objects().check_owned<SongMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack),
-                                                    masterOutNode.firstChildElement(), object_id());
 
     QDomNode busTracksNode = node.firstChildElement("BusTracks");
     QDomNode busTrackNode = busTracksNode.firstChild();
@@ -263,7 +261,7 @@ int TSheet::set_state( const QDomNode & node )
     QDomNode workSheetNode = workSheetsNode.firstChild();
 
     while(!workSheetNode.isNull()) {
-        TSession* childSession = new TSession(this);
+        TWorkspace* childSession = m_project->objects().load<TWorkspace>(workSheetNode.toElement(), this);
         childSession->set_state(workSheetNode);
         add_child_session(childSession);
 
@@ -281,10 +279,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
     QDomElement sheetNode = doc.createElement("Sheet");
 
     if (! istemplate) {
-        sheetNode.setAttribute("id", get_id());
         TObjectFactory::write(sheetNode, object_id());
-    } else {
-        sheetNode.setAttribute("id", TraversoDAW::Utils::create_id());
     }
 
     QDomElement properties = doc.createElement("Properties");
@@ -324,7 +319,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
     sheetNode.appendChild(busTracksNode);
 
     QDomNode workSheetsNode = doc.createElement("WorkSheets");
-    foreach(TSession* session, m_childSessions) {
+    foreach(TWorkspace* session, m_childSessions) {
         workSheetsNode.appendChild(session->get_state(doc));
     }
 
@@ -480,7 +475,7 @@ void TSheet::solo_track(TTrack *track)
         foreach(TAudioTrack* sgTrack, tracks) {
             QList<TSend*> sends = sgTrack->get_post_sends();
             foreach(TSend* send, sends) {
-                if (send->get_bus_id() == track->get_process_bus()->get_id()) {
+                if (send->get_target_track() == track->object_id()) {
                     busTrackAudioTracks.append(sgTrack);
                 }
             }
@@ -997,6 +992,8 @@ void TSheet::prepare_recording()
 // recording ends (push_recording_session())
 void TSheet::start_takes()
 {
+    // Takes make their sources, and ids are made on the GUI thread only
+    Q_ASSERT(QThread::currentThread() == this->thread());
     QList<TAudioTrack*> armedTracks;
     if (m_bounceTrack->armed()) {
         armedTracks.append(m_bounceTrack);

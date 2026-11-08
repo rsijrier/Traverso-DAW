@@ -23,7 +23,7 @@ QString TWaveform::peak_path(const TBufferedAudioStream* source)
 }
 
 TWaveform::TWaveform(TBufferedAudioStreamReader* source, RequestBuild build)
-    : m_sourceId(source->get_id())
+    : m_sourceId(source->object_id())
     , m_fileName(source->get_filename())
     , m_rate(source->get_file_rate())
     , m_channelCount(int(source->get_channel_count()))

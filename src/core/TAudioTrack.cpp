@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TAudioTrack.h"
+#include "TObjectFactory.h"
 #include "TSplitableTimeLineEntity.h"
 
 #include <QDomElement>
@@ -99,7 +100,7 @@ QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
             }
 
             QDomElement clipNode = doc.createElement("Clip");
-            clipNode.setAttribute("id", clip->get_id() );
+            TObjectFactory::write_reference(clipNode, "clip", clip->object_id());
             clips.appendChild(clipNode);
         }
 
@@ -134,13 +135,15 @@ int TAudioTrack::set_state( const QDomNode & node )
         QDomNode clipNode = ClipsNode.firstChild();
         while (!clipNode.isNull()) {
             QDomElement clipElement = clipNode.toElement();
-            qint64 id = clipElement.attribute("id", "").toLongLong();
+            const std::optional<ClipId> id = TObjectFactory::read_reference<ClipTag>(clipElement, "clip");
 
-            TAudioClip* clip = resources_manager()->get_clip_for_old_id(id);
+            TAudioClip* clip = id ? resources_manager()->get_clip(*id) : nullptr;
             if (!clip) {
+                // One missing clip loses only itself
                 tInformUser().critical(tr("Track: AudioClip with id %1 not "
-                                   "found in Resources database!").arg(id));
-                break;
+                                   "found in Resources database!").arg(clipElement.attribute("clip")));
+                clipNode = clipNode.nextSibling();
+                continue;
             }
 
             clip->set_track(this);
@@ -194,7 +197,7 @@ TAudioClip* TAudioTrack::init_recording()
     if (!m_inputBus) {
         tInformUser().critical(tr("Unable to Record to AudioTrack"));
         tInformUser().warning(tr("AudioDevice doesn't have this Capture Bus: %1 (Track %2)").
-                       arg(m_busInName).arg(get_id()) );
+                       arg(m_busInName, QString::fromStdString(object_id().to_string())) );
         return nullptr;
     }
 

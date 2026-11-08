@@ -54,9 +54,22 @@ static size_t name_index(uint16_t tag)
     return size_t(TObjectIds::kind_of(tag)) * TObjectIds::SubtypeCount + (TObjectIds::subtype_of(tag) % TObjectIds::SubtypeCount);
 }
 
-void TObjectIds::register_name(uint16_t tag, const char* name)
+static std::array<std::atomic<bool>, 256 * TObjectIds::SubtypeCount>& from_owner_flags()
 {
+    static std::array<std::atomic<bool>, 256 * TObjectIds::SubtypeCount> table{};
+    return table;
+}
+
+void TObjectIds::register_tag(uint16_t tag, const char* name, bool fromOwner)
+{
+    from_owner_flags()[name_index(tag)].store(fromOwner, std::memory_order_relaxed);
     names()[name_index(tag)].store(name, std::memory_order_release);
+}
+
+bool TObjectIds::from_owner(uint16_t tag)
+{
+    Q_ASSERT(names()[name_index(tag)].load(std::memory_order_acquire));
+    return from_owner_flags()[name_index(tag)].load(std::memory_order_relaxed);
 }
 
 const char* TObjectIds::name_of(uint16_t tag)

@@ -181,11 +181,11 @@ void TTrackManagerDialog::create_routing_input_menu()
         for(TTrack* track : tracks) {
             // Input from a track is that track's send to this one: leave out
             // the tracks for which it would close a feedback loop (T64)
-            if (track->send_closes_loop(m_track->get_id())) {
+            if (track->send_closes_loop(m_track->object_id())) {
                 continue;
             }
             QAction* action = m_routingInputMenu->addAction(track->get_name());
-            action->setData(QVariant::fromValue<QObject*>(track));
+            action->setData(QVariant::fromValue(track->object_id()));
         }
     }
 
@@ -238,12 +238,12 @@ QMenu* TTrackManagerDialog::create_sends_menu()
 
     if (!(m_track == projectMaster)) {
         action = menu->addAction(projectMaster->get_name());
-        action->setData(projectMaster->get_id());
+        action->setData(QVariant::fromValue(projectMaster->object_id()));
     }
 
     if (sheetMaster && !(m_track == sheetMaster)) {
         action = menu->addAction(sheetMaster->get_name());
-        action->setData(sheetMaster->get_id());
+        action->setData(QVariant::fromValue(sheetMaster->object_id()));
     }
 
     if (sheet) {
@@ -252,7 +252,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
         if (!(m_track->get_type() == TTrack::BUS) && busTracks.size()) {
             for(TBusTrack* busTrack : busTracks) {
                 action = menu->addAction(busTrack->get_name());
-                action->setData(busTrack->get_id());
+                action->setData(QVariant::fromValue(busTrack->object_id()));
             }
         }
         menu->addSeparator();
@@ -262,7 +262,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
         QList<TBusTrack*> busTracks = project->get_bus_tracks();
         for(TBusTrack* busTrack : busTracks) {
             action = menu->addAction(busTrack->get_name());
-            action->setData(busTrack->get_id());
+            action->setData(QVariant::fromValue(busTrack->object_id()));
         }
         menu->addSeparator();
     }
@@ -270,7 +270,7 @@ QMenu* TTrackManagerDialog::create_sends_menu()
     // Leave out the targets a send to which would close a feedback loop
     // (T64), the track itself included
     for (QAction* target : menu->actions()) {
-        if (!target->isSeparator() && m_track->send_closes_loop(target->data().toLongLong())) {
+        if (!target->isSeparator() && m_track->send_closes_loop(target->data().value<TrackId>())) {
             menu->removeAction(target);
             delete target;
         }
@@ -278,8 +278,8 @@ QMenu* TTrackManagerDialog::create_sends_menu()
 
     for(AudioBus* bus : pm().get_project()->get_hardware_buses()) {
         if (bus->is_output() && bus->is_valid()) {
-            action = menu->addAction(bus->get_name());
-            action->setData(bus->get_id());
+            // A port goes by its name, the action's text
+            menu->addAction(bus->get_name());
         }
     }
 
@@ -316,9 +316,9 @@ void TTrackManagerDialog::routingInputMenuActionTriggered(QAction *action)
     }
 
     if (m_track->get_type() == TTrack::BUS) {
-        TTrack* sender = qobject_cast<TTrack*>(action->data().value<QObject*>());
+        TTrack* sender = project->get_track(action->data().value<TrackId>());
         if (sender) {
-            sender->add_post_send(m_track->get_id());
+            sender->add_post_send(m_track->object_id());
         }
     }
 }
@@ -327,7 +327,12 @@ void TTrackManagerDialog::routingOutputMenuActionTriggered(QAction *action)
 {
     TProject* project = pm().get_project();
     if (action && project) {
-        m_track->add_post_send(action->data().toLongLong());
+        // A track, or a port by name
+        if (action->data().canConvert<TrackId>()) {
+            m_track->add_post_send(action->data().value<TrackId>());
+        } else if (AudioBus* port = project->get_playback_bus(action->text())) {
+            m_track->add_post_send(port);
+        }
     }
 }
 
@@ -335,7 +340,12 @@ void TTrackManagerDialog::preSendsMenuActionTriggered(QAction *action)
 {
     TProject* project = pm().get_project();
     if (action && project) {
-        m_track->add_pre_send(action->data().toLongLong());
+        // A track, or a port by name
+        if (action->data().canConvert<TrackId>()) {
+            m_track->add_pre_send(action->data().value<TrackId>());
+        } else if (AudioBus* port = project->get_playback_bus(action->text())) {
+            m_track->add_pre_send(port);
+        }
     }
 }
 

@@ -3,7 +3,7 @@
 
 // Headless test of TObjectPool: found by exact and wider ids, a duplicate
 // refused, a destroyed object out of both indexes, derived ids outside the
-// numbers, find_owner() and the owner invariant.
+// numbers.
 
 #include "TObjectIdTestAccess.h"
 #include "TObjectPool.h"
@@ -48,9 +48,8 @@ int main(int argc, char** argv)
     // The pool asserts it runs on the main thread
     QCoreApplication app(argc, argv);
 
-    QObject root;
     TObjectIdGenerator ids;
-    TObjectPool pool(&root);
+    TObjectPool pool;
     auto a = std::make_unique<NodeA>();
     NodeA owner;
     NodeB b;
@@ -68,16 +67,8 @@ int main(int argc, char** argv)
 
     // b derived from owner: its tag on the owner's number
     const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(ownerId));
-    QObject* bOwner = &owner;
-    check(pool.add_owned(TObjectIdTestAccess::from_value<NodeBId>(derived).value(), &b, [&bOwner]() { return bOwner; }), "a derived object goes in");
-    check(pool.find_owner(derived) == &owner, "find_owner() gives the owner from the number");
-    check(pool.find_owner(TObjectIds::make_tag(1, 2) * (1ull << TObjectIds::SequenceBits)) == &root, "number 0 is the root's");
-    check(pool.owners_out_of_place().isEmpty(), "the invariant holds");
-
-    // b hung on another owner by hand: the invariant finds it
-    bOwner = a.get();
-    check(pool.owners_out_of_place() == QList<uint64_t>{derived}, "an object hung on another owner is found");
-    bOwner = &owner;
+    check(pool.add_owned(TObjectIdTestAccess::from_value<NodeBId>(derived).value(), &b), "a derived object goes in");
+    check(pool.find_raw(derived) == &b, "a derived object is found by its id");
 
     a.reset();
     check(!pool.contains(TObjectIdTestAccess::value(aId)) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
@@ -85,8 +76,7 @@ int main(int argc, char** argv)
     check(pool.count() == 2, "no empty entry stays");
 
     pool.remove(ownerId);
-    check(pool.find_owner(derived) == nullptr && pool.owners_out_of_place() == QList<uint64_t>{derived},
-          "an owner removed: its derived object is out of place");
+    check(pool.find_raw(derived) == &b, "an owner removed: its derived object stays until it leaves itself");
 
     if (failures > 0) {
         std::printf("%d object pool tests FAILED\n", failures);

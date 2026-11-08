@@ -8,7 +8,9 @@
 // load<T>() makes one from its element in the project file with the id saved
 // there, make_owned<T, Tag>() makes an object that belongs one to one to its
 // owner in a fixed role (a master, the bounce track) with an id derived from
-// the owner's number. All enroll it in the project's pool. Owned by the project.
+// the owner's number; such an object writes no id and no owner, its place in
+// the file and its owner give it. All enroll it in the project's pool. Owned
+// by the project.
 //
 // The id is decided before the object is built: a class whose constructor takes
 // its id first gets it there (a song, which makes its master and bounce track
@@ -18,14 +20,14 @@
 //   using IdTag = AudioTrackTag;        the exact tag it is made under
 //   friend class TObjectFactory;        the factory sets its id
 //   an m_objectId member of a tag the IdTag fits in
-//   QObject* id_owner() const;          its owner now: the song of a track, the
-//                                       track of a clip, nullptr for none
 // A class made under more than one tag (the masters) has IdTag void; its maker
 // names the tag.
 //
 // In the project file an id is bare hex: "objectid" for the object's own,
-// "owner" for its owner's. The structure of the file places an object; "owner"
-// only checks it, and so does "objectid" of a derived object.
+// "owner" for its owner's, and a named attribute for a reference to another
+// object (read_reference()). The structure of the file places an object, and
+// make_owned() gives a derived object its owner: "owner" is written, not read
+// or checked. A flat file (T112) will place objects by it.
 //
 // GUI thread only, like the pool and the sequence.
 
@@ -36,8 +38,8 @@
 #include <QDomElement>
 #include <QList>
 #include <QString>
+#include <QStringList>
 
-#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -62,8 +64,7 @@ public:
 
     // An object from its element in the project file: the id saved there when
     // it fits the tag and no other object has it; else a new one, with a
-    // warning when the file had one. Its "owner" is kept for
-    // check_owner_references(), once the whole file is loaded
+    // warning when the file had one
     template <typename T, typename Tag = typename T::IdTag, typename... Args>
     T* load(const QDomElement& element, Args&&... args)
     {
@@ -78,9 +79,6 @@ public:
                 ++m_warnings;
             }
             object = make<T, Tag>(std::forward<Args>(args)...);
-        }
-        if (element.hasAttribute(OwnerAttribute)) {
-            m_ownerReferences.append({object, text_of(element, OwnerAttribute), [object]() { return object->id_owner(); }});
         }
         return object;
     }
@@ -98,56 +96,9 @@ public:
         const std::optional<TObjectId<Tag>> id = TObjectId<Tag>::from_storage(owned_value<Tag>(ownerNumber));
         Q_ASSERT(id);
         T* object = construct<T>(*id, std::forward<Args>(args)...);
-        [[maybe_unused]] const bool added = m_pool.add_owned(*id, object, [object]() { return object->id_owner(); });
+        [[maybe_unused]] const bool added = m_pool.add_owned(*id, object);
         Q_ASSERT(added);
         return object;
-    }
-
-    // At load, for a derived object the structure placed: its saved id and
-    // owner only check it. The owner wins: a difference is a warning, the id
-    // stays derived. The number of warnings
-    template <typename Tag, typename T, typename OwnerTag>
-    int check_owned(T* object, const QDomElement& element, TObjectId<OwnerTag> owner)
-    {
-        int warnings = 0;
-        const object_id_value_t own = object->m_objectId.to_storage();
-        if (element.hasAttribute(ObjectIdAttribute) && read_value(element, ObjectIdAttribute) != own) {
-            TLOG_W("ids", "the saved id {} of a {} does not follow from its owner: it stays {}",
-                   text_of(element, ObjectIdAttribute), Tag::Name, TObjectIds::to_hex(own));
-            ++warnings;
-        }
-        if (element.hasAttribute(OwnerAttribute) && read_value(element, OwnerAttribute) != owner.to_storage()) {
-            TLOG_W("ids", "the owner {} of a {} in the project file is not the one it belongs to",
-                   text_of(element, OwnerAttribute), Tag::Name);
-            ++warnings;
-        }
-        m_warnings += warnings;
-        return warnings;
-    }
-
-    // After a load: every "owner" against the owner the structure gave. Without
-    // the attribute nothing is said (a clip on no track). An owner that does
-    // not exist, or another than the structure's, is a warning; the structure
-    // wins and the reference is dropped. The number of warnings
-    int check_owner_references()
-    {
-        int warnings = 0;
-        for (const OwnerReference& reference : std::as_const(m_ownerReferences)) {
-            const object_id_value_t named = read_value_text(reference.text);
-            QObject* actual = reference.owner();
-            if (named == 0 || !m_pool.contains(named)) {
-                TLOG_W("ids", "the owner {} of {} does not exist: the reference is dropped", reference.text,
-                       TObjectIds::to_string(m_pool.id_of(reference.object)));
-                ++warnings;
-            } else if (m_pool.find_raw(named) != actual) {
-                TLOG_W("ids", "the owner {} of {} is not where the project file puts it: the file's structure wins",
-                       reference.text, TObjectIds::to_string(m_pool.id_of(reference.object)));
-                ++warnings;
-            }
-        }
-        m_ownerReferences.clear();
-        m_warnings += warnings;
-        return warnings;
     }
 
     // Before a load: the counter above the saved next number and above every
@@ -178,7 +129,7 @@ public:
     // summary in the log
     int take_warning_count() { return std::exchange(m_warnings, 0); }
 
-    // In get_state(): the object's own id and its owner's, next to the old "id"
+    // In get_state(): the object's own id and its owner's
     template <typename Tag>
     static void write(QDomElement& element, TObjectId<Tag> id)
     {
@@ -188,6 +139,46 @@ public:
     static void write_owner(QDomElement& element, TObjectId<Tag> owner)
     {
         element.setAttribute(OwnerAttribute, QString::fromStdString(owner.to_hex()));
+    }
+
+    // A reference to another object: its id as bare hex. read_reference()
+    // gives nothing when the attribute is missing, is no id, or is an id of
+    // another kind; a prefix that names another kind than the number is
+    // logged
+    template <typename Tag>
+    static void write_reference(QDomElement& element, const char* attribute, TObjectId<Tag> id)
+    {
+        element.setAttribute(attribute, QString::fromStdString(id.to_hex()));
+    }
+    template <typename Tag>
+    static std::optional<TObjectId<Tag>> read_reference(const QDomElement& element, const char* attribute)
+    {
+        return reference_of<Tag>(element.attribute(attribute));
+    }
+
+    // A list of references in one attribute, ";"-joined. Entries that are no
+    // id of the kind are left out
+    template <typename Tag>
+    static void write_references(QDomElement& element, const char* attribute, const QList<TObjectId<Tag>>& ids)
+    {
+        QStringList texts;
+        for (const TObjectId<Tag>& id : ids) {
+            texts.append(QString::fromStdString(id.to_hex()));
+        }
+        element.setAttribute(attribute, texts.join(';'));
+    }
+    template <typename Tag>
+    static QList<TObjectId<Tag>> read_references(const QDomElement& element, const char* attribute)
+    {
+        QList<TObjectId<Tag>> ids;
+        for (const QString& text : element.attribute(attribute).split(';', Qt::SkipEmptyParts)) {
+            if (const std::optional<TObjectId<Tag>> id = reference_of<Tag>(text)) {
+                ids.append(*id);
+            } else {
+                TLOG_W("ids", "the reference {} in the project file is no {} id: left out", text.toStdString(), Tag::Name);
+            }
+        }
+        return ids;
     }
 
     // A template holds no ids: the objects made from it get their own
@@ -205,13 +196,6 @@ private:
     static constexpr const char* OwnerAttribute = "owner";
     static constexpr const char* NextObjectIdAttribute = "nextobjectid";
     static constexpr object_id_value_t SequenceMask = TObjectIds::SequenceMask;
-
-    struct OwnerReference
-    {
-        QObject* object;
-        std::string text;
-        std::function<QObject*()> owner;
-    };
 
     template <typename Tag>
     static constexpr object_id_value_t owned_value(object_id_value_t ownerNumber)
@@ -290,6 +274,20 @@ private:
     }
 
     template <typename Tag>
+    static std::optional<TObjectId<Tag>> reference_of(const QString& text)
+    {
+        const qsizetype colon = text.indexOf(':');
+        const object_id_value_t raw = raw_value(text);
+        if (raw == 0) {
+            return std::nullopt;
+        }
+        if (colon >= 0 && text.left(colon) != QLatin1String(TObjectIds::name_of(TObjectIds::tag_of(raw)))) {
+            TLOG_W("ids", "the id {} in the project file names another kind than its number has", text.toStdString());
+        }
+        return TObjectId<Tag>::from_storage(raw);
+    }
+
+    template <typename Tag>
     std::optional<TObjectId<Tag>> read(const QDomElement& element, const char* attribute)
     {
         const object_id_value_t value = read_value(element, attribute);
@@ -301,6 +299,5 @@ private:
 
     TObjectIdGenerator& m_ids;
     TObjectPool& m_pool;
-    QList<OwnerReference> m_ownerReferences;
     int m_warnings{0};
 };

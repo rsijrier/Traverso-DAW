@@ -31,6 +31,9 @@
 // they see it (TObjectFactory, TObjectPool): everyone else holds a TObjectId
 using object_id_value_t = uint64_t;
 
+template <typename Tag>
+class TObjectId;
+
 // The raw ids, for TObjectId and for whoever only has the number (the log, the
 // project file)
 struct TObjectIds
@@ -49,16 +52,24 @@ struct TObjectIds
     static constexpr uint64_t AllSubtypes = ~0ull;
     static constexpr uint64_t subtype(uint8_t s) { return 1ull << s; }
 
-    // The name the log and to_string() show for a tag, given by the domain that
-    // owns it at start-up. name must live as long as the program (a literal)
-    static void register_name(uint16_t tag, const char* name);
+    // An exact tag as the domain that owns it gives it at start-up: the name the
+    // log and to_string() show (a literal: it lives as long as the program), and
+    // whether its ids are derived from their owner (FromOwner)
+    static void register_tag(uint16_t tag, const char* name, bool fromOwner);
     // The registered name, "id" when the tag has none
     static const char* name_of(uint16_t tag);
+    // Whether the id is derived from its owner, by the tag in its value: such an
+    // object writes no id and no owner. The tag must be registered
+    template <typename Tag>
+    static bool is_derived(TObjectId<Tag> id);
     // "audiotrack:0301000000000005": the tag's name and the whole value in hex.
     // Also the form for JSON and QML, which hold only 53 bits exact in a number
     static std::string to_string(object_id_value_t value);
     // "0301000000000005": the value alone, the form of the project file
     static std::string to_hex(object_id_value_t value);
+
+private:
+    static bool from_owner(uint16_t tag);
 };
 
 // The sequence of one project, owned by the project (no singleton). Ids are made
@@ -197,6 +208,12 @@ constexpr bool objects_fit()
     static_assert((std::has_single_bit(Exact::Subtypes) && ...), "objects_fit() takes exact tags after the set");
     return ((Exact::Kind != Set::Kind || (Exact::Subtypes & Set::Subtypes) == 0
              || std::is_base_of_v<typename Set::Object, typename Exact::Object>) && ...);
+}
+
+template <typename Tag>
+bool TObjectIds::is_derived(TObjectId<Tag> id)
+{
+    return from_owner(id.tag());
 }
 
 template <typename Tag>

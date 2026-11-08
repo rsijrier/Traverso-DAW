@@ -87,15 +87,13 @@ void TClipsViewPort::dragEnterEvent( QDragEnterEvent * event )
 		
 		while (!stream.atEnd()) {
 			stream >> r >> c >> v;
-			if (const ClipId clip = v.value(ResourcesClipIdRole).value<ClipId>(); clip.is_valid()) {
-				m_resourcesImport.append({clip, 0});
-				continue;
+			// The item's id tells a clip from a source by its type
+			const QVariant item = v.value(Qt::UserRole);
+			if (item.metaType() == QMetaType::fromType<ClipId>()) {
+				m_resourcesImport.append({item.value<ClipId>(), AudioSourceId()});
+			} else if (item.metaType() == QMetaType::fromType<AudioSourceId>()) {
+				m_resourcesImport.append({ClipId(), item.value<AudioSourceId>()});
 			}
-			qint64 id = v.value(Qt::UserRole).toLongLong();
-			if (!id) {
-				continue;
-			}
-			m_resourcesImport.append({ClipId(), id});
 		}
 	}
 	
@@ -154,7 +152,7 @@ void TClipsViewPort::dropEvent(QDropEvent* event )
             clips.append(clip);
             continue;
 		}
-		TBufferedAudioStreamReader* source = import.clip.is_valid() ? nullptr : resources_manager()->get_readsource(import.sourceId);
+		TBufferedAudioStreamReader* source = import.clip.is_valid() ? nullptr : resources_manager()->get_readsource(import.source);
 		if (source) {
 			clip = resources_manager()->new_audio_clip(source->get_short_name());
             resources_manager()->set_source_for_clip(clip, source);

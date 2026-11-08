@@ -37,10 +37,6 @@ class TAudioClip;
 class TProject;
 
 
-// The role of a clip's new id in the resources window's items, read by a
-// drop on the canvas; Qt::UserRole there is a source's old id
-inline constexpr int ResourcesClipIdRole = Qt::UserRole + 1;
-
 class TResourcesManager : public QObject
 {
 	Q_OBJECT
@@ -55,15 +51,12 @@ public:
 	TBufferedAudioStreamReader* create_recording_source(const QString& dir,
 				const QString& name,
 				uint channelCount,
-				qint64 sheetId);
+				SongId song);
 	
 	TBufferedAudioStreamReader* import_source(const QString& dir, const QString& name);
 	TBufferedAudioStreamReader* get_silent_readsource();
 	TAudioClip* new_audio_clip(const QString& name);
 	TAudioClip* get_clip(ClipId id);
-	// By old id, for the load of a track's clip list only (until the project
-	// file references clips by their new id)
-	TAudioClip* get_clip_for_old_id(qint64 oldId);
 
 	void mark_clip_removed(TAudioClip* clip);
 	void mark_clip_added(TAudioClip* clip);
@@ -75,9 +68,9 @@ public slots:
 
 public:
 	bool is_clip_in_use(ClipId id) const;
-	bool is_source_in_use(qint64 id) const;
+	bool is_source_in_use(AudioSourceId id) const;
 
-	TBufferedAudioStreamReader* get_readsource(qint64 id);
+	TBufferedAudioStreamReader* get_readsource(AudioSourceId id);
 	
 	QList<TBufferedAudioStreamReader*> get_all_audio_sources() const;
 	QList<TAudioClip*> get_all_clips() const;
@@ -115,11 +108,9 @@ private:
 	void delete_takes(const QList<TAudioClip*>& takes);
 
 	TProject* m_project;
-	QHash<qint64, SourceData* >	m_sources;
+	// By the id of the source: the stream kept here
+	QHash<AudioSourceId, SourceData* >	m_sources;
 	QHash<ClipId, ClipData* >	m_clips;
-	// The loaded clips by the old id the file names them by, for
-	// get_clip_for_old_id() during the load
-	QHash<qint64, ClipId>		m_clipOfOldId;
     // Taken out of the project by discard_takes(), freed with the project:
     // a take may have just left its track, and the audio thread lets go of
     // it only in a later cycle; once the project is off the audio device

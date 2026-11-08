@@ -68,7 +68,6 @@ public:
         Q_ASSERT(m_objectId.is_valid());
         return m_objectId;
     }
-    QObject* id_owner() const;
 
     QString get_description() const {return m_description;}
     QString get_performer() const {return m_performer;}

@@ -1135,6 +1135,149 @@ From the GPU waveform test program, clip edges in variant A (branch
   With T58 (the singletons: an object made without its parent, or with fewer
   dependencies) and T14, T42 (ids, the converter). It fits the ids: every
   object stands on its id already, and `owner` is a reference by id.
+- **T113 A copied audio file may meet a file of the same name** (Remon,
+  2026-11-08, from the take names of version 4; not checked): an import that
+  is copied or converted into the project's `audiosources` (or a copied
+  project) keeps its own name, so two imports with one name from different
+  folders can land on the same file name. Check how the copy handles an
+  existing file today; it must never overwrite one. Outside the take names,
+  which are unique by project, song, track and take.
+- **T114 Takes in Broadcast Wave, and a project rebuilt from them** (Remon,
+  2026-11-08; for later): a take writes a BWF `bext` chunk (its position on
+  the timeline at the start of the recording as TimeReference, the date and
+  time) and an `iXML` chunk (the names of project, song and track, the take
+  number, the ids, the input it was recorded from). An import reads a folder
+  of BWF files back into songs, tracks and clips at their time, also files of
+  other programs as far as their `bext`/`iXML` go. Not recoverable from the
+  files: routing (the project's, it changes over time; no standard place) and
+  every edit after the recording (splits, fades, gain, plugins). WavPack takes
+  carry the chunks as a wrapper.
+  **What code written now must keep possible** (Remon: T114 must stay doable
+  without large structural changes):
+  - a take's source gets its id before its file is made, and everything the
+    chunks need is known when the writer opens the file (project UUID, song
+    and track ids and names, take number, position, input): libsndfile wants
+    `bext` before the first audio;
+  - the take's file name is made in one place from those data, so the chunks
+    and the name cannot tell different stories;
+  - an import gets new ids from its own project's factory; ids read from
+    another project's files are data (for regrouping), never taken as the
+    objects' own ids;
+  - names that clash on import go through T113.
+- **T115 Sends from a project bus track to song tracks fail at load**
+  (medium; found 2026-11-08, confirmed by Fable's review of the version 4
+  work): the project's bus tracks load before the songs, so a send whose
+  target is a track of a song finds no track and is dropped. Both version 3
+  and version 4 lose it. Proposal: load the sends of the project's bus tracks
+  after the songs.
+- **T116 Under Jack every track got one more send at every load** (medium;
+  found 2026-11-08): `connect_to_jack()` adds a send to a new jack bus of the
+  track at every call, and the saved send came back next to it. Version 4
+  no longer saves a track's own jack sends; check at run time whether this is
+  now gone.
+- **T117 The jack master was silent after a load** (medium; found
+  2026-11-08): a software bus from the file had no channels, because
+  `channelids` was never read. Version 4 writes no software buses and makes
+  the jack master at every load; check at run time whether it now has its
+  channels.
+- **T118 `TResourcesManager::import_source()` leaks on a read error** (low;
+  Fable, 2026-11-08): when the source gives an error, the copy is deleted but
+  the original stream and its `SourceData` are not, and the stream stays in
+  the object pool for the project's life. Older than version 4. Proposal:
+  delete both there.
+- **T120 A project file that is too new or fails to convert opens the
+  backups dialog** (low; Fable, Remon 2026-11-08): `PROJECT_FILE_TOO_NEW` and
+  `PROJECT_FILE_CONVERSION_FAILED` fall into `TProjectManager.cpp`'s `default:` →
+  `project_load_failed()`, which says "you will now be given a list of
+  available backups" (`TMainWindow.cpp:1758-1764`). A too-new file needs a
+  newer Traverso, and a failed conversion (read-only storage) no backup; each
+  needs its own message.
+- **T119 Getters by id through the pool, with detection of stale ids**
+  (medium; Remon's work order, 2026-11-08). After the id branch; replaces the
+  separate question about `get_audio_bus()`. Nothing changes before.
+  - **End design.** Getters that walk the tree to find an object by id
+    (`get_audio_bus`, `get_track`, `get_sheet`, …) look it up in the pool. The
+    pool holds every living object in one of two states: *in the project*
+    (reachable in the tree) or *removed* (out of the tree, held only by undo).
+    `find(id)` gives only objects in the project; for a removed one it gives
+    nullptr. Undo takes a removed object back with its own explicit function,
+    used by undo only (name: proposal wanted). Derived objects (gain/fade
+    curves, …) follow their owner's state, one level; their state is not set
+    on its own. No `qobject_cast` in the getters: a tag for the subtypes with
+    a process bus (bus track and both masters), `Object = TBusTrack` (name:
+    proposal wanted); the caller does `id.as<…>()` (optional), then
+    `pool.find()`. The first user of `as<>()`.
+  - **Principles.** The pool for "give me object X"; the tree for "which
+    objects are in the project" (lists, counts, the dialog, saving). This
+    border goes into the pool's comment. A stale id is never silent: from an
+    edit file or the agent (normal use) the edit reports an error with the
+    id; from our own code (a bug) an assert in debug, with the id and the
+    caller. The detector comes in the first commit, before or with the first
+    converted getter.
+  - **Mechanical, the agent decides:** includes, forward declarations,
+    renames; converting a getter once the detector is there, when its
+    behaviour stays the same.
+  - **Ask first, with options, advice and consequence:** first the list of
+    every place where an object leaves or re-enters the tree
+    (`private_remove_track`, sheets, clips, markers, …) and of every getter
+    that walks the tree; only then code. Where the state is set: per place,
+    or in one place per container. Every getter whose behaviour changes, also
+    in an edge case. Every caller that now finds a removed object on purpose
+    (except undo). Before building something new: how the existing design
+    already does it elsewhere.
+  - **Tests.** In debug, at load and save, an invariant check: in the project
+    ⇔ reachable in the tree. Sends: remove a bus track while other tracks
+    send to it, then undo and redo; nothing asks `get_audio_bus()` for the
+    removed track, and if something does, the detector reports it. Selection:
+    select a clip, remove it, use a tool on it: cleaned up or reported, never
+    silently done. An edit file with the id of a removed object: the edit
+    reports an error. Undo and redo of a removal: the object comes back with
+    the same id and is in the project again.
+  - **Report.** At most five lines, details to `reports/`; say what was not
+    tested.
+  - **Design question, the selection** (Remon, 2026-11-08). `TSelectionService`
+    holds `QHash<ClipId, TTimeLineEntity*>`: keyed by id, the value a pointer.
+    It can move to ids only, looked up through `find()`, once the removed
+    state exists. Later a selection holds other kinds too (tracks, audio
+    clips, markers, also combined). Options: (1) a list per kind (`ClipId`,
+    `TrackId`, `MarkerId`): type safe, within "an id never converts across
+    kinds", a tool asks for the kind it handles; the order of selection
+    across kinds is lost. (2) One list with an id over all kinds: keeps the
+    order, but such a type does not exist and would be an exception to the
+    kinds rule. Agent's advice: (1).
+  - **Starting list** (kept up to date during the id branch, line numbers on
+    `new-ids`).
+  - Functions that walk the tree to find an object by id:
+    - `TProject::get_audio_bus(TrackId)` (`TProject.cpp:932`): masters, the
+      songs' and the project's bus tracks;
+    - `TProject::get_track(TrackId)` (`:1019`), `get_session(WorkspaceId)`
+      (`:1210`), `get_sheet(SongId)` (`:1396`); `get_sheet_index(SongId)`
+      (`:1410`) wants the index and stays a walk;
+    - `TTrack::get_send(SendId)` (`TTrack.cpp:605`), `remove_post_sends()`
+      (`:422`) and `remove_pre_sends()` (`:469`) over the track's own sends;
+      `send_closes_loop()`'s `targetsOf` with its project-master case (`:499`);
+    - `TSession::get_track(TrackId)` (`TSession.cpp:147`): the master, then
+      the hash `m_tracks`;
+    - `TAudioClipManager::set_state()` (`TAudioClipManager.cpp:74`): the
+      selection's clips over all clips;
+    - `MarkerDialog::get_marker(MarkerId)` (`MarkerDialog.cpp:194`).
+  - `qobject_cast`/`dynamic_cast` that tell a kind the tag of the id already
+    knows (`as<>()` on the id):
+    - session is song, project or workspace: `TTrack.cpp:92, 220`,
+      `TWorkspace.cpp:22, 65`, `TSnapList.cpp:59`, `TProject.cpp:683, 1240,
+      1790`, `TSheetView.cpp:106, 625`, `TSheetWidget.cpp:230`,
+      `TClipsViewPort.cpp:212`, `TZoomCommand.cpp:195`, `NewTrackDialog.cpp:91,
+      239`, `ResourcesWidget.cpp:272`, `TMainWindow.cpp:504, 1682-1683, 1836`,
+      `NewProjectDialog.cpp:333`, `InsertSilenceDialog.cpp:55`,
+      `TAudioBusVUMonitorWidget.cpp:171-179`, `TransportConsoleWidget.cpp:141-156`,
+      `TTrackManagerDialog.cpp:145, 229`, `TraversoCommands.cpp:463, 576, 632`;
+    - track is audio, bus or master: `TSession.cpp:524-549`, `TProject.cpp:234`,
+      `TSheetView.cpp:380-381`, `NewTrackDialog.cpp:115-116, 129`,
+      `TTrackManagerDialog.cpp:86, 100, 358, 585, 615`, `TVUMeterView.cpp:63`,
+      `TraversoCommands.cpp:887`;
+    - entity is a clip: `TSelectionService.cpp:22, 41`,
+      `TRemoveEntitiesController.cpp:30`, `TSheet.cpp:1348-1353`,
+      `TraversoCommands.cpp:520, 625, 642, 744, 841, 917, 927`.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin

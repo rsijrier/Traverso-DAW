@@ -3,9 +3,10 @@
 
 // Headless test of TObjectFactory: new objects get new numbers in the order
 // they are made, loaded ones the id of their element, a damaged or doubled id
-// a new one, an owned object an id derived from its owner, owner references
-// checked against the structure, and the sequence goes on above every number
-// in the file from before the load on.
+// a new one, an owned object an id derived from its owner, the sequence goes
+// on above every number in
+// the file from before the load on, and references to other objects are
+// written and read back.
 
 #include "TObjectIdTestAccess.h"
 #include "TObjectFactory.h"
@@ -36,16 +37,14 @@ struct OtherPartTag { static constexpr bool FromOwner = true; static constexpr u
 struct PartsTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3) | TObjectIds::subtype(4); static constexpr const char* Name = "parts"; using Object = Part; };
 struct OwnerTag { static constexpr uint8_t Kind = 2; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "owner"; using Object = Owner; };
 
-// An object with a number; its owner is whatever the test hangs it on
+// An object with a number
 class Item : public QObject
 {
 public:
     using IdTag = ItemTag;
     explicit Item(int value = 0) : value(value) {}
     uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
-    QObject* id_owner() const { return owner; }
     int value;
-    QObject* owner{};
 
 private:
     friend class TObjectFactory;
@@ -60,7 +59,6 @@ public:
     using IdTag = void;
     explicit Part(QObject* owner) : owner(owner) {}
     uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
-    QObject* id_owner() const { return owner; }
     QObject* owner;
 
 private:
@@ -86,7 +84,6 @@ public:
     }
     uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
     TObjectId<OwnerTag> object_id() const { return m_objectId; }
-    QObject* id_owner() const { return nullptr; }
     Part* part{};
     Part* otherPart{};
 
@@ -102,15 +99,12 @@ static uint64_t value(uint8_t subtype, uint64_t sequence)
     return (uint64_t(TObjectIds::make_tag(1, subtype)) << TObjectIds::SequenceBits) | sequence;
 }
 
-static QDomElement element_with(QDomDocument& doc, const QString& objectid, const QString& owner = QString())
+static QDomElement element_with(QDomDocument& doc, const QString& objectid)
 {
     QDomElement e = doc.createElement("Item");
     doc.documentElement().appendChild(e);
     if (!objectid.isNull()) {
         e.setAttribute("objectid", objectid);
-    }
-    if (!owner.isNull()) {
-        e.setAttribute("owner", owner);
     }
     return e;
 }
@@ -132,7 +126,7 @@ int main(int argc, char** argv)
     // New objects: numbers in the order they are made, enrolled, arguments passed on
     {
         TObjectIdGenerator ids;
-        TObjectPool pool(&project);
+        TObjectPool pool;
         TObjectFactory objects(ids, pool);
         Item* a = objects.make<Item>(5);
         Item* b = objects.make<Item>();
@@ -153,7 +147,7 @@ int main(int argc, char** argv)
     // runs on a file with all of them first
     {
         TObjectIdGenerator ids;
-        TObjectPool pool(&project);
+        TObjectPool pool;
         TObjectFactory objects(ids, pool);
         QDomDocument file;
         file.appendChild(file.createElement("Project"));
@@ -185,7 +179,6 @@ int main(int argc, char** argv)
         check(TObjectIds::sequence_of(sameNumber->id()) == 15, "another kind with a number in use: a new one");
 
         check(ids.next() == 16, "after the load the counter is above every number");
-        check(objects.check_owner_references() == 0, "elements without owner say nothing");
         check(objects.take_warning_count() == 6 && objects.take_warning_count() == 0, "six damaged ids, six warnings, counted once");
         delete sameNumber;
 
@@ -194,30 +187,10 @@ int main(int argc, char** argv)
         }
     }
 
-    // Owner references: the structure wins, a dangling or different one warns
-    {
-        TObjectIdGenerator ids;
-        TObjectPool pool(&project);
-        TObjectFactory objects(ids, pool);
-        Item* track = objects.load<Item>(element_with(doc, hex(value(1, 1))));
-        Item* other = objects.load<Item>(element_with(doc, hex(value(1, 2))));
-        Item* right = objects.load<Item>(element_with(doc, hex(value(1, 3)), hex(value(1, 1))));
-        Item* dangling = objects.load<Item>(element_with(doc, hex(value(1, 4)), hex(value(1, 99))));
-        Item* elsewhere = objects.load<Item>(element_with(doc, hex(value(1, 5)), hex(value(1, 2))));
-        right->owner = track;
-        dangling->owner = track;
-        elsewhere->owner = track;
-        check(objects.check_owner_references() == 2, "a dangling owner and another owner than the structure's: two warnings");
-        check(pool.find_raw(dangling->id()) == dangling, "an object with a dangling owner stays");
-        for (Item* item : {track, other, right, dangling, elsewhere}) {
-            delete item;
-        }
-    }
-
     // Owned objects: the owner's number under the role's tag
     {
         TObjectIdGenerator ids;
-        TObjectPool pool(&project);
+        TObjectPool pool;
         TObjectFactory objects(ids, pool);
         Item* counted = objects.make<Item>();
         Owner* first = objects.make<Owner>(objects);
@@ -228,33 +201,20 @@ int main(int argc, char** argv)
         check(first->part->id() != second->part->id(), "two owners give their parts different ids");
         check(first->part->id() != counted->id() && second->otherPart->id() != counted->id(),
               "an owned id never meets one from the counter: its subtype is its own");
-        check(pool.find_owner(first->part->id()) == first, "find_owner() gives the owner");
-        check(pool.owners_out_of_place().isEmpty(), "the invariant holds");
+        check(first->part->owner == first, "make_owned() passes the owner on");
 
         // The same steps again, as after a reload: the same derived ids
         TObjectIdGenerator ids2;
-        TObjectPool pool2(&project);
+        TObjectPool pool2;
         TObjectFactory objects2(ids2, pool2);
         delete objects2.make<Item>();
         Owner* again = objects2.make<Owner>(objects2);
         check(again->part->id() == first->part->id(), "the same steps give the same derived ids");
         delete again;
 
-        // A saved derived id that does not follow from the owner: the owner wins
-        QDomElement saved = element_with(doc, hex(value(3, 77)), hex(value(1, 77)));
-        check(objects.check_owned<PartTag>(first->part, saved, first->object_id()) == 2, "a wrong saved id and owner: two warnings");
-        check(first->part->id() == value(3, firstNumber), "the derived id stays");
-        QDomElement right = element_with(doc, hex(first->part->id()), hex(first->id()));
-        check(objects.check_owned<PartTag>(first->part, right, first->object_id()) == 0, "a right saved id and owner: no warning");
-
-        // Hung on another owner by hand: the invariant finds it
-        first->part->owner = second;
-        check(pool.owners_out_of_place() == QList<uint64_t>{first->part->id()}, "a part hung on another owner is found");
-        first->part->owner = first;
-
         Part* projectPart = objects.make_owned<Part, PartTag>(TObjectId<OwnerTag>::root(), &project);
-        check(projectPart->id() == value(3, 0) && pool.find_owner(projectPart->id()) == &project,
-              "an owner without a number: number 0, owned by the root");
+        check(projectPart->id() == value(3, 0) && pool.find_raw(projectPart->id()) == projectPart,
+              "an owner without a number: number 0");
         delete projectPart;
         delete counted;
         delete first;
@@ -265,7 +225,7 @@ int main(int argc, char** argv)
     // to an object made before the element with that number is loaded
     {
         TObjectIdGenerator ids;
-        TObjectPool pool(&project);
+        TObjectPool pool;
         TObjectFactory objects(ids, pool);
         QDomDocument file;
         file.appendChild(file.createElement("Project"));
@@ -297,7 +257,7 @@ int main(int argc, char** argv)
         element_with(file, hex(value(1, 4)));
         for (const QString& next : {QStringLiteral("abc"), QString::number(TObjectIds::SequenceMask), QString()}) {
             TObjectIdGenerator ids;
-            TObjectPool pool(&project);
+            TObjectPool pool;
             TObjectFactory objects(ids, pool);
             QDomElement saved = doc.createElement("Properties");
             if (!next.isNull()) {
@@ -309,10 +269,45 @@ int main(int argc, char** argv)
         }
     }
 
+    // References: written as bare hex, read back as the same id; a missing
+    // attribute, no id or an id of another kind gives nothing
+    {
+        TObjectIdGenerator ids;
+        TObjectPool pool;
+        TObjectFactory objects(ids, pool);
+        Item* a = objects.make<Item>();
+        Item* b = objects.make<Item>();
+        const TObjectId<ItemTag> aId = *TObjectIdTestAccess::from_value<TObjectId<ItemTag>>(a->id());
+        const TObjectId<ItemTag> bId = *TObjectIdTestAccess::from_value<TObjectId<ItemTag>>(b->id());
+
+        QDomElement e = doc.createElement("Reference");
+        TObjectFactory::write_reference(e, "target", aId);
+        check(e.attribute("target") == hex(a->id()), "write_reference() writes bare hex");
+        check(TObjectFactory::read_reference<ItemTag>(e, "target") == aId, "read_reference() reads the same id");
+        check(!TObjectFactory::read_reference<ItemTag>(e, "missing"), "a missing attribute: no id");
+        e.setAttribute("junk", "no id");
+        check(!TObjectFactory::read_reference<ItemTag>(e, "junk"), "a text that is no id: no id");
+        e.setAttribute("other", hex(value(3, 1)));
+        check(!TObjectFactory::read_reference<ItemTag>(e, "other"), "an id of another tag: no id");
+        e.setAttribute("prefixed", "item:" + hex(a->id()));
+        check(TObjectFactory::read_reference<ItemTag>(e, "prefixed") == aId, "a prefix of the right kind is read");
+
+        TObjectFactory::write_references(e, "list", QList<TObjectId<ItemTag>>{aId, bId});
+        check(e.attribute("list") == hex(a->id()) + ";" + hex(b->id()), "write_references() joins with ';'");
+        check(TObjectFactory::read_references<ItemTag>(e, "list") == QList<TObjectId<ItemTag>>{aId, bId},
+              "read_references() reads them back in order");
+        e.setAttribute("mixed", hex(a->id()) + ";junk;" + hex(value(3, 1)) + ";" + hex(b->id()));
+        check(TObjectFactory::read_references<ItemTag>(e, "mixed") == QList<TObjectId<ItemTag>>{aId, bId},
+              "entries that are no id of the kind are left out");
+        check(TObjectFactory::read_references<ItemTag>(e, "missing").isEmpty(), "a missing list is empty");
+        delete a;
+        delete b;
+    }
+
     // The save writes the counter's next number
     {
         TObjectIdGenerator ids;
-        TObjectPool pool(&project);
+        TObjectPool pool;
         TObjectFactory objects(ids, pool);
         delete objects.make<Item>();
         QDomElement saved = doc.createElement("Properties");

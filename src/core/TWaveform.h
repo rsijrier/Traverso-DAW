@@ -4,6 +4,7 @@
 #pragma once
 
 #include "TPeakBuildService.h"
+#include "TObjectIdTags.h"
 #include "TPeakFile.h"
 #include "TTimeRef.h"
 #include "TWaveformColumns.h"
@@ -104,7 +105,7 @@ private:
     void start_build(const char* reason);
     TBufferedAudioStreamReader* reader();
 
-    qint64 m_sourceId{0};
+    AudioSourceId m_sourceId;
     QString m_fileName;
     uint m_rate{0};
     int m_channelCount{0};

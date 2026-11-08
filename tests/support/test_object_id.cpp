@@ -131,8 +131,11 @@ int main(int argc, char** argv)
     check(hashed.size() == 2, "ids hash as their value");
 
     check(a.to_string() == "id:0101000000000001", "an id without a registered name shows as id: and its hex");
-    TObjectIds::register_name(a.tag(), ATag::Name);
+    TObjectIds::register_tag(a.tag(), ATag::Name, false);
     check(a.to_string() == "a:0101000000000001", "a registered name and the value in 16 hex digits");
+    check(!TObjectIds::is_derived(a), "an id of a tag registered as not from its owner is not derived");
+    TObjectIds::register_tag(TObjectIds::make_tag(BTag::Kind, 2), BTag::Name, true);
+    check(TObjectIds::is_derived(BId::create(ids)), "an id of a tag registered as from its owner is derived");
 
     uint64_t previous = 0;
     bool increasing = true;

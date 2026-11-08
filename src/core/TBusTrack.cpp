@@ -37,7 +37,6 @@ TBusTrack::TBusTrack(TrackId id, TSession* session, const QString& name, int cha
 
         create_process_bus();
 
-        m_processBus->set_id(get_id());
         m_processBus->set_name(m_name);
 
         session->set_track_height(id, INITIAL_HEIGHT);
@@ -70,12 +69,7 @@ int TBusTrack::set_state( const QDomNode & node )
         bool ok;
         m_channelCount = e.attribute("channelcount", "2").toInt(&ok);
 
-        // The process bus has the track's id: sends find a bus track by it,
-        // and TTrack::set_state() restores the sends, so the file's id is on
-        // the track and on its bus before that (T64's loop check relies on it)
-        set_id(e.attribute("id", "0").toLongLong());
         create_process_bus();
-        m_processBus->set_id(get_id());
 
         TTrack::set_state(node);
 
@@ -96,7 +90,6 @@ void TBusTrack::create_process_bus()
         busConfig.channelcount = m_channelCount;
         busConfig.type = "output";
         busConfig.isInternalBus = true;
-        busConfig.id = get_id();
         m_processBus = new AudioBus(m_session->audio_device(), busConfig);
 }
 

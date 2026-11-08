@@ -55,7 +55,17 @@ public :
         FILE_DOES_NOT_EXIST = -4
     };
 	
+    // Not enrolled in the pool: it carries the source's id, the source is the
+    // stream the resources manager keeps
     TBufferedAudioStreamReader* deep_copy();
+
+    // Given by TObjectFactory
+    using IdTag = AudioSourceTag;
+    AudioSourceId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
 
 	
 	int set_state( const QDomNode& node );
@@ -95,6 +105,9 @@ public :
 	
 	
 private:
+    friend class TObjectFactory;
+    AudioSourceId m_objectId;
+
     // The file's reader once init() opened it; none: no file read
     std::unique_ptr<TAudioReader> m_audioReader;
 

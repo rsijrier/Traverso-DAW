@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioResampler.h"
 #include "TResamplerSettings.h"
 #include "TSheet.h"
+#include "TWorkspace.h"
 #include "TTrack.h"
 #include "TVUMonitor.h"
 #include "TSheetView.h"
@@ -1641,7 +1642,7 @@ TCommand* TMainWindow::show_add_child_session_dialog()
         return 0;
     }
 
-    TSession* session = new TSession(parentSession);
+    TWorkspace* session = m_project->objects().make<TWorkspace>(parentSession);
 
     TTrackSelector selector(this, parentSession, session);
     if (selector.exec() == QDialog::Accepted) {

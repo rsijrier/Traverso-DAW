@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #pragma once
 
+#include "TObjectIdTags.h"
 #include "TBufferedAudioStreamStatus.h"
 #include "TAudioBuffer.h"
 #include "TIOStream.h"
@@ -49,13 +50,14 @@ public :
     void set_name(const QString& name);
     void set_dir(const QString& name);
     void set_original_bit_depth(uint bitDepth);
-    void set_created_by_sheet(qint64 id);
+    // The song a take was recorded in; none for an import
+    void set_created_by_sheet(SongId song);
     QString get_filename() const;
     QString get_dir() const;
     QString get_name() const;
     QString get_short_name() const;
     qint64 get_id() const {return m_id;}
-    qint64 get_orig_sheet_id() const {return m_origSheetId;}
+    SongId get_orig_sheet_id() const {return m_originSong;}
     uint get_sample_rate() const;
     uint get_channel_count() const T_REALTIME_SAFE override {return m_channelCount;}
     uint get_bit_depth() const;
@@ -85,7 +87,7 @@ protected:
     size_t              m_slotcount;
 
     uint		m_channelCount;
-    qint64		m_origSheetId{};
+    SongId		m_originSong;
     QString 	m_dir;
     qint64		m_id{};
     QString 	m_name;

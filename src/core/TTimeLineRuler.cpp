@@ -40,11 +40,6 @@ TTimeLineRuler::TTimeLineRuler(TSession * sheet)
     QObject::tr("TTimeLineRuler");
 }
 
-QObject* TTimeLineRuler::id_owner() const
-{
-	return m_sheet;
-}
-
 QDomNode TTimeLineRuler::get_state(QDomDocument doc)
 {
 	QDomElement domNode = doc.createElement("TimeLine");

@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <TBufferedAudioStream.h>
 #include <TBufferedAudioStreamReader.h>
 #include <TAudioClip.h>
+#include <TAudioTrack.h>
 #include <Utils.h>
 #include <TThemer.h>
 #include "TLocation.h"
@@ -342,11 +343,11 @@ void ResourcesWidget::remove_clip(TAudioClip * clip)
 
 void ResourcesWidget::add_source(TBufferedAudioStreamReader * source)
 {
-	SourceTreeItem* item = m_sourceindices.value(source->get_id());
+	SourceTreeItem* item = m_sourceindices.value(source->object_id());
 	
 	if (! item) {
 		item = new SourceTreeItem(sourcesTreeWidget, source);
-		m_sourceindices.insert(source->get_id(), item);
+		m_sourceindices.insert(source->object_id(), item);
 		item->setTextAlignment(1, Qt::AlignHCenter);
 		item->setTextAlignment(2, Qt::AlignHCenter);
 		item->setTextAlignment(3, Qt::AlignLeft);
@@ -357,13 +358,13 @@ void ResourcesWidget::add_source(TBufferedAudioStreamReader * source)
 
 void ResourcesWidget::remove_source(TBufferedAudioStreamReader * source)
 {
-	SourceTreeItem* item = m_sourceindices.value(source->get_id());
+	SourceTreeItem* item = m_sourceindices.value(source->object_id());
 
 	if (!item) {
 		return;
 	}
 
-	m_sourceindices.remove(source->get_id());
+	m_sourceindices.remove(source->object_id());
 	// Its clips' items are its children: they go with it
 	for (auto it = m_clipindices.begin(); it != m_clipindices.end();) {
 		if (it.value()->QTreeWidgetItem::parent() == item) {
@@ -386,7 +387,7 @@ void ResourcesWidget::update_clip_state(TAudioClip* clip)
 	update_source_state(clip->get_readsource_id());
 }
 
-void ResourcesWidget::update_source_state(qint64 id)
+void ResourcesWidget::update_source_state(AudioSourceId id)
 {
 	SourceTreeItem* item = m_sourceindices.value(id);
 	Q_ASSERT(item);
@@ -397,8 +398,8 @@ ClipTreeItem::ClipTreeItem(SourceTreeItem * parent, TAudioClip * clip)
 	: QTreeWidgetItem(parent)
 	, m_clip(clip)
 {
-	// A clip's new id in a role of its own; Qt::UserRole is a source's old id
-	setData(0, ResourcesClipIdRole, QVariant::fromValue(clip->object_id()));
+	// A drop tells a clip from a source by the type of the id
+	setData(0, Qt::UserRole, QVariant::fromValue(clip->object_id()));
     connect(clip, &TAudioClip::recordingFinished, this, &ClipTreeItem::clip_state_changed);
 	connect(clip, &TAudioClip::stateChanged, this, &ClipTreeItem::clip_state_changed);
 }
@@ -427,7 +428,17 @@ void ClipTreeItem::clip_state_changed()
 
 void ClipTreeItem::apply_filter(TSheet * sheet)
 {
-	if (m_clip->get_sheet_id() == sheet->get_id()) {
+	// The song of its track; a clip on no track has the song of its take, an
+	// import belongs to the project and shows under every song
+	bool belongs;
+	if (TAudioTrack* track = m_clip->get_track()) {
+		belongs = track->get_sheet() == sheet;
+	} else {
+		TBufferedAudioStreamReader* source = m_clip->get_readsource();
+		const SongId origin = source ? source->get_orig_sheet_id() : SongId();
+		belongs = !origin.is_valid() || origin == sheet->object_id();
+	}
+	if (belongs) {
 		if (isHidden()) {
 			setHidden(false);
 		}
@@ -449,7 +460,9 @@ SourceTreeItem::SourceTreeItem(QTreeWidget* parent, TBufferedAudioStreamReader *
 
 void SourceTreeItem::apply_filter(TSheet * sheet)
 {
-	if (m_source->get_orig_sheet_id() == sheet->get_id()) {
+	// A take shows under its song, an import under every song
+	const SongId origin = m_source->get_orig_sheet_id();
+	if (!origin.is_valid() || origin == sheet->object_id()) {
 		setHidden(false);
 		return;
 	}
@@ -472,7 +485,7 @@ void SourceTreeItem::apply_filter(TSheet * sheet)
 
 void SourceTreeItem::source_state_changed()
 {
-	if (resources_manager()->is_source_in_use(m_source->get_id())) {
+	if (resources_manager()->is_source_in_use(m_source->object_id())) {
 		for (int i=0; i<5; ++i) {
 			setForeground(i, QColor(Qt::black));
 		}
@@ -489,7 +502,7 @@ void SourceTreeItem::source_state_changed()
 	setText(1, duration);
 	setText(2, "");
 	setText(3, "");
-	setData(0, Qt::UserRole, m_source->get_id());
+	setData(0, Qt::UserRole, QVariant::fromValue(m_source->object_id()));
 	setToolTip(0, m_source->get_short_name() + "   " + duration);
 
 }

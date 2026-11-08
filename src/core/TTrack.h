@@ -61,8 +61,6 @@ public:
         Q_ASSERT(m_objectId.is_valid());
         return m_objectId;
     }
-    // Its owner: the song or the project it was made in
-    QObject* id_owner() const;
 
     enum TRACKTYPE{
         AUDIO = 0,
@@ -96,14 +94,16 @@ public:
     }
 
     void add_input_bus(const QString& name);
-    void add_post_send(qint64 busId);
-    void add_post_send(AudioBus* bus);
-    void add_pre_send(qint64 busId);
+    // To a track (a bus track or a master), or to a port (a hardware or
+    // software bus)
+    void add_post_send(TrackId target);
+    void add_post_send(AudioBus* port);
+    void add_pre_send(TrackId target);
+    void add_pre_send(AudioBus* port);
     void remove_post_sends(const QList<SendId>& sendIds);
     void remove_all_post_sends();
     void remove_post_send(TSend* send);
     void remove_pre_sends(const QList<SendId>& sendIds);
-    void add_input_bus(qint64 busId);
 
     bool connect_to_jack(bool inports, bool outports);
     bool disconnect_from_jack(bool inports, bool outports);
@@ -119,10 +119,9 @@ public:
     QList<TSend*> get_post_sends() const;
     QList<TSend*> get_pre_sends() const;
     TSend* get_send(SendId sendId);
-    bool has_post_send(qint64 busId) const;
-    // True when a send from this track to the bus busId would close a
+    // True when a send from this track to the track target would close a
     // feedback loop (T64): such a send is refused
-    bool send_closes_loop(qint64 busId);
+    bool send_closes_loop(TrackId target);
     virtual void add_input_bus(AudioBus* bus);
 
 

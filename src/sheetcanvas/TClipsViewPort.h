@@ -49,10 +49,10 @@ protected:
 private:
     TSheetWidget*                   m_sw;
     QStringList                     m_importFiles;
-    // From the resources window: a clip by its new id, or a source by its old id
+    // From the resources window: a clip or a source, by its id
     struct ResourceImport {
         ClipId clip;
-        qint64 sourceId;
+        AudioSourceId source;
     };
     QList<ResourceImport>           m_resourcesImport;
     TAudioTrack*                    m_importTrack{nullptr};

@@ -38,8 +38,3 @@ qint64 TraversoDAW::Utils::create_id( )
 	return id;
 }
 
-QDateTime TraversoDAW::Utils::extract_date_time(qint64 id)
-{
-    QDateTime time = QDateTime::fromSecsSinceEpoch(id / 1000000000);
-    return time;
-}

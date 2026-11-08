@@ -20,6 +20,7 @@
 */
  
 #include "TAudioClipManager.h"
+#include "TObjectFactory.h"
 
 #include "ClipSelection.h"
 #include "TSelectionService.h"
@@ -51,12 +52,12 @@ QDomNode TAudioClipManager::get_state(QDomDocument doc, bool /*istemplate*/)
 	QDomElement managerNode = doc.createElement("ClipManager");
 	QDomElement globalSelection = doc.createElement("GlobalSelection");
 	
-	QStringList selectedClips;
+	QList<ClipId> selectedClips;
 	foreach(TAudioClip* clip, m_clipselection) {
-		selectedClips << QString::number(clip->get_id());
+		selectedClips << clip->object_id();
 	}
 	
-	globalSelection.setAttribute("clips",  selectedClips.join(";"));
+	TObjectFactory::write_references(globalSelection, "selectedclips", selectedClips);
 	
 	managerNode.appendChild(globalSelection);
 	
@@ -67,14 +68,16 @@ int TAudioClipManager::set_state(const QDomNode & node)
 {
 	QDomElement e = node.firstChildElement("GlobalSelection");
 	
-	QStringList selectionList = e.attribute("clips", "").split(";");
-	
-	for (int i=0; i<selectionList.size(); ++i) {
-		qint64 id = selectionList.at(i).toLongLong();
+	for (const ClipId& id : TObjectFactory::read_references<ClipTag>(e, "selectedclips")) {
+		bool found = false;
 		foreach(TAudioClip* clip, m_clips) {
-			if (clip->get_id() == id) {
+			if (clip->object_id() == id) {
 				add_to_selection(clip);
+				found = true;
 			}
+		}
+		if (!found) {
+			TLOG_W("ids", "the selected clip {} is not in the song, left out of the selection", id.to_string());
 		}
 	}
 	

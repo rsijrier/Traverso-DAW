@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QRandomGenerator>
 #include "TBufferedAudioStreamReader.h"
+#include "TObjectFactory.h"
 #include "TAudioReader.h"
 
 #include "TProjectManager.h"
@@ -130,10 +131,13 @@ QDomNode TBufferedAudioStreamReader::get_state( QDomDocument doc )
 {
     QDomElement node = doc.createElement("Source");
     node.setAttribute("channelcount", m_channelCount);
-    node.setAttribute("origsheetid", m_origSheetId);
+    TObjectFactory::write(node, object_id());
+    if (m_originSong.is_valid()) {
+        TObjectFactory::write_reference(node, "originsong", m_originSong);
+    }
     node.setAttribute("dir", m_dir);
-    node.setAttribute("id", m_id);
-        node.setAttribute("name", m_name);
+    node.setAttribute("name", m_name);
+    node.setAttribute("shortname", m_shortName);
     node.setAttribute("origbitdepth", m_origBitDepth);
     node.setAttribute("wasrecording", m_wasRecording);
     node.setAttribute("length", m_length.universal_frame());
@@ -149,23 +153,16 @@ int TBufferedAudioStreamReader::set_state( const QDomNode & node )
 
     QDomElement e = node.toElement();
     m_channelCount = e.attribute("channelcount", "0").toUInt();
-    m_origSheetId = e.attribute("origsheetid", "0").toLongLong();
+    m_originSong = TObjectFactory::read_reference<SongTag>(e, "originsong").value_or(SongId());
     set_dir( e.attribute("dir", "" ));
-    m_id = e.attribute("id", "").toLongLong();
     m_rate = m_outputRate = e.attribute("rate", "0").toUInt();
     bool ok;
     m_length = TTimeRef(e.attribute("length", "0").toLongLong(&ok));
     m_origBitDepth = e.attribute("origbitdepth", "0").toUInt();
     m_wasRecording = e.attribute("wasrecording", "0").toInt();
 
-    // For older project files, this should properly detect if the
-    // audio source was a recording or not., in fact this should suffice
-    // and the flag wasrecording would be unneeded, but oh well....
-    if (m_origSheetId != 0) {
-        m_wasRecording = true;
-    }
-
     set_name( e.attribute("name", "No name supplied?" ));
+    m_shortName = e.attribute("shortname", m_name);
 
     return 1;
 }
@@ -278,6 +275,7 @@ TBufferedAudioStreamReader * TBufferedAudioStreamReader::deep_copy( )
     QDomDocument doc("ReadSource");
     QDomNode rsnode = get_state(doc);
     TBufferedAudioStreamReader* source = new TBufferedAudioStreamReader(rsnode);
+    source->m_objectId = m_objectId;
     return source;
 }
 

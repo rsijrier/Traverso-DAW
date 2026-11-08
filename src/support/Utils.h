@@ -33,7 +33,6 @@ class Utils
 {
 public:
 
-    static QDateTime extract_date_time(qint64 id);
     static qint64 create_id();
 };
 

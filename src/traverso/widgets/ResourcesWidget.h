@@ -108,10 +108,10 @@ private:
 	TSheet* m_currentSheet;
 	FileWidget* m_filewidget;
 	QHash<ClipId, ClipTreeItem*> m_clipindices;
-	QHash<qint64, SourceTreeItem*> m_sourceindices;
+	QHash<AudioSourceId, SourceTreeItem*> m_sourceindices;
 	
 	void update_clip_state(TAudioClip* clip);
-	void update_source_state(qint64 id);
+	void update_source_state(AudioSourceId id);
 	
 	void filter_on_current_sheet();
 	

@@ -45,6 +45,7 @@ class TTimeLineRuler;
 
 class TAudioDevice;
 class TProject;
+class TWorkspace;
 
 class TSession : public TContextItem
 {
@@ -59,9 +60,6 @@ public:
 
     // The audio device this session runs on (Traverso owns it)
     TAudioDevice& audio_device() const { return m_device; }
-
-	QDomNode get_state(QDomDocument doc);
-	int set_state( const QDomNode & node );
 
 
 	qreal get_hzoom() const;
@@ -88,9 +86,6 @@ public:
 	// parent's. Its objects get their ids from that project's factory
 	virtual TProject* get_project() const;
 	TTrack* get_track(TrackId id) const;
-	// By old id, for the load of a workspace's tracks only (until the project
-	// file references tracks by their new id)
-	TTrack* get_track(qint64 id) const;
 	TTimeLineRuler* get_timeline_ruler() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
@@ -99,7 +94,7 @@ public:
 	TBusTrack* get_master_out_bus_track() const;
 	virtual QList<TTrack*> get_tracks() const;
 	QList<TBusTrack*> get_bus_tracks() const;
-	QList<TSession*> get_child_sessions() const {return m_childSessions;}
+	QList<TWorkspace*> get_child_sessions() const {return m_childSessions;}
 	TLocation* get_work_snap() const;
 	virtual bool is_snap_on() const	{return m_isSnapOn;}
 
@@ -123,8 +118,8 @@ public:
     TCommand* add_track(TTrack* track, bool historable=true);
     TCommand* remove_track(TTrack* track, bool historable=true);
 
-	void add_child_session(TSession* child);
-	void remove_child_session(TSession* child);
+	void add_child_session(TWorkspace* child);
+	void remove_child_session(TWorkspace* child);
 
     TChannelBuffer& get_curve_buffer() {
         return m_curveProcessBuffer;
@@ -134,7 +129,7 @@ protected:
     // First: the members below are made with it
     TAudioDevice& m_device;
 	TSession*               m_parentSession;
-	QList<TSession*>        m_childSessions;
+	QList<TWorkspace*>      m_childSessions;
     TRtList<TAudioTrack>    m_audioTracks;
     TRtList<TBusTrack>      m_busTracks;
     TBusTrack*              m_masterOutBusTrack;

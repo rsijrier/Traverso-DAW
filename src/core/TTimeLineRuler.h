@@ -49,7 +49,6 @@ public:
 
     // Derived from its song's id (TObjectFactory::make_owned())
     RulerId object_id() const { return m_objectId; }
-    QObject* id_owner() const;
 
     TTimeLineMarker* get_end_marker();
     bool get_end_location(TTimeRef& location);

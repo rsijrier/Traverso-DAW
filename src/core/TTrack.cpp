@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TTrack.h"
 #include "TObjectFactory.h"
+#include "TPortNames.h"
 #include "TRtTransaction.h"
 
 #include "AudioBus.h"
@@ -33,7 +34,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TProject.h"
 #include "TAudioBusConfiguration.h"
 #include "TVUMonitor.h"
-#include "Utils.h"
 #include "TBusTrack.h"
 #include "TSend.h"
 #include "TRoutingGraph.h"
@@ -70,11 +70,6 @@ TTrack::TTrack(TrackId id, TSession* session)
     }
 }
 
-QObject* TTrack::id_owner() const
-{
-    return m_session;
-}
-
 TTrack::~TTrack()
 {
     // FIXME, we delete ourselves, but audiodevice could still be
@@ -87,14 +82,11 @@ TTrack::~TTrack()
 
 void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
 {
-    if (! istemplate ) {
-        node.setAttribute("id", get_id());
+    if (!istemplate && !TObjectIds::is_derived(object_id())) {
         TObjectFactory::write(node, object_id());
         if (TSheet* sheet = qobject_cast<TSheet*>(m_session)) {
             TObjectFactory::write_owner(node, sheet->object_id());
         }
-    } else {
-        node.setAttribute("id", TraversoDAW::Utils::create_id());
     }
     node.setAttribute("name", m_name);
     node.setAttribute("pan", m_audio.get_pan());
@@ -112,6 +104,15 @@ void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
     QDomNode sendsNode = doc.createElement("Sends");
 
     for (TSend* send : m_postSends.gui_items()) {
+        // A track's own jack bus is made again when it connects to jack at
+        // load, with its send; only the jack master is named in the file
+        AudioBus* bus = send->get_bus();
+        // set_state() deletes a send whose bus did not resolve
+        Q_ASSERT(bus);
+        if (!send->get_target_track().is_valid() && bus->get_bus_type() == AudioBus::BusIsSoftware
+            && bus->get_name() != QLatin1String(JackMasterPortName)) {
+            continue;
+        }
         sendsNode.appendChild(send->get_state(node.toDocument()));
     }
     for (TSend* send : m_preSends.gui_items()) {
@@ -137,7 +138,6 @@ int TTrack::set_state( const QDomNode & node )
     set_solo(e.attribute( "solo", "" ).toInt());
     set_muted_by_solo(e.attribute( "mutedbysolo", "0").toInt());
     m_audio.set_pan( e.attribute( "pan", "" ).toFloat() );
-    set_id(e.attribute("id", "0").toLongLong());
     m_session->set_track_height(object_id(), e.attribute( "height", "90" ).toInt());
 
     QDomNode m_pluginChainNode = node.firstChildElement("PluginChain");
@@ -164,8 +164,9 @@ int TTrack::set_state( const QDomNode & node )
                 // This send could not set it's state...
                 TLOG_W("track", "a send could not restore its state, moving on");
                 delete send;
-            } else if (send_closes_loop(send->get_bus_id())) {
-                TLOG_W("track", "track {}: the send to bus {} would close a feedback loop, not loaded", m_name, send->get_bus_id());
+            } else if (send->get_target_track().is_valid() && send_closes_loop(send->get_target_track())) {
+                TLOG_W("track", "track {}: the send to {} would close a feedback loop, not loaded", m_name,
+                       send->get_target_track().to_string());
                 delete send;
             } else {
                 if (send->get_type() == TSend::POSTSEND) {
@@ -188,19 +189,19 @@ int TTrack::set_state( const QDomNode & node )
     if (! m_session->is_project_session()) {
         TProject* project = pm().get_project();
         if (m_session && project) {
-            qint64 sendBusId;
+            TrackId sendTarget;
             if (m_name == "Sheet Master") {
-                TLOG_D("track", "sheet master gets the project bus id");
-                sendBusId = project->get_master_out_bus_track()->get_id();
+                TLOG_D("track", "sheet master gets the project master as target");
+                sendTarget = project->get_master_out_bus_track()->object_id();
             } else {
-                sendBusId = m_session->get_master_out_bus_track()->get_id();
+                sendTarget = m_session->get_master_out_bus_track()->object_id();
             }
 
             // Make sure we output always to the most logical bus.
             // This might conflict with what the user asked for but then
             // Use MUTE instead :)
             if (m_postSends.gui_items().isEmpty()) {
-                add_post_send(sendBusId);
+                add_post_send(sendTarget);
             }
         }
     }
@@ -302,42 +303,51 @@ void TTrack::set_input_bus(AudioBus* bus, TRtTransaction& transaction)
 }
 
 
-void TTrack::add_input_bus(qint64 busId)
-{
-    TProject* project = pm().get_project();
-    AudioBus* bus = project->get_audio_bus(busId);
-    add_input_bus(bus);
-}
-
-void TTrack::add_post_send(qint64 busId)
+void TTrack::add_post_send(TrackId target)
 {
     for (TSend* send : m_postSends.gui_items()) {
-
-        if (send->get_bus_id() == busId) {
-            TLOG_W("track", "track {} already has bus {} as post send", m_name, busId);
+        if (send->get_target_track() == target) {
+            TLOG_W("track", "track {} already has {} as post send", m_name, target.to_string());
             return;
         }
     }
 
-    TProject* project = pm().get_project();
-    AudioBus* bus = project->get_audio_bus(busId);
+    TProject* project = m_session->get_project();
+    AudioBus* bus = project->get_audio_bus(target);
 
     if (!bus) {
-        TLOG_W("track", "bus {} not found in the project", busId);
+        TLOG_W("track", "{} not found in the project", target.to_string());
         return;
     }
 
-    add_post_send(bus);
+    if (send_closes_loop(target)) {
+        TLOG_W("track", "track {}: a post send to {} would close a feedback loop, refused", m_name, target.to_string());
+        return;
+    }
+
+    TSend* postSend = project->objects().make<TSend>(this, target, bus);
+    postSend->set_type(TSend::POSTSEND);
+
+    {
+        TRtTransaction transaction;
+        private_add_post_send(postSend, transaction);
+    }
+
+    emit routingConfigurationChanged();
 }
 
-void TTrack::add_post_send(AudioBus *bus)
+void TTrack::add_post_send(AudioBus* port)
 {
-    if (send_closes_loop(bus->get_id())) {
-        TLOG_W("track", "track {}: a post send to bus {} would close a feedback loop, refused", m_name, bus->get_id());
-        return;
+    Q_ASSERT(port);
+
+    for (TSend* send : m_postSends.gui_items()) {
+        if (send->get_bus() == port) {
+            TLOG_W("track", "track {} already has bus {} as post send", m_name, port->get_name());
+            return;
+        }
     }
 
-    TSend* postSend = m_session->get_project()->objects().make<TSend>(this, bus);
+    TSend* postSend = m_session->get_project()->objects().make<TSend>(this, port);
     postSend->set_type(TSend::POSTSEND);
 
     {
@@ -349,29 +359,51 @@ void TTrack::add_post_send(AudioBus *bus)
 }
 
 
-void TTrack::add_pre_send(qint64 busId)
+void TTrack::add_pre_send(TrackId target)
 {
     for (TSend* send : m_preSends.gui_items()) {
-        if (send->get_bus_id() == busId) {
-            TLOG_W("track", "track {} already has bus {} as pre send", m_name, busId);
+        if (send->get_target_track() == target) {
+            TLOG_W("track", "track {} already has {} as pre send", m_name, target.to_string());
             return;
         }
     }
 
-    TProject* project = pm().get_project();
-    AudioBus* bus = project->get_audio_bus(busId);
+    TProject* project = m_session->get_project();
+    AudioBus* bus = project->get_audio_bus(target);
 
     if (!bus) {
-        TLOG_W("track", "bus {} not found in the project", busId);
+        TLOG_W("track", "{} not found in the project", target.to_string());
         return;
     }
 
-    if (send_closes_loop(busId)) {
-        TLOG_W("track", "track {}: a pre send to bus {} would close a feedback loop, refused", m_name, busId);
+    if (send_closes_loop(target)) {
+        TLOG_W("track", "track {}: a pre send to {} would close a feedback loop, refused", m_name, target.to_string());
         return;
     }
 
-    TSend* preSend = m_session->get_project()->objects().make<TSend>(this, bus);
+    TSend* preSend = project->objects().make<TSend>(this, target, bus);
+    preSend->set_type(TSend::PRESEND);
+
+    {
+        TRtTransaction transaction;
+        private_add_pre_send(preSend, transaction);
+    }
+
+    emit routingConfigurationChanged();
+}
+
+void TTrack::add_pre_send(AudioBus* port)
+{
+    Q_ASSERT(port);
+
+    for (TSend* send : m_preSends.gui_items()) {
+        if (send->get_bus() == port) {
+            TLOG_W("track", "track {} already has bus {} as pre send", m_name, port->get_name());
+            return;
+        }
+    }
+
+    TSend* preSend = m_session->get_project()->objects().make<TSend>(this, port);
     preSend->set_type(TSend::PRESEND);
 
     {
@@ -451,33 +483,33 @@ void TTrack::remove_pre_sends(const QList<SendId>& sendIds)
     emit routingConfigurationChanged();
 }
 
-bool TTrack::send_closes_loop(qint64 busId)
+bool TTrack::send_closes_loop(TrackId target)
 {
-    TProject* project = pm().get_project();
-    if (!project) {
-        return false;
-    }
+    TProject* project = m_session->get_project();
 
-    // A bus track's process bus has the id of its track; other buses (the
-    // hardware and software buses) have no track and send nowhere
-    auto targetsOf = [project](qint64 id) {
-        QList<qint64> targets;
+    // The tracks a track sends to; a send to a port is no edge
+    auto targetsOf = [project](TrackId id) {
+        QList<TrackId> targets;
         TTrack* track = project->get_track(id);
-        if (!track && project->get_master_out_bus_track()->get_id() == id) {
+        if (!track && project->get_master_out_bus_track()->object_id() == id) {
             track = project->get_master_out_bus_track();
         }
         if (track) {
             for (TSend* send : track->get_post_sends()) {
-                targets.append(send->get_bus_id());
+                if (send->get_target_track().is_valid()) {
+                    targets.append(send->get_target_track());
+                }
             }
             for (TSend* send : track->get_pre_sends()) {
-                targets.append(send->get_bus_id());
+                if (send->get_target_track().is_valid()) {
+                    targets.append(send->get_target_track());
+                }
             }
         }
         return targets;
     };
 
-    return TRoutingGraph::closes_loop(get_id(), busId, targetsOf);
+    return TRoutingGraph::closes_loop(object_id(), target, targetsOf);
 }
 
 void TTrack::private_add_post_send(TSend* postSend, TRtTransaction& transaction)
@@ -563,17 +595,6 @@ QList<TSend* > TTrack::get_post_sends() const
 QList<TSend* > TTrack::get_pre_sends() const
 {
     return m_preSends.gui_items();
-}
-
-bool TTrack::has_post_send(qint64 busId) const
-{
-    for (TSend* send : m_postSends.gui_items()) {
-        if (send->get_bus_id() == busId) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 TSend* TTrack::get_send(SendId sendId)

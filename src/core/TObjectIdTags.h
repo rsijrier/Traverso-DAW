@@ -33,6 +33,8 @@ class TProject;
 class TTimeLineRuler;
 class TTimeLineMarker;
 class TSend;
+class TBufferedAudioStreamReader;
+class TWorkspace;
 
 // Kind 0 is no kind. The numbers follow the tree, so an id reads as where it
 // stands in it (doc/design/object-ids.md). All are fixed, also those whose
@@ -90,6 +92,14 @@ enum : uint8_t {
 };
 
 enum : uint8_t {
+    AudioSourceSubtype = 1,
+};
+
+enum : uint8_t {
+    WorkspaceSubtype = 1,
+};
+
+enum : uint8_t {
     RulerSubtype = 1,
 };
 
@@ -124,6 +134,7 @@ struct AudioMixerTrackTag
 
 struct AudioTrackTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioTrackSubtype);
     static constexpr const char* Name = "audiotrack";
@@ -132,6 +143,7 @@ struct AudioTrackTag
 
 struct BusTrackTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(BusTrackSubtype);
     static constexpr const char* Name = "bustrack";
@@ -180,6 +192,7 @@ struct ClipTag
 
 struct AudioClipTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = ClipKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioClipSubtype);
     static constexpr const char* Name = "audioclip";
@@ -193,11 +206,11 @@ using BusTrackId = TObjectId<BusTrackTag>;
 using SongMasterId = TObjectId<SongMasterTag>;
 using ProjectMasterId = TObjectId<ProjectMasterTag>;
 using BounceTrackId = TObjectId<BounceTrackTag>;
-// Songs: one subtype. In the code a song is still a TSheet; a session (a
-// container of tracks, to be named workspace) has no id yet
+// Songs: one subtype. In the code a song is still a TSheet
 
 struct SongTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = SongKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(SongSubtype);
     static constexpr const char* Name = "song";
@@ -209,6 +222,7 @@ struct SongTag
 
 struct ProjectTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = ProjectKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(ProjectSubtype);
     static constexpr const char* Name = "project";
@@ -231,6 +245,7 @@ struct RulerTag
 
 struct MarkerTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = MarkerKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(MarkerSubtype);
     static constexpr const char* Name = "marker";
@@ -239,10 +254,36 @@ struct MarkerTag
 
 struct SendTag
 {
+    static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = SendKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(SendSubtype);
     static constexpr const char* Name = "send";
     using Object = TSend;
+};
+
+// An audio source: one per audio file of the project, the stream the resources
+// manager keeps. The streams it hands out as copies carry the same id and are
+// not in the pool
+
+struct AudioSourceTag
+{
+    static constexpr bool FromOwner = false;
+    static constexpr uint8_t Kind = AudioSourceKind;
+    static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioSourceSubtype);
+    static constexpr const char* Name = "audiosource";
+    using Object = TBufferedAudioStreamReader;
+};
+
+// A workspace: a session of a song or of the project that shows some of its
+// tracks
+
+struct WorkspaceTag
+{
+    static constexpr bool FromOwner = false;
+    static constexpr uint8_t Kind = WorkspaceKind;
+    static constexpr uint64_t Subtypes = TObjectIds::subtype(WorkspaceSubtype);
+    static constexpr const char* Name = "workspace";
+    using Object = TWorkspace;
 };
 
 using RulerId = TObjectId<RulerTag>;
@@ -251,22 +292,26 @@ using SendId = TObjectId<SendTag>;
 using ClipId = TObjectId<ClipTag>;
 using AudioClipId = TObjectId<AudioClipTag>;
 using SongId = TObjectId<SongTag>;
+using AudioSourceId = TObjectId<AudioSourceTag>;
+using WorkspaceId = TObjectId<WorkspaceTag>;
 
 // At start-up, before anything logs an id. Only exact tags: ids are made with
 // those, so they are the ones the log shows
 inline void register_object_id_names()
 {
-    TObjectIds::register_name(TObjectIds::make_tag(TrackKind, AudioTrackSubtype), AudioTrackTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(TrackKind, BusTrackSubtype), BusTrackTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(TrackKind, SongMasterSubtype), SongMasterTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(TrackKind, ProjectMasterSubtype), ProjectMasterTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(TrackKind, BounceTrackSubtype), BounceTrackTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(ClipKind, AudioClipSubtype), AudioClipTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(SongKind, SongSubtype), SongTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(ProjectKind, ProjectSubtype), ProjectTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(RulerKind, RulerSubtype), RulerTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(MarkerKind, MarkerSubtype), MarkerTag::Name);
-    TObjectIds::register_name(TObjectIds::make_tag(SendKind, SendSubtype), SendTag::Name);
+    TObjectIds::register_tag(TObjectIds::make_tag(TrackKind, AudioTrackSubtype), AudioTrackTag::Name, AudioTrackTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(TrackKind, BusTrackSubtype), BusTrackTag::Name, BusTrackTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(TrackKind, SongMasterSubtype), SongMasterTag::Name, SongMasterTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(TrackKind, ProjectMasterSubtype), ProjectMasterTag::Name, ProjectMasterTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(TrackKind, BounceTrackSubtype), BounceTrackTag::Name, BounceTrackTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(ClipKind, AudioClipSubtype), AudioClipTag::Name, AudioClipTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(SongKind, SongSubtype), SongTag::Name, SongTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(ProjectKind, ProjectSubtype), ProjectTag::Name, ProjectTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(RulerKind, RulerSubtype), RulerTag::Name, RulerTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(MarkerKind, MarkerSubtype), MarkerTag::Name, MarkerTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(SendKind, SendSubtype), SendTag::Name, SendTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(AudioSourceKind, AudioSourceSubtype), AudioSourceTag::Name, AudioSourceTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(WorkspaceKind, WorkspaceSubtype), WorkspaceTag::Name, WorkspaceTag::FromOwner);
     // A clip id travels as item data in a drag from the resources window: the
     // stream of a QVariant names its type, which the reading side must know
     qRegisterMetaType<ClipId>();
@@ -275,4 +320,5 @@ inline void register_object_id_names()
     qRegisterMetaType<TrackId>();
     qRegisterMetaType<SendId>();
     qRegisterMetaType<MarkerId>();
+    qRegisterMetaType<AudioSourceId>();
 }

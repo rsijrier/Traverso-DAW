@@ -66,7 +66,6 @@ TAudioClip::TAudioClip(const QString& name)
 {
     PENTERCONS;
     m_name = name;
-    m_readSourceId = m_sheetId = 0;
     QObject::tr("TAudioClip");
 
     m_track = nullptr;
@@ -94,26 +93,13 @@ void TAudioClip::set_name(const QString& name)
     emit stateChanged();
 }
 
-QObject* TAudioClip::id_owner() const
-{
-    // A removed clip keeps m_track for undo; its project's resources manager
-    // knows whether it is in use. Clips of a removed track or song still count
-    // as in use (T96)
-    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(object_id())) {
-        return m_track;
-    }
-    return nullptr;
-}
-
 TAudioClip::TAudioClip(const QDomNode& node)
     : TAudioClip("")
 {
     PENTERCONS;
 
     QDomElement e = node.toElement();
-    set_id(e.attribute("id", "").toLongLong());
-    m_readSourceId = e.attribute("source", "").toLongLong();
-    m_sheetId = e.attribute("sheet", "0").toLongLong();
+    m_readSourceId = TObjectFactory::read_reference<AudioSourceTag>(e, "audiosource").value_or(AudioSourceId());
     m_name = e.attribute( "clipname", "" ) ;
     m_audio.set_muted(e.attribute( "mute", "" ).toInt());
     const TTimeRef length(e.attribute( "length", "0" ).toLongLong());
@@ -161,8 +147,7 @@ int TAudioClip::set_state(const QDomNode& node)
 
     m_isTake = e.attribute( "take", "").toInt();
     m_isLocked = e.attribute( "locked", "0" ).toInt();
-    m_readSourceId = e.attribute("source", "").toLongLong();
-    m_sheetId = e.attribute("sheet", "0").toLongLong();
+    m_readSourceId = TObjectFactory::read_reference<AudioSourceTag>(e, "audiosource").value_or(AudioSourceId());
     m_audio.set_muted(e.attribute( "mute", "" ).toInt());
 
     bool ok;
@@ -225,15 +210,18 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     node.setAttribute("mute", m_audio.is_muted());
     node.setAttribute("take", m_isTake);
     node.setAttribute("clipname", m_name );
-    node.setAttribute("id", get_id() );
     TObjectFactory::write(node, object_id());
-    if (id_owner()) {
+    // A removed clip keeps m_track for undo; its project's resources manager
+    // knows whether it is in use. Clips of a removed track or song still count
+    // as in use (T96)
+    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(object_id())) {
         TObjectFactory::write_owner(node, m_track->object_id());
     }
-    node.setAttribute("sheet", m_sheetId );
     node.setAttribute("locked", m_isLocked);
 
-    node.setAttribute("source", m_readSourceId);
+    if (m_readSourceId.is_valid()) {
+        TObjectFactory::write_reference(node, "audiosource", m_readSourceId);
+    }
 
     if (m_fadeIn) {
         node.appendChild(m_fadeIn->get_state(doc));
@@ -658,7 +646,7 @@ int TAudioClip::init_recording()
 
     TBufferedAudioStreamReader* rs = resources_manager()->create_recording_source(
                 get_sheet()->get_audio_sources_dir(),
-                m_name, channelcount, get_sheet()->get_id());
+                m_name, channelcount, get_sheet()->object_id());
 
     resources_manager()->set_source_for_clip(this, rs);
 
@@ -768,7 +756,7 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
 
     m_readSource = rs;    
     m_readSource->set_source_start_location(get_source_start_location());
-    m_readSourceId = rs->get_id();
+    m_readSourceId = rs->object_id();
     m_sourceLength = rs->get_length();
     sync_location_to_stream();
     connect(m_location.get(), &TLocation::locationChanged, this, &TAudioClip::sync_location_to_stream);
@@ -911,8 +899,6 @@ void TAudioClip::attach_to_sheet()
     } else {
         PWARN("AudioClip::attach_to_sheet() : no ReadSource available!!");
     }
-
-    m_sheetId = sheet->get_id();
 
     // The peak file is needed before the clip is ever seen
     if (m_waveform) {

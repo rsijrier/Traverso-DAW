@@ -6,7 +6,7 @@
 // The objects of one project by id (doc/design/object-ids.md). Two indexes:
 // byId for every object, byNumber for the objects with a number from the
 // sequence. An object derived from an owner (a master, the bounce track) is in
-// byId only; find_owner() gives its owner from its number. TObjectFactory
+// byId only: its number is its owner's. TObjectFactory
 // enrolls an object when it makes or loads it; it leaves when it is destroyed.
 // Whether an object is in the project's tree now is not the index's question:
 // an edit asks the object. Owned by the project, no singleton.
@@ -25,17 +25,10 @@
 #include <QThread>
 #include <QtGlobal>
 
-#include <functional>
 
 class TObjectPool : public QObject
 {
 public:
-    // root is the owner of number 0, the project
-    explicit TObjectPool(QObject* root = nullptr)
-        : m_root(root)
-    {
-    }
-
     // An object with a number from the sequence. False when the id is there
     // already, its number is used by another object, or it is invalid
     template <typename Tag>
@@ -49,17 +42,13 @@ public:
         return true;
     }
 
-    // An object derived from its owner. owner gives its owner as it is now, for
-    // the invariant find_owner(id) == owner()
+    // An object derived from its owner: its number is its owner's, so it is not
+    // in byNumber
     template <typename Tag>
-    bool add_owned(TObjectId<Tag> id, typename Tag::Object* object, std::function<QObject*()> owner)
+    bool add_owned(TObjectId<Tag> id, typename Tag::Object* object)
         requires(std::has_single_bit(Tag::Subtypes))
     {
-        if (!insert(id.to_storage(), object)) {
-            return false;
-        }
-        m_ownerOf.insert(id.to_storage(), std::move(owner));
-        return true;
+        return insert(id.to_storage(), object);
     }
 
     template <typename Tag>
@@ -82,14 +71,6 @@ public:
     // Without a domain, for QML and the log: the caller checks the tag
     QObject* find_raw(object_id_value_t value) const { return m_byId.value(value); }
 
-    // The owner of an id derived from it: the object with that number, the
-    // root for number 0
-    QObject* find_owner(object_id_value_t value) const
-    {
-        const object_id_value_t number = TObjectIds::sequence_of(value);
-        return number == 0 ? m_root : m_byNumber.value(number);
-    }
-
     // The id of an object in the pool, 0 when it has none
     object_id_value_t id_of(const QObject* object) const { return m_idOf.value(object); }
 
@@ -97,19 +78,6 @@ public:
     // Whether an object with a counter id already has this value's number
     bool has_number(object_id_value_t value) const { return m_byNumber.contains(TObjectIds::sequence_of(value)); }
     qsizetype count() const { return m_byId.size(); }
-
-    // The derived ids whose object is not with the owner its number names: the
-    // invariant find_owner(id) == owner(), for the load check and the tests
-    QList<object_id_value_t> owners_out_of_place() const
-    {
-        QList<object_id_value_t> wrong;
-        for (auto it = m_ownerOf.cbegin(); it != m_ownerOf.cend(); ++it) {
-            if (find_owner(it.key()) != it.value()()) {
-                wrong.append(it.key());
-            }
-        }
-        return wrong;
-    }
 
 private:
     bool insert(object_id_value_t value, QObject* object)
@@ -135,7 +103,6 @@ private:
     {
         if (QObject* object = m_byId.take(value)) {
             m_idOf.remove(object);
-            m_ownerOf.remove(value);
             const object_id_value_t number = TObjectIds::sequence_of(value);
             if (m_byNumber.value(number) == object) {
                 m_byNumber.remove(number);
@@ -143,10 +110,8 @@ private:
         }
     }
 
-    QObject* m_root;
     QHash<object_id_value_t, QObject*> m_byId;
     QHash<object_id_value_t, QObject*> m_byNumber;
     QHash<const QObject*, object_id_value_t> m_idOf;
-    QHash<object_id_value_t, std::function<QObject*()>> m_ownerOf;
     QHash<object_id_value_t, QMetaObject::Connection> m_destroyed;
 };

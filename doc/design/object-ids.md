@@ -212,8 +212,7 @@ with an id are made. The project owns the sequence, the pool and the factory:
 
 A class with an id has `using IdTag = AudioTrackTag;` (`void` for a class in
 more than one role: its maker names the tag), a private `m_objectId`,
-`friend class TObjectFactory`, and `QObject* id_owner() const`: its owner now.
-The factory decides the id before it builds the object: a class whose
+and `friend class TObjectFactory`. The factory decides the id before it builds the object: a class whose
 constructor takes its id first gets it there (a song, `TSheet(SongId, ...)`,
 which makes its master and bounce track from its own number), the others right
 after. The owner gives its number to `make_owned()`, as it is not in the pool
@@ -231,18 +230,18 @@ around it has no id, and `object_id()` asserts on first use.
 | byId | every object, by its id |
 | byNumber | the objects with a counter id, by their number |
 
-`find(id)` gives an object of the tag; `find_owner(id)` the owner of a derived
-id: its number looked up in byNumber, the project for 0. An object leaves the
+`find(id)` gives an object of the tag. A derived object is in byId only: its
+number is its owner's. An object leaves the
 pool when it is destroyed (`QObject::destroyed`): no empty entries, so
 `contains()` is never true for a dead object. Whether an object is in the
 project's tree now is not the pool's question: an edit asks the object (is this
 clip on a track, is that track in a song of the project) and refuses with a
 reason. A removed track or clip stays findable as long as it lives, for undo.
 
-**Invariant:** for every derived object, `pool.find_owner(object->id()) ==
-object->id_owner()` (`owners_out_of_place()`). Checked at the end of every load
-(a warning per object, and a `Q_ASSERT` in debug builds), and in the edit and
-undo tests once there are edits (`TSplitEdit`).
+A derived object always hangs on the owner its number names: `make_owned()`
+is given the owner and has no other way in, and a derived object has no
+function to change its owner. So there is no check of it (prevent, not detect;
+Remon, 2026-11-08).
 
 | Kind | Subtype | Tag | Object | Id |
 |---|---|---|---|---|
@@ -272,6 +271,57 @@ bus track is the object, hardware is named by name or port), `AudioChannel`
 (`CurveId`, number)). The numbers of 11 and 12 are fixed now, so nothing
 shifts later.
 
+## Version 4 of the project file (Remon, 2026-11-08)
+
+Decided for the step that replaces the old ids:
+
+- **No interim loading.** The loaders read only the new references; every
+  version 3 file is converted to version 4 first. No load code for old files.
+- **Converter 3 → 4**, after the existing 2 → 3: converted on load, the
+  original kept as `<file>.pre-4` (`-2`, `-3` … when that exists). Templates
+  are converted in memory; a restored backup is converted at its load. Every
+  object gets a new id, numbered from 1 in document order; no owner is
+  written (the first save adds them). A file with an old `id` left after the
+  conversion is not loaded. A file of a newer version is refused with its own
+  message. The conversion writes the backup and the converted file next to
+  the original: a version 3 project on storage that cannot be written (read
+  only, a full disk) is refused, where version 3 loaded it before.
+- **`createdon`**: the project's creation date and time, ISO 8601 in UTC, on
+  `Properties`; filled by the converter from the old project id, written by a
+  new project when it is made and by a project made from a template. Shown in
+  local time. A version 3 project shows no date in the open dialog until it
+  has been opened once.
+- **Project UUID**: `uuid` on `Properties`, made once when a project is made;
+  the converter gives an old project one, a project made from a template gets
+  its own. Comes in this step (the
+  take names need it), before the JSON step.
+- **Take file names**: `<project>-<song>-<track>-<take>.<extension>`, with
+  the first 12 hex digits of the project UUID, the sequence numbers of song
+  and track in 5 hex digits each, and the take number in 4 decimal digits:
+  `3f9a1c2e7b04-00005-00012-0003.wav` (34 characters). No word "take" and no
+  source id: the folder and the source say it is a take, and the take number
+  is saved per track and only grows, so project, song, track and take are
+  unique. The extension follows the recording format. The fixed widths sort a
+  list by project, song, track and take; a number past its width makes its
+  field longer, the name stays unique. The source gets its id before the file
+  is made. An existing file is never overwritten. Old recordings keep their
+  names. The short name a source shows is saved in its element, so no rule
+  derives it from the file name.
+- **Origin of a take**: `originsong` (a `SongId`) on the source of a
+  recording, next to `wasrecording`; not on imports. A clip's song follows from
+  its owner (clip → track → song); a take clip in the library finds its song
+  through its source. A clip's `sheet` and a source's `origsheetid` go.
+- **A send's target**: two attributes, `targettrack` (a `TrackId`) and
+  `targetport` (a port by name), exactly one of them; not one string read two
+  ways. The only software port in the file is `jackmaster`: the software
+  buses (a track's own jack buses and the jack master) are not saved, they are
+  made again when the project and its tracks connect to jack, with their
+  sends.
+- **The active session**: `currentsong` (a `SongId`) and, when a workspace is
+  active, `activeworkspace` (a `WorkspaceId`). The project itself as the
+  active session is not saved: the load opens the current song.
+- **Channels**: `AudioChannels` and a bus's `channelids` leave the file.
+
 ## Saved now, next to the old ids
 
 Branch `object-ids` saves the ids under their own attribute names, next to the
@@ -297,14 +347,12 @@ the project and are never asked for one (rule 4: ids only in the GUI thread).
 
 The structure of the file places an object, as the loader does now: a track by
 the song it is in, a clip by the track whose clip list names it, a master by its
-song. `owner` and a derived `objectid` only check it:
+song. **`owner` is written, not read or checked** (Remon, 2026-11-08): the
+structure places an object, and nothing in the loader needs it. A flat file
+(T112), where nothing is nested, will place objects by it. Ids at load:
 
 | Case | Behaviour |
 |---|---|
-| No `owner` attribute | legitimate (a clip on no track): silent |
-| `owner` names an id that does not exist | damaged or edited by hand. Counter object: it stays, the reference is dropped, a warning. Derived object: it goes, with a warning (does not occur yet: the masters are placed by the structure) |
-| `owner` names another object than the structure | the structure wins, a warning |
-| A derived `objectid` that does not follow from the owner | the owner wins, the id is derived again, a warning |
 | An `objectid` that does not fit its element, is used twice, has a number another object has, or lies within 2^32 of the end of the sequence | a new one, a warning; the first loaded keeps it |
 | A damaged `nextobjectid`: no number, or within 2^32 of the end | ignored, a warning |
 

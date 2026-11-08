@@ -65,7 +65,6 @@ public:
     using IdTag = AudioClipTag;
     // Its owner: the track it is on while it is in use, nullptr when on none. A
     // removed clip is on none, also while it keeps its track for undo
-    QObject* id_owner() const;
 
     enum RecordingStatus {
         NO_RECORDING,
@@ -125,8 +124,7 @@ public:
     uint get_channel_count() const T_REALTIME_SAFE;
     uint get_rate() const;
     uint get_bitdepth() const;
-    inline qint64 get_readsource_id( ) const {return m_readSourceId;}
-    qint64 get_sheet_id() const {return m_sheetId;}
+    AudioSourceId get_readsource_id( ) const {return m_readSourceId;}
     TBufferedAudioStreamReader* get_readsource() const {return m_readSource;};
 
     QDomNode get_dom_node() const;
@@ -186,8 +184,7 @@ private:
     bool            m_syncDuringDrag;
     RecordingStatus m_recordingStatus;
 
-    qint64 m_readSourceId;
-    qint64 m_sheetId;
+    AudioSourceId m_readSourceId;
 
     TFadeCurve* create_fade(int fadeType, TRtTransaction& transaction);
     void init();

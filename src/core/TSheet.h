@@ -85,7 +85,6 @@ public:
         return m_objectId;
     }
     // Its owner is the project, which has no id
-    QObject* id_owner() const { return nullptr; }
     TBounceTrack* get_bounce_track() const { return m_bounceTrack; }
     // The peak file of an audio source, built in this sheet's DiskIO idle
     // time (TPeakBuildService)

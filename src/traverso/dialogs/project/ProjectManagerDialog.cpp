@@ -86,7 +86,7 @@ void ProjectManagerDialog::set_project(TProject* project)
         connect(m_project->get_history_stack(), &QUndoStack::undoTextChanged, this, &ProjectManagerDialog::undo_text_changed);
         setWindowTitle("Manage Project - " + m_project->get_title());
 		descriptionTextEdit->setText(m_project->get_description());
-        createdDateLabel->setText("Created on: " + TraversoDAW::Utils::extract_date_time(m_project->get_id()).toString());
+        createdDateLabel->setText("Created on: " + m_project->get_created_on().toLocalTime().toString());
 		lineEditTitle->setText(m_project->get_title());
 		lineEditId->setText(m_project->get_discid());
 		lineEditUPC->setText(m_project->get_upc_ean());
