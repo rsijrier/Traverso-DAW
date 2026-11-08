@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TGain.h"
 #include "TSend.h"
+#include "TObjectFactory.h"
 #include "Debugger.h"
 
 #include "AudioBus.h"
@@ -55,11 +56,18 @@ void TSend::init()
         m_pan = 0.0;
 }
 
+QObject* TSend::id_owner() const
+{
+        return m_track;
+}
+
 QDomNode TSend::get_state( QDomDocument doc)
 {
         QDomElement node = doc.createElement("Send");
 
         node.setAttribute("id", m_id);
+        TObjectFactory::write(node, object_id());
+        TObjectFactory::write_owner(node, m_track->object_id());
         node.setAttribute("gain", m_gain);
         node.setAttribute("pan", m_pan);
         if (m_bus) {

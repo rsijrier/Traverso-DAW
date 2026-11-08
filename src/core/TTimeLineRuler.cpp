@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "CommandGroup.h"
 #include "TSession.h"
+#include "TProject.h"
 #include "TTimeLineMarker.h"
 #include "TExportSpecification.h"
 #include "TAddRemoveCommand.h"
@@ -37,6 +38,11 @@ TTimeLineRuler::TTimeLineRuler(TSession * sheet)
 	, m_sheet(sheet)
 {
     QObject::tr("TTimeLineRuler");
+}
+
+QObject* TTimeLineRuler::id_owner() const
+{
+	return m_sheet;
 }
 
 QDomNode TTimeLineRuler::get_state(QDomDocument doc)
@@ -60,7 +66,7 @@ int TTimeLineRuler::set_state(const QDomNode & node)
 	QDomNode markerNode = markersNode.firstChild();
 
 	while (!markerNode.isNull()) {
-		TTimeLineMarker* marker = new TTimeLineMarker(this, markerNode);
+		TTimeLineMarker* marker = m_sheet->get_project()->objects().load<TTimeLineMarker>(markerNode.toElement(), this, markerNode);
         connect(marker->get_location(), &TLocation::locationChanged, this, &TTimeLineRuler::marker_position_changed);
 		m_markers.append(marker);
 		markerNode = markerNode.nextSibling();
@@ -337,20 +343,20 @@ TCommand *TTimeLineRuler::add_marker_at(const TTimeRef when)
     // check if it is the first marker added to the timeline
     if (get_markers().empty()) {
         if (when > TTimeRef()) {  // add one at the beginning of the sheet
-            TTimeLineMarker* m = new TTimeLineMarker(this, TTimeRef(), TTimeLineMarker::CDTRACK);
+            TTimeLineMarker* m = m_sheet->get_project()->objects().make<TTimeLineMarker>(this, TTimeRef(), TTimeLineMarker::CDTRACK);
             m->set_description("");
             group->add_command(add_marker(m));
         }
 
         TTimeRef lastlocation = m_sheet->get_last_location();
         if (when < lastlocation) {  // add one at the end of the sheet
-            TTimeLineMarker* me = new TTimeLineMarker(this, lastlocation, TTimeLineMarker::ENDMARKER);
+            TTimeLineMarker* me = m_sheet->get_project()->objects().make<TTimeLineMarker>(this, lastlocation, TTimeLineMarker::ENDMARKER);
             me->set_description(tr("End"));
             group->add_command(this->add_marker(me));
         }
     }
 
-    TTimeLineMarker* marker = new TTimeLineMarker(this, when, TTimeLineMarker::CDTRACK);
+    TTimeLineMarker* marker = m_sheet->get_project()->objects().make<TTimeLineMarker>(this, when, TTimeLineMarker::CDTRACK);
     marker->set_description("");
 
     group->setText(tr("Add Marker"));

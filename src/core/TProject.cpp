@@ -118,6 +118,7 @@ TProject::TProject(TAudioDevice& device, const QString& title)
 
     // One to one with the project, which has no number: its id is derived on 0
     m_masterOutBusTrack = m_objects.make_owned<MasterOutSubGroup, ProjectMasterTag>(object_id(), this, "");
+    m_timeLineRuler = m_objects.make_owned<TTimeLineRuler, RulerTag>(object_id(), this);
     // FIXME: m_masterOut is a Track, but at this point in time, Track can't
     // get a reference to us via pm().get_project();
     connect(m_masterOutBusTrack, &TBusTrack::routingConfigurationChanged, this, &TProject::track_property_changed);
@@ -714,6 +715,9 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
 
     projectNode.appendChild(workSheetsNode);
 
+    if (istemplate) {
+        TObjectFactory::remove_ids(projectNode);
+    }
 
     return projectNode;
 }

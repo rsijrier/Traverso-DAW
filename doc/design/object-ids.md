@@ -246,8 +246,8 @@ undo tests once there are edits (`TSplitEdit`).
 
 | Kind | Subtype | Tag | Object | Id |
 |---|---|---|---|---|
-| 1 project | 1 | `ProjectTag` (comes with `TSplitEdit`) | `TProject` | fixed, number 0: `project:0101000000000000`, not saved |
-| 2 song | 1 | `SongTag` | `TSheet`: a sheet is a song. A session, a container of tracks (to be named workspace), has no id yet | counter |
+| 1 project | 1 | `ProjectTag` | `TProject` | fixed, number 0 (`TObjectId::root()`): `project:0101000000000000`, not saved |
+| 2 song | 1 | `SongTag` | `TSheet`: a sheet is a song; owner the project, not in the file | counter |
 | 3 track | all | `TrackTag` | `TTrack` | |
 | | 1 to 5 | `AudioMixerTrackTag` | `TAudioMixerTrack` (from the next branch) | |
 | | 1 | `AudioTrackTag` | `TAudioTrack` | counter |
@@ -257,8 +257,20 @@ undo tests once there are edits (`TSplitEdit`).
 | | 5 | `BounceTrackTag` | `TBounceTrack` | derived |
 | 4 clip | all | `ClipTag` | `TClip` | |
 | | 1 | `AudioClipTag` | `TAudioClip` | counter |
-| 5 curve | | planned (gain curve, fades) | | derived |
-| 6 marker | | planned, when markers get ids | | |
+| 5 curve | gain, fade-in, fade-out, automation | | `TCurve` | gain and fades derived from their clip or track; automation counter, owner its track |
+| 6 marker | 1 | | `TTimeLineMarker` | counter, owner its ruler |
+| 7 send | 1 | | `TSend` | counter, owner its track; its target is a track |
+| 8 audio source | 1 | | the source (resources manager) | counter, owner the project |
+| 9 workspace | 1 | | a song's child session | counter, owner its song |
+| 10 ruler | 1 | | `TTimeLineRuler` | derived from its song, the owner of the markers |
+| 11 plugin chain | 1 | | `TAudioPluginChain` | derived from its track or clip; after T108 |
+| 12 plugin | LV2, VST3, CLAP, internal | | `TAudioPlugin` | counter, owner its chain (several, movable); after T108 |
+
+No object id (Remon, 2026-11-08): `AudioBus` (the engine's; in the model the
+bus track is the object, hardware is named by name or port), `AudioChannel`
+(out of the file: it is never read), a curve node (local in its curve:
+(`CurveId`, number)). The numbers of 11 and 12 are fixed now, so nothing
+shifts later.
 
 ## Saved now, next to the old ids
 
@@ -270,8 +282,17 @@ tag and then ignored.
 
 | Attribute | Where |
 |---|---|
-| `objectid` | every track, clip and song (`Sheet`) element, also the masters (derived: only as a check); not in templates. The bounce track is not saved |
-| `owner` | every object with an owner: a track its song, a clip its track, a master its song. Not the project master, not a clip on no track (also not a removed clip that keeps its track for undo) |
+| `objectid` | every object with a counter id: track, clip, song (`Sheet`), marker, send. Not in templates (`TObjectFactory::remove_ids()` on a template's song or project). The masters still write theirs (derived: only as a check), until the rule below reaches them. The bounce track is not saved |
+| `owner` | every object with a counter id and an owner: a track its song, a clip its track, a marker its ruler, a send its track. Not the project master, not a clip on no track (also not a removed clip that keeps its track for undo) |
+
+**Derived objects write no owner and no id** (Remon, 2026-11-08): their id
+follows from their owner, and the structure of the file places them, so there
+is nothing left to check. The ruler is the first: it writes neither. The
+masters follow in a step of their own.
+
+The markers of a CD export list (`TTimeLineRuler::get_cdtrack_list()`, the
+export thread) are made without the factory and have no id: they never join
+the project and are never asked for one (rule 4: ids only in the GUI thread).
 | `nextobjectid`, a number | the project's `Properties` |
 
 The structure of the file places an object, as the loader does now: a track by

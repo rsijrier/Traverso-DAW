@@ -158,6 +158,7 @@ void TSheet::init()
     set_related_context_item( m_audioClipManager );
     m_selectionService = new TSelectionService(this);
     create_history_stack();
+    m_timeLineRuler = m_project->objects().make_owned<TTimeLineRuler, RulerTag>(object_id(), this);
     m_timeLineRuler->set_history_stack(get_history_stack());
 
     connect(this, &TSheet::prepareRecording, this, &TSheet::prepare_recording);
@@ -328,6 +329,10 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
     }
 
     sheetNode.appendChild(workSheetsNode);
+
+    if (istemplate) {
+        TObjectFactory::remove_ids(sheetNode);
+    }
 
     return sheetNode;
 }

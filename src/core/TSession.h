@@ -43,6 +43,8 @@ class TTrack;
 class TTimeLineRuler;
 
 class TAudioDevice;
+class TProject;
+
 class TSession : public TContextItem
 {
 	Q_OBJECT
@@ -81,6 +83,9 @@ public:
     // transport location
     TTimeRef get_heard_transport_location(uint64_t nowNanoseconds);
 	virtual TSnapList* get_snap_list() const;
+	// The project it belongs to: a song's, the project itself, a workspace's
+	// parent's. Its objects get their ids from that project's factory
+	virtual TProject* get_project() const;
 	// By old id, for the load of a workspace's tracks only (until the project
 	// file references tracks by their new id)
 	TTrack* get_track(qint64 id) const;

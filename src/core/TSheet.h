@@ -74,7 +74,7 @@ public:
     TAudioTrack* get_audio_track_for_index(int index);
     int get_audio_track_count() const {return m_audioTracks.gui_items().size();}
 
-    TProject* get_project() const {return m_project;}
+    TProject* get_project() const override {return m_project;}
 
     using IdTag = SongTag;
     // The id, given by TObjectFactory when it made or loaded the song

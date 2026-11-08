@@ -1489,7 +1489,7 @@ void TMainWindow::import_audio()
 
         if (clip) {
             QFileInfo fi(fileName);
-            TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation);
+            TTimeLineMarker* m = m_project->objects().make<TTimeLineMarker>(timeLineRuler, importLocation);
             m->set_description(QString(tr("%1: %2")).arg(n).arg(fi.baseName()));
 
             clips.append(clip);
@@ -1536,7 +1536,7 @@ void TMainWindow::import_audio()
             delete moveEndMarker;
         }
     } else {
-        TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation, TTimeLineMarker::ENDMARKER);
+        TTimeLineMarker* m = m_project->objects().make<TTimeLineMarker>(timeLineRuler, importLocation, TTimeLineMarker::ENDMARKER);
         TCommand::process_command(timeLineRuler->add_marker(m, true));
     }
 

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #pragma once
 
 #include "TContextItem.h"
+#include "TObjectIdTags.h"
 #include <QDomNode>
 #include <QList>
 #include "TTimeRef.h"
@@ -46,6 +47,10 @@ public:
     QList<TTimeLineMarker*> get_cd_layout(bool & endmarker);
     TSession *get_sheet() const {return m_sheet;}
 
+    // Derived from its song's id (TObjectFactory::make_owned())
+    RulerId object_id() const { return m_objectId; }
+    QObject* id_owner() const;
+
     TTimeLineMarker* get_end_marker();
     bool get_end_location(TTimeRef& location);
     bool get_start_location(TTimeRef& location);
@@ -60,6 +65,8 @@ public:
     QString get_cdrdao_tracklist(TExportSpecification* spec, QString file_path, bool pregap = false);
 
 private:
+    friend class TObjectFactory;
+    RulerId m_objectId;
     TSession* m_sheet;
     QList<TTimeLineMarker*> m_markers;
     void index_markers();

@@ -60,7 +60,8 @@ TSession::TSession(TAudioDevice& device, TSession *parentSession)
     m_workSnap = nullptr;
 
 	if (!parentSession) {
-        m_timeLineRuler = new TTimeLineRuler(this);
+        // The ruler: made by the song and the project, which have an id to
+        // derive its id from (not yet here, in the base)
 		m_snaplist = new TSnapList(this);
         m_workSnap = new TLocation(this);
 	} else {
@@ -243,6 +244,13 @@ TLocation* TSession::get_work_snap() const
 	}
 
 	return m_workSnap;
+}
+
+TProject* TSession::get_project() const
+{
+	// A song and the project answer themselves; this is a workspace
+	Q_ASSERT(m_parentSession);
+	return m_parentSession->get_project();
 }
 
 TTimeLineRuler* TSession::get_timeline_ruler() const

@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomElement>
 #include <QObject>
 
+#include "TObjectIdTags.h"
+
 class AudioBus;
 class TTrack;
 
@@ -52,12 +54,22 @@ public:
     AudioBus* get_bus() const {return m_bus;}
     QString get_from_name() const ;
     qint64 get_id() const {return m_id;}
+    // Given by TObjectFactory
+    using IdTag = SendTag;
+    SendId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+    QObject* id_owner() const;
     qint64 get_bus_id() const;
     int get_type() const {return m_type;}
     float get_pan() const {return m_pan;}
     float get_gain() const {return m_gain;}
 
 private:
+    friend class TObjectFactory;
+    SendId          m_objectId;
     AudioBus*       m_bus;
     TTrack*          m_track;
     qint64          m_id{};

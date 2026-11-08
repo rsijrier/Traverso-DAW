@@ -97,6 +97,7 @@ public :
     // (doc/design/object-ids.md)
     TObjectFactory& objects() { return m_objects; }
     TObjectPool& object_pool() { return m_objectPool; }
+    TProject* get_project() const override { return const_cast<TProject*>(this); }
     // The same in every project (ProjectTag)
     ProjectId object_id() const { return ProjectId::root(); }
     TPeakBuildService* get_peak_builds() const { return m_peakBuilds.get(); }

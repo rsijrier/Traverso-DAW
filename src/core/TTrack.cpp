@@ -158,7 +158,7 @@ int TTrack::set_state( const QDomNode & node )
 
         QDomNode sendNode = sendsNode.firstChild();
         while (!sendNode.isNull()) {
-            TSend* send = new TSend(this);
+            TSend* send = m_session->get_project()->objects().load<TSend>(sendNode.toElement(), this);
             if (send->set_state(sendNode) < 0) {
                 // This send could not set it's state...
                 TLOG_W("track", "a send could not restore its state, moving on");
@@ -336,7 +336,7 @@ void TTrack::add_post_send(AudioBus *bus)
         return;
     }
 
-    TSend* postSend = new TSend(this, bus);
+    TSend* postSend = m_session->get_project()->objects().make<TSend>(this, bus);
     postSend->set_type(TSend::POSTSEND);
 
     {
@@ -370,7 +370,7 @@ void TTrack::add_pre_send(qint64 busId)
         return;
     }
 
-    TSend* preSend = new TSend(this, bus);
+    TSend* preSend = m_session->get_project()->objects().make<TSend>(this, bus);
     preSend->set_type(TSend::PRESEND);
 
     {
