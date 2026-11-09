@@ -25,8 +25,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QDomElement>
 #include <QDomNode>
+#include <QUuid>
 
 #include "TSheet.h"
+#include "TProject.h"
 #include "TAudioClip.h"
 #include "TAudioClipManager.h"
 #include "AudioBus.h"
@@ -201,14 +203,25 @@ TAudioClip* TAudioTrack::init_recording()
         return nullptr;
     }
 
-    QString name = 	m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(++m_numtakes);
+    const int take = ++m_numtakes;
+    const QString name = m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(take);
+
+    // <12 hex of the project's UUID>-<song 5 hex>-<track 5 hex>-<take 4 digits>
+    // (doc/design/object-ids.md); the writer adds the extension of the format
+    const QUuid uuid = m_sheet->get_project()->get_uuid();
+    Q_ASSERT(!uuid.isNull());
+    const QString fileName = QString("%1-%2-%3-%4")
+                                 .arg(uuid.toString(QUuid::Id128).left(12))
+                                 .arg(m_sheet->object_id().sequence(), 5, 16, QChar('0'))
+                                 .arg(object_id().sequence(), 5, 16, QChar('0'))
+                                 .arg(take, 4, 10, QChar('0'));
 
     TAudioClip* clip = resources_manager()->new_audio_clip(name);
     clip->set_track(this);
     clip->attach_to_sheet();
     clip->move_to_location(m_sheet->get_transport_location());
 
-    if (clip->init_recording() < 0) {
+    if (clip->init_recording(fileName) < 0) {
         PERROR("Could not create AudioClip to record to!");
         resources_manager()->destroy_clip(clip);
         return nullptr;

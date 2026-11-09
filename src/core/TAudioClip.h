@@ -73,7 +73,8 @@ public:
     };
 
     void set_audio_source(TBufferedAudioStreamReader* source);
-    int init_recording();
+    // fileName: the take's file, without its extension (TAudioTrack::init_recording())
+    int init_recording(const QString& fileName);
     int process(TProcessContext &context) T_REALTIME_SAFE;
 
     void move_to_location(const TTimeRef& location) final;

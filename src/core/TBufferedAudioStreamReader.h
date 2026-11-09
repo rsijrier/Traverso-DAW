@@ -44,7 +44,8 @@ class TBufferedAudioStreamReader : public TBufferedAudioStream
 public :
     TBufferedAudioStreamReader(const QDomNode &node);
     TBufferedAudioStreamReader(const QString& dir, const QString& name);
-    TBufferedAudioStreamReader(const QString& dir, const QString& name, uint channelCount);
+    // A take: its file name without the extension, and the name shown
+    TBufferedAudioStreamReader(const QString& dir, const QString& fileName, const QString& shortName, uint channelCount);
     TBufferedAudioStreamReader();  // For creating a 0-channel, silent TBufferedAudioStreamReader
     ~TBufferedAudioStreamReader();
 	

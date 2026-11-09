@@ -48,8 +48,11 @@ public:
 	int set_state( const QDomNode& node );
 	QDomNode get_state(QDomDocument doc);
 	
+	// shortName: what is shown (the clip's name); fileName: the take's file,
+	// without its extension
 	TBufferedAudioStreamReader* create_recording_source(const QString& dir,
-				const QString& name,
+				const QString& shortName,
+				const QString& fileName,
 				uint channelCount,
 				SongId song);
 	

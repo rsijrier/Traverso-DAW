@@ -143,6 +143,8 @@ public:
     }
 
     uint16_t tag() const { return TObjectIds::tag_of(m_value); }
+    // The number in the project's sequence, without the tag
+    object_id_value_t sequence() const { return TObjectIds::sequence_of(m_value); }
     bool is_valid() const { return m_value != 0; }
     std::string to_string() const { return TObjectIds::to_string(m_value); }
     std::string to_hex() const { return TObjectIds::to_hex(m_value); }

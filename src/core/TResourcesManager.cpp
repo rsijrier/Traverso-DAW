@@ -275,13 +275,14 @@ TBufferedAudioStreamReader* TResourcesManager::import_source(const QString& dir,
 
 TBufferedAudioStreamReader* TResourcesManager::create_recording_source(
 	const QString& dir,
-	const QString& name,
+	const QString& shortName,
+	const QString& fileName,
     uint channelCount,
  	SongId song)
 {
 	PENTER;
 	
-    TBufferedAudioStreamReader* stream = m_project->objects().make<TBufferedAudioStreamReader>(dir, name, channelCount);
+    TBufferedAudioStreamReader* stream = m_project->objects().make<TBufferedAudioStreamReader>(dir, fileName, shortName, channelCount);
 	SourceData* data = new SourceData();
     data->stream = stream;
 	

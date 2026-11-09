@@ -615,7 +615,7 @@ void TAudioClip::process_capture(TProcessContext &context) T_REALTIME_SAFE
     }
 }
 
-int TAudioClip::init_recording()
+int TAudioClip::init_recording(const QString& fileName)
 {
     Q_ASSERT(m_track);
 
@@ -646,11 +646,9 @@ int TAudioClip::init_recording()
 
     TBufferedAudioStreamReader* rs = resources_manager()->create_recording_source(
                 get_sheet()->get_audio_sources_dir(),
-                m_name, channelcount, get_sheet()->object_id());
+                m_name, fileName, channelcount, get_sheet()->object_id());
 
     resources_manager()->set_source_for_clip(this, rs);
-
-    QString sourceid = QString::number(rs->get_id());
 
     auto spec = new TExportSpecification;
 
@@ -676,7 +674,7 @@ int TAudioClip::init_recording()
     spec->set_sample_rate(get_sheet()->get_project()->project_rate());
     spec->set_export_start_location(TTimeRef());
     spec->set_export_end_location(TTimeRef());
-    spec->set_export_file_name(m_name + "-" + sourceid);
+    spec->set_export_file_name(fileName);
 
     m_writer = new TBufferedAudioStreamWriter(spec->get_export_dir(), spec->get_export_file_name());
     if (m_writer->prepare_file(spec, device.get_sample_rate()) == -1) {

@@ -379,6 +379,11 @@ int TProject::load(const QString& projectfile)
     m_rate = e.attribute( "rate", "" ).toUInt();
     m_bitDepth = e.attribute( "bitdepth", "" ).toUInt();
     m_uuid = QUuid::fromString(e.attribute("uuid"));
+    if (m_uuid.isNull()) {
+        m_uuid = QUuid::createUuid();
+        TLOG_W("ids", "the project's uuid \"{}\" in the project file is missing or damaged: a new one, {}",
+               e.attribute("uuid").toStdString(), m_uuid.toString(QUuid::WithoutBraces).toStdString());
+    }
     m_createdOn = QDateTime::fromString(e.attribute("createdon"), Qt::ISODate);
     // Before anything is loaded: an object of the file without an id gets a
     // number above all saved ones

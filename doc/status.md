@@ -430,7 +430,14 @@ Other open tasks:
 - **T40 Internal routing and routing via JACK/PipeWire** (incl. JACK transport
   slave); **PipeWire as a graph client**; **JACK revision** (port lists as
   `TRtList`).
-- **T41 Export through the bounce track** (own branch).
+- **T41 Export through the bounce track** (own branch). From the id branch
+  (Fable, 2026-11-09): the bounce track inherits `m_numtakes` and
+  `init_recording()`, but is made anew at every load and never saved, so after
+  a reload its take numbers start again and a bounce gets the file name of an
+  earlier one, which overwrites it (or, once the writer never overwrites, is
+  refused). Options: save the bounce track's take count with the song, or
+  another name scheme for bounce files. Latent until the bounce track is
+  armed.
 - **T42 Project file converter**: upgrade when the version is bumped; removes the
   default fades of older versions.
 - **T43 Gain ramp**: click-free mute, solo and fader (ramp state per transport).
@@ -1192,6 +1199,39 @@ From the GPU waveform test program, clip edges in variant A (branch
   available backups" (`TMainWindow.cpp:1758-1764`). A too-new file needs a
   newer Traverso, and a failed conversion (read-only storage) no backup; each
   needs its own message.
+- **T121 Copy-convert and the merger: rework** (medium; Remon, 2026-11-08:
+  copy-convert is rewritten anyway). `TAudioFileMerger` returns after a failed
+  open of its writer without `taskFinished`, so the 2 → 3 converter dialog can
+  wait for ever, and copy-convert only logs a failed open (older than the id
+  branch). Telling the user from their own threads, and what a refused open
+  means for them: T122. Name clashes of copied files: T113.
+- **T122 The writer never overwrites an audio file** (medium; Remon,
+  2026-11-09; taken out of the id branch's C8, the work so far in
+  `reports/new-ids-2026-11-07/c8-full-2026-11-09.patch`). Take names are
+  unique without it (song and track numbers are project-wide, take numbers are
+  never reused); this is a safety net.
+  - Remon's decision Q-H (a): `TAudioWriter::open()` refuses an existing file,
+    for every caller (recording, copy-convert, `TAudioFileMerger`).
+  - Prevent, not detect: the three encoders create their file exclusively
+    (`QIODevice::NewOnly`, `fopen` with `"x"`): no race between check and
+    create, no symlink followed. The check in `open()` stays for the message.
+    The full-disk test then needs another way than `/dev/full` (an existing
+    device): a file size limit (`RLIMIT_FSIZE`, `SIGXFSZ` ignored).
+  - The user is told: the recording on the GUI thread; copy-convert and the
+    merger from their own threads to the GUI (with T121).
+  - Copy-convert emits `taskFinished` with the path after a refused open
+    (`TAudioFileCopyConvert.cpp:103-106, 155`), so the new-project dialog
+    imports the file that already had that name: another sound than the one
+    chosen (Fable, 2026-11-09).
+  - A failed recording start leaves its source in the project
+    (`TAudioTrack::init_recording()` destroys only the clip; the source is
+    made before the file, as it should). `delete_takes()` would put the file
+    on the delete list, and after a refused open that file is someone else's.
+    Options: a) a rollback in `TResourcesManager` that takes clip and source
+    out without touching files; b) unlink the source from the clip, then
+    `remove_source()`.
+  - Consequence: an interrupted 2 → 3 conversion cannot be run again while its
+    half-written `.wav` is there.
 - **T119 Getters by id through the pool, with detection of stale ids**
   (medium; Remon's work order, 2026-11-08). After the id branch; replaces the
   separate question about `get_audio_bus()`. Nothing changes before.

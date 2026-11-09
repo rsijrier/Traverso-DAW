@@ -84,18 +84,16 @@ TBufferedAudioStreamReader::TBufferedAudioStreamReader(const QString& dir, const
 
 
 // Constructor for recorded audio.
-TBufferedAudioStreamReader::TBufferedAudioStreamReader(const QString& dir, const QString& name, uint channelCount)
-    : TBufferedAudioStream(dir, name)
+TBufferedAudioStreamReader::TBufferedAudioStreamReader(const QString& dir, const QString& fileName, const QString& shortName, uint channelCount)
+    : TBufferedAudioStream(dir, fileName)
 {
     private_init();
 
     m_channelCount = channelCount;
     m_silent = false;
-    m_name = name  + "-" + QString::number(m_id);
-    m_fileName = m_dir + m_name;
     m_rate = pm().get_project()->get_rate();
     m_wasRecording = true;
-    m_shortName = m_name.left(m_name.length() - 20);
+    m_shortName = shortName;
 }
 
 
@@ -300,8 +298,11 @@ int TBufferedAudioStreamReader::set_file(const QString & filename)
     QString dir = filename.left(splitpoint - 1) + "/";
     QString name = filename.right(length - splitpoint);
 
+    // The file the recording was written to; the name shown stays
+    const QString shortName = m_shortName;
     set_dir(dir);
     set_name(name);
+    m_shortName = shortName;
 
     if (init() < 0) {
         return -1;
