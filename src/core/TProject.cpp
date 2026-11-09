@@ -105,7 +105,7 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_peakBuilds = std::make_unique<TPeakBuildService>();
     create_history_stack();
 
-    m_audiodeviceClient = new TAudioDeviceClient("sheet_" + QByteArray::number(get_id()));
+    m_audiodeviceClient = new TAudioDeviceClient(QString::fromStdString(object_id().to_string()));
     // Made here, on the GUI thread, if not yet: process() only wakes them
     m_readScheduler = pm().get_read_scheduler();
     m_writeScheduler = pm().get_write_scheduler();
@@ -885,7 +885,7 @@ AudioBus* TProject::get_playback_bus(const QString& name) const
 {
     QList<AudioBus*> allBuses;
     allBuses.append(m_hardwareAudioBuses);
-    allBuses.append(m_softwareAudioBuses.values());
+    allBuses.append(m_softwareAudioBuses);
 
     foreach(AudioBus* bus, allBuses) {
         if (bus->get_type() == AudioChannel::ChannelIsOutput) {
@@ -912,7 +912,7 @@ AudioBus* TProject::get_capture_bus(const QString& name) const
 {
     QList<AudioBus*> allBuses;
     allBuses.append(m_hardwareAudioBuses);
-    allBuses.append(m_softwareAudioBuses.values());
+    allBuses.append(m_softwareAudioBuses);
 
     foreach(AudioBus* bus, allBuses) {
         if (bus->get_type() == AudioChannel::ChannelIsInput) {
@@ -962,11 +962,11 @@ AudioBus* TProject::create_software_audio_bus(const TAudioBusConfiguration& conf
         audio_device().add_jack_channel(channel);
         bus->add_channel(channel);
 
-        m_softwareAudioChannels.insert(channel->get_id(), channel);
+        m_softwareAudioChannels.append(channel);
     }
 
 
-    m_softwareAudioBuses.insert(bus->get_id(), bus);
+    m_softwareAudioBuses.append(bus);
 
     return bus;
 }

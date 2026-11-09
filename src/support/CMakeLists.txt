@@ -15,7 +15,6 @@ add_library(traversosupport STATIC
     TObjectId.h TObjectId.cpp
     TPlatform.h
     TRealTime.h
-    Utils.h Utils.cpp
     TTimeRef.h TTimeRef.cpp
     TTypes.h
     defines.h

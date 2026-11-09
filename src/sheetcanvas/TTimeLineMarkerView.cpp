@@ -26,7 +26,6 @@
 #include "TClipsViewPort.h"
 #include "TPositionIndicator.h"
 #include <TTimeLineMarker.h>
-#include <Utils.h>
 #include "Debugger.h"
 #include "TLocation.h"
 

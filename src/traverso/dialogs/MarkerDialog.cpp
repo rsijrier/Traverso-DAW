@@ -32,7 +32,6 @@
 #include <TSheet.h>
 #include <TTimeLineRuler.h>
 #include <TTimeLineMarker.h>
-#include <Utils.h>
 #include <QDebug>
 #include <QTextStream>
 #include <QFileDialog>

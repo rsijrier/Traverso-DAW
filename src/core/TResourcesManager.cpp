@@ -432,7 +432,6 @@ void TResourcesManager::mark_clip_removed(TAudioClip * clip)
 {
 	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
-//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	data->removed = true;
@@ -451,7 +450,6 @@ void TResourcesManager::mark_clip_added(TAudioClip * clip)
 {
 	ClipData* clipdata = m_clips.value(clip->object_id());
 	if (!clipdata) {
-//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	clipdata->removed = false;
@@ -511,7 +509,6 @@ void TResourcesManager::destroy_clip(TAudioClip * clip)
 {
 	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
-//		PERROR("Clip with id %lld not in database", clip->get_id());
 	} else {
 		m_clips.remove(clip->object_id());
 		delete data;

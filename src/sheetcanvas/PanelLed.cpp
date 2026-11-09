@@ -25,7 +25,6 @@
 #include <QPainter>
 
 #include "TrackPanelView.h"
-#include <Utils.h>
 
 
 

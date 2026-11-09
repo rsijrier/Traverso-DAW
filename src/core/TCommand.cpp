@@ -23,7 +23,6 @@ $Id: Command.cpp,v 1.21 2008/02/12 20:39:08 r_sijrier Exp $
 #include "TCommand.h"
 #include "TContextPointer.h"
 #include <TViewPortInterface.h>
-#include <Utils.h>
 #include <TThemer.h>
 #include "TContextItem.h"
 

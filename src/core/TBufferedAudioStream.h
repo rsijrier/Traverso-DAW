@@ -56,7 +56,6 @@ public :
     QString get_dir() const;
     QString get_name() const;
     QString get_short_name() const;
-    qint64 get_id() const {return m_id;}
     SongId get_orig_sheet_id() const {return m_originSong;}
     uint get_sample_rate() const;
     uint get_channel_count() const T_REALTIME_SAFE override {return m_channelCount;}
@@ -89,7 +88,6 @@ protected:
     uint		m_channelCount;
     SongId		m_originSong;
     QString 	m_dir;
-    qint64		m_id{};
     QString 	m_name;
     QString		m_shortName;
     uint		m_origBitDepth{};

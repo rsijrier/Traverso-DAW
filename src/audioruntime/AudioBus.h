@@ -57,7 +57,6 @@ public:
 
     AudioChannel* get_channel(uint channelNumber);
     QList<AudioChannel* > get_channels() const{return m_channels;}
-    QList<qint64> get_channel_ids() const;
 
     /**
      * Get a pointer to the buffer associated with AudioChannel \a channel
@@ -76,8 +75,6 @@ public:
     bool is_valid() const;
     int get_type() const {return m_type;}
     int get_bus_type() const {return m_busType;}
-    qint64 get_id() const {return m_id;}
-    void set_id(qint64 id) {m_id = id;}
     void set_name(const QString& name) {m_name = name;}
 
     void process_monitoring() T_REALTIME_SAFE {
@@ -125,7 +122,6 @@ private:
     bool                    m_isInternalBus;
     int                     m_type;
     int                     m_busType;
-    qint64                  m_id;
 
 signals:
     void monitoringPeaksStarted();

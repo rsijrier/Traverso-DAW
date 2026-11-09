@@ -20,7 +20,6 @@
 */
 
 #include "OpenProjectDialog.h"
-#include "Utils.h"
 
 #include <QDir>
 #include <QStringList>
@@ -33,7 +32,6 @@
 #include "TInformUser.h"
 #include <TProjectManager.h>
 #include <TProject.h>
-#include <Utils.h>
 
 #include "Debugger.h"
 

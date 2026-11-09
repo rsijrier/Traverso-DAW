@@ -214,8 +214,8 @@ private:
 
     QList<AudioBus* >       m_hardwareAudioBuses;
 
-    QHash<qint64, AudioBus* >       m_softwareAudioBuses;
-    QHash<qint64, AudioChannel* >   m_softwareAudioChannels;
+    QList<AudioBus* >       m_softwareAudioBuses;
+    QList<AudioChannel* >   m_softwareAudioChannels;
 
     TExportSpecification*   m_exportSpecification;
 

@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <utility>
 #include "TClock.h"
-#include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
 #include "TLog.h"
@@ -44,7 +43,6 @@ TBufferedAudioStream::TBufferedAudioStream(QString  dir, const QString& name)
 {
 	PENTERCONS;
 	m_fileName = m_dir + m_name;
-    m_id = TraversoDAW::Utils::create_id();
 
     m_rtBufferSlotsQueue = nullptr;
     m_freeBufferSlotsQueue = nullptr;

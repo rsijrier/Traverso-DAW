@@ -1,6 +1,5 @@
 #include "TContextItem.h"
 
-#include "Utils.h"
 #include "TContextPointer.h"
 #include "qundogroup.h"
 #include "qundostack.h"
@@ -13,7 +12,6 @@ TContextItem::TContextItem(TContextItem *parent)
     , m_hasActiveContext(false)
     , m_ignoreContext(false)
 {
-    m_id = 0;
     m_historyStack = nullptr;
 }
 
@@ -53,16 +51,6 @@ void TContextItem::set_ignore_context(bool ignoreContext)
     m_ignoreContext = ignoreContext;
 }
 
-void TContextItem::set_id(qint64 id)
-{
-    if (id == 0) {
-        PERROR(QString("Setting Context Item id to 0 for object %1").arg(metaObject()->className()));
-        get_id();
-        return;
-    }
-    m_id = id;
-}
-
 void TContextItem::create_history_stack()
 {
     PENTER;
@@ -88,11 +76,4 @@ QUndoGroup* TContextItem::get_undogroup()
     return &group;
 }
 
-qint64 TContextItem::get_id()
-{
-    if (m_id == 0) {
-        m_id = TraversoDAW::Utils::create_id();
-    }
-    return m_id;
-}
 

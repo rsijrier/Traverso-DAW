@@ -50,7 +50,6 @@
 #include "TProjectManager.h"
 #include <TSheet.h>
 #include <TAudioTrack.h>
-#include <Utils.h>
 #include <CommandGroup.h>
 #include "TAudioClipFactory.h"
 #include "TAudioFileCopyConvert.h"

@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTrackPanelViewPort.h"
 #include <TAudioTrack.h>
 #include "TTrackPanelView.h"
-#include <Utils.h>
 #include "TGain.h"
 #include <TFaderCommand.h>
 #include <TrackPan.h>

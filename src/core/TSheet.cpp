@@ -58,7 +58,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TLog.h"
 #include "TRecordingCommand.h"
 #include "TResourcesManager.h"
-#include "Utils.h"
 #include "TTimeLineRuler.h"
 #include "TTimeLineMarker.h"
 #include "TInputEventDispatcher.h"                       
@@ -188,7 +187,7 @@ void TSheet::init()
 
     m_changed = m_isRecording = m_prepareRecording = false;
 
-    m_audiodeviceClient = new TAudioDeviceClient("sheet_" + QByteArray::number(get_id()));
+    m_audiodeviceClient = new TAudioDeviceClient(QString::fromStdString(object_id().to_string()));
     m_audiodeviceClient->set_process_callback(
         TProcessCallBack::from_method<TSheet, &TSheet::process>(this)
         );

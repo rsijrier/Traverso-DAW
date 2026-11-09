@@ -23,7 +23,6 @@ $Id: AudioBus.cpp,v 1.11 2008/01/21 16:22:15 r_sijrier Exp $
 #include "AudioBus.h"
 #include "AudioChannel.h"
 #include "TAudioDevice.h"
-#include "Utils.h"
 
 
 /**
@@ -60,13 +59,6 @@ AudioBus::AudioBus(TAudioDevice& device, const TAudioBusConfiguration& config)
                 m_busType = BusIsSoftware;
         } else {
                 qFatal("bustype != hardware or software");
-        }
-
-        m_id = config.id;
-
-        // id was never created if it == -1, so create a unique one now!
-        if (m_id == -1) {
-                m_id = TraversoDAW::Utils::create_id();
         }
 
         m_isInternalBus = config.isInternalBus;
@@ -121,15 +113,6 @@ QStringList AudioBus::get_channel_names() const
         }
 
         return list;
-}
-
-QList<qint64> AudioBus::get_channel_ids() const
-{
-        QList<qint64> ids;
-        foreach(AudioChannel* channel, m_channels) {
-                ids.append(channel->get_id());
-        }
-        return ids;
 }
 
 void AudioBus::audiodevice_params_changed()
