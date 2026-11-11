@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <QObject>
 #include <QThread>
+#include <cstdint>
 #include <memory>
 #include <type_traits>
 #include "cameron/readerwritercircularbuffer.h"
@@ -104,7 +105,11 @@ private:
     std::unique_ptr<moodycamel::BlockingReaderWriterCircularBuffer<TAudioThreadMessageQueueEvent>> m_processedByRTThreadQueue;
 
     TAudioThreadMessageQueueThread* m_TAudioThreadMessageQueueThread;
+    // Dropped since the worker last reported them (the audio thread counts)
     std::atomic<int>  m_droppedRtEvents{0};
+    // Dropped in this session, reported or not: the worker adds what it
+    // reports, the destructor reads it after the worker ended
+    std::atomic<int64_t> m_droppedRtEventsTotal{0};
     std::atomic<bool> m_running{true};
 
 public slots:
@@ -114,7 +119,8 @@ public slots:
 signals:
     void batchTransactionStarted();
     void batchTransactionFinished();
-    void queueOverflowDetected();
+    // From the worker thread: count events were dropped since the last one
+    void queueOverflowDetected(int count);
 };
 
 TAudioThreadMessageQueue& tsmp() T_REALTIME_SAFE;

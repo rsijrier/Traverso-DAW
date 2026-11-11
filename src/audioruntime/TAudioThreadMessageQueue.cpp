@@ -70,8 +70,9 @@ TAudioThreadMessageQueue::TAudioThreadMessageQueue()
     m_processedByRTThreadQueue = std::make_unique<moodycamel::BlockingReaderWriterCircularBuffer<TAudioThreadMessageQueueEvent>>(5120);
 
     // Asynchronously notify the system when the lock-free queues encounter pressure
-    connect(this, &TAudioThreadMessageQueue::queueOverflowDetected, this, []() {
-        qCritical("CRITICAL: Real-time message queue overflowed! Events dropped to preserve audio stream integrity.");
+    connect(this, &TAudioThreadMessageQueue::queueOverflowDetected, this, [](int count) {
+        TLOG_E("mq", "a queue from the audio thread was full: {} events dropped, their callbacks did not run "
+                     "(what they would free stays allocated)", count);
     }, Qt::QueuedConnection);
 
     // Bootstrapping the companion background thread for GUI signaling tasks
@@ -86,8 +87,6 @@ TAudioThreadMessageQueue::TAudioThreadMessageQueue()
  */
 TAudioThreadMessageQueue::~TAudioThreadMessageQueue()
 {
-    TLOG_I("mq", "dropped real time events: {}", m_droppedRtEvents.load());
-
     m_running = false;
 
     // Dispatch a hollow dummy payload to immediately break the blocking wait_dequeue state
@@ -98,6 +97,10 @@ TAudioThreadMessageQueue::~TAudioThreadMessageQueue()
     m_TAudioThreadMessageQueueThread->quit();
     m_TAudioThreadMessageQueueThread->wait();
     delete m_TAudioThreadMessageQueueThread;
+
+    // The worker has ended: what it reported plus what it had not yet
+    TLOG_I("mq", "dropped real time events in this session: {}",
+           m_droppedRtEventsTotal.load() + m_droppedRtEvents.load());
 }
 
 /**
@@ -205,9 +208,11 @@ void TAudioThreadMessageQueue::process_processed_events_by_rt_thread_queue()
     m_postedFromRTThreadQueue->wait_dequeue(event);
 
     // Asynchronously evaluate if the real-time loop registered any dropped transactions
-    if (m_droppedRtEvents.load(std::memory_order_relaxed) > 0) {
-        m_droppedRtEvents.store(0, std::memory_order_relaxed);
-        emit queueOverflowDetected();
+    // Taken at once, so a drop between a read and a reset is not lost
+    const int dropped = m_droppedRtEvents.exchange(0, std::memory_order_relaxed);
+    if (dropped > 0) {
+        m_droppedRtEventsTotal.fetch_add(dropped, std::memory_order_relaxed);
+        emit queueOverflowDetected(dropped);
     }
 
     // Execute callback patterns strictly when operating active run states
