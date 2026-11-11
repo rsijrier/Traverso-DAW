@@ -21,7 +21,6 @@
 
 #include <bit>
 #include <cstdint>
-#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -217,9 +216,3 @@ bool TObjectIds::is_derived(TObjectId<Tag> id)
 {
     return from_owner(id.tag());
 }
-
-template <typename Tag>
-struct std::hash<TObjectId<Tag>>
-{
-    size_t operator()(TObjectId<Tag> id) const noexcept { return qHash(id); }
-};

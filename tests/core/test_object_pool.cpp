@@ -75,7 +75,6 @@ int main(int argc, char** argv)
     check(!pool.add(TObjectIdTestAccess::from_value<NodeBId>(bWithANumber).value(), &sameNumber), "another tag with a number in use is refused");
     check(pool.find(aId) == a.get() && pool.find(NodeId(ownerId)) == &owner, "found by the exact id and by the id of the kind");
     check(pool.find(NodeAId()) == nullptr, "the invalid id finds nothing");
-    check(pool.id_of(&owner) == TObjectIdTestAccess::value(ownerId), "id_of() gives the id of an object");
 
     // c derived from owner: its tag on the owner's number, enrolled with the id
     // it was made with
@@ -88,7 +87,6 @@ int main(int argc, char** argv)
 
     a.reset();
     check(!pool.contains(TObjectIdTestAccess::value(aId)) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
-    check(pool.id_of(nullptr) == 0, "no id for no object");
     check(pool.count() == 2, "no empty entry stays");
 
     pool.remove(ownerId);

@@ -81,8 +81,6 @@ public:
     // Without a domain, for QML and the log: the caller checks the tag
     QObject* find_raw(object_id_value_t value) const { return m_byId.value(value); }
 
-    // The id of an object in the pool, 0 when it has none
-    object_id_value_t id_of(const QObject* object) const { return m_idOf.value(object); }
 
     bool contains(object_id_value_t value) const { return m_byId.contains(value); }
     // Whether an object with a counter id already has this value's number
@@ -97,7 +95,6 @@ private:
             return false;
         }
         m_byId.insert(value, object);
-        m_idOf.insert(object, value);
         // Out when it is destroyed. The pool is the context: when the pool goes
         // first (a project's own tracks die after its members), so does this
         m_destroyed.insert(value, connect(object, &QObject::destroyed, this, [this, value]() {
@@ -112,7 +109,6 @@ private:
     void erase(object_id_value_t value)
     {
         if (QObject* object = m_byId.take(value)) {
-            m_idOf.remove(object);
             const object_id_value_t number = TObjectIds::sequence_of(value);
             if (m_byNumber.value(number) == object) {
                 m_byNumber.remove(number);
@@ -122,6 +118,5 @@ private:
 
     QHash<object_id_value_t, QObject*> m_byId;
     QHash<object_id_value_t, QObject*> m_byNumber;
-    QHash<const QObject*, object_id_value_t> m_idOf;
     QHash<object_id_value_t, QMetaObject::Connection> m_destroyed;
 };

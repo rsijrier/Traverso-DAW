@@ -12,9 +12,9 @@
 #include <QCoreApplication>
 #include <QDataStream>
 #include <QIODevice>
+#include <QSet>
 
 #include <cstdio>
-#include <unordered_set>
 
 
 static int failures = 0;
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
     check(read == a, "an id read back from a stream is the same");
     check(!notAnA.is_valid(), "a value of another tag reads as the invalid id");
 
-    std::unordered_set<AId> hashed{a, a, AId::create(ids)};
+    QSet<AId> hashed{a, a, AId::create(ids)};
     check(hashed.size() == 2, "ids hash as their value");
 
     check(a.to_string() == "id:0101000000000001", "an id without a registered name shows as id: and its hex");
