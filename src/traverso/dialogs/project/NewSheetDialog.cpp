@@ -68,7 +68,7 @@ void NewSheetDialog::accept()
 	QDomNode node;
 	if (useTemplateCheckBox->isChecked() && index >= 0) {
 		usetemplate = true;
-		TSheet* templatesheet = m_project->get_sheet(templateComboBox->itemData(index).toLongLong());
+		TSheet* templatesheet = m_project->get_sheet(templateComboBox->itemData(index).value<SongId>());
 		Q_ASSERT(templatesheet);
 		QDomDocument doc("Sheet");
 		node = templatesheet->get_state(doc, usetemplate);
@@ -81,7 +81,9 @@ void NewSheetDialog::accept()
 	for (int i=0; i<count; ++i) {
 		TSheet* sheet;
 		if (usetemplate) {
-			sheet = m_project->objects().make<TSheet>(m_project);
+			// A copy of the template song, made as at a load: a new song's
+			// constructor would give its master a second send
+			sheet = m_project->objects().load<TSheet>(node.toElement(), m_project, node);
 			sheet->set_state(node);
 		} else {
 			sheet = m_project->objects().make<TSheet>(m_project, trackcount);
@@ -97,7 +99,7 @@ void NewSheetDialog::accept()
 	TCommand::process_command(group);
 	
 	if (firstNewSheet) {
-		m_project->set_current_session(firstNewSheet->get_id());
+		m_project->set_current_session(firstNewSheet);
 	}
 	
 	hide();
@@ -128,10 +130,10 @@ void NewSheetDialog::update_template_combo()
 	templateComboBox->clear();
 	
 	foreach(TSheet* sheet, m_project->get_sheets()) {
-		QString text = "Sheet " + QString::number(m_project->get_sheet_index(sheet->get_id())) +
+		QString text = "Sheet " + QString::number(m_project->get_sheet_index(sheet->object_id())) +
                                 " " + sheet->get_name();
 		
-		templateComboBox->addItem(text, sheet->get_id());
+		templateComboBox->addItem(text, QVariant::fromValue(sheet->object_id()));
 
                 // FIXME ? Maybe the dialog should be modal, and be recreated each time it is shown
                 // to avoid code complexity like this?

@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <TProjectManager.h>
 #include <TProject.h>
 #include <TResourcesManager.h>
-#include <Utils.h>
 #include "TMainWindow.h"
 #include "TBufferedAudioStreamReader.h"
 #include "TAudioClipFactory.h"
@@ -81,7 +80,7 @@ void ExternalProcessingDialog::prepare_for_external_processing()
 
     //This should NOT be possible, but just in case....
     if (! audioStreamReader) {
-        qDebug("ExternalProcessing:: resources manager did NOT return a resource for the to be processed audioclip (%lld) !!!!\n", m_acep->m_clip->get_id());
+        qDebug("ExternalProcessing:: resources manager did NOT return a resource for the to be processed audioclip (%s) !!!!\n", m_acep->m_clip->object_id().to_string().c_str());
         return;
     }
 

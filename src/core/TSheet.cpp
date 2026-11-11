@@ -40,6 +40,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TSheet.h"
 #include "TProject.h"
 #include "TObjectFactory.h"
+#include "TWorkspace.h"
 #include "TAudioTrack.h"
 #include "TAudioClip.h"
 #include "TExportSpecification.h"
@@ -57,7 +58,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TLog.h"
 #include "TRecordingCommand.h"
 #include "TResourcesManager.h"
-#include "Utils.h"
 #include "TTimeLineRuler.h"
 #include "TTimeLineMarker.h"
 #include "TInputEventDispatcher.h"                       
@@ -92,10 +92,13 @@ TSheet::TSheet(SongId id, TProject* project, int numtracks)
 
     TRtTransaction transaction;
 
+    // A new song's master sends to the project's master
+    m_masterOutBusTrack->add_default_post_send();
+
     for (int i=1; i <= numtracks; i++) {
         int height = TAudioTrack::INITIAL_HEIGHT;
         QString trackname = QString("Audio Track %1").arg(i);
-        TAudioTrack* track = m_project->objects().make<TAudioTrack>(this, trackname, height);
+        TAudioTrack* track = new_audio_track(trackname, height);
         private_add_track(track, transaction);
     }
 
@@ -109,7 +112,6 @@ TSheet::TSheet(SongId id, TProject* project, const QDomNode& node)
 {
     PENTERCONS;
 
-    set_id(node.toElement().attribute("id", "0").toLongLong());
     init();
 }
 
@@ -158,6 +160,7 @@ void TSheet::init()
     set_related_context_item( m_audioClipManager );
     m_selectionService = new TSelectionService(this);
     create_history_stack();
+    m_timeLineRuler = TObjectFactory::make_derived<RulerTag>(this);
     m_timeLineRuler->set_history_stack(get_history_stack());
 
     connect(this, &TSheet::prepareRecording, this, &TSheet::prepare_recording);
@@ -174,11 +177,15 @@ void TSheet::init()
     m_clipRenderBus = new AudioBus(audio_device(), busConfig);
 
     // One to one with the sheet: their ids are derived from the sheet's
-    const uint64_t sequence = TObjectIds::sequence_of(object_id().to_storage());
-    m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(sequence, this, tr("Sheet Master"));
+    MasterOutSubGroup* master = TObjectFactory::make_derived<SongMasterTag>(this, tr("Sheet Master"));
+    [[maybe_unused]] bool added = m_project->object_pool().add<SongMasterTag>(master);
+    Q_ASSERT(added);
+    m_masterOutBusTrack = master;
     m_masterOutBusTrack->audio()->set_gain(0.5);
 
-    m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(sequence, this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    m_bounceTrack = TObjectFactory::make_derived<BounceTrackTag>(this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    added = m_project->object_pool().add<BounceTrackTag>(m_bounceTrack);
+    Q_ASSERT(added);
     // TODO: only on export add and after export remove this post send
     // m_masterOutBusTrack->add_post_send(m_bounceTrack->get_input_bus());
 
@@ -188,7 +195,7 @@ void TSheet::init()
 
     m_changed = m_isRecording = m_prepareRecording = false;
 
-    m_audiodeviceClient = new TAudioDeviceClient("sheet_" + QByteArray::number(get_id()));
+    m_audiodeviceClient = new TAudioDeviceClient(QString::fromStdString(object_id().to_string()));
     m_audiodeviceClient->set_process_callback(
         TProcessCallBack::from_method<TSheet, &TSheet::process>(this)
         );
@@ -232,8 +239,6 @@ int TSheet::set_state( const QDomNode & node )
     // Force the proper name for our Master Bus Track
     m_masterOutBusTrack->set_name("Sheet Master");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
-    m_project->objects().check_owned<SongMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack),
-                                                    masterOutNode.firstChildElement(), object_id().to_storage());
 
     QDomNode busTracksNode = node.firstChildElement("BusTracks");
     QDomNode busTrackNode = busTracksNode.firstChild();
@@ -263,7 +268,7 @@ int TSheet::set_state( const QDomNode & node )
     QDomNode workSheetNode = workSheetsNode.firstChild();
 
     while(!workSheetNode.isNull()) {
-        TSession* childSession = new TSession(this);
+        TWorkspace* childSession = m_project->objects().load<TWorkspace>(workSheetNode.toElement(), this);
         childSession->set_state(workSheetNode);
         add_child_session(childSession);
 
@@ -280,12 +285,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
 {
     QDomElement sheetNode = doc.createElement("Sheet");
 
-    if (! istemplate) {
-        sheetNode.setAttribute("id", get_id());
-        TObjectFactory::write(sheetNode, object_id());
-    } else {
-        sheetNode.setAttribute("id", TraversoDAW::Utils::create_id());
-    }
+    TObjectFactory::write(sheetNode, object_id());
 
     QDomElement properties = doc.createElement("Properties");
     properties.setAttribute("title", m_name);
@@ -324,7 +324,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
     sheetNode.appendChild(busTracksNode);
 
     QDomNode workSheetsNode = doc.createElement("WorkSheets");
-    foreach(TSession* session, m_childSessions) {
+    foreach(TWorkspace* session, m_childSessions) {
         workSheetsNode.appendChild(session->get_state(doc));
     }
 
@@ -476,7 +476,7 @@ void TSheet::solo_track(TTrack *track)
         foreach(TAudioTrack* sgTrack, tracks) {
             QList<TSend*> sends = sgTrack->get_post_sends();
             foreach(TSend* send, sends) {
-                if (send->get_bus_id() == track->get_process_bus()->get_id()) {
+                if (send->get_target_track() == track->object_id()) {
                     busTrackAudioTracks.append(sgTrack);
                 }
             }
@@ -993,6 +993,8 @@ void TSheet::prepare_recording()
 // recording ends (push_recording_session())
 void TSheet::start_takes()
 {
+    // Takes make their sources, and ids are made on the GUI thread only
+    Q_ASSERT(QThread::currentThread() == this->thread());
     QList<TAudioTrack*> armedTracks;
     if (m_bounceTrack->armed()) {
         armedTracks.append(m_bounceTrack);
@@ -1280,13 +1282,13 @@ QUndoCommand* TSheet::create_command_mutate_clips(const QList<TAudioClip*>& clip
     QMap<TAudioTrack*, TrackMutation> mutationsPerTrack;
 
     for (TAudioClip* clip : clipsToRemove) {
-        if (clip && clip->get_track()) {
+        if (clip && clip->has_track()) {
             mutationsPerTrack[clip->get_track()].toRemove.append(clip);
         }
     }
 
     for (TAudioClip* clip : clipsToAdd) {
-        if (clip && clip->get_track()) {
+        if (clip && clip->has_track()) {
             mutationsPerTrack[clip->get_track()].toAdd.append(clip);
         }
     }
@@ -1344,7 +1346,7 @@ QUndoCommand* TSheet::create_command_split_entities(const QList<TSplitableTimeLi
 
         TSplitMutationResult entityResult = entity->calculate_split_mutation(splitLocation);
 
-        if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeAudioClip) {
+        if (dynamic_cast<TAudioClip*>(entity)) {
             for (TTimeLineEntity* e : entityResult.toRemove) {
                 totalClipsToRemove.append(dynamic_cast<TAudioClip*>(e));
             }
@@ -1352,7 +1354,6 @@ QUndoCommand* TSheet::create_command_split_entities(const QList<TSplitableTimeLi
                 totalClipsToAdd.append(dynamic_cast<TAudioClip*>(e));
             }
         }
-        // else if (entity->get_timeline_entity_type() == TTimeLineEntity::Type::TypeVideoClip) { ... }
     }
 
     if (totalClipsToAdd.isEmpty()) {
@@ -1372,4 +1373,11 @@ TPeakBuild TSheet::request_peak_build(const QString& audioPath, const QString& p
 void TSheet::post_process_peaks(std::shared_ptr<TPeakStream> recorded)
 {
     m_project->get_peak_builds()->post_process(std::move(recorded), m_readScheduler);
+}
+
+TAudioTrack* TSheet::new_audio_track(const QString& name, int height)
+{
+    TAudioTrack* track = m_project->objects().make<TAudioTrack>(this, name, height);
+    track->add_default_post_send();
+    return track;
 }

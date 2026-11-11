@@ -24,9 +24,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QString>
 #include <memory>
 #include <QList>
+#include <QDateTime>
 #include <QDomNode>
+#include <QUuid>
 
 #include "TObjectFactory.h"
+#include "TObjectIdTags.h"
 #include "TSession.h"
 #include "TRtList.h"
 #include "TProcessContext.h"
@@ -62,10 +65,12 @@ public :
     // jackd only feature
     int transport_control(TTransportControl* transportControl) T_REALTIME_SAFE;
 
+    // An output port by name, hardware or software (the jack master)
     AudioBus* get_playback_bus(const QString& name) const;
     AudioBus* get_capture_bus(const QString& name) const;
 
-    AudioBus* get_audio_bus(qint64 id);
+    // The process bus of a bus track or a master: what a send to it feeds
+    AudioBus* get_audio_bus(TrackId id);
     AudioBus* create_software_audio_bus(const TAudioBusConfiguration& config);
     void remove_software_audio_bus(AudioBus* bus);
     QList<TSend*> get_inputs_for_bus_track(TBusTrack* busTrack) const;
@@ -76,11 +81,12 @@ public :
 
     QList<AudioBus*> get_hardware_buses() const;
     QList<TTrack*> get_sheet_tracks() const;
-    TTrack* get_track(qint64 trackId) const;
+    // A track of a song (a master too) or of the project; not the project
+    // master
+    TTrack* get_track(TrackId trackId) const;
 
 
     // Get functions
-    qint64 get_current_sheet_id() const;
     int get_num_sheets() const;
     uint get_rate() const;
     // The project's rate: the user's wish, which recordings and exports are
@@ -97,6 +103,10 @@ public :
     // (doc/design/object-ids.md)
     TObjectFactory& objects() { return m_objects; }
     TObjectPool& object_pool() { return m_objectPool; }
+    TProject* get_project() const override { return const_cast<TProject*>(this); }
+    // The same in every project (ProjectTag)
+    using IdTag = ProjectTag;
+    ProjectId object_id() const { return ProjectId::root(); }
     TPeakBuildService* get_peak_builds() const { return m_peakBuilds.get(); }
     QString get_title() const;
     QString get_engineer() const;
@@ -112,16 +122,22 @@ public :
     QString get_audiosources_dir() const;
     QString get_import_dir() const;
     QString get_error_string() const {return m_errorString;}
+    // Invalid for a project that has never been saved as version 4
+    QUuid get_uuid() const {return m_uuid;}
+    // UTC; invalid when the project file did not say (a template)
+    QDateTime get_created_on() const {return m_createdOn;}
     QList<TSheet* > get_sheets() const;
     // Every sheet's undone recording sessions, before the project closes
     void discard_undone_recordings();
-    TSession* get_session(qint64 id);
+    // A workspace of the project or of a song
+    TSession* get_session(WorkspaceId id);
     QList<TSession*> get_sessions();
     TSession* get_current_session() const ;
     TSheet* get_active_sheet() const {return m_activeSheet;}
-    TSheet* get_sheet(qint64 id) const;
-    int get_sheet_index(qint64 id);
-    int get_session_index(qint64 id);
+    SongId get_current_sheet_id() const;
+    TSheet* get_sheet(SongId id) const;
+    int get_sheet_index(SongId id) const;
+    int get_session_index(const TSession* session);
     int get_keyboard_arrow_key_navigation_speed() const {return m_keyboardArrowNavigationSpeed;}
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
 
@@ -138,7 +154,7 @@ public :
     void set_upc_ean(const QString& pUPC);
     void set_genre(int pGenre);
     void set_sheet_export_progress(int pogress);
-    void set_current_session(qint64 id);
+    void set_current_session(TSession* session);
     void set_import_dir(const QString& dir);
     void set_sheets_are_tracks_folder(bool isFolder);
     void set_work_at(const TTimeRef &worklocation, bool isFolder);
@@ -162,7 +178,9 @@ public :
     enum {
         SETTING_XML_CONTENT_FAILED = -1,
         PROJECT_FILE_COULD_NOT_BE_OPENED = -2,
-        PROJECT_FILE_VERSION_MISMATCH = -3
+        PROJECT_FILE_VERSION_MISMATCH = -3,
+        PROJECT_FILE_TOO_NEW = -4,
+        PROJECT_FILE_CONVERSION_FAILED = -5
     };
 
     void connect_to_audio_device();
@@ -181,7 +199,7 @@ private:
 
     // First: everything made below gets its id from them
     TObjectIdGenerator       m_idGenerator;
-    TObjectPool              m_objectPool{this};
+    TObjectPool              m_objectPool;
     TObjectFactory           m_objects{m_idGenerator, m_objectPool};
     TResourcesManager*       m_resourcesManager;
     std::unique_ptr<TPeakBuildService> m_peakBuilds;
@@ -197,14 +215,16 @@ private:
 
     QList<AudioBus* >       m_hardwareAudioBuses;
 
-    QHash<qint64, AudioBus* >       m_softwareAudioBuses;
-    QHash<qint64, AudioChannel* >   m_softwareAudioChannels;
+    QList<AudioBus* >       m_softwareAudioBuses;
+    QList<AudioChannel* >   m_softwareAudioChannels;
 
     TExportSpecification*   m_exportSpecification;
 
 
 
     QString 	m_rootDir;
+    QUuid       m_uuid;
+    QDateTime   m_createdOn;
     QString 	m_sourcesDir;
     QString 	engineer;
     QString		m_description;
@@ -228,8 +248,6 @@ private:
 
 
 
-    qint64 		m_activeSheetId;
-    qint64      m_activeSessionId;
 
     int create(int sheetcount, int numtracks);
     int create_audiosources_dir();
@@ -240,7 +258,10 @@ private:
     TAudioDeviceSetup m_audioDeviceSetup;
 
     void set_project_closed();
-    void log_object_ids(int warnings, bool invariantHolds) const;
+    void log_object_ids(int warnings) const;
+    // A version 3 project file: kept as <file>.pre-4, converted to version 4
+    // and written back. 1, or the load's error code
+    int convert_from_version_3(QDomDocument& doc, const QString& filename);
 
     friend class TProjectManager;
     

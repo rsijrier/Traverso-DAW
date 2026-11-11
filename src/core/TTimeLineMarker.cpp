@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TTimeLineMarker.h"
+#include "TObjectFactory.h"
 #include "TSheet.h"
 #include "TTimeLineRuler.h"
 
@@ -65,7 +66,8 @@ QDomNode TTimeLineMarker::get_state(QDomDocument doc)
 
     domNode.setAttribute("position",  m_location->get_start().universal_frame());
     domNode.setAttribute("description",  m_description);
-    domNode.setAttribute("id",  get_id());
+    TObjectFactory::write(domNode, object_id());
+    TObjectFactory::write_owner(domNode, m_timeline->object_id());
     domNode.setAttribute("performer", m_performer);
     domNode.setAttribute("composer", m_composer);
     domNode.setAttribute("songwriter", m_songwriter);
@@ -98,7 +100,6 @@ int TTimeLineMarker::set_state(const QDomNode & node)
     TTimeRef location = TTimeRef(e.attribute("position", "0").toLongLong());
 
     m_location->set_range(location, location);
-    set_id(e.attribute("id", "0").toLongLong());
     m_performer = e.attribute("performer", "");
     m_composer = e.attribute("composer", "");
     m_songwriter = e.attribute("songwriter", "");

@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioPlugin.h"
 #include "TAudioPluginChain.h"
 #include <TTrack.h>
-#include <Utils.h>
 
 #include <TAudioPluginPropertiesDialog.h>
 

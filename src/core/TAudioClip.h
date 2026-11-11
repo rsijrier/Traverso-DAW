@@ -65,7 +65,6 @@ public:
     using IdTag = AudioClipTag;
     // Its owner: the track it is on while it is in use, nullptr when on none. A
     // removed clip is on none, also while it keeps its track for undo
-    QObject* id_owner() const;
 
     enum RecordingStatus {
         NO_RECORDING,
@@ -74,11 +73,11 @@ public:
     };
 
     void set_audio_source(TBufferedAudioStreamReader* source);
-    int init_recording();
+    // fileName: the take's file, without its extension (TAudioTrack::init_recording())
+    int init_recording(const QString& fileName);
     int process(TProcessContext &context) T_REALTIME_SAFE;
 
     void move_to_location(const TTimeRef& location) final;
-    unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeAudioClip; }
 
     bool validate_split_boundary(const TTimeRef& splitLocation) const final;
     TSplitMutationResult calculate_split_mutation(const TTimeRef& splitLocation) final;
@@ -126,8 +125,7 @@ public:
     uint get_channel_count() const T_REALTIME_SAFE;
     uint get_rate() const;
     uint get_bitdepth() const;
-    inline qint64 get_readsource_id( ) const {return m_readSourceId;}
-    qint64 get_sheet_id() const {return m_sheetId;}
+    AudioSourceId get_readsource_id( ) const {return m_readSourceId;}
     TBufferedAudioStreamReader* get_readsource() const {return m_readSource;};
 
     QDomNode get_dom_node() const;
@@ -187,8 +185,7 @@ private:
     bool            m_syncDuringDrag;
     RecordingStatus m_recordingStatus;
 
-    qint64 m_readSourceId;
-    qint64 m_sheetId;
+    AudioSourceId m_readSourceId;
 
     TFadeCurve* create_fade(int fadeType, TRtTransaction& transaction);
     void init();

@@ -92,10 +92,11 @@ void NewTrackDialog::create_track()
         TTrack* track;
 
         if (isBusTrack->isChecked()) {
-                track = m_project->objects().make<TBusTrack>(session, title, 2);
+                track = session->new_bus_track(title, 2);
 
         } else {
-                track = m_project->objects().make<TAudioTrack>(sheet, title, TAudioTrack::INITIAL_HEIGHT);
+                Q_ASSERT(sheet);
+                track = sheet->new_audio_track(title, TAudioTrack::INITIAL_HEIGHT);
         }
 
         int channelCount = 1;
@@ -126,20 +127,27 @@ void NewTrackDialog::create_track()
                 // of AudioTrack.
                 // If AudioTrack already had any post sends then we remove it by default here
                 if (busTrack) {
-                    qint64 audioTrackId = item->data(Qt::UserRole).toLongLong();
-                    TAudioTrack* inputAudioTrack = qobject_cast<TAudioTrack*>(pm().get_project()->get_track(audioTrackId));
+                    TAudioTrack* inputAudioTrack = qobject_cast<TAudioTrack*>(m_project->get_track(item->data(Qt::UserRole).value<TrackId>()));
                     if (inputAudioTrack) {
                         inputAudioTrack->remove_all_post_sends();
-                        inputAudioTrack->add_post_send(busTrack->get_process_bus());
+                        inputAudioTrack->add_post_send(busTrack->object_id());
                     }
                 }
             }
 
-            // add post send to Track/Bus if any was selected
+            // add post send to Track/Bus if any was selected; the outputs chosen
+            // replace the default send to the master
             QList<QListWidgetItem*> selectedOutputItems = routingOutputListWidget->selectedItems();
+            if (!selectedOutputItems.isEmpty()) {
+                track->remove_all_post_sends();
+            }
             foreach(QListWidgetItem* item, selectedOutputItems) {
-                qint64 outputBusId = item->data(Qt::UserRole).toLongLong();
-                track->add_post_send(outputBusId);
+                // A track, or a port by name
+                if (item->data(Qt::UserRole).canConvert<TrackId>()) {
+                    track->add_post_send(item->data(Qt::UserRole).value<TrackId>());
+                } else if (AudioBus* port = m_project->get_playback_bus(item->text())) {
+                    track->add_post_send(port);
+                }
             }
         }
 
@@ -213,7 +221,7 @@ void NewTrackDialog::update_buses_comboboxes()
         foreach(TBusTrack* sg, subs) {
             QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
             item->setText(sg->get_name());
-            item->setData(Qt::UserRole, sg->get_id());
+            item->setData(Qt::UserRole, QVariant::fromValue(sg->object_id()));
         }
 
         QList<AudioBus*> hardwareBuses = m_project->get_hardware_buses();
@@ -226,12 +234,10 @@ void NewTrackDialog::update_buses_comboboxes()
             if (isAudioTrack->isChecked() && bus->get_type() == AudioChannel::ChannelIsInput) {
                 QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                 item->setText(bus->get_name());
-                item->setData(Qt::UserRole, bus->get_id());
             }
             if (bus->get_type() == AudioChannel::ChannelIsOutput) {
                 QListWidgetItem* item = new QListWidgetItem(routingOutputListWidget);
                 item->setText(bus->get_name());
-                item->setData(Qt::UserRole, bus->get_id());
             }
         }
 
@@ -240,7 +246,7 @@ void NewTrackDialog::update_buses_comboboxes()
             foreach(TAudioTrack* at, sheet->get_audio_tracks()) {
                 QListWidgetItem* item = new QListWidgetItem(routingInputListWidget);
                 item->setText(at->get_name());
-                item->setData(Qt::UserRole, at->get_id());
+                item->setData(Qt::UserRole, QVariant::fromValue(at->object_id()));
             }
         }
 

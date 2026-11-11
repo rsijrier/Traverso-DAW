@@ -3,25 +3,27 @@
 
 #pragma once
 
+#include "TObjectIdTags.h"
+
 #include <QList>
 #include <QSet>
-#include <QtGlobal>
 
-// The routing as a graph: a node is a track or a bus (a bus track's process
-// bus has the id of its track), an edge a send. Feedback loops are excluded
-// (T64): a send is refused when it would close one.
+// The routing as a graph: a node is a track, an edge a send to a track. A
+// send to a port (a hardware or software bus) sends nowhere further and is no
+// edge. Feedback loops are excluded (T64): a send is refused when it would
+// close one.
 class TRoutingGraph
 {
 public:
     // True when an edge from -> to closes a loop: to is from itself, or from
     // is reachable from to. targetsOf(id) gives the ids an id sends to.
     template <typename TargetsOf>
-    static bool closes_loop(qint64 from, qint64 to, TargetsOf targetsOf)
+    static bool closes_loop(TrackId from, TrackId to, TargetsOf targetsOf)
     {
-        QList<qint64> pending{to};
-        QSet<qint64> visited;
+        QList<TrackId> pending{to};
+        QSet<TrackId> visited;
         while (!pending.isEmpty()) {
-            const qint64 id = pending.takeLast();
+            const TrackId id = pending.takeLast();
             if (id == from) {
                 return true;
             }

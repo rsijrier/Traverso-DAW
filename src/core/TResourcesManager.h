@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TTimeRef.h"
 #include <QString>
 #include <QHash>
+
+#include "TObjectIdTags.h"
 #include <QList>
 #include <QDomDocument>
 #include <QObject>
@@ -33,6 +35,7 @@ class TBufferedAudioStream;
 class TBufferedAudioStreamReader;
 class TAudioClip;
 class TProject;
+
 
 class TResourcesManager : public QObject
 {
@@ -45,15 +48,18 @@ public:
 	int set_state( const QDomNode& node );
 	QDomNode get_state(QDomDocument doc);
 	
+	// shortName: what is shown (the clip's name); fileName: the take's file,
+	// without its extension
 	TBufferedAudioStreamReader* create_recording_source(const QString& dir,
-				const QString& name,
+				const QString& shortName,
+				const QString& fileName,
 				uint channelCount,
-				qint64 sheetId);
+				SongId song);
 	
 	TBufferedAudioStreamReader* import_source(const QString& dir, const QString& name);
 	TBufferedAudioStreamReader* get_silent_readsource();
 	TAudioClip* new_audio_clip(const QString& name);
-	TAudioClip* get_clip(qint64 id);
+	TAudioClip* get_clip(ClipId id);
 
 	void mark_clip_removed(TAudioClip* clip);
 	void mark_clip_added(TAudioClip* clip);
@@ -64,10 +70,10 @@ public slots:
 	void remove_source(TBufferedAudioStreamReader* source);
 
 public:
-	bool is_clip_in_use(qint64) const;
-	bool is_source_in_use(qint64 id) const;
+	bool is_clip_in_use(ClipId id) const;
+	bool is_source_in_use(AudioSourceId id) const;
 
-	TBufferedAudioStreamReader* get_readsource(qint64 id);
+	TBufferedAudioStreamReader* get_readsource(AudioSourceId id);
 	
 	QList<TBufferedAudioStreamReader*> get_all_audio_sources() const;
 	QList<TAudioClip*> get_all_clips() const;
@@ -105,8 +111,9 @@ private:
 	void delete_takes(const QList<TAudioClip*>& takes);
 
 	TProject* m_project;
-	QHash<qint64, SourceData* >	m_sources;
-	QHash<qint64, ClipData* >	m_clips;
+	// By the id of the source: the stream kept here
+	QHash<AudioSourceId, SourceData* >	m_sources;
+	QHash<ClipId, ClipData* >	m_clips;
     // Taken out of the project by discard_takes(), freed with the project:
     // a take may have just left its track, and the audio thread lets go of
     // it only in a later cycle; once the project is off the audio device

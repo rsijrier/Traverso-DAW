@@ -6,7 +6,7 @@
 #include "TSelectionService.h"
 
 #include <QVariant>
-#include "TContextItem.h"
+#include "TClip.h"
 #include "TSelectionTimeBounds.h"
 #include <QObject>
 
@@ -15,26 +15,14 @@ TSelectionService::TSelectionService(QObject* parent)
 {
 }
 
-void TSelectionService::select_with_context(TTimeLineEntity* entity, SelectionContext activeContext)
+void TSelectionService::select(TTimeLineEntity* entity)
 {
-    if (!entity) return;
+    Q_ASSERT(entity);
 
-    if (activeContext == ContextTrackLane) {
-        if (entity->get_timeline_entity_type() != TTimeLineEntity::TypeAudioClip &&
-            entity->get_timeline_entity_type() != TTimeLineEntity::TypeVideoClip) {
-            return;
-        }
-    }
-    else if (activeContext == ContextAutomation) {
-        if (entity->get_timeline_entity_type() != TTimeLineEntity::TypeCurveNode) {
-            return;
-        }
-    }
+    auto* clip = dynamic_cast<TClip*>(entity);
+    Q_ASSERT(clip);
 
-    auto* contextItem = dynamic_cast<TContextItem*>(entity);
-    if (!contextItem) return;
-
-    qint64 id = contextItem->get_id();
+    const ClipId id = clip->object_id();
     if (!m_registry.contains(id)) {
         m_registry.insert(id, entity);
 
@@ -48,12 +36,12 @@ void TSelectionService::select_with_context(TTimeLineEntity* entity, SelectionCo
 
 void TSelectionService::deselect(TTimeLineEntity* entity)
 {
-    if (!entity) return;
+    Q_ASSERT(entity);
 
-    auto* contextItem = dynamic_cast<TContextItem*>(entity);
-    if (!contextItem) return;
+    auto* clip = dynamic_cast<TClip*>(entity);
+    Q_ASSERT(clip);
 
-    qint64 id = contextItem->get_id();
+    const ClipId id = clip->object_id();
     if (m_registry.remove(id) > 0) {
         if (auto* qobj = dynamic_cast<QObject*>(entity)) {
             qobj->setProperty("selected", false);

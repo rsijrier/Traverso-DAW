@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QWidget>
 #include <QTreeWidgetItem>
 #include "TSession.h"
+#include "TObjectIdTags.h"
 #include "ui_ResourcesWidget.h"
 
 class TProject;
@@ -106,11 +107,11 @@ private:
 	TProject* m_project;
 	TSheet* m_currentSheet;
 	FileWidget* m_filewidget;
-	QHash<qint64, ClipTreeItem*> m_clipindices;
-	QHash<qint64, SourceTreeItem*> m_sourceindices;
+	QHash<ClipId, ClipTreeItem*> m_clipindices;
+	QHash<AudioSourceId, SourceTreeItem*> m_sourceindices;
 	
 	void update_clip_state(TAudioClip* clip);
-	void update_source_state(qint64 id);
+	void update_source_state(AudioSourceId id);
 	
 	void filter_on_current_sheet();
 	

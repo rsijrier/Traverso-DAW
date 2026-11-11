@@ -10,6 +10,7 @@
 #include <QList>
 #include "TTimeLineEntity.h"
 #include "TSelectionTimeBounds.h"
+#include "TObjectIdTags.h"
 
 class TSelectionService final : public QObject
 {
@@ -18,21 +19,14 @@ class TSelectionService final : public QObject
     Q_PROPERTY(bool hasSelection READ has_selection NOTIFY selectionChanged)
 
 public:
-    enum SelectionContext {
-        ContextAll,
-        ContextTrackLane,
-        ContextAutomation
-    };
-    Q_ENUM(SelectionContext)
-
     explicit TSelectionService(QObject* parent = nullptr);
     ~TSelectionService() override = default;
 
-    void select_with_context(TTimeLineEntity* entity, SelectionContext activeContext);
+    void select(TTimeLineEntity* entity);
     void deselect(TTimeLineEntity* entity);
     void clear();
 
-    bool is_selected(qint64 id) const { return m_registry.contains(id); }
+    bool is_selected(ClipId id) const { return m_registry.contains(id); }
     int get_selection_count() const { return m_registry.size(); }
     bool has_selection() const { return !m_registry.isEmpty(); }
 
@@ -43,5 +37,5 @@ signals:
     void selectionChanged();
 
 private:
-    QHash<qint64, TTimeLineEntity*> m_registry;
+    QHash<ClipId, TTimeLineEntity*> m_registry;
 };

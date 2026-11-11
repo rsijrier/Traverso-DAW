@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioResampler.h"
 #include "TResamplerSettings.h"
 #include "TSheet.h"
+#include "TWorkspace.h"
 #include "TTrack.h"
 #include "TVUMonitor.h"
 #include "TSheetView.h"
@@ -1489,7 +1490,7 @@ void TMainWindow::import_audio()
 
         if (clip) {
             QFileInfo fi(fileName);
-            TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation);
+            TTimeLineMarker* m = m_project->objects().make<TTimeLineMarker>(timeLineRuler, importLocation);
             m->set_description(QString(tr("%1: %2")).arg(n).arg(fi.baseName()));
 
             clips.append(clip);
@@ -1536,7 +1537,7 @@ void TMainWindow::import_audio()
             delete moveEndMarker;
         }
     } else {
-        TTimeLineMarker* m = new TTimeLineMarker(timeLineRuler, importLocation, TTimeLineMarker::ENDMARKER);
+        TTimeLineMarker* m = m_project->objects().make<TTimeLineMarker>(timeLineRuler, importLocation, TTimeLineMarker::ENDMARKER);
         TCommand::process_command(timeLineRuler->add_marker(m, true));
     }
 
@@ -1641,12 +1642,12 @@ TCommand* TMainWindow::show_add_child_session_dialog()
         return 0;
     }
 
-    TSession* session = new TSession(parentSession);
+    TWorkspace* session = m_project->objects().make<TWorkspace>(parentSession);
 
     TTrackSelector selector(this, parentSession, session);
     if (selector.exec() == QDialog::Accepted) {
         parentSession->add_child_session(session);
-        m_project->set_current_session(session->get_id());
+        m_project->set_current_session(session);
     } else {
         delete session;
     }
@@ -1884,7 +1885,7 @@ TCommand* TMainWindow::show_track_finder()
         tracks.append(m_project->get_master_out_bus_track());
         foreach(TTrack* track, tracks) {
             QStandardItem* sItem = new QStandardItem(track->get_name());
-            sItem->setData(track->get_id(), Qt::UserRole);
+            sItem->setData(QVariant::fromValue(track->object_id()), Qt::UserRole);
             QList<QStandardItem*> items;
             items.append(sItem);
             sItem = new QStandardItem(sheet->get_name());
@@ -1904,7 +1905,7 @@ TCommand* TMainWindow::show_track_finder()
 
 void TMainWindow::track_finder_model_index_changed(const QModelIndex& index)
 {
-    qlonglong id = index.data(Qt::UserRole).toLongLong();
+    TrackId id = index.data(Qt::UserRole).value<TrackId>();
 
     foreach(TSheetWidget* sw, m_sheetWidgets) {
         TSession* session = sw->get_session();

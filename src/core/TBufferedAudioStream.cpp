@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <utility>
 #include "TClock.h"
-#include "Utils.h"
 #include "TQueueBufferSlot.h"
 #include "TIOPlanner.h"
 #include "TLog.h"
@@ -44,7 +43,6 @@ TBufferedAudioStream::TBufferedAudioStream(QString  dir, const QString& name)
 {
 	PENTERCONS;
 	m_fileName = m_dir + m_name;
-    m_id = TraversoDAW::Utils::create_id();
 
     m_rtBufferSlotsQueue = nullptr;
     m_freeBufferSlotsQueue = nullptr;
@@ -257,11 +255,7 @@ void TBufferedAudioStream::delete_queue_buffers()
 void TBufferedAudioStream::set_name(const QString& name)
 {
 	m_name = name;
-	if (m_wasRecording) {
-		m_shortName = m_name.left(m_name.length() - 20);
-	} else {
-		m_shortName = m_name;
-	}
+	m_shortName = m_name;
 	m_fileName = m_dir + m_name;
 }
 
@@ -283,9 +277,9 @@ void TBufferedAudioStream::set_original_bit_depth( uint bitDepth )
 	m_origBitDepth = bitDepth;
 }
 
-void TBufferedAudioStream::set_created_by_sheet(qint64 id)
+void TBufferedAudioStream::set_created_by_sheet(SongId song)
 {
-	m_origSheetId = id;
+	m_originSong = song;
 }
 
 QString TBufferedAudioStream::get_filename( ) const

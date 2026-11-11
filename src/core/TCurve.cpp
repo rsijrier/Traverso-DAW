@@ -93,7 +93,6 @@ QDomNode TCurve::get_state(QDomDocument doc, const QString& name)
 
     domNode.setAttribute("nodes",  nodesList.join(";"));
     domNode.setAttribute("defaulvalue",  m_defaultValue);
-    domNode.setAttribute("id",  get_id());
 
 
     return domNode;
@@ -106,7 +105,6 @@ int TCurve::set_state( const QDomNode & node )
 
     QStringList nodesList = e.attribute( "nodes", "" ).split(";");
     m_defaultValue = e.attribute( "defaulvalue", "1.0" ).toDouble();
-    set_id(e.attribute("id", "0" ).toLongLong());
 
     TRtTransaction transaction;
 

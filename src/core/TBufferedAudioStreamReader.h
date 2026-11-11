@@ -44,7 +44,8 @@ class TBufferedAudioStreamReader : public TBufferedAudioStream
 public :
     TBufferedAudioStreamReader(const QDomNode &node);
     TBufferedAudioStreamReader(const QString& dir, const QString& name);
-    TBufferedAudioStreamReader(const QString& dir, const QString& name, uint channelCount);
+    // A take: its file name without the extension, and the name shown
+    TBufferedAudioStreamReader(const QString& dir, const QString& fileName, const QString& shortName, uint channelCount);
     TBufferedAudioStreamReader();  // For creating a 0-channel, silent TBufferedAudioStreamReader
     ~TBufferedAudioStreamReader();
 	
@@ -55,7 +56,17 @@ public :
         FILE_DOES_NOT_EXIST = -4
     };
 	
+    // Not enrolled in the pool: it carries the source's id, the source is the
+    // stream the resources manager keeps
     TBufferedAudioStreamReader* deep_copy();
+
+    // Given by TObjectFactory
+    using IdTag = AudioSourceTag;
+    AudioSourceId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
 
 	
 	int set_state( const QDomNode& node );
@@ -95,6 +106,9 @@ public :
 	
 	
 private:
+    friend class TObjectFactory;
+    AudioSourceId m_objectId;
+
     // The file's reader once init() opened it; none: no file read
     std::unique_ptr<TAudioReader> m_audioReader;
 

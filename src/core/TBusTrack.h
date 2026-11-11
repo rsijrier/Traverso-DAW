@@ -33,8 +33,8 @@ class TBusTrack : public TTrack
 public:
     using IdTag = BusTrackTag;
 
-    TBusTrack(TSession* session, const QString& name, int channelCount);
-    TBusTrack(TSession* session, const QDomNode node);
+    TBusTrack(TrackId id, TSession* session, const QString& name, int channelCount);
+    TBusTrack(TrackId id, TSession* session, const QDomNode node);
     ~TBusTrack();
 
     QDomNode get_state(QDomDocument doc, bool istemplate=false);
@@ -61,8 +61,8 @@ public:
     // Two tags, the song's master and the project's: the maker names one
     using IdTag = void;
 
-    MasterOutSubGroup(TSession* session, const QString& name) : TBusTrack(session, name, 2) {}
-    MasterOutSubGroup(TSession* session, const QDomNode node) : TBusTrack(session, node) {}
+    MasterOutSubGroup(TrackId id, TSession* session, const QString& name) : TBusTrack(id, session, name, 2) {}
+    MasterOutSubGroup(TrackId id, TSession* session, const QDomNode node) : TBusTrack(id, session, node) {}
     ~MasterOutSubGroup() {}
 
     //        void add_output_bus(const QString& name) {

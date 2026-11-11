@@ -25,7 +25,8 @@ in creation order, and are the same for the same steps in a test. No clock.
 | Sequence | 1 to 2^48 − 1 | Per project, increasing from 1; 0 only in an id derived from the project (its master) |
 
 The value 0 is the invalid id. The fields are byte-aligned on purpose: the hex
-form reads directly (`0101000000000005` = kind 1, subtype 1, number 5).
+form reads directly (`0301000000000005` = kind 3, subtype 1, number 5: an
+audio track).
 
 ## Rules
 
@@ -37,9 +38,14 @@ form reads directly (`0101000000000005` = kind 1, subtype 1, number 5).
    `created` field.
 4. Ids are made in the GUI thread, never in the real-time path. The audio thread
    that needs a new object asks the GUI thread through the message queue.
-5. Kind and subtype numbers are part of the project file: never renumber them,
-   never reuse a number that was given up.
-6. In JSON and QML an id is always a string (`"audiotrack:0101000000000005"`):
+5. Kind and subtype numbers are part of the project file. The kinds follow
+   the tree (project, song, track, clip, curve, marker), so an id reads as
+   where it stands in it. Renumbered once on 2026-11-07 (Remon), when only
+   development projects held ids: their load check gives a new id with a
+   warning where a tag no longer fits its element, and a save makes them
+   clean. **Frozen at the foundations release:** from then on never renumber
+   them, never reuse a number that was given up.
+6. In JSON and QML an id is always a string (`"audiotrack:0301000000000005"`):
    JavaScript numbers hold only 53 bits exactly.
 
 ## Tags
@@ -69,6 +75,14 @@ across kinds. The compiler enforces this.
 `Tag::Object` is the class `TObjectPool::find()` returns, through a
 `static_cast` from `QObject*`. Every `Tag::Object` is therefore a `QObject`.
 
+The value of an id is an `object_id_value_t`. Only the project file and the
+pool's index see it (`TObjectFactory`, `TObjectPool`, and the tests through
+`TObjectIdTestAccess`): `from_storage()`, `to_storage()` and `accepts()` are
+private. Everyone else holds a `TObjectId`: as a `QHash` key (`qHash()`), as
+item data in a drag (`QDataStream`; a value of another tag reads as the
+invalid id), and as text (`to_string()`, `to_hex()`). The project's own id is
+`TObjectId::root()`: its exact tag on number 0.
+
 ## Generator
 
 One `TObjectIdGenerator` per project, owned by the project (no singleton).
@@ -77,9 +91,9 @@ One `TObjectIdGenerator` per project, owned by the project (no singleton).
 class TObjectIdGenerator
 {
 public:
-    uint64_t create(uint16_t tag);                              // mutex, m_next++
-    void restore(uint64_t savedNext, uint64_t highestLoaded);   // at load
-    uint64_t next() const;                                      // for save
+    object_id_value_t create(uint16_t tag);                     // mutex, m_next++
+    void restore(object_id_value_t savedNext, object_id_value_t highestLoaded);   // at load
+    object_id_value_t next() const;                             // for save
 };
 ```
 
@@ -158,7 +172,7 @@ from the counter: its id is derived from the owner.
 | Object | Id |
 |---|---|
 | Song master, project master, bounce track | derived (owner: song or project) |
-| Gain curve, fade-in, fade-out of a clip or track | derived (owner: clip or track) |
+| Gain curve, fade-in, fade-out of a clip or track (gain curves with T108; the bounce track has none) | derived (owner: clip or track) |
 | Ruler | derived (owner: song) |
 | Plugin chain | derived (owner: clip or track) |
 | Tracks, clips, plugins, markers, sends, automation lanes per parameter | counter |
@@ -178,6 +192,15 @@ derived id = [ kind of the role | subtype of the role | the owner's sequence num
 - The 48 bits are not divided further: the number has one meaning.
 - Unique: only one role uses a subtype, and each owner's number is unique. A
   derived id never meets one from the counter, its subtype is its own.
+- One sequence for all kinds: a clip 7 and a track 7 never exist together, so
+  `[5|1|7]` names one curve. The factory asserts it where it adds a counter id
+  (a number used twice) and where it adds a derived one (an id made twice).
+- An owner that is itself derived shares its number: the song master and the
+  bounce track both have the song's number `s`. Where two derived owners share
+  a number, their derived objects in the same role need different subtypes.
+  The bounce track has no gain curve (Remon 2026-11-11), so no gain curve
+  meets this now. `tests/core/test_derived_ids.cpp` builds every kind of
+  derived object next to counter owners and checks that no id is made twice.
 - A derived object has no function to change its owner.
 
 In branch `object-ids` the masters and the bounce track are derived; the
@@ -194,19 +217,35 @@ with an id are made. The project owns the sequence, the pool and the factory:
 |---|---|
 | `make<T>(args...)` | a new object, a new number from the counter |
 | `load<T>(element, args...)` | an object from its element, with the id saved there when it fits and is free; else a new one, with a warning |
-| `make_owned<T, Tag>(ownerNumber, args...)` | a derived object, in its owner's constructor, with its final id |
+| `make_derived<Tag>(owner, args...)` | static, no pool: a derived object, in its owner's constructor, as `Tag::Object(id, owner, args...)`, the id from `owner->object_id()`. Refuses at compile time an owner whose own id is derived (its `IdTag` is `FromOwner` or `void`): an object of such an owner gets a counter id |
 
 A class with an id has `using IdTag = AudioTrackTag;` (`void` for a class in
 more than one role: its maker names the tag), a private `m_objectId`,
-`friend class TObjectFactory`, and `QObject* id_owner() const`: its owner now.
-The factory decides the id before it builds the object: a class whose
+and `friend class TObjectFactory`. The factory decides the id before it builds the object: a class whose
 constructor takes its id first gets it there (a song, `TSheet(SongId, ...)`,
 which makes its master and bounce track from its own number), the others right
-after. The owner gives its number to `make_owned()`, as it is not in the pool
-yet while it runs its constructor.
+after. A derived peer (a master, the bounce track) is enrolled by its maker
+with `TObjectPool::add<Tag>(object)` (the song for its master and bounce track,
+the project for its master); a derived part is not enrolled.
 
 Every `new` of a track, clip or song goes through the factory. An object made
 around it has no id, and `object_id()` asserts on first use.
+
+## Peers and parts
+
+The rule for the pool is "peer or part", not "derived or counter" (Remon,
+2026-11-11), a property of the tag: `InPool`.
+
+- Peers are in the pool: song, track (with the masters and the bounce track),
+  clip, marker, send, source, workspace, plugin. The masters are derived but
+  peers: a send points at a master. `find()` reaches every living peer by a
+  bare id (QML, the agent, JSON).
+- Parts are not in the pool: gain, fade and automation curves, the ruler, the
+  plugin chain. Their address in edits, JSON and undo is (owner id, role), not
+  their id: a part is found through `pool.find(owner)` and the owner's
+  accessor, so an edit can never go around the owner.
+- `TObjectPool::add()` and `find()` compile only for a tag with `InPool`. The
+  project is not in its own pool (the pool is its member).
 
 ## The pool
 
@@ -214,34 +253,105 @@ around it has no id, and `object_id()` asserts on first use.
 
 | Index | Holds |
 |---|---|
-| byId | every object, by its id |
-| byNumber | the objects with a counter id, by their number |
+| byId | every peer, by its id |
+| byNumber | the peers with a counter id, by their number |
 
-`find(id)` gives an object of the tag; `find_owner(id)` the owner of a derived
-id: its number looked up in byNumber, the project for 0. An object leaves the
+`find(id)` gives a peer of the tag. A derived peer is in byId only: its
+number is its owner's. An object leaves the
 pool when it is destroyed (`QObject::destroyed`): no empty entries, so
 `contains()` is never true for a dead object. Whether an object is in the
 project's tree now is not the pool's question: an edit asks the object (is this
 clip on a track, is that track in a song of the project) and refuses with a
 reason. A removed track or clip stays findable as long as it lives, for undo.
 
-**Invariant:** for every derived object, `pool.find_owner(object->id()) ==
-object->id_owner()` (`owners_out_of_place()`). Checked at the end of every load
-(a warning per object, and a `Q_ASSERT` in debug builds), and in the edit and
-undo tests once there are edits (`TSplitEdit`).
+A derived object always hangs on the owner its number names: `make_derived()`
+is given the owner and has no other way in, and a derived object has no
+function to change its owner. So there is no check of it (prevent, not detect;
+Remon, 2026-11-08).
 
 | Kind | Subtype | Tag | Object | Id |
 |---|---|---|---|---|
-| 1 track | all | `TrackTag` | `TTrack` | |
+| 1 project | 1 | `ProjectTag` | `TProject` | fixed, number 0 (`TObjectId::root()`): `project:0101000000000000`, not saved |
+| 2 song | 1 | `SongTag` | `TSheet`: a sheet is a song; owner the project, not in the file | counter |
+| 3 track | all | `TrackTag` | `TTrack` | |
 | | 1 to 5 | `AudioMixerTrackTag` | `TAudioMixerTrack` (from the next branch) | |
 | | 1 | `AudioTrackTag` | `TAudioTrack` | counter |
 | | 2 | `BusTrackTag` | `TBusTrack` | counter |
 | | 3 | `SongMasterTag` | `MasterOutSubGroup` of a song | derived |
 | | 4 | `ProjectMasterTag` | `MasterOutSubGroup` of the project | derived, number 0 |
 | | 5 | `BounceTrackTag` | `TBounceTrack` | derived |
-| 2 clip | all | `ClipTag` | `TClip` | |
+| 4 clip | all | `ClipTag` | `TClip` | |
 | | 1 | `AudioClipTag` | `TAudioClip` | counter |
-| 3 song | 1 | `SongTag` | `TSheet`: a sheet is a song. A session, a container of tracks (to be named workspace), has no id yet | counter |
+| 5 curve | all | `CurveTag` | `TContextItem` (`TCurve` and `TFadeCurve` share no other base) | |
+| | 1 | (no tag yet) | `TCurve` of a clip's or track's fader | derived `[5|1|owner]` (project master `[5|1|0]`); with T108 |
+| | 2 | `FadeInCurveTag` | `TFadeCurve` | derived from its clip |
+| | 3 | `FadeOutCurveTag` | `TFadeCurve` | derived from its clip |
+| | 4 | (no tag yet) | an automation `TCurve` of a plugin port | counter, saved; with T108 |
+| | 5 | not used | | the bounce track has no gain curve |
+| 6 marker | 1 | | `TTimeLineMarker` | counter, owner its ruler |
+| 7 send | 1 | | `TSend` | counter, owner its track; its target is a track |
+| 8 audio source | 1 | | the source (resources manager) | counter, owner the project |
+| 9 workspace | 1 | | a song's child session | counter, owner its song |
+| 10 ruler | 1 | | `TTimeLineRuler` | derived from its song, the owner of the markers |
+| 11 plugin chain | 1 | | `TAudioPluginChain` | derived from its track or clip; after T108 |
+| 12 plugin | LV2, VST3, CLAP, internal | | `TAudioPlugin` | counter, owner its chain (several, movable); after T108 |
+
+No object id (Remon, 2026-11-08): `AudioBus` (the engine's; in the model the
+bus track is the object, hardware is named by name or port), `AudioChannel`
+(out of the file: it is never read), a curve node (local in its curve:
+(`CurveId`, number)). The numbers of 11 and 12 are fixed now, so nothing
+shifts later.
+
+## Version 4 of the project file (Remon, 2026-11-08)
+
+Decided for the step that replaces the old ids:
+
+- **No interim loading.** The loaders read only the new references; every
+  version 3 file is converted to version 4 first. No load code for old files.
+- **Converter 3 → 4**, after the existing 2 → 3: converted on load, the
+  original kept as `<file>.pre-4` (`-2`, `-3` … when that exists). Templates
+  are converted in memory; a restored backup is converted at its load. Every
+  object gets a new id, numbered from 1 in document order; no owner is
+  written (the first save adds them). A file with an old `id` left after the
+  conversion is not loaded. A file of a newer version is refused with its own
+  message. The conversion writes the backup and the converted file next to
+  the original: a version 3 project on storage that cannot be written (read
+  only, a full disk) is refused, where version 3 loaded it before.
+- **`createdon`**: the project's creation date and time, ISO 8601 in UTC, on
+  `Properties`; filled by the converter from the old project id, written by a
+  new project when it is made and by a project made from a template. Shown in
+  local time. A version 3 project shows no date in the open dialog until it
+  has been opened once.
+- **Project UUID**: `uuid` on `Properties`, made once when a project is made;
+  the converter gives an old project one, a project made from a template gets
+  its own. Comes in this step (the
+  take names need it), before the JSON step.
+- **Take file names**: `<project>-<song>-<track>-<take>.<extension>`, with
+  the first 12 hex digits of the project UUID, the sequence numbers of song
+  and track in 5 hex digits each, and the take number in 4 decimal digits:
+  `3f9a1c2e7b04-00005-00012-0003.wav` (34 characters). No word "take" and no
+  source id: the folder and the source say it is a take, and the take number
+  is saved per track and only grows, so project, song, track and take are
+  unique. The extension follows the recording format. The fixed widths sort a
+  list by project, song, track and take; a number past its width makes its
+  field longer, the name stays unique. The source gets its id before the file
+  is made. An existing file is never overwritten. Old recordings keep their
+  names. The short name a source shows is saved in its element, so no rule
+  derives it from the file name.
+- **Origin of a take**: `originsong` (a `SongId`) on the source of a
+  recording, next to `wasrecording`; not on imports. A clip's song follows from
+  its owner (clip → track → song); a take clip in the library finds its song
+  through its source. A clip's `sheet` and a source's `origsheetid` go.
+- **A send's target**: two attributes, `targettrack` (a `TrackId`) and
+  `targetport` (a port by name), exactly one of them; not one string read two
+  ways. The only software port in the file is `jackmaster`: the software
+  buses (a track's own jack buses and the jack master) are not saved, they are
+  made again when the project and its tracks connect to jack, with their
+  sends.
+- **The active session**: `currentsong` (a `SongId`) and, when a workspace is
+  active, `activeworkspace` (a `WorkspaceId`). The project itself as the
+  active session is not saved: the load opens the current song.
+- **Channels**: `AudioChannels` and a bus's `channelids` leave the file.
 
 ## Saved now, next to the old ids
 
@@ -253,20 +363,27 @@ tag and then ignored.
 
 | Attribute | Where |
 |---|---|
-| `objectid` | every track, clip and song (`Sheet`) element, also the masters (derived: only as a check); not in templates. The bounce track is not saved |
-| `owner` | every object with an owner: a track its song, a clip its track, a master its song. Not the project master, not a clip on no track (also not a removed clip that keeps its track for undo) |
+| `objectid` | every object with a counter id: track, clip, song (`Sheet`), marker, send. Also in templates: a template keeps its ids, so its references (sends, workspace tracks) stay valid; a project made from it gets a new `uuid` and `createdon` only (Remon, 2026-11-11). The masters still write theirs (derived: only as a check), until the rule below reaches them. The bounce track is not saved |
+| `owner` | every object with a counter id and an owner: a track its song, a clip its track, a marker its ruler, a send its track. Not the project master, not a clip on no track (also not a removed clip that keeps its track for undo) |
+
+**Derived objects write no owner and no id** (Remon, 2026-11-08): their id
+follows from their owner, and the structure of the file places them, so there
+is nothing left to check. The ruler is the first: it writes neither. The
+masters follow in a step of their own.
+
+The markers of a CD export list (`TTimeLineRuler::get_cdtrack_list()`, the
+export thread) are made without the factory and have no id: they never join
+the project and are never asked for one (rule 4: ids only in the GUI thread).
 | `nextobjectid`, a number | the project's `Properties` |
 
 The structure of the file places an object, as the loader does now: a track by
 the song it is in, a clip by the track whose clip list names it, a master by its
-song. `owner` and a derived `objectid` only check it:
+song. **`owner` is written, not read or checked** (Remon, 2026-11-08): the
+structure places an object, and nothing in the loader needs it. A flat file
+(T112), where nothing is nested, will place objects by it. Ids at load:
 
 | Case | Behaviour |
 |---|---|
-| No `owner` attribute | legitimate (a clip on no track): silent |
-| `owner` names an id that does not exist | damaged or edited by hand. Counter object: it stays, the reference is dropped, a warning. Derived object: it goes, with a warning (does not occur yet: the masters are placed by the structure) |
-| `owner` names another object than the structure | the structure wins, a warning |
-| A derived `objectid` that does not follow from the owner | the owner wins, the id is derived again, a warning |
 | An `objectid` that does not fit its element, is used twice, has a number another object has, or lies within 2^32 of the end of the sequence | a new one, a warning; the first loaded keeps it |
 | A damaged `nextobjectid`: no number, or within 2^32 of the end | ignored, a warning |
 

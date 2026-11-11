@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include <optional>
 #include "TContextItem.h"
+#include "TObjectIdTags.h"
 
 #include <QDomNode>
 #include <QHash>
@@ -43,6 +44,9 @@ class TTrack;
 class TTimeLineRuler;
 
 class TAudioDevice;
+class TProject;
+class TWorkspace;
+
 class TSession : public TContextItem
 {
 	Q_OBJECT
@@ -56,9 +60,6 @@ public:
 
     // The audio device this session runs on (Traverso owns it)
     TAudioDevice& audio_device() const { return m_device; }
-
-	QDomNode get_state(QDomDocument doc);
-	int set_state( const QDomNode & node );
 
 
 	qreal get_hzoom() const;
@@ -81,16 +82,19 @@ public:
     // transport location
     TTimeRef get_heard_transport_location(uint64_t nowNanoseconds);
 	virtual TSnapList* get_snap_list() const;
-	TTrack* get_track(qint64 id) const;
+	// The project it belongs to: a song's, the project itself, a workspace's
+	// parent's. Its objects get their ids from that project's factory
+	virtual TProject* get_project() const;
+	TTrack* get_track(TrackId id) const;
 	TTimeLineRuler* get_timeline_ruler() const;
 	TSession* get_parent_session() const {return m_parentSession;}
 	QString get_name() const {return m_name;}
-	int get_track_height(qint64 trackId) const {return m_trackHeights.value(trackId, 150);}
+	int get_track_height(TrackId trackId) const {return m_trackHeights.value(trackId, 150);}
 
 	TBusTrack* get_master_out_bus_track() const;
 	virtual QList<TTrack*> get_tracks() const;
 	QList<TBusTrack*> get_bus_tracks() const;
-	QList<TSession*> get_child_sessions() const {return m_childSessions;}
+	QList<TWorkspace*> get_child_sessions() const {return m_childSessions;}
 	TLocation* get_work_snap() const;
 	virtual bool is_snap_on() const	{return m_isSnapOn;}
 
@@ -109,13 +113,16 @@ public:
     bool is_project_session() const {return m_isProjectSession;}
 	bool is_child_session() const;
 	void set_name(const QString& name);
-	void set_track_height(qint64 trackId, int height) {m_trackHeights.insert(trackId, height);}
+	void set_track_height(TrackId trackId, int height) {m_trackHeights.insert(trackId, height);}
 
     TCommand* add_track(TTrack* track, bool historable=true);
+    // The one place a new bus track is made; in a song it sends to the song's
+    // master. Adding it to the session is the caller's
+    TBusTrack* new_bus_track(const QString& name, int channelCount);
     TCommand* remove_track(TTrack* track, bool historable=true);
 
-	void add_child_session(TSession* child);
-	void remove_child_session(TSession* child);
+	void add_child_session(TWorkspace* child);
+	void remove_child_session(TWorkspace* child);
 
     TChannelBuffer& get_curve_buffer() {
         return m_curveProcessBuffer;
@@ -125,13 +132,13 @@ protected:
     // First: the members below are made with it
     TAudioDevice& m_device;
 	TSession*               m_parentSession;
-	QList<TSession*>        m_childSessions;
+	QList<TWorkspace*>      m_childSessions;
     TRtList<TAudioTrack>    m_audioTracks;
     TRtList<TBusTrack>      m_busTracks;
-	QHash<qint64, TTrack* >	m_tracks;
     TBusTrack*              m_masterOutBusTrack;
     TBounceTrack*           m_bounceTrack;
-    QHash<qint64, int>      m_trackHeights;
+    QHash<TrackId, TTrack*> m_tracks;
+    QHash<TrackId, int>     m_trackHeights;
 
     TSnapList*           m_snaplist;
     TLocation*          m_workSnap{nullptr};

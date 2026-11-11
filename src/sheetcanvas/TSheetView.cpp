@@ -498,7 +498,7 @@ void TSheetView::vzoom(qreal factor)
 		} else if (height < m_trackMinimumHeight) {
 			height = m_trackMinimumHeight;
 		}
-		m_session->set_track_height(track->get_id(), height);
+		m_session->set_track_height(track->object_id(), height);
 	}
 
 	update_tracks_bounding_rect();
@@ -510,16 +510,16 @@ TCommand* TSheetView::toggle_expand_all_tracks(int height)
 	if (height < 0) {
 		if (m_meanTrackHeight > m_trackMinimumHeight) {
 			foreach(TTrackView* view, get_track_views()) {
-				m_session->set_track_height(view->get_track()->get_id(), m_trackMinimumHeight);
+				m_session->set_track_height(view->get_track()->object_id(), m_trackMinimumHeight);
 			}
 		} else {
 			foreach(TTrackView* view, get_track_views()) {
-				m_session->set_track_height(view->get_track()->get_id(), TTrack::INITIAL_HEIGHT);
+				m_session->set_track_height(view->get_track()->object_id(), TTrack::INITIAL_HEIGHT);
 			}
 		}
 	} else {
 		foreach(TTrackView* view, get_track_views()) {
-			m_session->set_track_height(view->get_track()->get_id(), height);
+			m_session->set_track_height(view->get_track()->object_id(), height);
 		}
 	}
 
@@ -538,7 +538,7 @@ void TSheetView::set_track_height(TTrackView *view, int newheight)
 		newheight = m_trackMinimumHeight;
 	}
 
-	m_session->set_track_height(view->get_track()->get_id(), newheight);
+	m_session->set_track_height(view->get_track()->object_id(), newheight);
 
 	view->calculate_bounding_rect();
 	layout_tracks();
@@ -1420,7 +1420,7 @@ QList<TTrackView*> TSheetView::get_track_views() const
 
 int TSheetView::get_track_height(TTrack *track) const
 {
-	return m_session->get_track_height(track->get_id());
+	return m_session->get_track_height(track->object_id());
 }
 
 TCommand* TSheetView::edit_properties()

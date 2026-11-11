@@ -40,9 +40,12 @@ add_library(traversocore STATIC
     TRoutingGraph.h
     TObjectIdTags.h
     TObjectPool.h
+    TPortNames.h
     TObjectFactory.h
     TSession.cpp
     TSheet.cpp
+    TWorkspace.cpp
+    TProjectFileConversion3To4.cpp
     TTrack.cpp
     TBufferedAudioStreamWriter.cpp
     TSnapList.cpp

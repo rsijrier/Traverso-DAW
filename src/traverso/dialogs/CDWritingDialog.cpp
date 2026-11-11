@@ -61,7 +61,6 @@ CDWritingDialog::CDWritingDialog( QWidget * parent )
 	env << "LC_ALL=C";
 	m_burnprocess->setEnvironment(env);
 	m_writingState = NO_STATE;
-	m_lastSheetExported = -1;
 	
     refreshButton->setIcon(QIcon(TMainWindow::find_pixmap(":/refresh-16")));
 	refreshButton->setMaximumHeight(26);

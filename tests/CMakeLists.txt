@@ -18,6 +18,7 @@ add_subdirectory(resampling)
 add_subdirectory(recording)
 add_subdirectory(routing)
 add_subdirectory(core)
+add_subdirectory(projectfile)
 
 # Every key resolves to the same function as in the reference table, and the
 # built-in keymaps have no new problems: the app itself, offscreen, with an

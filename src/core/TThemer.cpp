@@ -22,7 +22,6 @@ $Id: TThemer.cpp,v 1.14 2009/04/16 19:38:18 n_doebelin Exp $
 
 #include "TThemer.h"
 
-#include <Utils.h>
 #include "TConfig.h"
 #include <QDir>
 #include <QTextStream>

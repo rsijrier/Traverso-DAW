@@ -32,12 +32,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioTrack.h"
 #include "TAudioDeviceClient.h"
 #include "TProject.h"
+#include "TFadeCurve.h"
 #include "TSheet.h"
+#include "TWorkspace.h"
+#include "TProjectFileConversion3To4.h"
+#include "TPortNames.h"
 #include "TProjectManager.h"
 #include "TIOScheduler.h"
 #include "TInformUser.h"
 #include "TInputEventDispatcher.h"
 #include "TResourcesManager.h"
+#include "TBufferedAudioStreamReader.h"
 #include "TPeakBuildService.h"
 #include "TExportSpecification.h"
 #include "TAudioDevice.h"
@@ -59,12 +64,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // joins when TAudioMixerTrack exists
 static_assert(objects_fit<TrackTag, AudioTrackTag, BusTrackTag, SongMasterTag, ProjectMasterTag, BounceTrackTag>());
 static_assert(objects_fit<ClipTag, AudioClipTag>());
+static_assert(objects_fit<CurveTag, FadeInCurveTag, FadeOutCurveTag>());
 
 #include "qapplication.h"
 #include "qthread.h"
 
-#define PROJECT_FILE_VERSION 	3
-#define MASTER_OUT_SOFTWARE_BUS_ID 1
+#define PROJECT_FILE_VERSION 	4
 
 
 /**	\class TProject
@@ -87,7 +92,6 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_spectralMeter = nullptr;
     m_correlationMeter = nullptr;
     m_activeSession = nullptr;
-    m_activeSessionId = m_activeSheetId = -1;
     engineer = "";
     m_keyboardArrowNavigationSpeed = 4;
     m_projectClosed = false;
@@ -103,7 +107,7 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_peakBuilds = std::make_unique<TPeakBuildService>();
     create_history_stack();
 
-    m_audiodeviceClient = new TAudioDeviceClient("sheet_" + QByteArray::number(get_id()));
+    m_audiodeviceClient = new TAudioDeviceClient(QString::fromStdString(object_id().to_string()));
     // Made here, on the GUI thread, if not yet: process() only wakes them
     m_readScheduler = pm().get_read_scheduler();
     m_writeScheduler = pm().get_write_scheduler();
@@ -118,7 +122,11 @@ TProject::TProject(TAudioDevice& device, const QString& title)
     m_exportSpecification = nullptr;
 
     // One to one with the project, which has no number: its id is derived on 0
-    m_masterOutBusTrack = m_objects.make_owned<MasterOutSubGroup, ProjectMasterTag>(0, this, "");
+    MasterOutSubGroup* master = TObjectFactory::make_derived<ProjectMasterTag>(this, "");
+    [[maybe_unused]] const bool added = m_objectPool.add<ProjectMasterTag>(master);
+    Q_ASSERT(added);
+    m_masterOutBusTrack = master;
+    m_timeLineRuler = TObjectFactory::make_derived<RulerTag>(this);
     // FIXME: m_masterOut is a Track, but at this point in time, Track can't
     // get a reference to us via pm().get_project();
     connect(m_masterOutBusTrack, &TBusTrack::routingConfigurationChanged, this, &TProject::track_property_changed);
@@ -197,10 +205,12 @@ int TProject::create(int sheetcount, int numtracks)
     }
 
     if (!m_sheets.gui_items().isEmpty()) {
-        set_current_session(m_sheets.gui_items().first()->get_id());
+        set_current_session(m_sheets.gui_items().first());
     }
 
     m_importDir = QDir::homePath();
+    m_uuid = QUuid::createUuid();
+    m_createdOn = QDateTime::currentDateTimeUtc();
 
     // Only the setup: the audio device starts when the project loads. Another
     // project may still be connected to it now
@@ -224,7 +234,7 @@ int TProject::create_audiosources_dir()
 
 static void log_track(TTrack* track, const std::string& owner)
 {
-    const std::string id = TObjectIds::to_string(track->object_id().to_storage());
+    const std::string id = track->object_id().to_string();
     const std::string name = track->get_name().toStdString();
     if (auto* audioTrack = qobject_cast<TAudioTrack*>(track)) {
         TLOG_D("ids", "{} owner {} '{}', {} clips", id, owner, name, audioTrack->get_audioclips().size());
@@ -236,16 +246,15 @@ static void log_track(TTrack* track, const std::string& owner)
 // After a load: one line for the summary, and in debug one per song and track,
 // to compare two loads of the same project. Temporary, with log_track(): goes
 // once the log can do this itself (T98)
-void TProject::log_object_ids(int warnings, bool invariantHolds) const
+void TProject::log_object_ids(int warnings) const
 {
-    TLOG_I("ids", "ids: {} objects, next {}, {} warnings, invariant {}", m_objectPool.count(), m_idGenerator.next(),
-           warnings, invariantHolds ? "holds" : "broken");
+    TLOG_I("ids", "ids: {} objects, next {}, {} warnings", m_objectPool.count(), m_idGenerator.next(), warnings);
     log_track(m_masterOutBusTrack, "-");
     for (TTrack* track : get_tracks()) {
         log_track(track, "-");
     }
     for (TSheet* sheet : m_sheets.gui_items()) {
-        const std::string song = TObjectIds::to_string(sheet->object_id().to_storage());
+        const std::string song = sheet->object_id().to_string();
         TLOG_D("ids", "{} '{}'", song, sheet->get_name().toStdString());
         log_track(sheet->get_master_out_bus_track(), song);
         log_track(sheet->get_bounce_track(), song);
@@ -253,6 +262,45 @@ void TProject::log_object_ids(int warnings, bool invariantHolds) const
             log_track(track, song);
         }
     }
+}
+
+static void log_conversion(const QStringList& warnings)
+{
+    for (const QString& warning : warnings) {
+        TLOG_W("project", "conversion to version 4: {}", warning);
+    }
+}
+
+int TProject::convert_from_version_3(QDomDocument& doc, const QString& filename)
+{
+    QString backup = filename + ".pre-4";
+    for (int n = 2; QFile::exists(backup); ++n) {
+        backup = filename + ".pre-4-" + QString::number(n);
+    }
+    if (!QFile::copy(filename, backup)) {
+        m_errorString = tr("Project %1: cannot keep the old project file as %2, the project is not converted").arg(m_name, backup);
+        tInformUser().critical(m_errorString);
+        return PROJECT_FILE_CONVERSION_FAILED;
+    }
+
+    const TProjectFileConversion3To4::Result converted = TProjectFileConversion3To4::convert(doc, QUuid::createUuid());
+    log_conversion(converted.warnings);
+    if (converted.leftOverIds > 0) {
+        m_errorString = tr("Project %1: the project file holds %2 old ids this version of Traverso does not know, it is not converted")
+                            .arg(m_name).arg(converted.leftOverIds);
+        tInformUser().critical(m_errorString);
+        return PROJECT_FILE_CONVERSION_FAILED;
+    }
+
+    QString errorstring;
+    if (!TFileHelper::save_document(doc, filename, &errorstring)) {
+        m_errorString = tr("Project %1: cannot write the converted project file (Reason: %2)").arg(m_name, errorstring);
+        tInformUser().critical(m_errorString);
+        return PROJECT_FILE_CONVERSION_FAILED;
+    }
+
+    TLOG_I("project", "{} converted to project file version 4, the old file kept as {}", filename.toStdString(), backup.toStdString());
+    return 1;
 }
 
 int TProject::load(const QString& projectfile)
@@ -298,17 +346,30 @@ int TProject::load(const QString& projectfile)
         return SETTING_XML_CONTENT_FAILED;
     }
 
+    file.close();
+
+    const int version = doc.documentElement().firstChildElement("Properties").attribute("projectfileversion", "-1").toInt();
+    if (version > PROJECT_FILE_VERSION) {
+        m_errorString = tr("Project %1 was made by a newer version of Traverso and cannot be opened by this one").arg(m_name);
+        tInformUser().warning(m_errorString);
+        return PROJECT_FILE_TOO_NEW;
+    }
+    if (version == 3) {
+        const int converted = convert_from_version_3(doc, filename);
+        if (converted < 0) {
+            return converted;
+        }
+    } else if (version != PROJECT_FILE_VERSION) {
+        m_errorString = tr("Project File Version does not match, unable to load Project!");
+        tInformUser().warning(m_errorString);
+        return PROJECT_FILE_VERSION_MISMATCH;
+    }
+
     emit projectLoadStarted();
 
     QDomElement docElem = doc.documentElement();
     QDomNode propertiesNode = docElem.firstChildElement("Properties");
     QDomElement e = propertiesNode.toElement();
-
-    if (e.attribute("projectfileversion", "-1").toInt() != PROJECT_FILE_VERSION) {
-        m_errorString = tr("Project File Version does not match, unable to load Project!");
-        tInformUser().warning(m_errorString);
-        return PROJECT_FILE_VERSION_MISMATCH;
-    }
 
     m_name = e.attribute( "title", "" );
     engineer = e.attribute( "engineer", "" );
@@ -322,39 +383,19 @@ int TProject::load(const QString& projectfile)
     m_message = e.attribute( "message", "" );
     m_rate = e.attribute( "rate", "" ).toUInt();
     m_bitDepth = e.attribute( "bitdepth", "" ).toUInt();
-    set_id(e.attribute("id", "0").toLongLong());
+    m_uuid = QUuid::fromString(e.attribute("uuid"));
+    if (m_uuid.isNull()) {
+        m_uuid = QUuid::createUuid();
+        TLOG_W("ids", "the project's uuid \"{}\" in the project file is missing or damaged: a new one, {}",
+               e.attribute("uuid").toStdString(), m_uuid.toString(QUuid::WithoutBraces).toStdString());
+    }
+    m_createdOn = QDateTime::fromString(e.attribute("createdon"), Qt::ISODate);
     // Before anything is loaded: an object of the file without an id gets a
     // number above all saved ones
     m_objects.restore_sequence(docElem, e);
     m_sheetsAreTrackFolder = e.attribute("sheeTSMPetrackfolder", "0").toInt();
     m_importDir = e.attribute("importdir", QDir::homePath());
 
-
-
-    QDomNode channelsConfigNode = docElem.firstChildElement("AudioChannels");
-    QDomNode channelNode = channelsConfigNode.firstChild();
-
-    //        while (!channelNode.isNull()) {
-    //                QDomElement e = channelNode.toElement();
-    //                QString name = e.attribute("name", "");
-    //                QString typeString = e.attribute("type", "");
-    //                uint number = e.attribute("number", "0").toInt();
-    //                qint64 id = e.attribute("id", "0").toLongLong();
-
-    //                int type = -1;
-    //                if (typeString == "input") {
-    //                        type = ChannelIsInput;
-    //                }
-    //                if (typeString == "output") {
-    //                        type = ChannelIsOutput;
-    //                }
-
-    //                AudioChannel* chan = new AudioChannel(name, number, type, id);
-
-    //                m_softwareAudioChannels.insert(chan->get_id(), chan);
-
-    //                channelNode = channelNode.nextSibling();
-    //        }
 
 
     QDomNode busesConfigNode = docElem.firstChildElement("AudioBuses");
@@ -367,25 +408,16 @@ int TProject::load(const QString& projectfile)
         conf.channelNames = e.attribute("channels", "").split(";");
         conf.type = e.attribute("type", "");
         conf.bustype = e.attribute("bustype", "software");
-        conf.id = e.attribute("id", "-1").toLongLong();
-        QStringList channelIds = e.attribute("channelids", "").split(";", Qt::SkipEmptyParts);
 
         AudioBus* bus = new AudioBus(audio_device(), conf);
 
         switch(bus->get_bus_type()) {
         case AudioBus::BusIsSoftware:
-        {
-            AudioChannel* channel;
-            for(const QString &idString : channelIds) {
-                qint64 id = idString.toLongLong();
-                channel = m_softwareAudioChannels.value(id);
-                if (channel) {
-                    bus->add_channel(channel);
-                }
-            }
-            m_softwareAudioBuses.insert(bus->get_id(), bus);
+            // Not in a version 4 file: the software buses are made again when
+            // the project and its tracks connect to jack
+            TLOG_W("project", "a software bus {} in the project file is ignored", conf.name);
+            delete bus;
             break;
-        }
         case AudioBus::BusIsHardware:
         {
             for(const QString &channelName : conf.channelNames) {
@@ -406,9 +438,21 @@ int TProject::load(const QString& projectfile)
     read_audio_device_setup(doc);
     audio_device().set_parameters(m_audioDeviceSetup);
 
+    // Before the master loads its sends: a send to the jack master names it
+    // by name. Not in the file, made at every load under jack: the user
+    // expects at least the master to show up in the patchbay
+    AudioBus* jackMaster = nullptr;
+    if (audio_device().get_driver_type() == "Jack") {
+        TAudioBusConfiguration conf;
+        conf.name = JackMasterPortName;
+        conf.channelNames << conf.name + "_0" << conf.name + "_1";
+        conf.type = "output";
+        conf.bustype = "software";
+        jackMaster = create_software_audio_bus(conf);
+    }
+
     QDomNode masterOutNode = docElem.firstChildElement("MasterOut");
     m_masterOutBusTrack->set_state(masterOutNode.firstChildElement());
-    m_objects.check_owned<ProjectMasterTag>(static_cast<MasterOutSubGroup*>(m_masterOutBusTrack), masterOutNode.firstChildElement(), 0);
     // Force the proper name for our Master Bus
     m_masterOutBusTrack->set_name(tr("Master"));
 
@@ -424,21 +468,13 @@ int TProject::load(const QString& projectfile)
         }
     }
 
-    // Lets see if there is already a Project Master out jack bus:
-    // if not, create one, the user expects at least that Master shows up in the patchbay!
-    if (audio_device().get_driver_type() == "Jack") {
-        AudioBus* bus = m_softwareAudioBuses.value(MASTER_OUT_SOFTWARE_BUS_ID);
-        if (!bus) {
-            TAudioBusConfiguration conf;
-            conf.name = "jackmaster";
-            conf.channelNames << "jackmaster_0" << "jackmaster_1";
-            conf.type = "output";
-            conf.bustype = "software";
-            conf.id = MASTER_OUT_SOFTWARE_BUS_ID;
-            bus = create_software_audio_bus(conf);
-
-            m_masterOutBusTrack->add_post_send(MASTER_OUT_SOFTWARE_BUS_ID);
-
+    if (jackMaster) {
+        bool sendsToJackMaster = false;
+        for (TSend* send : m_masterOutBusTrack->get_post_sends()) {
+            sendsToJackMaster = sendsToJackMaster || send->get_bus() == jackMaster;
+        }
+        if (!sendsToJackMaster) {
+            m_masterOutBusTrack->add_post_send(jackMaster);
         }
     }
 
@@ -487,38 +523,43 @@ int TProject::load(const QString& projectfile)
     QDomNode workSheetNode = workSheetsNode.firstChild();
 
     while(!workSheetNode.isNull()) {
-        TSession* childSession = new TSession(this);
+        TWorkspace* childSession = m_objects.load<TWorkspace>(workSheetNode.toElement(), this);
         childSession->set_state(workSheetNode);
         add_child_session(childSession);
 
         workSheetNode = workSheetNode.nextSibling();
     }
 
-    // The load check: every owner reference against the file's structure, and
-    // every derived object with the owner its number names
-    m_objects.check_owner_references();
-    const QList<uint64_t> outOfPlace = m_objectPool.owners_out_of_place();
-    for (const uint64_t id : outOfPlace) {
-        TLOG_W("ids", "{} is not with the owner its id names", TObjectIds::to_string(id));
+    log_object_ids(m_objects.take_warning_count());
+
+
+    const std::optional<SongId> currentSong = TObjectFactory::read_reference<SongTag>(e, "currentsong");
+    const std::optional<WorkspaceId> activeWorkspace = TObjectFactory::read_reference<WorkspaceTag>(e, "activeworkspace");
+    TSession* activeSheet = currentSong ? get_sheet(*currentSong) : nullptr;
+    TSession* activeSession = activeWorkspace ? get_session(*activeWorkspace) : nullptr;
+    if (currentSong && !activeSheet) {
+        TLOG_W("ids", "the current song {} is not in the project: the first song is current", currentSong->to_string());
     }
-    Q_ASSERT(outOfPlace.isEmpty());
-    log_object_ids(m_objects.take_warning_count(), outOfPlace.isEmpty());
-
-
-    qint64 activeSheetId = e.attribute("currentsheetid", "0" ).toLongLong();
-    qint64 activeSessionId = e.attribute("activesessionid", "0" ).toLongLong();
-
-    if ( activeSheetId == 0) {
-        if (!m_sheets.gui_items().isEmpty()) {
-            activeSheetId = m_sheets.gui_items().first()->get_id();
+    if (activeWorkspace && !activeSession) {
+        TLOG_W("ids", "the active workspace {} is not in the project: none is active", activeWorkspace->to_string());
+    }
+    // A take names the song it was recorded in; the songs load after the sources
+    for (TBufferedAudioStreamReader* source : m_resourcesManager->get_all_audio_sources()) {
+        const SongId origin = source->get_orig_sheet_id();
+        if (origin.is_valid() && !get_sheet(origin)) {
+            TLOG_W("ids", "the song {} of the take {} is not in the project", origin.to_string(), source->get_name());
         }
     }
 
-    if (activeSheetId == activeSessionId) {
-        set_current_session(activeSheetId);
-    } else {
-        set_current_session(activeSheetId);
-        set_current_session(activeSessionId);
+    if (!activeSheet && !m_sheets.gui_items().isEmpty()) {
+        activeSheet = m_sheets.gui_items().first();
+    }
+
+    if (activeSheet) {
+        set_current_session(activeSheet);
+    }
+    if (activeSession && activeSession != activeSheet) {
+        set_current_session(activeSession);
     }
 
     tInformUser().information( tr("Project %1 loaded").arg(m_name) );
@@ -553,13 +594,24 @@ int TProject::save_from_template_to_project_file(const QString& templateFile, co
     QDomNode propertiesNode = docElem.firstChildElement("Properties");
     QDomElement e = propertiesNode.toElement();
 
-    if (e.attribute("projectfileversion", "-1").toInt() != PROJECT_FILE_VERSION) {
+    const int version = e.attribute("projectfileversion", "-1").toInt();
+    if (version == 3) {
+        const TProjectFileConversion3To4::Result converted = TProjectFileConversion3To4::convert(doc, QUuid());
+        log_conversion(converted.warnings);
+        if (converted.leftOverIds > 0) {
+            m_errorString = tr("Template %1 holds data this version of Traverso does not know").arg(templateFile);
+            tInformUser().critical(m_errorString);
+            return PROJECT_FILE_CONVERSION_FAILED;
+        }
+    } else if (version != PROJECT_FILE_VERSION) {
         m_errorString = tr("Project File Version does not match, unable to load Project!");
         tInformUser().warning(m_errorString);
-        return PROJECT_FILE_VERSION_MISMATCH;
+        return version > PROJECT_FILE_VERSION ? PROJECT_FILE_TOO_NEW : PROJECT_FILE_VERSION_MISMATCH;
     }
 
     e.setAttribute("title", projectName);
+    e.setAttribute("uuid", QUuid::createUuid().toString(QUuid::WithoutBraces));
+    e.setAttribute("createdon", QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
 
     QString errorstring;
     if (!TFileHelper::save_document(doc, saveFileName, &errorstring)) {
@@ -615,16 +667,25 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
     properties.setAttribute("arranger", m_arranger);
     properties.setAttribute("songwriter", m_songwriter);
     properties.setAttribute("message", m_message);
-    properties.setAttribute("currentsheetid", m_activeSheetId);
-    properties.setAttribute("activesessionid", m_activeSessionId);
     properties.setAttribute("rate", m_rate);
     properties.setAttribute("bitdepth", m_bitDepth);
     properties.setAttribute("projectfileversion", PROJECT_FILE_VERSION);
     properties.setAttribute("sheeTSMPetrackfolder", m_sheetsAreTrackFolder);
     if (! istemplate) {
-        properties.setAttribute("id", get_id());
+        properties.setAttribute("uuid", m_uuid.toString(QUuid::WithoutBraces));
+        if (m_createdOn.isValid()) {
+            properties.setAttribute("createdon", m_createdOn.toUTC().toString(Qt::ISODate));
+        }
     } else {
         properties.setAttribute("title", "Template Project File!!");
+    }
+    // The project itself as the active session is not saved: the load opens
+    // the current song. A template keeps its ids, so it names them too
+    if (m_activeSheet) {
+        TObjectFactory::write_reference(properties, "currentsong", m_activeSheet->object_id());
+    }
+    if (TWorkspace* workspace = qobject_cast<TWorkspace*>(m_activeSession)) {
+        TObjectFactory::write_reference(properties, "activeworkspace", workspace->object_id());
     }
     properties.setAttribute("importdir", m_importDir);
     m_objects.write_sequence(properties);
@@ -644,35 +705,15 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
 
     projectNode.appendChild(audioDriverConfigs);
 
-    QDomElement channelsElement = doc.createElement("AudioChannels");
-
-    foreach(AudioChannel* channel, m_softwareAudioChannels) {
-        QDomElement chanElement = doc.createElement("Channel");
-        chanElement.setAttribute("name", channel->get_name());
-        chanElement.setAttribute("type", channel->get_type() == AudioChannel::ChannelIsInput ? "input" : "output");
-        chanElement.setAttribute("id", channel->get_id());
-        channelsElement.appendChild(chanElement);
-    }
-    projectNode.appendChild(channelsElement);
-
     QDomElement busesElement = doc.createElement("AudioBuses");
 
-    QList<AudioBus*> buses;
-    buses.append(m_hardwareAudioBuses);
-    buses.append(m_softwareAudioBuses.values());
-
-    foreach(AudioBus* bus, buses) {
+    // The software buses (jack) are made again at load: not saved
+    foreach(AudioBus* bus, m_hardwareAudioBuses) {
         QDomElement busElement = doc.createElement("Bus");
         busElement.setAttribute("name", bus->get_name());
         busElement.setAttribute("channels", bus->get_channel_names().join(";"));
-        QStringList channelIds;
-        foreach(qint64 id, bus->get_channel_ids()) {
-            channelIds.append(QString::number(id));
-        }
-        busElement.setAttribute("channelids", channelIds.join(";"));
         busElement.setAttribute("type", bus->is_input() ? "input" : "output");
-        busElement.setAttribute("id", bus->get_id());
-        busElement.setAttribute("bustype", bus->get_bus_type() == AudioBus::BusIsHardware ? "hardware" : "software");
+        busElement.setAttribute("bustype", "hardware");
 
         busesElement.appendChild(busElement);
     }
@@ -710,12 +751,11 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
     projectNode.appendChild(sheetsNode);
 
     QDomNode workSheetsNode = doc.createElement("WorkSheets");
-    foreach(TSession* session, m_childSessions) {
+    foreach(TWorkspace* session, m_childSessions) {
         workSheetsNode.appendChild(session->get_state(doc));
     }
 
     projectNode.appendChild(workSheetsNode);
-
 
     return projectNode;
 }
@@ -844,7 +884,11 @@ void TProject::add_meter(TAudioPlugin *meter)
  */
 AudioBus* TProject::get_playback_bus(const QString& name) const
 {
-    foreach(AudioBus* bus, m_hardwareAudioBuses) {
+    QList<AudioBus*> allBuses;
+    allBuses.append(m_hardwareAudioBuses);
+    allBuses.append(m_softwareAudioBuses);
+
+    foreach(AudioBus* bus, allBuses) {
         if (bus->get_type() == AudioChannel::ChannelIsOutput) {
             if (bus->get_name() == name) {
                 return bus;
@@ -869,7 +913,7 @@ AudioBus* TProject::get_capture_bus(const QString& name) const
 {
     QList<AudioBus*> allBuses;
     allBuses.append(m_hardwareAudioBuses);
-    allBuses.append(m_softwareAudioBuses.values());
+    allBuses.append(m_softwareAudioBuses);
 
     foreach(AudioBus* bus, allBuses) {
         if (bus->get_type() == AudioChannel::ChannelIsInput) {
@@ -882,37 +926,25 @@ AudioBus* TProject::get_capture_bus(const QString& name) const
     return nullptr;
 }
 
-AudioBus* TProject::get_audio_bus(qint64 id)
+AudioBus* TProject::get_audio_bus(TrackId id)
 {
-    if (m_masterOutBusTrack->get_id() == id) {
+    if (m_masterOutBusTrack->object_id() == id) {
         return m_masterOutBusTrack->get_process_bus();
     }
 
     foreach(TSheet* sheet, m_sheets.gui_items()) {
-        if (sheet->get_master_out_bus_track()->get_id() == id) {
+        if (sheet->get_master_out_bus_track()->object_id() == id) {
             return sheet->get_master_out_bus_track()->get_process_bus();
         }
         foreach(TBusTrack* group, sheet->get_bus_tracks()) {
-            if (group->get_id() == id) {
+            if (group->object_id() == id) {
                 return group->get_process_bus();
             }
         }
     }
 
-    foreach(AudioBus* bus, m_hardwareAudioBuses) {
-        if (bus->get_id() == id) {
-            return bus;
-        }
-    }
-
-    foreach(AudioBus* bus, m_softwareAudioBuses) {
-        if (bus->get_id() == id) {
-            return bus;
-        }
-    }
-
     foreach(TBusTrack* group, get_bus_tracks()) {
-        if (group->get_id() == id) {
+        if (group->object_id() == id) {
             return group->get_process_bus();
         }
     }
@@ -931,11 +963,11 @@ AudioBus* TProject::create_software_audio_bus(const TAudioBusConfiguration& conf
         audio_device().add_jack_channel(channel);
         bus->add_channel(channel);
 
-        m_softwareAudioChannels.insert(channel->get_id(), channel);
+        m_softwareAudioChannels.append(channel);
     }
 
 
-    m_softwareAudioBuses.insert(bus->get_id(), bus);
+    m_softwareAudioBuses.append(bus);
 
     return bus;
 }
@@ -962,7 +994,7 @@ QList<TSend*> TProject::get_inputs_for_bus_track(TBusTrack *busTrack) const
     foreach(TTrack* track, tracks) {
         QList<TSend*> sends = track->get_post_sends();
         foreach(TSend* send, sends) {
-            if (send->get_bus_id() == busTrack->get_id()) {
+            if (send->get_target_track() == busTrack->object_id()) {
                 inputs.append(send);
             }
         }
@@ -981,12 +1013,12 @@ QList<TTrack*> TProject::get_sheet_tracks() const
     return tracks;
 }
 
-TTrack* TProject::get_track(qint64 id) const
+TTrack* TProject::get_track(TrackId id) const
 {
     QList<TTrack*> tracks = get_sheet_tracks();
     tracks.append(get_tracks());
     foreach(TTrack* track, tracks) {
-        if (track->get_id() == id) {
+        if (track->object_id() == id) {
             return track;
         }
     }
@@ -1173,61 +1205,39 @@ TCommand* TProject::remove_sheet(TSheet* sheet, bool historable)
 
 
 
-TSheet* TProject::get_sheet(qint64 id) const
+TSession* TProject::get_session(WorkspaceId id)
 {
-    TSheet* current = nullptr;
-
+    QList<TWorkspace*> workspaces = get_child_sessions();
     foreach(TSheet* sheet, m_sheets.gui_items()) {
-        if (sheet->get_id() == id) {
-            current = sheet;
-            break;
-        }
+        workspaces.append(sheet->get_child_sessions());
     }
 
-    return current;
-}
-
-TSession* TProject::get_session(qint64 id)
-{
-    QList<TSession*> sessions = get_sessions();
-
-    foreach(TSession* session, sessions) {
-        if (session->get_id() == id) {
-            return session;
+    foreach(TWorkspace* workspace, workspaces) {
+        if (workspace->object_id() == id) {
+            return workspace;
         }
     }
 
     return nullptr;
 }
 
-void TProject::set_current_session(qint64 id)
+void TProject::set_current_session(TSession* session)
 {
     PENTER;
+    Q_ASSERT(session);
 
     // check if this session is allready current
-    if (m_activeSession && m_activeSession->get_id() == id) {
+    if (m_activeSession == session) {
         emit sessionIsAlreadyCurrent(m_activeSession);
-        return;
-    }
-
-    TSession* session = get_session(id);
-
-    if (!session) {
-        qDebug("id %lld doesn't match any known sessions???", id);
         return;
     }
 
     m_activeSession = session;
 
-    if (m_activeSession) {
-        m_activeSessionId = m_activeSession->get_id();
-    }
-
     TSheet* sheet = qobject_cast<TSheet*>(m_activeSession);
 
     if (sheet && (m_activeSheet != sheet)) {
         m_activeSheet = sheet;
-        m_activeSheetId = sheet->get_id();
         set_parent_session(m_activeSheet);
     }
 
@@ -1257,7 +1267,7 @@ int TProject::export_project()
         if (sheet->is_transport_rolling()) {
             sheet->start_transport();
         }
-        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet->get_id())) +"-" + sheet->get_name());
+        m_exportSpecification->set_export_file_name("Sheet_" + QString::number(get_sheet_index(sheet->object_id())) +"-" + sheet->get_name());
 
         TTimeRef exportStartLocation, exportEndLocation;
         bool exportRangeAvailable = false;
@@ -1380,12 +1390,26 @@ QList<TSheet* > TProject::get_sheets( ) const
     return m_sheets.gui_items();
 }
 
-int TProject::get_sheet_index(qint64 id)
+TSheet* TProject::get_sheet(SongId id) const
+{
+    TSheet* current = nullptr;
+
+    foreach(TSheet* sheet, m_sheets.gui_items()) {
+        if (sheet->object_id() == id) {
+            current = sheet;
+            break;
+        }
+    }
+
+    return current;
+}
+
+int TProject::get_sheet_index(SongId id) const
 {
     const QList<TSheet*>& sheets = m_sheets.gui_items();
     for (int i=0; i<sheets.size(); ++i) {
         TSheet* sheet = sheets.at(i);
-        if (sheet->get_id() == id) {
+        if (sheet->object_id() == id) {
             return i + 1;
         }
     }
@@ -1393,24 +1417,23 @@ int TProject::get_sheet_index(qint64 id)
     return 0;
 }
 
-int TProject::get_session_index(qint64 id)
+SongId TProject::get_current_sheet_id( ) const
 {
-    QList<TSession*> sessions = get_sessions();
+    return m_activeSheet ? m_activeSheet->object_id() : SongId();
+}
 
-    for(int i=0; i<sessions.size(); ++i) {
-        if (sessions.at(i)->get_id() == id) {
-            return i;
-        }
-    }
-
-    return -1;
+int TProject::get_session_index(const TSession* session)
+{
+    return int(get_sessions().indexOf(session));
 }
 
 QList<TSession*> TProject::get_sessions()
 {
     QList<TSession*> sessions;
     sessions.append(this);
-    sessions.append(get_child_sessions());
+    for (TWorkspace* session : get_child_sessions()) {
+        sessions.append(session);
+    }
     foreach(TSheet* sheet, m_sheets.gui_items()) {
         sessions.append(sheet);
         foreach(TSession* session, sheet->get_child_sessions()) {
@@ -1419,11 +1442,6 @@ QList<TSession*> TProject::get_sessions()
     }
 
     return sessions;
-}
-
-qint64 TProject::get_current_sheet_id( ) const
-{
-    return m_activeSheetId;
 }
 
 int TProject::get_num_sheets( ) const
@@ -1603,7 +1621,7 @@ void TProject::private_remove_sheet(TSheet* sheet, TRtTransaction& transaction)
     m_sheets.remove(sheet, transaction);
 
     if (!m_sheets.gui_items().isEmpty()) {
-        set_current_session(m_sheets.gui_items().last()->get_id());
+        set_current_session(m_sheets.gui_items().last());
     }
 
     emit sheetRemoved(sheet);
@@ -1766,12 +1784,13 @@ TCommand* TProject::remove_child_session()
         return nullptr;
     }
 
-    TSession* toBeRemoved = m_activeSession;
+    TWorkspace* toBeRemoved = qobject_cast<TWorkspace*>(m_activeSession);
+    Q_ASSERT(toBeRemoved);
     TSession* parentSession = m_activeSession->get_parent_session();
 
     parentSession->remove_child_session(toBeRemoved);
 
-    set_current_session(parentSession->get_id());
+    set_current_session(parentSession);
 
 
     delete toBeRemoved;

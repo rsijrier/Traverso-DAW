@@ -74,11 +74,10 @@ void TSplitEntityController::update()
     if (m_splitLocation > maxValidSplit) m_splitLocation = maxValidSplit;
 
     if (m_sheet->is_snap_on()) {
-        TSnapList::SnapFilters activeFilters = TSnapList::SnapAll;
         TViewPortInterface* viewport = cpointer().get_viewport();
         qreal scaleFactor = viewport ? viewport->get_timeref_scale_factor() : 1;
 
-        TRichSnapResult snap = m_sheet->get_snap_list()->get_snap_context(m_splitLocation, scaleFactor, activeFilters);
+        TRichSnapResult snap = m_sheet->get_snap_list()->get_snap_context(m_splitLocation, scaleFactor);
 
         if (snap.snappedLocation >= minValidSplit && snap.snappedLocation <= maxValidSplit) {
             m_splitLocation = snap.snappedLocation;

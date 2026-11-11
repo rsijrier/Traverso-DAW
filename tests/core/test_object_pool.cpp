@@ -3,8 +3,9 @@
 
 // Headless test of TObjectPool: found by exact and wider ids, a duplicate
 // refused, a destroyed object out of both indexes, derived ids outside the
-// numbers, find_owner() and the owner invariant.
+// numbers.
 
+#include "TObjectIdTestAccess.h"
 #include "TObjectPool.h"
 
 #include <QCoreApplication>
@@ -26,10 +27,23 @@ static void check(bool ok, const char* what)
 class Node : public QObject {};
 class NodeA : public Node {};
 class NodeB : public Node {};
+class NodeC;
 
-struct NodeTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes; static constexpr const char* Name = "node"; using Object = Node; };
-struct NodeATag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "nodea"; using Object = NodeA; };
-struct NodeBTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(2); static constexpr const char* Name = "nodeb"; using Object = NodeB; };
+struct NodeTag { static constexpr bool InPool = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes; static constexpr const char* Name = "node"; using Object = Node; };
+struct NodeATag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "nodea"; using Object = NodeA; };
+struct NodeBTag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(2); static constexpr const char* Name = "nodeb"; using Object = NodeB; };
+
+// A peer derived from its owner, as a master
+struct NodeCTag { static constexpr bool InPool = true; static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3); static constexpr const char* Name = "nodec"; using Object = NodeC; };
+class NodeC : public Node
+{
+public:
+    explicit NodeC(TObjectId<NodeCTag> id) : m_objectId(id) {}
+    TObjectId<NodeCTag> object_id() const { return m_objectId; }
+
+private:
+    TObjectId<NodeCTag> m_objectId;
+};
 
 using NodeId = TObjectId<NodeTag>;
 using NodeAId = TObjectId<NodeATag>;
@@ -47,45 +61,38 @@ int main(int argc, char** argv)
     // The pool asserts it runs on the main thread
     QCoreApplication app(argc, argv);
 
-    QObject root;
     TObjectIdGenerator ids;
-    TObjectPool pool(&root);
+    TObjectPool pool;
     auto a = std::make_unique<NodeA>();
     NodeA owner;
-    NodeB b;
     const NodeAId aId = NodeAId::create(ids);
     const NodeAId ownerId = NodeAId::create(ids);
 
     check(pool.add(aId, a.get()) && pool.add(ownerId, &owner), "two objects go in");
     check(!pool.add(aId, a.get()), "the same id a second time is refused");
     NodeB sameNumber;
-    const uint64_t bWithANumber = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(aId.to_storage());
-    check(!pool.add(NodeBId::from_storage(bWithANumber).value(), &sameNumber), "another tag with a number in use is refused");
+    const uint64_t bWithANumber = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(aId));
+    check(!pool.add(TObjectIdTestAccess::from_value<NodeBId>(bWithANumber).value(), &sameNumber), "another tag with a number in use is refused");
     check(pool.find(aId) == a.get() && pool.find(NodeId(ownerId)) == &owner, "found by the exact id and by the id of the kind");
     check(pool.find(NodeAId()) == nullptr, "the invalid id finds nothing");
-    check(pool.id_of(&owner) == ownerId.to_storage(), "id_of() gives the id of an object");
+    check(pool.id_of(&owner) == TObjectIdTestAccess::value(ownerId), "id_of() gives the id of an object");
 
-    // b derived from owner: its tag on the owner's number
-    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(ownerId.to_storage());
-    QObject* bOwner = &owner;
-    check(pool.add_owned(NodeBId::from_storage(derived).value(), &b, [&bOwner]() { return bOwner; }), "a derived object goes in");
-    check(pool.find_owner(derived) == &owner, "find_owner() gives the owner from the number");
-    check(pool.find_owner(TObjectIds::make_tag(1, 2) * (1ull << TObjectIds::SequenceBits)) == &root, "number 0 is the root's");
-    check(pool.owners_out_of_place().isEmpty(), "the invariant holds");
-
-    // b hung on another owner by hand: the invariant finds it
-    bOwner = a.get();
-    check(pool.owners_out_of_place() == QList<uint64_t>{derived}, "an object hung on another owner is found");
-    bOwner = &owner;
+    // c derived from owner: its tag on the owner's number, enrolled with the id
+    // it was made with
+    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 3)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(ownerId));
+    NodeC b(TObjectIdTestAccess::from_value<TObjectId<NodeCTag>>(derived).value());
+    check(pool.add<NodeCTag>(&b), "a derived peer goes in");
+    check(pool.find_raw(derived) == &b, "a derived peer is found by its id");
+    NodeC twice(b.object_id());
+    check(!pool.add<NodeCTag>(&twice), "a derived id made twice is refused");
 
     a.reset();
-    check(!pool.contains(aId.to_storage()) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
+    check(!pool.contains(TObjectIdTestAccess::value(aId)) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");
     check(pool.id_of(nullptr) == 0, "no id for no object");
     check(pool.count() == 2, "no empty entry stays");
 
     pool.remove(ownerId);
-    check(pool.find_owner(derived) == nullptr && pool.owners_out_of_place() == QList<uint64_t>{derived},
-          "an owner removed: its derived object is out of place");
+    check(pool.find_raw(derived) == &b, "an owner removed: its derived object stays until it leaves itself");
 
     if (failures > 0) {
         std::printf("%d object pool tests FAILED\n", failures);

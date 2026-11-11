@@ -5,6 +5,7 @@
 
 #include "TRemoveEntitiesController.h"
 #include "TContextItem.h"
+#include "TClip.h"
 #include "TSelectionService.h"
 #include "TTimeLineEntity.h"
 #include "Debugger.h"
@@ -26,18 +27,13 @@ TCommitResult TRemoveEntitiesController::commit()
 {
     PENTER;
 
-    auto* targetItem = dynamic_cast<TContextItem*>(m_target);
-    const bool removingSelection = m_selection && targetItem && m_selection->is_selected(targetItem->get_id());
+    auto* targetClip = dynamic_cast<TClip*>(m_target);
+    const bool removingSelection = m_selection && targetClip && m_selection->is_selected(targetClip->object_id());
 
     QList<TTimeLineEntity*> entities;
 
     if (removingSelection) {
-        // Only entities of the target's type, the selection may contain others
-        for (TTimeLineEntity* entity : m_selection->get_selected_entities()) {
-            if (entity->get_timeline_entity_type() == m_target->get_timeline_entity_type()) {
-                entities.append(entity);
-            }
-        }
+        entities = m_selection->get_selected_entities();
     } else {
         entities.append(m_target);
     }

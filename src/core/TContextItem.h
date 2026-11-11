@@ -46,12 +46,9 @@ public:
 
     TContextItem* get_related_context_item() const {return m_relatedContextItem;}
 
-    qint64 get_id();
-
     void set_related_context_item(TContextItem* item) {m_relatedContextItem = item;}
     void set_has_active_context(bool context);
     void set_ignore_context(bool ignoreContext);
-    void set_id(qint64 id);
 
     bool has_active_context() const {return m_hasActiveContext;}
     bool item_ignores_context() const {return m_ignoreContext;}
@@ -75,7 +72,6 @@ protected:
 
 private:
     QUndoStack*             m_historyStack;
-    qint64                  m_id;
     TContextItem*          m_relatedContextItem;
     bool                    m_hasActiveContext;
     bool                    m_ignoreContext;

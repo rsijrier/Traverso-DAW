@@ -20,12 +20,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TAudioTrack.h"
+#include "TObjectFactory.h"
 #include "TSplitableTimeLineEntity.h"
 
 #include <QDomElement>
 #include <QDomNode>
+#include <QUuid>
 
 #include "TSheet.h"
+#include "TProject.h"
 #include "TAudioClip.h"
 #include "TAudioClipManager.h"
 #include "AudioBus.h"
@@ -38,14 +41,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "Debugger.h"
 
 
-TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
-    : TTrack(sheet)
+TAudioTrack::TAudioTrack(TrackId id, TSheet* sheet, const QString& name, int height )
+    : TTrack(id, sheet)
     , m_sheet(sheet)
     , m_clips(TSplitableTimeLineEntity::starts_before)
 {
     PENTERCONS;
     m_name = name;
-    sheet->set_track_height(get_id(), height);
+    sheet->set_track_height(id, height);
     m_numtakes = 0;
     m_showClipVolumeAutomation = false;
 
@@ -54,8 +57,8 @@ TAudioTrack::TAudioTrack(TSheet* sheet, const QString& name, int height )
     init();
 }
 
-TAudioTrack::TAudioTrack( TSheet * sheet, const QDomNode node)
-    : TTrack(sheet)
+TAudioTrack::TAudioTrack(TrackId id, TSheet * sheet, const QDomNode node)
+    : TTrack(id, sheet)
     , m_sheet(sheet)
     , m_clips(TSplitableTimeLineEntity::starts_before)
 {
@@ -99,7 +102,7 @@ QDomNode TAudioTrack::get_state( QDomDocument doc, bool istemplate)
             }
 
             QDomElement clipNode = doc.createElement("Clip");
-            clipNode.setAttribute("id", clip->get_id() );
+            TObjectFactory::write_reference(clipNode, "clip", clip->object_id());
             clips.appendChild(clipNode);
         }
 
@@ -134,13 +137,15 @@ int TAudioTrack::set_state( const QDomNode & node )
         QDomNode clipNode = ClipsNode.firstChild();
         while (!clipNode.isNull()) {
             QDomElement clipElement = clipNode.toElement();
-            qint64 id = clipElement.attribute("id", "").toLongLong();
+            const std::optional<ClipId> id = TObjectFactory::read_reference<ClipTag>(clipElement, "clip");
 
-            TAudioClip* clip = resources_manager()->get_clip(id);
+            TAudioClip* clip = id ? resources_manager()->get_clip(*id) : nullptr;
             if (!clip) {
+                // One missing clip loses only itself
                 tInformUser().critical(tr("Track: AudioClip with id %1 not "
-                                   "found in Resources database!").arg(id));
-                break;
+                                   "found in Resources database!").arg(clipElement.attribute("clip")));
+                clipNode = clipNode.nextSibling();
+                continue;
             }
 
             clip->set_track(this);
@@ -194,18 +199,29 @@ TAudioClip* TAudioTrack::init_recording()
     if (!m_inputBus) {
         tInformUser().critical(tr("Unable to Record to AudioTrack"));
         tInformUser().warning(tr("AudioDevice doesn't have this Capture Bus: %1 (Track %2)").
-                       arg(m_busInName).arg(get_id()) );
+                       arg(m_busInName, QString::fromStdString(object_id().to_string())) );
         return nullptr;
     }
 
-    QString name = 	m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(++m_numtakes);
+    const int take = ++m_numtakes;
+    const QString name = m_sheet->get_name() + "-" + m_name + "-take-" + QString::number(take);
+
+    // <12 hex of the project's UUID>-<song 5 hex>-<track 5 hex>-<take 4 digits>
+    // (doc/design/object-ids.md); the writer adds the extension of the format
+    const QUuid uuid = m_sheet->get_project()->get_uuid();
+    Q_ASSERT(!uuid.isNull());
+    const QString fileName = QString("%1-%2-%3-%4")
+                                 .arg(uuid.toString(QUuid::Id128).left(12))
+                                 .arg(m_sheet->object_id().sequence(), 5, 16, QChar('0'))
+                                 .arg(object_id().sequence(), 5, 16, QChar('0'))
+                                 .arg(take, 4, 10, QChar('0'));
 
     TAudioClip* clip = resources_manager()->new_audio_clip(name);
     clip->set_track(this);
     clip->attach_to_sheet();
     clip->move_to_location(m_sheet->get_transport_location());
 
-    if (clip->init_recording() < 0) {
+    if (clip->init_recording(fileName) < 0) {
         PERROR("Could not create AudioClip to record to!");
         resources_manager()->destroy_clip(clip);
         return nullptr;
@@ -468,8 +484,8 @@ void TAudioTrack::toggle_show_clip_volume_automation()
     emit automationVisibilityChanged();
 }
 
-TBounceTrack::TBounceTrack(TSheet *sheet, const QString &name, int height)
-    : TAudioTrack(sheet, name, height)
+TBounceTrack::TBounceTrack(TrackId id, TSheet *sheet, const QString &name, int height)
+    : TAudioTrack(id, sheet, name, height)
 {
     m_type = TTrack::TRACKTYPE::BOUNCE;
     TAudioBusConfiguration busConfig;

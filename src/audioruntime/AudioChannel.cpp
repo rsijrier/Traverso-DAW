@@ -24,7 +24,6 @@
 
 #include "TVUMonitor.h"
 #include "TAudioThreadMessageQueue.h"
-#include "Utils.h"
 #include "Debugger.h"
 
 #include <QString>
@@ -39,7 +38,7 @@
  */
 
 
-AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, nframes_t bufferSize, qint64 id)
+AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, nframes_t bufferSize)
     : m_audioBuffer(bufferSize)
 {
     m_name = name;
@@ -47,11 +46,6 @@ AudioChannel::AudioChannel(const QString& name, uint channelNumber, int type, nf
     m_type = type;
     m_monitoring = true;
     m_latency = 0;
-    if (id == 0) {
-        m_id = TraversoDAW::Utils::create_id();
-    } else {
-        m_id = id;
-    }
 }
 
 AudioChannel::~ AudioChannel( )

@@ -93,7 +93,7 @@ void TResourcesManager::discard_takes(const QList<TAudioClip*>& takes)
     QList<TAudioClip*> discarded;
     QStringList names;
     for (TAudioClip* take : takes) {
-        ClipData* clip = m_clips.value(take->get_id());
+        ClipData* clip = m_clips.value(take->object_id());
         SourceData* source = m_sources.value(take->get_readsource_id());
         if (!clip || !clip->removed || !source || source->clipCount > 0) {
             TLOG_I("recording", "keeping take {}: still in use", take->get_name().toStdString());
@@ -128,7 +128,7 @@ void TResourcesManager::drop_empty_take(TAudioClip* take)
 void TResourcesManager::delete_takes(const QList<TAudioClip*>& takes)
 {
     for (TAudioClip* take : takes) {
-        ClipData* clip = m_clips.take(take->get_id());
+        ClipData* clip = m_clips.take(take->object_id());
         SourceData* source = m_sources.take(take->get_readsource_id());
         if (!clip || !source) {
             continue;
@@ -215,10 +215,10 @@ int TResourcesManager::set_state( const QDomNode & node )
 	QDomNode sourcesNode = node.firstChildElement("AudioSources").firstChild();
 	
 	while(!sourcesNode.isNull()) {
-        TBufferedAudioStreamReader* stream = new TBufferedAudioStreamReader(sourcesNode);
+        TBufferedAudioStreamReader* stream = m_project->objects().load<TBufferedAudioStreamReader>(sourcesNode.toElement(), sourcesNode);
 		SourceData* data = new SourceData();
         data->stream = stream;
-        m_sources.insert(stream->get_id(), data);
+        m_sources.insert(stream->object_id(), data);
 		sourcesNode = sourcesNode.nextSibling();
         if (stream->get_channel_count() == 0) {
             m_silentReadSource = stream;
@@ -232,7 +232,7 @@ int TResourcesManager::set_state( const QDomNode & node )
 		TAudioClip* clip = m_project->objects().load<TAudioClip>(clipsNode.toElement(), clipsNode);
 		ClipData* data = new ClipData();
 		data->clip = clip;
-		m_clips.insert(clip->get_id(), data);
+		m_clips.insert(clip->object_id(), data);
 		clipsNode = clipsNode.nextSibling();
 	}
 	
@@ -248,22 +248,21 @@ TBufferedAudioStreamReader* TResourcesManager::import_source(const QString& dir,
 	QString fileName = dir + name;
 	foreach(SourceData* data, m_sources) {
         if (data->stream->get_filename() == fileName) {
-            TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "id is %lld", data->stream->get_id());
-            return get_readsource(data->stream->get_id());
+            return get_readsource(data->stream->object_id());
 		}
 	}
 	
-    TBufferedAudioStreamReader* stream = new TBufferedAudioStreamReader(dir, name);
+    // An import belongs to the project, to no song
+    TBufferedAudioStreamReader* stream = m_project->objects().make<TBufferedAudioStreamReader>(dir, name);
 	SourceData* data = new SourceData();
     data->stream = stream;
-        stream->set_created_by_sheet(m_project->get_current_session()->get_id());
 	
-    m_sources.insert(stream->get_id(), data);
+    m_sources.insert(stream->object_id(), data);
 	
-    stream = get_readsource(stream->get_id());
+    stream = get_readsource(stream->object_id());
 	
     if (stream->get_error() < 0) {
-        m_sources.remove(stream->get_id());
+        m_sources.remove(stream->object_id());
         delete stream;
         return nullptr;
 	}
@@ -276,21 +275,22 @@ TBufferedAudioStreamReader* TResourcesManager::import_source(const QString& dir,
 
 TBufferedAudioStreamReader* TResourcesManager::create_recording_source(
 	const QString& dir,
-	const QString& name,
+	const QString& shortName,
+	const QString& fileName,
     uint channelCount,
- 	qint64 sheetId)
+ 	SongId song)
 {
 	PENTER;
 	
-    TBufferedAudioStreamReader* stream = new TBufferedAudioStreamReader(dir, name, channelCount);
+    TBufferedAudioStreamReader* stream = m_project->objects().make<TBufferedAudioStreamReader>(dir, fileName, shortName, channelCount);
 	SourceData* data = new SourceData();
     data->stream = stream;
 	
     stream->set_original_bit_depth(m_project->audio_device().get_bit_depth());
-    stream->set_created_by_sheet(sheetId);
+    stream->set_created_by_sheet(song);
     stream->ref();
 	
-    m_sources.insert(stream->get_id(), data);
+    m_sources.insert(stream->object_id(), data);
 	
     emit sourceAdded(stream);
 	
@@ -301,25 +301,24 @@ TBufferedAudioStreamReader* TResourcesManager::create_recording_source(
 TBufferedAudioStreamReader* TResourcesManager::get_silent_readsource()
 {
 	if (!m_silentReadSource) {
-        m_silentReadSource = new TBufferedAudioStreamReader();
+        m_silentReadSource = m_project->objects().make<TBufferedAudioStreamReader>();
 		SourceData* data = new SourceData();
         data->stream = m_silentReadSource;
-		m_sources.insert(m_silentReadSource->get_id(), data);
-		m_silentReadSource->set_created_by_sheet( -1 );
+		m_sources.insert(m_silentReadSource->object_id(), data);
 	}
 	
-	m_silentReadSource = get_readsource(m_silentReadSource->get_id());
+	m_silentReadSource = get_readsource(m_silentReadSource->object_id());
 	
 	return m_silentReadSource;
 }
 
 
-TBufferedAudioStreamReader * TResourcesManager::get_readsource(qint64 id)
+TBufferedAudioStreamReader * TResourcesManager::get_readsource(AudioSourceId id)
 {
 	SourceData* data = m_sources.value(id);
 	
 	if (!data) {
-        PWARN(QString("ResourcesManager::get_readsource(): ReadSource with id %1 is not in my database!").arg(id).toLatin1().data());
+        TLOG_W("resources", "the source {} is not in the project", id.to_string());
         return nullptr;
 	}
 	
@@ -355,7 +354,7 @@ TBufferedAudioStreamReader * TResourcesManager::get_readsource(qint64 id)
 		'deep copy' of the TAudioClip with id \a id if the TAudioClip was allready
 		getted before via this function.
  */
-TAudioClip* TResourcesManager::get_clip(qint64 id)
+TAudioClip* TResourcesManager::get_clip(ClipId id)
 {
 	ClipData* data = m_clips.value(id);
 	 
@@ -373,17 +372,17 @@ TAudioClip* TResourcesManager::get_clip(qint64 id)
 		// check for this, since it's absolutely crucial, and 
 		// indicates a design error somewhere ! (most likely in 
 		// AudioClip::create_copy();
-		Q_ASSERT( ! m_clips.contains(clip->get_id()) );
+		Q_ASSERT( ! m_clips.contains(clip->object_id()) );
 		ClipData* copy = new ClipData();
 		copy->clip = clip;
 		copy->isCopy = true;
 		
-		m_clips.insert(clip->get_id(), copy);
+		m_clips.insert(clip->object_id(), copy);
 		
 		// Now that we have created a copy of the audioclip, start
 		// the usual get_clip routine again to properly init the clip
 		// and other stuff.
-		return get_clip(clip->get_id());
+		return get_clip(clip->object_id());
 	}
 	
     TBufferedAudioStreamReader* source = get_readsource(data->clip->get_readsource_id());
@@ -403,7 +402,7 @@ TAudioClip* TResourcesManager::new_audio_clip(const QString& name)
 	// In use from the start. Not through get_clip(): that sets the source a
 	// loaded clip refers to, a new clip has none yet, the caller sets it
 	data->inUse = true;
-	m_clips.insert(clip->get_id(), data);
+	m_clips.insert(clip->object_id(), data);
 	return clip;
 }
 
@@ -431,9 +430,8 @@ QList< TAudioClip * > TResourcesManager::get_all_clips() const
 
 void TResourcesManager::mark_clip_removed(TAudioClip * clip)
 {
-	ClipData* data = m_clips.value(clip->get_id());
+	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
-//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	data->removed = true;
@@ -450,9 +448,8 @@ void TResourcesManager::mark_clip_removed(TAudioClip * clip)
 
 void TResourcesManager::mark_clip_added(TAudioClip * clip)
 {
-	ClipData* clipdata = m_clips.value(clip->get_id());
+	ClipData* clipdata = m_clips.value(clip->object_id());
 	if (!clipdata) {
-//		PERROR("Clip with id %lld is not in my database!", clip->get_id());
 		return;
 	}
 	clipdata->removed = false;
@@ -468,7 +465,7 @@ void TResourcesManager::mark_clip_added(TAudioClip * clip)
 }
 
 
-bool TResourcesManager::is_clip_in_use(qint64 id) const
+bool TResourcesManager::is_clip_in_use(ClipId id) const
 {
 	ClipData* data = m_clips.value(id);
 	if (!data) {
@@ -478,7 +475,7 @@ bool TResourcesManager::is_clip_in_use(qint64 id) const
 	return data->inUse && !data->removed;
 }
 
-bool TResourcesManager::is_source_in_use(qint64 id) const
+bool TResourcesManager::is_source_in_use(AudioSourceId id) const
 {
 	SourceData* data = m_sources.value(id);
 	if (!data) {
@@ -510,11 +507,10 @@ TResourcesManager::ClipData::ClipData()
 
 void TResourcesManager::destroy_clip(TAudioClip * clip)
 {
-	ClipData* data = m_clips.value(clip->get_id());
+	ClipData* data = m_clips.value(clip->object_id());
 	if (!data) {
-//		PERROR("Clip with id %lld not in database", clip->get_id());
 	} else {
-		m_clips.remove(clip->get_id());
+		m_clips.remove(clip->object_id());
 		delete data;
 		delete clip;
 	}
@@ -523,7 +519,7 @@ void TResourcesManager::destroy_clip(TAudioClip * clip)
 
 void TResourcesManager::remove_source(TBufferedAudioStreamReader * source)
 {
-	SourceData* data = m_sources.value(source->get_id());
+	SourceData* data = m_sources.value(source->object_id());
 	if (!data) {
 	} else {
 		if (data->clipCount > 0) {
@@ -533,7 +529,7 @@ void TResourcesManager::remove_source(TBufferedAudioStreamReader * source)
 			return;
 		}
 		
-		m_sources.remove(source->get_id());
+		m_sources.remove(source->object_id());
 
 		emit sourceRemoved(source);
 

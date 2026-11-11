@@ -26,6 +26,7 @@ $Id: FadeCurve.h,v 1.19 2008/01/21 16:22:14 r_sijrier Exp $
 #include "TContextItem.h"
 #include "TCurveSnapshot.h"
 #include "TFadeShape.h"
+#include "TObjectIdTags.h"
 #include "TRtValue.h"
 #include "TChannelBuffer.h"
 #include "TTimeRef.h"
@@ -73,8 +74,18 @@ public:
     static constexpr FadeType FadeIn = TFadeShape::FadeIn;
     static constexpr FadeType FadeOut = TFadeShape::FadeOut;
 
-    TFadeCurve(TContextItem* parent, FadeType fadeType, TRtTransaction& transaction);
+    // Fade in or fade out by the subtype of its id (TObjectFactory::make_derived())
+    TFadeCurve(CurveId id, TContextItem* parent, TRtTransaction& transaction);
     ~TFadeCurve() override = default;
+
+    // A part of its clip, not in the pool: its id is derived from the clip's
+    // and written nowhere. Made under two tags (fade in, fade out)
+    using IdTag = void;
+    CurveId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
 
     QDomNode get_state(QDomDocument doc);
     int set_state( const QDomNode & node );
@@ -117,6 +128,7 @@ public:
     void get_columns(double x0, double columnWidth, int count, TCurveColumn* columns);
 
 private:
+    CurveId                               m_objectId;
     TTimeLineEntity*                      m_parentTimeLineEntity{nullptr};
     float 		                          m_bendFactor{0.0f};
     float 		                          m_strenghtFactor{0.5f};

@@ -36,7 +36,7 @@ class AudioChannel : public QObject
     Q_OBJECT
 
 public:
-    explicit AudioChannel(const QString& name, uint channelNumber, int type, nframes_t bufferSize,  qint64 id=0);
+    explicit AudioChannel(const QString& name, uint channelNumber, int type, nframes_t bufferSize);
     ~AudioChannel();
 
     enum ChannelFlags {
@@ -64,14 +64,12 @@ public:
     QString get_name() const {return m_name;}
     uint get_number() const {return m_number;}
     int get_type() const {return m_type;}
-    qint64 get_id() const {return m_id;}
 
 private:
     TRtList<TVUMonitor>     m_monitors;
     TRealTimeChannelBuffer    m_audioBuffer;
     uint 			m_latency;
     uint 			m_number;
-    qint64                  m_id;
     int                     m_type;
     bool			m_monitoring;
     QString 		m_name;

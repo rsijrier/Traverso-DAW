@@ -42,7 +42,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 
 #include "Debugger.h"
-#include "Utils.h"
 
 ProjectManagerDialog::ProjectManagerDialog( QWidget * parent )
 	: QDialog(parent)
@@ -86,7 +85,7 @@ void ProjectManagerDialog::set_project(TProject* project)
         connect(m_project->get_history_stack(), &QUndoStack::undoTextChanged, this, &ProjectManagerDialog::undo_text_changed);
         setWindowTitle("Manage Project - " + m_project->get_title());
 		descriptionTextEdit->setText(m_project->get_description());
-        createdDateLabel->setText("Created on: " + TraversoDAW::Utils::extract_date_time(m_project->get_id()).toString());
+        createdDateLabel->setText("Created on: " + m_project->get_created_on().toLocalTime().toString());
 		lineEditTitle->setText(m_project->get_title());
 		lineEditId->setText(m_project->get_discid());
 		lineEditUPC->setText(m_project->get_upc_ean());
@@ -149,7 +148,7 @@ void ProjectManagerDialog::update_sheet_list( )
 	treeSheetWidget->clear();
 	foreach(TSheet* sheet, m_project->get_sheets()) {
 
-		QString sheetNr = QString::number(m_project->get_sheet_index(sheet->get_id()));
+		QString sheetNr = QString::number(m_project->get_sheet_index(sheet->object_id()));
                 QString sheetName = "Sheet " + sheetNr + " - " + sheet->get_name();
 		QString numberOfTracks = QString::number(sheet->get_audio_track_count());
 		QString sheetLength = TTimeRef::timeref_to_ms_2(sheet->get_last_location());
@@ -163,7 +162,7 @@ void ProjectManagerDialog::update_sheet_list( )
 		item->setText(1, numberOfTracks);
 		item->setText(2, sheetLength);
 		
-		item->setData(0, Qt::UserRole, sheet->get_id());
+		item->setData(0, Qt::UserRole, QVariant::fromValue(sheet->object_id()));
 	}
 }
 
@@ -175,14 +174,13 @@ void ProjectManagerDialog::sheetitem_clicked( QTreeWidgetItem* item, int)
 
 	TSheet* sheet;
 
-	qint64 id = item->data(0, Qt::UserRole).toLongLong();
-	sheet = m_project->get_sheet(id);
+	sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 
 	Q_ASSERT(sheet);
 		
         selectedSheetName->setText(sheet->get_name());
 	
-        m_project->set_current_session(sheet->get_id());
+        m_project->set_current_session(sheet);
 }
 
 void ProjectManagerDialog::on_renameSheetButton_clicked( )
@@ -197,8 +195,7 @@ void ProjectManagerDialog::on_renameSheetButton_clicked( )
 		return;
 	}
 	
-	qint64 id = item->data(0, Qt::UserRole).toLongLong();
-	TSheet* sheet = m_project->get_sheet(id);
+	TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 	
 	Q_ASSERT(sheet);
 	
@@ -222,9 +219,10 @@ void ProjectManagerDialog::on_deleteSheetButton_clicked( )
 		return;
 	}
 	
-	qint64 id = item->data(0, Qt::UserRole).toLongLong();
+	TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
+	Q_ASSERT(sheet);
 	
-	TCommand::process_command(m_project->remove_sheet(m_project->get_sheet(id)));
+	TCommand::process_command(m_project->remove_sheet(sheet));
 }
 
 void ProjectManagerDialog::on_createSheetButton_clicked( )
@@ -336,9 +334,7 @@ void ProjectManagerDialog::on_sheetAudioSourcesPushButton_clicked()
                 return;
         }
 
-        qint64 id = item->data(0, Qt::UserRole).toLongLong();
-
-        TSheet* sheet = m_project->get_sheet(id);
+        TSheet* sheet = m_project->get_sheet(item->data(0, Qt::UserRole).value<SongId>());
 
         if (!sheet) {
                 return;

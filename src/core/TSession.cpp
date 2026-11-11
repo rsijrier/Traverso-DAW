@@ -29,9 +29,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TConfig.h"
 #include "TBusTrack.h"
 #include "TSheet.h"
+#include "TSend.h"
+#include "TObjectFactory.h"
+#include "TProject.h"
 #include "TSnapList.h"
 #include "TLocation.h"
 #include "TTimeLineRuler.h"
+#include "TWorkspace.h"
 
 #include "Debugger.h"
 #include "TFloatCompare.h"
@@ -60,7 +64,8 @@ TSession::TSession(TAudioDevice& device, TSession *parentSession)
     m_workSnap = nullptr;
 
 	if (!parentSession) {
-        m_timeLineRuler = new TTimeLineRuler(this);
+        // The ruler: made by the song and the project, which have an id to
+        // derive its id from (not yet here, in the base)
 		m_snaplist = new TSnapList(this);
         m_workSnap = new TLocation(this);
 	} else {
@@ -112,67 +117,6 @@ void TSession::set_parent_session(TSession *parentSession)
 }
 
 
-int TSession::set_state( const QDomNode & node )
-{
-	PENTER;
-
-	QDomElement e = node.toElement();
-
-	m_name = e.attribute("name", "" );
-    set_id(e.attribute("id", "0").toLongLong());
-    m_scrollBarXValue = e.attribute("sbx", "0").toInt();
-    m_scrollBarYValue = e.attribute("sby", "0").toInt();
-
-	QDomNode tracksNode = node.firstChildElement("Tracks");
-	QDomNode trackNode = tracksNode.firstChild();
-
-	while(!trackNode.isNull()) {
-		QDomElement e = trackNode.toElement();
-
-		qint64 id = e.attribute("id", "0").toLongLong();
-
-        TTrack* track = m_parentSession->get_track(id);
-		if (track) {
-            TCommand* cmd = add_track(track);
-            // add_track(track) should not return a TCommand object
-            // but directly add track and return nullptr, this is by design
-            Q_ASSERT(!cmd);
-            set_track_height(track->get_id(), e.attribute("height", "90").toInt());
-		}
-
-		trackNode = trackNode.nextSibling();
-	}
-
-
-	return 1;
-}
-
-QDomNode TSession::get_state(QDomDocument doc)
-{
-	QDomElement sheetNode = doc.createElement("WorkSheet");
-
-    sheetNode.setAttribute("id", get_id());
-	sheetNode.setAttribute("name", m_name);
-	sheetNode.setAttribute("sbx", get_scrollbar_xy().x());
-	sheetNode.setAttribute("sby", get_scrollbar_xy().y());
-
-	QDomNode tracksNode = doc.createElement("Tracks");
-
-    foreach(TTrack* track, get_tracks()) {
-		QDomElement trackNode = doc.createElement("Track");
-
-		trackNode.setAttribute("id", track->get_id() );
-		trackNode.setAttribute("height", get_track_height(track->get_id()));
-		tracksNode.appendChild(trackNode);
-	}
-
-	sheetNode.appendChild(tracksNode);
-
-	return sheetNode;
-}
-
-
-
 TBusTrack* TSession::get_master_out_bus_track() const
 {
     if (is_project_session()) {
@@ -203,9 +147,9 @@ QList<TTrack*> TSession::get_tracks() const
 	return list;
 }
 
-TTrack* TSession::get_track(qint64 id) const
+TTrack* TSession::get_track(TrackId id) const
 {
-	if (m_masterOutBusTrack && m_masterOutBusTrack->get_id() == id) {
+	if (m_masterOutBusTrack && m_masterOutBusTrack->object_id() == id) {
 		return m_masterOutBusTrack;
 	}
 
@@ -233,6 +177,13 @@ TLocation* TSession::get_work_snap() const
 	}
 
 	return m_workSnap;
+}
+
+TProject* TSession::get_project() const
+{
+	// A song and the project answer themselves; this is a workspace
+	Q_ASSERT(m_parentSession);
+	return m_parentSession->get_project();
 }
 
 TTimeLineRuler* TSession::get_timeline_ruler() const
@@ -530,7 +481,7 @@ TCommand* TSession::start_transport()
 TCommand* TSession::add_track(TTrack* track, bool historable)
 {
     if (is_child_session()) {
-        set_track_height(track->get_id(), m_parentSession->get_track_height(track->get_id()));
+        set_track_height(track->object_id(), m_parentSession->get_track_height(track->object_id()));
         TRtTransaction transaction;
         private_add_track(track, transaction);
         return nullptr;
@@ -582,7 +533,7 @@ void TSession::private_add_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_add_track() Unknown Track type, this is a programming error!");
 	}
 
-	m_tracks.insert(track->get_id(), track);
+	m_tracks.insert(track->object_id(), track);
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->connect_to_jack(true, true);
@@ -604,7 +555,7 @@ void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
         qFatal("TSession::private_remove_track() Unknown Track type, this is a programming error!");
 	}
 
-	m_tracks.remove(track->get_id());
+	m_tracks.remove(track->object_id());
 
 	if ( (!is_child_session()) && (audio_device().get_driver_type() == "Jack")) {
 		track->disconnect_from_jack(true, true);
@@ -613,15 +564,24 @@ void TSession::private_remove_track(TTrack* track, TRtTransaction& transaction)
 	emit trackRemoved(track);
 }
 
-void TSession::add_child_session(TSession *child)
+void TSession::add_child_session(TWorkspace *child)
 {
 	m_childSessions.append(child);
 	emit sessionAdded(child);
 }
 
-void TSession::remove_child_session(TSession *child)
+void TSession::remove_child_session(TWorkspace *child)
 {
 	m_childSessions.removeAll(child);
 	emit sessionRemoved(child);
 }
 
+TBusTrack* TSession::new_bus_track(const QString& name, int channelCount)
+{
+    TObjectFactory& objects = get_project()->objects();
+    TBusTrack* track = objects.make<TBusTrack>(this, name, channelCount);
+    if (!is_project_session()) {
+        track->add_default_post_send();
+    }
+    return track;
+}

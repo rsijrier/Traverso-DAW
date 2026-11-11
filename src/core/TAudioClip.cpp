@@ -66,7 +66,6 @@ TAudioClip::TAudioClip(const QString& name)
 {
     PENTERCONS;
     m_name = name;
-    m_readSourceId = m_sheetId = 0;
     QObject::tr("TAudioClip");
 
     m_track = nullptr;
@@ -94,28 +93,13 @@ void TAudioClip::set_name(const QString& name)
     emit stateChanged();
 }
 
-QObject* TAudioClip::id_owner() const
-{
-    // A removed clip keeps m_track for undo; its project's resources manager
-    // knows whether it is in use. Clips of a removed track or song still count
-    // as in use (T96). get_id() is not const as it makes a missing old id; a
-    // clip on a track has one, the resources manager holds it by it
-    const qint64 oldId = const_cast<TAudioClip*>(this)->get_id();
-    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(oldId)) {
-        return m_track;
-    }
-    return nullptr;
-}
-
 TAudioClip::TAudioClip(const QDomNode& node)
     : TAudioClip("")
 {
     PENTERCONS;
 
     QDomElement e = node.toElement();
-    set_id(e.attribute("id", "").toLongLong());
-    m_readSourceId = e.attribute("source", "").toLongLong();
-    m_sheetId = e.attribute("sheet", "0").toLongLong();
+    m_readSourceId = TObjectFactory::read_reference<AudioSourceTag>(e, "audiosource").value_or(AudioSourceId());
     m_name = e.attribute( "clipname", "" ) ;
     m_audio.set_muted(e.attribute( "mute", "" ).toInt());
     const TTimeRef length(e.attribute( "length", "0" ).toLongLong());
@@ -163,8 +147,7 @@ int TAudioClip::set_state(const QDomNode& node)
 
     m_isTake = e.attribute( "take", "").toInt();
     m_isLocked = e.attribute( "locked", "0" ).toInt();
-    m_readSourceId = e.attribute("source", "").toLongLong();
-    m_sheetId = e.attribute("sheet", "0").toLongLong();
+    m_readSourceId = TObjectFactory::read_reference<AudioSourceTag>(e, "audiosource").value_or(AudioSourceId());
     m_audio.set_muted(e.attribute( "mute", "" ).toInt());
 
     bool ok;
@@ -186,7 +169,7 @@ int TAudioClip::set_state(const QDomNode& node)
         QDomElement fadeInNode = node.firstChildElement("FadeIn");
         if (!fadeInNode.isNull()) {
             if (!m_fadeIn) {
-                TFadeCurve* fade = new TFadeCurve(this, TFadeCurve::FadeIn, transaction);
+                TFadeCurve* fade = TObjectFactory::make_derived<FadeInCurveTag>(this, transaction);
                 fade->set_parent_timeline_entity(this);
                 add_fade(fade, transaction);
             }
@@ -196,7 +179,7 @@ int TAudioClip::set_state(const QDomNode& node)
         QDomElement fadeOutNode = node.firstChildElement("FadeOut");
         if (!fadeOutNode.isNull()) {
             if (!m_fadeOut) {
-                TFadeCurve* fade = new TFadeCurve(this, TFadeCurve::FadeOut, transaction);
+                TFadeCurve* fade = TObjectFactory::make_derived<FadeOutCurveTag>(this, transaction);
                 fade->set_parent_timeline_entity(this);
                 add_fade(fade, transaction);
             }
@@ -227,15 +210,18 @@ QDomNode TAudioClip::get_state( QDomDocument doc )
     node.setAttribute("mute", m_audio.is_muted());
     node.setAttribute("take", m_isTake);
     node.setAttribute("clipname", m_name );
-    node.setAttribute("id", get_id() );
     TObjectFactory::write(node, object_id());
-    if (id_owner()) {
+    // A removed clip keeps m_track for undo; its project's resources manager
+    // knows whether it is in use. Clips of a removed track or song still count
+    // as in use (T96)
+    if (m_track && get_sheet()->get_project()->get_audiosource_manager()->is_clip_in_use(object_id())) {
         TObjectFactory::write_owner(node, m_track->object_id());
     }
-    node.setAttribute("sheet", m_sheetId );
     node.setAttribute("locked", m_isLocked);
 
-    node.setAttribute("source", m_readSourceId);
+    if (m_readSourceId.is_valid()) {
+        TObjectFactory::write_reference(node, "audiosource", m_readSourceId);
+    }
 
     if (m_fadeIn) {
         node.appendChild(m_fadeIn->get_state(doc));
@@ -267,8 +253,8 @@ TSplitMutationResult TAudioClip::calculate_split_mutation(const TTimeRef& splitL
     // get_clip() returns copies of this clip, including gain and lock state, each
     // with its own read source. Clips must not share a read source: it holds the
     // clip's source start and location window.
-    TAudioClip* leftClip = resources_manager()->get_clip(get_id());
-    TAudioClip* rightClip = resources_manager()->get_clip(get_id());
+    TAudioClip* leftClip = resources_manager()->get_clip(object_id());
+    TAudioClip* rightClip = resources_manager()->get_clip(object_id());
     Q_ASSERT(leftClip && rightClip);
 
     for (TAudioClip* c : {leftClip, rightClip}) {
@@ -629,7 +615,7 @@ void TAudioClip::process_capture(TProcessContext &context) T_REALTIME_SAFE
     }
 }
 
-int TAudioClip::init_recording()
+int TAudioClip::init_recording(const QString& fileName)
 {
     Q_ASSERT(m_track);
 
@@ -660,11 +646,9 @@ int TAudioClip::init_recording()
 
     TBufferedAudioStreamReader* rs = resources_manager()->create_recording_source(
                 get_sheet()->get_audio_sources_dir(),
-                m_name, channelcount, get_sheet()->get_id());
+                m_name, fileName, channelcount, get_sheet()->object_id());
 
     resources_manager()->set_source_for_clip(this, rs);
-
-    QString sourceid = QString::number(rs->get_id());
 
     auto spec = new TExportSpecification;
 
@@ -690,7 +674,7 @@ int TAudioClip::init_recording()
     spec->set_sample_rate(get_sheet()->get_project()->project_rate());
     spec->set_export_start_location(TTimeRef());
     spec->set_export_end_location(TTimeRef());
-    spec->set_export_file_name(m_name + "-" + sourceid);
+    spec->set_export_file_name(fileName);
 
     m_writer = new TBufferedAudioStreamWriter(spec->get_export_dir(), spec->get_export_file_name());
     if (m_writer->prepare_file(spec, device.get_sample_rate()) == -1) {
@@ -770,7 +754,7 @@ void TAudioClip::set_audio_source(TBufferedAudioStreamReader* rs)
 
     m_readSource = rs;    
     m_readSource->set_source_start_location(get_source_start_location());
-    m_readSourceId = rs->get_id();
+    m_readSourceId = rs->object_id();
     m_sourceLength = rs->get_length();
     sync_location_to_stream();
     connect(m_location.get(), &TLocation::locationChanged, this, &TAudioClip::sync_location_to_stream);
@@ -913,8 +897,6 @@ void TAudioClip::attach_to_sheet()
     } else {
         PWARN("AudioClip::attach_to_sheet() : no ReadSource available!!");
     }
-
-    m_sheetId = sheet->get_id();
 
     // The peak file is needed before the clip is ever seen
     if (m_waveform) {
@@ -1063,7 +1045,8 @@ TFadeCurve* TAudioClip::create_fade(int fadeType, TRtTransaction& transaction)
     }
 
     // A new fade has the default shape, the "Fast" preset
-    TFadeCurve* fadeCurve = new TFadeCurve(this, TFadeCurve::FadeType(fadeType), transaction);
+    TFadeCurve* fadeCurve = fadeType == TFadeCurve::FadeIn ? TObjectFactory::make_derived<FadeInCurveTag>(this, transaction)
+                                                           : TObjectFactory::make_derived<FadeOutCurveTag>(this, transaction);
     fadeCurve->set_history_stack(get_history_stack());
     fadeCurve->set_parent_timeline_entity(this);
 

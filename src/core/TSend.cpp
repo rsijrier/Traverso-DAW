@@ -21,12 +21,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "TGain.h"
 #include "TSend.h"
+#include "TObjectFactory.h"
 #include "Debugger.h"
 
 #include "AudioBus.h"
 #include "TProject.h"
 #include "TProjectManager.h"
-#include "Utils.h"
 #include "TTrack.h"
 
 
@@ -44,7 +44,15 @@ TSend::TSend(TTrack* track, AudioBus* bus)
     , m_track(track)
 {
         m_bus = bus;
-        m_id = TraversoDAW::Utils::create_id();
+        init();
+}
+
+TSend::TSend(TTrack* track, TrackId target, AudioBus* targetBus)
+    : QObject(track)
+    , m_track(track)
+    , m_targetTrack(target)
+{
+        m_bus = targetBus;
         init();
 }
 
@@ -59,11 +67,16 @@ QDomNode TSend::get_state( QDomDocument doc)
 {
         QDomElement node = doc.createElement("Send");
 
-        node.setAttribute("id", m_id);
+        TObjectFactory::write(node, object_id());
+        TObjectFactory::write_owner(node, m_track->object_id());
         node.setAttribute("gain", m_gain);
         node.setAttribute("pan", m_pan);
+        if (m_targetTrack.is_valid()) {
+                TObjectFactory::write_reference(node, "targettrack", m_targetTrack);
+        } else if (m_bus) {
+                node.setAttribute("targetport", m_bus->get_name());
+        }
         if (m_bus) {
-                node.setAttribute("bus", m_bus->get_id());
                 node.setAttribute("busname", m_bus->get_name());
         }
         if (m_type == POSTSEND) {
@@ -88,8 +101,6 @@ int TSend::set_state( const QDomNode & node )
 
         QDomElement e = node.toElement();
 
-        m_id = e.attribute("id", "0").toLongLong();
-        qint64 busId = e.attribute("bus", "0").toLongLong();
         QString type = e.attribute("type", "");
         QString busName = e.attribute("busname", "No Busname in Project file");
         set_gain(e.attribute("gain", "1.0").toFloat());
@@ -105,7 +116,21 @@ int TSend::set_state( const QDomNode & node )
         }
 
 
-        m_bus = project->get_audio_bus(busId);
+        // Exactly one target: a track, or a port by name
+        const std::optional<TrackId> target = TObjectFactory::read_reference<TrackTag>(e, "targettrack");
+        const bool hasPort = e.hasAttribute("targetport");
+        if (target.has_value() == hasPort) {
+                TLOG_W("track", "a send of {} names {} target: not loaded", m_track->get_name().toStdString(),
+                       hasPort ? "two kinds of" : "no");
+                return -1;
+        }
+
+        if (target) {
+                m_targetTrack = *target;
+                m_bus = project->get_audio_bus(m_targetTrack);
+        } else {
+                m_bus = project->get_playback_bus(e.attribute("targetport"));
+        }
 
         if (!m_bus) {
                 TLog::write_printf(TLogLevel::Debug, TLOG_FILE_CATEGORY, "TSend::set_state: Project didn't return my Bus (%s)!", busName.toLatin1().data());
@@ -119,15 +144,6 @@ int TSend::set_state( const QDomNode & node )
 QString TSend::get_from_name() const
 {
         return m_track->get_name();
-}
-
-qint64 TSend::get_bus_id() const
-{
-        if (!m_bus) {
-                return -1;
-        }
-
-        return m_bus->get_id();
 }
 
 void TSend::set_pan(float pan)

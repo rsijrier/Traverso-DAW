@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 */
 
 #include "TSessionTabWidget.h"
+#include "TWorkspace.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -264,7 +265,7 @@ void TSessionTabWidget::session_property_changed()
 void TSessionTabWidget::button_clicked()
 {
     if (pm().get_project()->get_current_session() != m_session) {
-        pm().get_project()->set_current_session(m_session->get_id());
+        pm().get_project()->set_current_session(m_session);
         enterEvent(nullptr);
     } else {
         arrow_button_clicked();
@@ -355,7 +356,7 @@ void TSessionTabWidget::project_session_is_current(TSession *session)
 
 void TSessionTabWidget::update_arrow_button_shortcut_and_icon()
 {
-    int number = pm().get_project()->get_session_index(m_session->get_id()) + 1;
+    int number = pm().get_project()->get_session_index(m_session) + 1;
     if (number < 10) {
         m_arrowButton->setText(QString("&%1").arg(number));
     } else {

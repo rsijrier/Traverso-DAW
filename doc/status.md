@@ -430,7 +430,14 @@ Other open tasks:
 - **T40 Internal routing and routing via JACK/PipeWire** (incl. JACK transport
   slave); **PipeWire as a graph client**; **JACK revision** (port lists as
   `TRtList`).
-- **T41 Export through the bounce track** (own branch).
+- **T41 Export through the bounce track** (own branch). From the id branch
+  (Fable, 2026-11-09): the bounce track inherits `m_numtakes` and
+  `init_recording()`, but is made anew at every load and never saved, so after
+  a reload its take numbers start again and a bounce gets the file name of an
+  earlier one, which overwrites it (or, once the writer never overwrites, is
+  refused). Options: save the bounce track's take count with the song, or
+  another name scheme for bounce files. Latent until the bounce track is
+  armed.
 - **T42 Project file converter**: upgrade when the version is bumped; removes the
   default fades of older versions.
 - **T43 Gain ramp**: click-free mute, solo and fader (ramp state per transport).
@@ -1143,6 +1150,289 @@ From the GPU waveform test program, clip edges in variant A (branch
   `TBufferedAudioStreamReader`, `TAudioClip`, `TTimeLineMarker`) en drie
   alleen het element, met een losse `set_state()` erna (`TWorkspace` 2×,
   `TSend`); die krijgen een constructor met een node.
+- **T108 Core links without commands, sheetcanvas and the app** (Remon,
+  2026-11-07, from the `TSplitEdit` analysis; before `TSplitTool`): no test
+  can link `traversocore` today. Core includes command headers
+  (`TAddRemoveCommand.h` in `TFadeCurve.cpp`, `TSession.cpp`,
+  `TTimeLineRuler.cpp`, `TTrack.cpp`; `Fade.h` in `TFadeCurve.cpp`;
+  `ClipSelection.h` in `TAudioClipManager.cpp`; `CommandGroup.h` in
+  `TTimeLineRuler.cpp`; `TMoveCommand.h` in `TInputEventDispatcher.cpp`),
+  `TConfig.cpp:26,59` makes `TraversoCommands`, and core uses
+  `traversoplugins` (plugin chain, `GainEnvelope`) without linking it while
+  the plugins include `TAddRemoveCommand.h`; commands reach sheetcanvas and
+  the app. A headless `TAudioClip` also needs `config()` and a `TSheet` with a
+  `TProject`, resources manager and io schedulers. Then the edit test of
+  `TSplitEdit` with a real sheet (Dummy driver, `test_audio_device`
+  pattern). Likely makes T101 (a testable `TShortCutManager`) easier too.
+  **With it, the ids of gain and automation curves** (Remon 2026-11-11, from
+  the id branch, which does not touch plugins): the owner (clip, audio track,
+  bus track, song master, project master) makes its gain curve with a derived
+  id `[5|1|owner]` (project master `[5|1|0]`) and hands it to its fader
+  (`GainEnvelope::set_curve()`, Q2); the port's saved state fills the existing
+  curve, which ends the second curve per fader and its leak (F2). Remon asks:
+  why not through the plugin's own `set_state()` at the load; if it must come
+  from outside, a narrow named function, not the whole port `set_state()`
+  public. The bounce track has no gain curve. Automation curves (several per
+  owner) get counter ids. The work as first built:
+  `reports/new-ids-2026-11-07/c10-full-2026-11-11.patch`.
+- **T109 The gain curve of the right piece of a split is wrong** (Remon,
+  2026-11-07, runtime test of `split-edit` step 0; also on d9728974, before
+  `tclip`): its nodes stand at the wrong place. The gain curve of a clip has
+  three time axes: the audio reads it in source time (`process_gain()` with
+  `fileLocation`, `TAudioClip::process()`), the view draws the nodes from the
+  source start (`TAudioClipView.cpp:94, 482`), and the model gets the clip's
+  timeline position as its offset (`TAudioClip::move_to_location()`), used by
+  `TCurveView.cpp:562, 577` and `TSheetView.cpp:1060`. They part as soon as
+  the source start is not 0. Likely with `TSplitEdit`: the curve splits with
+  its clip.
+- **T110 No snap on a single press of split** (Remon, 2026-11-07, runtime
+  test of `split-edit` step 0; also before `tclip`): only a hold calls
+  `TSplitEntityController::update()`, where the snap is; a single press finds
+  `m_splitLocation` unset and `commit()` takes the mouse position unsnapped
+  (`TSplitEntityController.cpp:132-136`). With `TSplitTool`.
+- **T112 The project file in JSON, with a flat structure** (Remon,
+  2026-11-08; an idea for the future, nothing decided): from XML to JSON,
+  which needs a flat structure: the objects side by side by their id,
+  references by id instead of nesting. `get_state()`/`set_state()` per class
+  may then go, serialisation is done in one place. Making objects can then be
+  central too, so no one asks for the factory through its parent and project
+  (now `m_sheet->get_project()->objects()` in `TTimeLineRuler`, for example).
+  With T58 (the singletons: an object made without its parent, or with fewer
+  dependencies) and T14, T42 (ids, the converter). It fits the ids: every
+  object stands on its id already, and `owner` is a reference by id.
+- **T113 A copied audio file may meet a file of the same name** (Remon,
+  2026-11-08, from the take names of version 4; not checked): an import that
+  is copied or converted into the project's `audiosources` (or a copied
+  project) keeps its own name, so two imports with one name from different
+  folders can land on the same file name. Check how the copy handles an
+  existing file today; it must never overwrite one. Outside the take names,
+  which are unique by project, song, track and take.
+- **T114 Takes in Broadcast Wave, and a project rebuilt from them** (Remon,
+  2026-11-08; for later): a take writes a BWF `bext` chunk (its position on
+  the timeline at the start of the recording as TimeReference, the date and
+  time) and an `iXML` chunk (the names of project, song and track, the take
+  number, the ids, the input it was recorded from). An import reads a folder
+  of BWF files back into songs, tracks and clips at their time, also files of
+  other programs as far as their `bext`/`iXML` go. Not recoverable from the
+  files: routing (the project's, it changes over time; no standard place) and
+  every edit after the recording (splits, fades, gain, plugins). WavPack takes
+  carry the chunks as a wrapper.
+  **What code written now must keep possible** (Remon: T114 must stay doable
+  without large structural changes):
+  - a take's source gets its id before its file is made, and everything the
+    chunks need is known when the writer opens the file (project UUID, song
+    and track ids and names, take number, position, input): libsndfile wants
+    `bext` before the first audio;
+  - the take's file name is made in one place from those data, so the chunks
+    and the name cannot tell different stories;
+  - an import gets new ids from its own project's factory; ids read from
+    another project's files are data (for regrouping), never taken as the
+    objects' own ids;
+  - names that clash on import go through T113.
+- **T115 Sends from a project bus track to song tracks fail at load**
+  (medium; found 2026-11-08, confirmed by Fable's review of the version 4
+  work): the project's bus tracks load before the songs, so a send whose
+  target is a track of a song finds no track and is dropped. Both version 3
+  and version 4 lose it. Proposal: load the sends of the project's bus tracks
+  after the songs.
+- **T116 Under Jack every track got one more send at every load** (medium;
+  found 2026-11-08): `connect_to_jack()` adds a send to a new jack bus of the
+  track at every call, and the saved send came back next to it. Version 4
+  no longer saves a track's own jack sends; check at run time whether this is
+  now gone.
+- **T117 The jack master was silent after a load** (medium; found
+  2026-11-08): a software bus from the file had no channels, because
+  `channelids` was never read. Version 4 writes no software buses and makes
+  the jack master at every load; check at run time whether it now has its
+  channels.
+- **T118 `TResourcesManager::import_source()` leaks on a read error** (low;
+  Fable, 2026-11-08): when the source gives an error, the copy is deleted but
+  the original stream and its `SourceData` are not, and the stream stays in
+  the object pool for the project's life. Older than version 4. Proposal:
+  delete both there.
+- **T120 A project file that is too new or fails to convert opens the
+  backups dialog** (low; Fable, Remon 2026-11-08): `PROJECT_FILE_TOO_NEW` and
+  `PROJECT_FILE_CONVERSION_FAILED` fall into `TProjectManager.cpp`'s `default:` →
+  `project_load_failed()`, which says "you will now be given a list of
+  available backups" (`TMainWindow.cpp:1758-1764`). A too-new file needs a
+  newer Traverso, and a failed conversion (read-only storage) no backup; each
+  needs its own message.
+- **T121 Copy-convert and the merger: rework** (medium; Remon, 2026-11-08:
+  copy-convert is rewritten anyway). `TAudioFileMerger` returns after a failed
+  open of its writer without `taskFinished`, so the 2 → 3 converter dialog can
+  wait for ever, and copy-convert only logs a failed open (older than the id
+  branch). Telling the user from their own threads, and what a refused open
+  means for them: T122. Name clashes of copied files: T113.
+- **T127 A copy within the project gets new ids, and its references go
+  with it** (medium; Remon, 2026-11-11, found at the T125 runtime test). A
+  song made from another song as its template (`NewSheetDialog`) is a copy:
+  it carries the ids of the original, so the factory gives every object a
+  new one ("used twice: a new one" in the log), but the references inside
+  the copy (a send's `targettrack` to its own song master or bus track, a
+  workspace's tracks, a clip list) are not mapped and may point at the
+  original song's objects (not checked; probably already so on `master`).
+  Needed: an old → new table over the copied state, as the 3 → 4 converter
+  does, so references inside the copy follow; later also for copy and
+  paste. Until then the dialog makes the copy through the load path (no
+  second send to the project master).
+- **T126 Projects known by their UUID, not by their title** (medium; Remon,
+  2026-11-11, found at the v4 runtime test). The project dropdown does not
+  tell two projects with the same title apart, also when they are separate
+  folders in the projects folder, and the app remembers the last project
+  by its title (`config "Project/current"`, `TProjectManager.cpp:213`,
+  `Traverso.cpp:119`): a copied project opened the original at the next
+  start. With the project UUID (version 4) both can be solved; two projects
+  may then share a title (Remon is no supporter of that).
+- **T125 The default send to the master only for a new track, not at every
+  load** (medium; Remon, 2026-11-11, found at the v4 runtime test).
+  `TTrack::set_state()` (`TTrack.cpp:182-207`) gives every track without a
+  post send a send to its song master (the song master one to the project
+  master), at every load. A routing removed on purpose comes back at every
+  load, and the send gets a new counter id each time (`next` goes up by one
+  per load, `nextobjectid` with it): an edit file or the agent that names
+  it does not find it after a reload. The default send belongs to making a
+  new track. Careful: the code's own note says a new project goes through
+  `set_state()` too (create, then load), so new tracks depend on it today.
+  With it, Remon: the 3 → 4 conversion gives an audio track without an
+  output (no post send) the send to its song master once in the file, so a
+  v3 project keeps what its loads always gave it.
+  **Converter part done** (branch `new-ids`, 2026-11-11): every song track,
+  song bus track and song master without a post send gets one Send to its
+  song master (the song master to the project master), as the v3 load did;
+  project bus tracks and the project master get none, as before. Headless
+  test in `tests/projectfile`.
+  **Load and new-track part done** (branch `new-ids`, 2026-11-11, Remon's
+  decision: one place for a new track): the default-send block is gone from
+  `TTrack::set_state()`; loading adds no send. A new track is made in one
+  place, `TSheet::new_audio_track()` and `TSession::new_bus_track()`, which
+  give it its post send to the session's own master by that master's bus
+  directly (no `get_audio_bus()` lookup, so it works in a new song not yet
+  in the project); project bus tracks get none, as before. A new song's
+  master gets its send to the project master in `TSheet`'s new-song
+  constructor. Callers: a new song's first tracks, `NewTrackDialog` (the
+  outputs chosen there replace the default send, as the old "only when it
+  has none" did), `AddNewAudioTrackCommand`. The send is added by one narrow function on the
+  track, `TTrack::add_default_post_send()` (no friend on `TTrack`, Remon).
+  **Templates** (Remon, 2026-11-11): a template keeps its ids and so its
+  routing; `remove_ids()` is gone, and a project made from a template gets
+  a new `uuid` and `createdon` only.
+- **T122 The writer never overwrites an audio file** (medium; Remon,
+  2026-11-09; taken out of the id branch's C8, the work so far in
+  `reports/new-ids-2026-11-07/c8-full-2026-11-09.patch`). Take names are
+  unique without it (song and track numbers are project-wide, take numbers are
+  never reused); this is a safety net.
+  - Remon's decision Q-H (a): `TAudioWriter::open()` refuses an existing file,
+    for every caller (recording, copy-convert, `TAudioFileMerger`).
+  - Prevent, not detect: the three encoders create their file exclusively
+    (`QIODevice::NewOnly`, `fopen` with `"x"`): no race between check and
+    create, no symlink followed. The check in `open()` stays for the message.
+    The full-disk test then needs another way than `/dev/full` (an existing
+    device): a file size limit (`RLIMIT_FSIZE`, `SIGXFSZ` ignored).
+  - The user is told: the recording on the GUI thread; copy-convert and the
+    merger from their own threads to the GUI (with T121).
+  - Copy-convert emits `taskFinished` with the path after a refused open
+    (`TAudioFileCopyConvert.cpp:103-106, 155`), so the new-project dialog
+    imports the file that already had that name: another sound than the one
+    chosen (Fable, 2026-11-09).
+  - A failed recording start leaves its source in the project
+    (`TAudioTrack::init_recording()` destroys only the clip; the source is
+    made before the file, as it should). `delete_takes()` would put the file
+    on the delete list, and after a refused open that file is someone else's.
+    Options: a) a rollback in `TResourcesManager` that takes clip and source
+    out without touching files; b) unlink the source from the clip, then
+    `remove_source()`.
+  - Consequence: an interrupted 2 → 3 conversion cannot be run again while its
+    half-written `.wav` is there.
+- **T119 Getters by id through the pool, with detection of stale ids**
+  (medium; Remon's work order, 2026-11-08). After the id branch; replaces the
+  separate question about `get_audio_bus()`. Nothing changes before.
+  - **End design.** Getters that walk the tree to find an object by id
+    (`get_audio_bus`, `get_track`, `get_sheet`, …) look it up in the pool. The
+    pool holds every living object in one of two states: *in the project*
+    (reachable in the tree) or *removed* (out of the tree, held only by undo).
+    `find(id)` gives only objects in the project; for a removed one it gives
+    nullptr. Undo takes a removed object back with its own explicit function,
+    used by undo only (name: proposal wanted). The pool holds peers only
+    (tag `InPool`, Remon 2026-11-11): a derived peer (a master, the bounce
+    track) is in it, and `find()` of a derived id also checks the "removed"
+    state of its owner; parts (curves, the ruler, plugin chains) are not in
+    it and are reached by (owner id, role): `pool.find(owner)` + the owner's
+    accessor. No `find_in_project()`. **Open (Remon):** whether objects on the
+    undo stack stay in the pool. No `qobject_cast` in the getters: a tag for the subtypes with
+    a process bus (bus track and both masters), `Object = TBusTrack` (name:
+    proposal wanted); the caller does `id.as<…>()` (optional), then
+    `pool.find()`. The first user of `as<>()`.
+  - **Principles.** The pool for "give me object X"; the tree for "which
+    objects are in the project" (lists, counts, the dialog, saving). This
+    border goes into the pool's comment. A stale id is never silent: from an
+    edit file or the agent (normal use) the edit reports an error with the
+    id; from our own code (a bug) an assert in debug, with the id and the
+    caller. The detector comes in the first commit, before or with the first
+    converted getter.
+  - **Mechanical, the agent decides:** includes, forward declarations,
+    renames; converting a getter once the detector is there, when its
+    behaviour stays the same.
+  - **Ask first, with options, advice and consequence:** first the list of
+    every place where an object leaves or re-enters the tree
+    (`private_remove_track`, sheets, clips, markers, …) and of every getter
+    that walks the tree; only then code. Where the state is set: per place,
+    or in one place per container. Every getter whose behaviour changes, also
+    in an edge case. Every caller that now finds a removed object on purpose
+    (except undo). Before building something new: how the existing design
+    already does it elsewhere.
+  - **Tests.** In debug, at load and save, an invariant check: in the project
+    ⇔ reachable in the tree. Sends: remove a bus track while other tracks
+    send to it, then undo and redo; nothing asks `get_audio_bus()` for the
+    removed track, and if something does, the detector reports it. Selection:
+    select a clip, remove it, use a tool on it: cleaned up or reported, never
+    silently done. An edit file with the id of a removed object: the edit
+    reports an error. Undo and redo of a removal: the object comes back with
+    the same id and is in the project again.
+  - **Report.** At most five lines, details to `reports/`; say what was not
+    tested.
+  - **Design question, the selection** (Remon, 2026-11-08). `TSelectionService`
+    holds `QHash<ClipId, TTimeLineEntity*>`: keyed by id, the value a pointer.
+    It can move to ids only, looked up through `find()`, once the removed
+    state exists. Later a selection holds other kinds too (tracks, audio
+    clips, markers, also combined). Options: (1) a list per kind (`ClipId`,
+    `TrackId`, `MarkerId`): type safe, within "an id never converts across
+    kinds", a tool asks for the kind it handles; the order of selection
+    across kinds is lost. (2) One list with an id over all kinds: keeps the
+    order, but such a type does not exist and would be an exception to the
+    kinds rule. Agent's advice: (1).
+  - **Starting list** (kept up to date during the id branch, line numbers on
+    `new-ids`).
+  - Functions that walk the tree to find an object by id:
+    - `TProject::get_audio_bus(TrackId)` (`TProject.cpp:932`): masters, the
+      songs' and the project's bus tracks;
+    - `TProject::get_track(TrackId)` (`:1019`), `get_session(WorkspaceId)`
+      (`:1210`), `get_sheet(SongId)` (`:1396`); `get_sheet_index(SongId)`
+      (`:1410`) wants the index and stays a walk;
+    - `TTrack::get_send(SendId)` (`TTrack.cpp:605`), `remove_post_sends()`
+      (`:422`) and `remove_pre_sends()` (`:469`) over the track's own sends;
+      `send_closes_loop()`'s `targetsOf` with its project-master case (`:499`);
+    - `TSession::get_track(TrackId)` (`TSession.cpp:147`): the master, then
+      the hash `m_tracks`;
+    - `TAudioClipManager::set_state()` (`TAudioClipManager.cpp:74`): the
+      selection's clips over all clips;
+    - `MarkerDialog::get_marker(MarkerId)` (`MarkerDialog.cpp:194`).
+  - `qobject_cast`/`dynamic_cast` that tell a kind the tag of the id already
+    knows (`as<>()` on the id):
+    - session is song, project or workspace: `TTrack.cpp:92, 220`,
+      `TWorkspace.cpp:22, 65`, `TSnapList.cpp:59`, `TProject.cpp:683, 1240,
+      1790`, `TSheetView.cpp:106, 625`, `TSheetWidget.cpp:230`,
+      `TClipsViewPort.cpp:212`, `TZoomCommand.cpp:195`, `NewTrackDialog.cpp:91,
+      239`, `ResourcesWidget.cpp:272`, `TMainWindow.cpp:504, 1682-1683, 1836`,
+      `NewProjectDialog.cpp:333`, `InsertSilenceDialog.cpp:55`,
+      `TAudioBusVUMonitorWidget.cpp:171-179`, `TransportConsoleWidget.cpp:141-156`,
+      `TTrackManagerDialog.cpp:145, 229`, `TraversoCommands.cpp:463, 576, 632`;
+    - track is audio, bus or master: `TSession.cpp:524-549`, `TProject.cpp:234`,
+      `TSheetView.cpp:380-381`, `NewTrackDialog.cpp:115-116, 129`,
+      `TTrackManagerDialog.cpp:86, 100, 358, 585, 615`, `TVUMeterView.cpp:63`,
+      `TraversoCommands.cpp:887`;
+    - entity is a clip: `TSelectionService.cpp:22, 41`,
+      `TRemoveEntitiesController.cpp:30`, `TSheet.cpp:1348-1353`,
+      `TraversoCommands.cpp:520, 625, 642, 744, 841, 917, 927`.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
@@ -1212,6 +1502,8 @@ From the platform header (`src/support/TPlatform.h`, 2026-10-30):
 ## Plans
 
 - **T58 Remove the singletons** (Remon, 2026-10-28; before T60).
+  See also T112 (2026-11-08): with fewer dependencies an object can be made
+  without its parent, and making objects can be central.
   2026-11-06: T94 was one such case: the statics' destruction at exit took
   `tsmp()`'s queue while the audio thread still ran a cycle. Fixed in the
   dump path by quitting as an ordinary exit; with the device owning its

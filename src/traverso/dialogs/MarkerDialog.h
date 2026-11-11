@@ -22,6 +22,7 @@
 #pragma once
 
 #include "ui_MarkerDialog.h"
+#include "TObjectIdTags.h"
 #include <QDialog>
 
 class TProject;
@@ -41,7 +42,7 @@ private:
 	TTimeLineMarker* m_marker{};
         TSession* m_session;
 
-	TTimeLineMarker* get_marker(qint64);
+	TTimeLineMarker* get_marker(MarkerId id);
 	void next_item(QLineEdit *);
 
 private slots:

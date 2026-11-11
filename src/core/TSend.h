@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include <QDomElement>
 #include <QObject>
 
+#include "TObjectIdTags.h"
+
 class AudioBus;
 class TTrack;
 
@@ -33,7 +35,10 @@ class TSend : public QObject
 
 public:
     TSend(TTrack* track);
+    // To a port (a hardware or software bus)
     TSend(TTrack* track, AudioBus* bus);
+    // To a track: the target's process bus
+    TSend(TTrack* track, TrackId target, AudioBus* targetBus);
 
     QDomNode get_state( QDomDocument doc);
     int set_state( const QDomNode& node );
@@ -51,16 +56,25 @@ public:
 
     AudioBus* get_bus() const {return m_bus;}
     QString get_from_name() const ;
-    qint64 get_id() const {return m_id;}
-    qint64 get_bus_id() const;
+    // Given by TObjectFactory
+    using IdTag = SendTag;
+    SendId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+    // The track this send goes to; invalid for a send to a port
+    TrackId get_target_track() const {return m_targetTrack;}
     int get_type() const {return m_type;}
     float get_pan() const {return m_pan;}
     float get_gain() const {return m_gain;}
 
 private:
+    friend class TObjectFactory;
+    SendId          m_objectId;
     AudioBus*       m_bus;
     TTrack*          m_track;
-    qint64          m_id{};
+    TrackId         m_targetTrack;
     int             m_type{};
     float           m_gain{};
     float           m_pan{};

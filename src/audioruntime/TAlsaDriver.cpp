@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAlsaDriver.h"
 #include "AudioChannel.h"
 #include <bit>
-#include <Utils.h>
 
 #include <algorithm>
 #include <cmath>

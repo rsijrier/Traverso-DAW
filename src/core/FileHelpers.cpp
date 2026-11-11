@@ -28,7 +28,6 @@ $Id: FileHelpers.cpp,v 1.10 2007/11/05 15:49:30 r_sijrier Exp $
 #include "TConfig.h"
 #include "TInformUser.h"
 #include <QDir>
-#include <Utils.h>
 #include <QObject>
 #include <QFile>
 #include <QSaveFile>

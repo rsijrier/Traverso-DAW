@@ -74,7 +74,7 @@ public:
     TAudioTrack* get_audio_track_for_index(int index);
     int get_audio_track_count() const {return m_audioTracks.gui_items().size();}
 
-    TProject* get_project() const {return m_project;}
+    TProject* get_project() const override {return m_project;}
 
     using IdTag = SongTag;
     // The id, given by TObjectFactory when it made or loaded the song
@@ -85,7 +85,6 @@ public:
         return m_objectId;
     }
     // Its owner is the project, which has no id
-    QObject* id_owner() const { return nullptr; }
     TBounceTrack* get_bounce_track() const { return m_bounceTrack; }
     // The peak file of an audio source, built in this sheet's DiskIO idle
     // time (TPeakBuildService)
@@ -115,6 +114,9 @@ public:
 
     // Set functions
     int set_state( const QDomNode & node );
+    // The one place a new audio track is made: it sends to this song's
+    // master. Adding it to the song is the caller's
+    TAudioTrack* new_audio_track(const QString& name, int height);
 
     void set_artists(const QString& pArtistis);
     void set_work_at(const TTimeRef &location, const bool isFolder=false) override;

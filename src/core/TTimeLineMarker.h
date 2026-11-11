@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #pragma once
 
 #include "TContextItem.h"
+#include "TObjectIdTags.h"
 #include "TTimeLineEntity.h"
 #include "TTimeRef.h"
 #include <QDomNode>
@@ -59,6 +60,15 @@ public:
 
     TTimeLineRuler * get_timeline() const {return m_timeline;}
 
+    // Given by TObjectFactory. The markers of a CD export list are made
+    // without one and are never asked for it
+    using IdTag = MarkerTag;
+    MarkerId object_id() const
+    {
+        Q_ASSERT(m_objectId.is_valid());
+        return m_objectId;
+    }
+
     QString get_description() const {return m_description;}
     QString get_performer() const {return m_performer;}
     QString get_composer() const {return m_composer;}
@@ -72,12 +82,13 @@ public:
     int get_index() {return m_index;}
 
     void move_to_location(const TTimeRef& newStartLocation) final;
-    unsigned int get_timeline_entity_type() const final { return TTimeLineEntity::Type::TypeMarker; }
 
 public slots:
     void set_when (const TTimeRef& when);
 
 private:
+    friend class TObjectFactory;
+    MarkerId m_objectId;
     TTimeLineRuler* m_timeline;
     QString	m_description,
         m_performer,

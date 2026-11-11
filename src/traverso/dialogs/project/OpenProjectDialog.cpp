@@ -20,7 +20,6 @@
 */
 
 #include "OpenProjectDialog.h"
-#include "Utils.h"
 
 #include <QDir>
 #include <QStringList>
@@ -33,7 +32,6 @@
 #include "TInformUser.h"
 #include <TProjectManager.h>
 #include <TProject.h>
-#include <Utils.h>
 
 #include "Debugger.h"
 
@@ -97,7 +95,9 @@ void OpenProjectDialog::update_projects_list()
 		QDomElement e = propertiesNode.toElement();
 		QString title = e.attribute( "title", "" );
 		QString description = e.attribute("description", "No description set");
-		qint64 id = e.attribute( "id", "" ).toLongLong();
+		// A version 3 project has its date in its old id: shown once it is
+		// opened and converted
+		const QDateTime createdOn = QDateTime::fromString(e.attribute("createdon"), Qt::ISODate);
 		
 
 		QDomNode sheetsNode = docElem.firstChildElement("Sheets");
@@ -138,7 +138,9 @@ void OpenProjectDialog::update_projects_list()
 			QString html = "<html><head></head><body>Project: " + title + "<br /><br />";
 			html += tr("Description:") + "<br />";
 			html += description + "<br /><br />";
-            html += tr("Created on:") + " " + TraversoDAW::Utils::extract_date_time(id).toString() + "<br />";
+            if (createdOn.isValid()) {
+                html += tr("Created on:") + " " + createdOn.toLocalTime().toString() + "<br />";
+            }
 			html += "</body></html>";
 			item->setToolTip(0, html);
 		}

@@ -55,8 +55,6 @@ public:
 
     void move_to_location(const TTimeRef& location) final;
 
-    unsigned int get_timeline_entity_type() const override { return TTimeLineEntity::TypeAudioClip; }
-
 private:
 	QList<TAudioClip*> m_clips;
 

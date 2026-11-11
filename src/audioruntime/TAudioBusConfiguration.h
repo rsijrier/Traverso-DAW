@@ -14,6 +14,5 @@ public:
     QString bustype;
     int channelcount;
     bool isInternalBus;
-    qint64 id;
 };
 
