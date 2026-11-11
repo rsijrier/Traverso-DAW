@@ -30,12 +30,12 @@ static void check(bool ok, const char* what)
 class Item;
 class Part;
 class Owner;
-struct ItemTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "item"; using Object = Item; };
-struct PartTag { static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3); static constexpr const char* Name = "part"; using Object = Part; };
-struct OtherPartTag { static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(4); static constexpr const char* Name = "otherpart"; using Object = Part; };
+struct ItemTag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "item"; using Object = Item; };
+struct PartTag { static constexpr bool InPool = false; static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3); static constexpr const char* Name = "part"; using Object = Part; };
+struct OtherPartTag { static constexpr bool InPool = false; static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(4); static constexpr const char* Name = "otherpart"; using Object = Part; };
 // One class in two roles: a tag with a mask over both, as its member
-struct PartsTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3) | TObjectIds::subtype(4); static constexpr const char* Name = "parts"; using Object = Part; };
-struct OwnerTag { static constexpr uint8_t Kind = 2; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "owner"; using Object = Owner; };
+struct PartsTag { static constexpr bool InPool = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3) | TObjectIds::subtype(4); static constexpr const char* Name = "parts"; using Object = Part; };
+struct OwnerTag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 2; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "owner"; using Object = Owner; };
 
 // An object with a number
 class Item : public QObject
@@ -51,18 +51,17 @@ private:
     TObjectId<ItemTag> m_objectId;
 };
 
-// A part in a fixed role of its owner, like a master; two roles, like
-// fade-in and fade-out: one class, two subtypes
+// A part in a fixed role of its owner, like a fade; two roles, like fade-in
+// and fade-out: one class, two subtypes. Not in the pool
 class Part : public QObject
 {
 public:
     using IdTag = void;
-    explicit Part(QObject* owner) : owner(owner) {}
+    Part(TObjectId<PartsTag> id, QObject* owner) : owner(owner), m_objectId(id) {}
     uint64_t id() const { return TObjectIdTestAccess::value(m_objectId); }
     QObject* owner;
 
 private:
-    friend class TObjectFactory;
     TObjectId<PartsTag> m_objectId;
 };
 
@@ -71,11 +70,11 @@ class Owner : public QObject
 {
 public:
     using IdTag = OwnerTag;
-    Owner(TObjectId<OwnerTag> id, TObjectFactory& objects)
+    explicit Owner(TObjectId<OwnerTag> id)
         : m_objectId(id)
     {
-        part = objects.make_owned<Part, PartTag>(id, this);
-        otherPart = objects.make_owned<Part, OtherPartTag>(id, this);
+        part = TObjectFactory::make_derived<PartTag>(this);
+        otherPart = TObjectFactory::make_derived<OtherPartTag>(this);
     }
     ~Owner() override
     {
@@ -92,7 +91,36 @@ private:
     TObjectId<OwnerTag> m_objectId;
 };
 
+// The project: no number of its own (number 0)
+class RootOwner : public QObject
+{
+public:
+    using IdTag = OwnerTag;
+    TObjectId<OwnerTag> object_id() const { return TObjectId<OwnerTag>::root(); }
+};
+
 static_assert(objects_fit<PartsTag, PartTag, OtherPartTag>(), "both roles are a Part");
+
+// An owner whose own id is derived (as a master's): make_derived() refuses it,
+// as its number is its owner's; its objects get a counter id
+class DerivedOwner : public QObject
+{
+public:
+    using IdTag = PartTag;
+    TObjectId<PartTag> object_id() const { return {}; }
+};
+static_assert(derivable_owner<Owner>, "an owner with a counter id makes derived objects");
+static_assert(derivable_owner<RootOwner>, "the project makes derived objects");
+static_assert(!derivable_owner<DerivedOwner>, "an owner with a derived id does not");
+static_assert(!derivable_owner<Part>, "a class made under several tags (IdTag void) does not");
+
+// A part is not in the pool: add() and find() do not compile for its tag
+template <typename Tag>
+concept findable = requires(TObjectPool pool, TObjectId<Tag> id) { pool.find(id); };
+template <typename Tag>
+concept addable = requires(TObjectPool pool, TObjectId<Tag> id, typename Tag::Object* object) { pool.add(id, object); };
+static_assert(findable<ItemTag> && addable<ItemTag>, "a peer is found and added by its id");
+static_assert(!findable<PartTag> && !addable<PartTag>, "a part is not");
 
 static uint64_t value(uint8_t subtype, uint64_t sequence)
 {
@@ -120,7 +148,6 @@ int main(int argc, char** argv)
     QCoreApplication app(argc, argv);
     QDomDocument doc;
     doc.appendChild(doc.createElement("Project"));
-    QObject project;
     QDomElement properties = doc.createElement("Properties");
 
     // New objects: numbers in the order they are made, enrolled, arguments passed on
@@ -174,8 +201,7 @@ int main(int argc, char** argv)
         Item* garbage = objects.load<Item>(element_with(doc, "not hex"));
         check(garbage->id() == value(1, 14), "an id that is no number: a new one");
         Owner* sameNumber = objects.load<Owner>(element_with(doc, QString::fromStdString(TObjectIds::to_hex(
-                                                    (uint64_t(TObjectIds::make_tag(2, 1)) << TObjectIds::SequenceBits) | 7))),
-                                                objects);
+                                                    (uint64_t(TObjectIds::make_tag(2, 1)) << TObjectIds::SequenceBits) | 7))));
         check(TObjectIds::sequence_of(sameNumber->id()) == 15, "another kind with a number in use: a new one");
 
         check(ids.next() == 16, "after the load the counter is above every number");
@@ -193,28 +219,30 @@ int main(int argc, char** argv)
         TObjectPool pool;
         TObjectFactory objects(ids, pool);
         Item* counted = objects.make<Item>();
-        Owner* first = objects.make<Owner>(objects);
-        Owner* second = objects.make<Owner>(objects);
+        Owner* first = objects.make<Owner>();
+        Owner* second = objects.make<Owner>();
         const uint64_t firstNumber = TObjectIds::sequence_of(first->id());
         check(first->part->id() == value(3, firstNumber) && first->otherPart->id() == value(4, firstNumber),
               "two roles of one class: the owner's number under two subtypes");
         check(first->part->id() != second->part->id(), "two owners give their parts different ids");
         check(first->part->id() != counted->id() && second->otherPart->id() != counted->id(),
               "an owned id never meets one from the counter: its subtype is its own");
-        check(first->part->owner == first, "make_owned() passes the owner on");
+        check(first->part->owner == first, "make_derived() passes the owner on");
 
         // The same steps again, as after a reload: the same derived ids
         TObjectIdGenerator ids2;
         TObjectPool pool2;
         TObjectFactory objects2(ids2, pool2);
         delete objects2.make<Item>();
-        Owner* again = objects2.make<Owner>(objects2);
+        Owner* again = objects2.make<Owner>();
         check(again->part->id() == first->part->id(), "the same steps give the same derived ids");
         delete again;
 
-        Part* projectPart = objects.make_owned<Part, PartTag>(TObjectId<OwnerTag>::root(), &project);
-        check(projectPart->id() == value(3, 0) && pool.find_raw(projectPart->id()) == projectPart,
-              "an owner without a number: number 0");
+        RootOwner root;
+        Part* projectPart = TObjectFactory::make_derived<PartTag>(&root);
+        check(projectPart->id() == value(3, 0), "an owner without a number: number 0");
+        check(pool.find_raw(first->part->id()) == nullptr && pool.find_raw(projectPart->id()) == nullptr,
+              "a part is not in the pool");
         delete projectPart;
         delete counted;
         delete first;
@@ -239,7 +267,7 @@ int main(int argc, char** argv)
         Item* first = objects.load<Item>(withoutId);
         Item* second = objects.load<Item>(two);
         Item* third = objects.load<Item>(fifty);
-        Owner* fourth = objects.load<Owner>(fiftyOfAnOwner, objects);
+        Owner* fourth = objects.load<Owner>(fiftyOfAnOwner);
         check(first->id() == value(1, 51), "an element without an id: a number above every one in the file");
         check(second->id() == value(1, 2) && third->id() == value(1, 50), "the elements after it keep their ids");
         check(TObjectIds::sequence_of(fourth->id()) == 52, "a number in use under another kind: a new one, no assert");

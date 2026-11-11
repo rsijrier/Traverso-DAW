@@ -38,11 +38,13 @@ $Id: TFadeCurve.cpp,v 1.36 2008/11/07 10:43:08 r_sijrier Exp $
 
 QStringList TFadeCurve::defaultShapes = QStringList() << "Fastest" << "Fast" << "Linear"  << "Slow" << "Slowest";
 
-TFadeCurve::TFadeCurve(TContextItem *parent, FadeType fadeType, TRtTransaction& transaction)
+TFadeCurve::TFadeCurve(CurveId id, TContextItem *parent, TRtTransaction& transaction)
     : TContextItem(parent)
-    , m_type(fadeType)
+    , m_objectId(id)
+    , m_type(TObjectIds::subtype_of(id.tag()) == FadeInCurveSubtype ? FadeIn : FadeOut)
     , m_state([this]() { return create_state(); })
 {
+    Q_ASSERT(TObjectIds::subtype_of(id.tag()) == FadeInCurveSubtype || TObjectIds::subtype_of(id.tag()) == FadeOutCurveSubtype);
     QObject::tr("TFadeCurve");
 
     connect(this, &TFadeCurve::bendValueChanged, this, &TFadeCurve::stateChanged);

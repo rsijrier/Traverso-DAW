@@ -1252,9 +1252,13 @@ From the GPU waveform test program, clip edges in variant A (branch
     (reachable in the tree) or *removed* (out of the tree, held only by undo).
     `find(id)` gives only objects in the project; for a removed one it gives
     nullptr. Undo takes a removed object back with its own explicit function,
-    used by undo only (name: proposal wanted). Derived objects (gain/fade
-    curves, …) follow their owner's state, one level; their state is not set
-    on its own. No `qobject_cast` in the getters: a tag for the subtypes with
+    used by undo only (name: proposal wanted). The pool holds peers only
+    (tag `InPool`, Remon 2026-11-11): a derived peer (a master, the bounce
+    track) is in it, and `find()` of a derived id also checks the "removed"
+    state of its owner; parts (curves, the ruler, plugin chains) are not in
+    it and are reached by (owner id, role): `pool.find(owner)` + the owner's
+    accessor. No `find_in_project()`. **Open (Remon):** whether objects on the
+    undo stack stay in the pool. No `qobject_cast` in the getters: a tag for the subtypes with
     a process bus (bus track and both masters), `Object = TBusTrack` (name:
     proposal wanted); the caller does `id.as<…>()` (optional), then
     `pool.find()`. The first user of `as<>()`.

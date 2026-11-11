@@ -27,10 +27,23 @@ static void check(bool ok, const char* what)
 class Node : public QObject {};
 class NodeA : public Node {};
 class NodeB : public Node {};
+class NodeC;
 
-struct NodeTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes; static constexpr const char* Name = "node"; using Object = Node; };
-struct NodeATag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "nodea"; using Object = NodeA; };
-struct NodeBTag { static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(2); static constexpr const char* Name = "nodeb"; using Object = NodeB; };
+struct NodeTag { static constexpr bool InPool = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes; static constexpr const char* Name = "node"; using Object = Node; };
+struct NodeATag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(1); static constexpr const char* Name = "nodea"; using Object = NodeA; };
+struct NodeBTag { static constexpr bool InPool = true; static constexpr bool FromOwner = false; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(2); static constexpr const char* Name = "nodeb"; using Object = NodeB; };
+
+// A peer derived from its owner, as a master
+struct NodeCTag { static constexpr bool InPool = true; static constexpr bool FromOwner = true; static constexpr uint8_t Kind = 1; static constexpr uint64_t Subtypes = TObjectIds::subtype(3); static constexpr const char* Name = "nodec"; using Object = NodeC; };
+class NodeC : public Node
+{
+public:
+    explicit NodeC(TObjectId<NodeCTag> id) : m_objectId(id) {}
+    TObjectId<NodeCTag> object_id() const { return m_objectId; }
+
+private:
+    TObjectId<NodeCTag> m_objectId;
+};
 
 using NodeId = TObjectId<NodeTag>;
 using NodeAId = TObjectId<NodeATag>;
@@ -52,7 +65,6 @@ int main(int argc, char** argv)
     TObjectPool pool;
     auto a = std::make_unique<NodeA>();
     NodeA owner;
-    NodeB b;
     const NodeAId aId = NodeAId::create(ids);
     const NodeAId ownerId = NodeAId::create(ids);
 
@@ -65,10 +77,14 @@ int main(int argc, char** argv)
     check(pool.find(NodeAId()) == nullptr, "the invalid id finds nothing");
     check(pool.id_of(&owner) == TObjectIdTestAccess::value(ownerId), "id_of() gives the id of an object");
 
-    // b derived from owner: its tag on the owner's number
-    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 2)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(ownerId));
-    check(pool.add_owned(TObjectIdTestAccess::from_value<NodeBId>(derived).value(), &b), "a derived object goes in");
-    check(pool.find_raw(derived) == &b, "a derived object is found by its id");
+    // c derived from owner: its tag on the owner's number, enrolled with the id
+    // it was made with
+    const uint64_t derived = (uint64_t(TObjectIds::make_tag(1, 3)) << TObjectIds::SequenceBits) | TObjectIds::sequence_of(TObjectIdTestAccess::value(ownerId));
+    NodeC b(TObjectIdTestAccess::from_value<TObjectId<NodeCTag>>(derived).value());
+    check(pool.add<NodeCTag>(&b), "a derived peer goes in");
+    check(pool.find_raw(derived) == &b, "a derived peer is found by its id");
+    NodeC twice(b.object_id());
+    check(!pool.add<NodeCTag>(&twice), "a derived id made twice is refused");
 
     a.reset();
     check(!pool.contains(TObjectIdTestAccess::value(aId)) && pool.find(aId) == nullptr, "a destroyed object leaves the pool");

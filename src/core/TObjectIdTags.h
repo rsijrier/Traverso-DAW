@@ -122,6 +122,7 @@ enum : uint8_t {
 
 struct TrackTag
 {
+    static constexpr bool InPool = true;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes;
     static constexpr const char* Name = "track";
@@ -130,6 +131,7 @@ struct TrackTag
 
 struct AudioMixerTrackTag
 {
+    static constexpr bool InPool = true;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioTrackSubtype) | TObjectIds::subtype(BusTrackSubtype)
                                          | TObjectIds::subtype(SongMasterSubtype) | TObjectIds::subtype(ProjectMasterSubtype)
@@ -140,6 +142,7 @@ struct AudioMixerTrackTag
 
 struct AudioTrackTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioTrackSubtype);
@@ -149,6 +152,7 @@ struct AudioTrackTag
 
 struct BusTrackTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(BusTrackSubtype);
@@ -157,10 +161,12 @@ struct BusTrackTag
 };
 
 // The masters and the bounce track belong one to one to their owner in a fixed
-// role: their id is derived from it (TObjectFactory::make_owned())
+// role: their id is derived from it (TObjectFactory::make_derived()). Peers all
+// the same (a send points at a master): in the pool, enrolled by their maker
 
 struct SongMasterTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(SongMasterSubtype);
@@ -170,6 +176,7 @@ struct SongMasterTag
 
 struct ProjectMasterTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(ProjectMasterSubtype);
@@ -179,6 +186,7 @@ struct ProjectMasterTag
 
 struct BounceTrackTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = TrackKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(BounceTrackSubtype);
@@ -190,6 +198,7 @@ struct BounceTrackTag
 
 struct ClipTag
 {
+    static constexpr bool InPool = true;
     static constexpr uint8_t Kind = ClipKind;
     static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes;
     static constexpr const char* Name = "clip";
@@ -198,6 +207,7 @@ struct ClipTag
 
 struct AudioClipTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = ClipKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioClipSubtype);
@@ -216,6 +226,7 @@ using BounceTrackId = TObjectId<BounceTrackTag>;
 
 struct SongTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = SongKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(SongSubtype);
@@ -224,10 +235,12 @@ struct SongTag
 };
 
 // The project: one fixed id, on number 0 (TObjectId::root()), the owner of the
-// project master. Not saved: it is the same in every project
+// project master. Not saved: it is the same in every project. Not in its own
+// pool: the pool is its member
 
 struct ProjectTag
 {
+    static constexpr bool InPool = false;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = ProjectKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(ProjectSubtype);
@@ -238,10 +251,12 @@ struct ProjectTag
 using ProjectId = TObjectId<ProjectTag>;
 
 // A song's ruler: one to one with its song, its id derived from the song's (the
-// project's own ruler on number 0). Not in the file: it follows from its song
+// project's own ruler on number 0). Not in the file: it follows from its song.
+// A part, not in the pool: reached through its song
 
 struct RulerTag
 {
+    static constexpr bool InPool = false;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = RulerKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(RulerSubtype);
@@ -251,6 +266,7 @@ struct RulerTag
 
 struct MarkerTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = MarkerKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(MarkerSubtype);
@@ -260,6 +276,7 @@ struct MarkerTag
 
 struct SendTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = SendKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(SendSubtype);
@@ -273,6 +290,7 @@ struct SendTag
 
 struct AudioSourceTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = AudioSourceKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(AudioSourceSubtype);
@@ -285,6 +303,7 @@ struct AudioSourceTag
 
 struct WorkspaceTag
 {
+    static constexpr bool InPool = true;
     static constexpr bool FromOwner = false;
     static constexpr uint8_t Kind = WorkspaceKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(WorkspaceSubtype);
@@ -292,11 +311,13 @@ struct WorkspaceTag
     using Object = TWorkspace;
 };
 
+// Curves are parts, not in the pool: addressed by (owner id, role).
 // Curves: TCurve (gain, automation) and TFadeCurve have no common base below
 // TContextItem, so the tag over all curves names that (Remon 2026-11-11). Not
 // downcast after find(CurveId): the exact tags name the concrete type
 struct CurveTag
 {
+    static constexpr bool InPool = false;
     static constexpr uint8_t Kind = CurveKind;
     static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes;
     static constexpr const char* Name = "curve";
@@ -305,6 +326,7 @@ struct CurveTag
 
 struct FadeInCurveTag
 {
+    static constexpr bool InPool = false;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = CurveKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(FadeInCurveSubtype);
@@ -314,6 +336,7 @@ struct FadeInCurveTag
 
 struct FadeOutCurveTag
 {
+    static constexpr bool InPool = false;
     static constexpr bool FromOwner = true;
     static constexpr uint8_t Kind = CurveKind;
     static constexpr uint64_t Subtypes = TObjectIds::subtype(FadeOutCurveSubtype);

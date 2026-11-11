@@ -217,18 +217,35 @@ with an id are made. The project owns the sequence, the pool and the factory:
 |---|---|
 | `make<T>(args...)` | a new object, a new number from the counter |
 | `load<T>(element, args...)` | an object from its element, with the id saved there when it fits and is free; else a new one, with a warning |
-| `make_owned<T, Tag>(ownerNumber, args...)` | a derived object, in its owner's constructor, with its final id |
+| `make_derived<Tag>(owner, args...)` | static, no pool: a derived object, in its owner's constructor, as `Tag::Object(id, owner, args...)`, the id from `owner->object_id()`. Refuses at compile time an owner whose own id is derived (its `IdTag` is `FromOwner` or `void`): an object of such an owner gets a counter id |
 
 A class with an id has `using IdTag = AudioTrackTag;` (`void` for a class in
 more than one role: its maker names the tag), a private `m_objectId`,
 and `friend class TObjectFactory`. The factory decides the id before it builds the object: a class whose
 constructor takes its id first gets it there (a song, `TSheet(SongId, ...)`,
 which makes its master and bounce track from its own number), the others right
-after. The owner gives its number to `make_owned()`, as it is not in the pool
-yet while it runs its constructor.
+after. A derived peer (a master, the bounce track) is enrolled by its maker
+with `TObjectPool::add<Tag>(object)` (the song for its master and bounce track,
+the project for its master); a derived part is not enrolled.
 
 Every `new` of a track, clip or song goes through the factory. An object made
 around it has no id, and `object_id()` asserts on first use.
+
+## Peers and parts
+
+The rule for the pool is "peer or part", not "derived or counter" (Remon,
+2026-11-11), a property of the tag: `InPool`.
+
+- Peers are in the pool: song, track (with the masters and the bounce track),
+  clip, marker, send, source, workspace, plugin. The masters are derived but
+  peers: a send points at a master. `find()` reaches every living peer by a
+  bare id (QML, the agent, JSON).
+- Parts are not in the pool: gain, fade and automation curves, the ruler, the
+  plugin chain. Their address in edits, JSON and undo is (owner id, role), not
+  their id: a part is found through `pool.find(owner)` and the owner's
+  accessor, so an edit can never go around the owner.
+- `TObjectPool::add()` and `find()` compile only for a tag with `InPool`. The
+  project is not in its own pool (the pool is its member).
 
 ## The pool
 
@@ -236,10 +253,10 @@ around it has no id, and `object_id()` asserts on first use.
 
 | Index | Holds |
 |---|---|
-| byId | every object, by its id |
-| byNumber | the objects with a counter id, by their number |
+| byId | every peer, by its id |
+| byNumber | the peers with a counter id, by their number |
 
-`find(id)` gives an object of the tag. A derived object is in byId only: its
+`find(id)` gives a peer of the tag. A derived peer is in byId only: its
 number is its owner's. An object leaves the
 pool when it is destroyed (`QObject::destroyed`): no empty entries, so
 `contains()` is never true for a dead object. Whether an object is in the
@@ -247,7 +264,7 @@ project's tree now is not the pool's question: an edit asks the object (is this
 clip on a track, is that track in a song of the project) and refuses with a
 reason. A removed track or clip stays findable as long as it lives, for undo.
 
-A derived object always hangs on the owner its number names: `make_owned()`
+A derived object always hangs on the owner its number names: `make_derived()`
 is given the owner and has no other way in, and a derived object has no
 function to change its owner. So there is no check of it (prevent, not detect;
 Remon, 2026-11-08).

@@ -33,8 +33,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 
 #include "Debugger.h"
 
-TTimeLineRuler::TTimeLineRuler(TSession * sheet)
+TTimeLineRuler::TTimeLineRuler(RulerId id, TSession * sheet)
 	: TContextItem(sheet)
+	, m_objectId(id)
 	, m_sheet(sheet)
 {
     QObject::tr("TTimeLineRuler");

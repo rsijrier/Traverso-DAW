@@ -105,6 +105,7 @@ public :
     TObjectPool& object_pool() { return m_objectPool; }
     TProject* get_project() const override { return const_cast<TProject*>(this); }
     // The same in every project (ProjectTag)
+    using IdTag = ProjectTag;
     ProjectId object_id() const { return ProjectId::root(); }
     TPeakBuildService* get_peak_builds() const { return m_peakBuilds.get(); }
     QString get_title() const;

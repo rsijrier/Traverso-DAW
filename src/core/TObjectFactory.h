@@ -6,11 +6,15 @@
 // The one place where objects with an id are made (doc/design/object-ids.md).
 // make<T>() makes a new object with a new number from the project's sequence,
 // load<T>() makes one from its element in the project file with the id saved
-// there, make_owned<T, Tag>() makes an object that belongs one to one to its
-// owner in a fixed role (a master, the bounce track) with an id derived from
-// the owner's number; such an object writes no id and no owner, its place in
-// the file and its owner give it. All enroll it in the project's pool. Owned
-// by the project.
+// there, make_derived<Tag>(owner) makes an object that belongs one to one to
+// its owner in a fixed role (a master, the bounce track, the ruler, a fade)
+// with an id derived from the owner's number; such an object writes no id and
+// no owner, its place in the file and its owner give it. Peers (songs, tracks
+// with the masters, clips, markers, sends, sources, workspaces; the tag's
+// InPool) are in the project's pool, so find() reaches every living peer by a
+// bare id; make() and load() enroll them, the maker of a derived peer enrolls
+// it. Parts (curves, the ruler) are not in the pool: they are reached through
+// their owner, addressed by (owner id, role). Owned by the project.
 //
 // The id is decided before the object is built: a class whose constructor takes
 // its id first gets it there (a song, which makes its master and bounce track
@@ -26,7 +30,7 @@
 // In the project file an id is bare hex: "objectid" for the object's own,
 // "owner" for its owner's, and a named attribute for a reference to another
 // object (read_reference()). The structure of the file places an object, and
-// make_owned() gives a derived object its owner: "owner" is written, not read
+// make_derived() gives a derived object its owner: "owner" is written, not read
 // or checked. A flat file (T112) will place objects by it.
 //
 // GUI thread only, like the pool and the sequence.
@@ -42,6 +46,13 @@
 
 #include <type_traits>
 #include <utility>
+
+// An owner make_derived() accepts: its own id is a counter id (its IdTag is
+// exact and not derived from an owner). A class made under several tags (IdTag
+// void, the masters) or with a derived id is refused at compile time
+template <typename Owner>
+concept derivable_owner = requires { typename Owner::IdTag; } && !std::is_void_v<typename Owner::IdTag>
+                          && requires { requires !Owner::IdTag::FromOwner; };
 
 class TObjectFactory
 {
@@ -83,24 +94,25 @@ public:
         return object;
     }
 
-    // An object that belongs one to one to its owner in a fixed role: its id is
-    // the role's tag on the owner's number (0 for the project). Unique, as only
-    // this role uses this subtype and each owner's number is unique; the same
-    // after every load, as it follows from the owner. The owner gives its id,
-    // as it is not in the pool yet while it makes its parts in its constructor
-    template <typename T, typename Tag, typename OwnerTag, typename... Args>
-    T* make_owned(TObjectId<OwnerTag> owner, Args&&... args)
-        requires(Tag::FromOwner && std::has_single_bit(Tag::Subtypes))
+    // An object that belongs one to one to its owner in a fixed role (a master,
+    // the bounce track, the ruler, a fade): its id is the role's tag on the
+    // owner's number (0 for the project). Unique, as only this role uses this
+    // subtype and each owner's number is unique; the same after every load, as
+    // it follows from the owner. Made as Tag::Object(id, owner, args...). The
+    // owner must have a counter id (or be the project): an owner whose own id
+    // is derived shares its number with its owner, so the derivation would not
+    // be unique; an object of such an owner gets a counter id. Static, without
+    // the pool: a part (ruler, fade) is not in the pool, and the maker of a
+    // peer (a master, the bounce track) enrolls it with TObjectPool::add()
+    template <typename Tag, typename Owner, typename... Args>
+        requires(Tag::FromOwner && std::has_single_bit(Tag::Subtypes) && derivable_owner<Owner>)
+    static typename Tag::Object* make_derived(Owner* owner, Args&&... args)
     {
-        const object_id_value_t ownerNumber = TObjectIds::sequence_of(owner.to_storage());
+        Q_ASSERT(owner);
+        const object_id_value_t ownerNumber = TObjectIds::sequence_of(owner->object_id().to_storage());
         const std::optional<TObjectId<Tag>> id = TObjectId<Tag>::from_storage(owned_value<Tag>(ownerNumber));
         Q_ASSERT(id);
-        T* object = construct<T>(*id, std::forward<Args>(args)...);
-        // Two owners with one number in the same role: the derivation rule
-        // does not hold for one of them
-        [[maybe_unused]] const bool added = m_pool.add_owned(*id, object);
-        Q_ASSERT_X(added, "TObjectFactory::make_owned", ("a derived id made twice: " + id->to_string()).c_str());
-        return object;
+        return new typename Tag::Object(*id, owner, std::forward<Args>(args)...);
     }
 
     // Before a load: the counter above the saved next number and above every
@@ -222,6 +234,7 @@ private:
     template <typename T, typename Tag, typename... Args>
     T* build(TObjectId<Tag> id, Args&&... args)
     {
+        static_assert(Tag::InPool, "an object with a counter id is a peer: it is in the pool");
         T* object = construct<T>(id, std::forward<Args>(args)...);
         // One sequence for all kinds: no two objects share a number, so an id
         // derived from an owner's number is unique (a clip 7 and a track 7

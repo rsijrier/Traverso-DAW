@@ -169,8 +169,7 @@ int TAudioClip::set_state(const QDomNode& node)
         QDomElement fadeInNode = node.firstChildElement("FadeIn");
         if (!fadeInNode.isNull()) {
             if (!m_fadeIn) {
-                TFadeCurve* fade = get_sheet()->get_project()->objects().make_owned<TFadeCurve, FadeInCurveTag>(
-                    object_id(), this, TFadeCurve::FadeIn, transaction);
+                TFadeCurve* fade = TObjectFactory::make_derived<FadeInCurveTag>(this, transaction);
                 fade->set_parent_timeline_entity(this);
                 add_fade(fade, transaction);
             }
@@ -180,8 +179,7 @@ int TAudioClip::set_state(const QDomNode& node)
         QDomElement fadeOutNode = node.firstChildElement("FadeOut");
         if (!fadeOutNode.isNull()) {
             if (!m_fadeOut) {
-                TFadeCurve* fade = get_sheet()->get_project()->objects().make_owned<TFadeCurve, FadeOutCurveTag>(
-                    object_id(), this, TFadeCurve::FadeOut, transaction);
+                TFadeCurve* fade = TObjectFactory::make_derived<FadeOutCurveTag>(this, transaction);
                 fade->set_parent_timeline_entity(this);
                 add_fade(fade, transaction);
             }
@@ -1047,10 +1045,8 @@ TFadeCurve* TAudioClip::create_fade(int fadeType, TRtTransaction& transaction)
     }
 
     // A new fade has the default shape, the "Fast" preset
-    TObjectFactory& objects = get_sheet()->get_project()->objects();
-    TFadeCurve* fadeCurve = fadeType == TFadeCurve::FadeIn
-                                ? objects.make_owned<TFadeCurve, FadeInCurveTag>(object_id(), this, TFadeCurve::FadeIn, transaction)
-                                : objects.make_owned<TFadeCurve, FadeOutCurveTag>(object_id(), this, TFadeCurve::FadeOut, transaction);
+    TFadeCurve* fadeCurve = fadeType == TFadeCurve::FadeIn ? TObjectFactory::make_derived<FadeInCurveTag>(this, transaction)
+                                                           : TObjectFactory::make_derived<FadeOutCurveTag>(this, transaction);
     fadeCurve->set_history_stack(get_history_stack());
     fadeCurve->set_parent_timeline_entity(this);
 

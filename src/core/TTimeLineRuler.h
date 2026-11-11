@@ -37,7 +37,7 @@ class TTimeLineRuler : public TContextItem
 {
     Q_OBJECT
 public:
-    TTimeLineRuler(TSession* sheet);
+    TTimeLineRuler(RulerId id, TSession* sheet);
     ~TTimeLineRuler() {}
 
     QDomNode get_state(QDomDocument doc);
@@ -47,7 +47,7 @@ public:
     QList<TTimeLineMarker*> get_cd_layout(bool & endmarker);
     TSession *get_sheet() const {return m_sheet;}
 
-    // Derived from its song's id (TObjectFactory::make_owned())
+    // Derived from its song's id (TObjectFactory::make_derived()); a part, not in the pool
     RulerId object_id() const { return m_objectId; }
 
     TTimeLineMarker* get_end_marker();
@@ -64,7 +64,6 @@ public:
     QString get_cdrdao_tracklist(TExportSpecification* spec, QString file_path, bool pregap = false);
 
 private:
-    friend class TObjectFactory;
     RulerId m_objectId;
     TSession* m_sheet;
     QList<TTimeLineMarker*> m_markers;

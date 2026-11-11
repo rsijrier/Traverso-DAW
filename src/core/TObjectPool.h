@@ -3,11 +3,14 @@
 
 #pragma once
 
-// The objects of one project by id (doc/design/object-ids.md). Two indexes:
-// byId for every object, byNumber for the objects with a number from the
-// sequence. An object derived from an owner (a master, the bounce track) is in
-// byId only: its number is its owner's. TObjectFactory
-// enrolls an object when it makes or loads it; it leaves when it is destroyed.
+// The peers of one project by id (doc/design/object-ids.md): every object
+// whose tag has InPool (songs, tracks with the masters, clips, markers, sends,
+// sources, workspaces). Parts (curves, the ruler) are not here: they are found
+// through their owner. Two indexes: byId for every peer, byNumber for the
+// peers with a number from the sequence. A peer derived from an owner (a
+// master, the bounce track) is in byId only: its number is its owner's.
+// TObjectFactory enrolls a peer when it makes or loads it, the maker of a
+// derived peer enrolls it; it leaves when it is destroyed.
 // Whether an object is in the project's tree now is not the index's question:
 // an edit asks the object. Owned by the project, no singleton.
 //
@@ -29,11 +32,11 @@
 class TObjectPool : public QObject
 {
 public:
-    // An object with a number from the sequence. False when the id is there
+    // A peer with a number from the sequence. False when the id is there
     // already, its number is used by another object, or it is invalid
     template <typename Tag>
     bool add(TObjectId<Tag> id, typename Tag::Object* object)
-        requires(std::has_single_bit(Tag::Subtypes))
+        requires(Tag::InPool && !Tag::FromOwner && std::has_single_bit(Tag::Subtypes))
     {
         if (has_number(id.to_storage()) || !insert(id.to_storage(), object)) {
             return false;
@@ -42,17 +45,23 @@ public:
         return true;
     }
 
-    // An object derived from its owner: its number is its owner's, so it is not
-    // in byNumber
+    // A peer derived from its owner (a master, the bounce track), with the id
+    // it was made with: its number is its owner's, so it is not in byNumber.
+    // False when the id is there already: two owners with one number in the
+    // same role, the derivation rule does not hold for one of them
     template <typename Tag>
-    bool add_owned(TObjectId<Tag> id, typename Tag::Object* object)
-        requires(std::has_single_bit(Tag::Subtypes))
+    bool add(typename Tag::Object* object)
+        requires(Tag::InPool && Tag::FromOwner && std::has_single_bit(Tag::Subtypes))
     {
-        return insert(id.to_storage(), object);
+        Q_ASSERT(object);
+        const std::optional<TObjectId<Tag>> id = TObjectId<Tag>::from_storage(object->object_id().to_storage());
+        Q_ASSERT(id);
+        return insert(id->to_storage(), object);
     }
 
     template <typename Tag>
     void remove(TObjectId<Tag> id)
+        requires(Tag::InPool)
     {
         Q_ASSERT(QThread::isMainThread());
         const object_id_value_t value = id.to_storage();
@@ -63,6 +72,7 @@ public:
     // The object, when it has this id; else nullptr
     template <typename Tag>
     typename Tag::Object* find(TObjectId<Tag> id) const
+        requires(Tag::InPool)
     {
         Q_ASSERT(QThread::isMainThread());
         return static_cast<typename Tag::Object*>(find_raw(id.to_storage()));

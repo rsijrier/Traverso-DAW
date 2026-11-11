@@ -157,7 +157,7 @@ void TSheet::init()
     set_related_context_item( m_audioClipManager );
     m_selectionService = new TSelectionService(this);
     create_history_stack();
-    m_timeLineRuler = m_project->objects().make_owned<TTimeLineRuler, RulerTag>(object_id(), this);
+    m_timeLineRuler = TObjectFactory::make_derived<RulerTag>(this);
     m_timeLineRuler->set_history_stack(get_history_stack());
 
     connect(this, &TSheet::prepareRecording, this, &TSheet::prepare_recording);
@@ -174,10 +174,15 @@ void TSheet::init()
     m_clipRenderBus = new AudioBus(audio_device(), busConfig);
 
     // One to one with the sheet: their ids are derived from the sheet's
-    m_masterOutBusTrack = m_project->objects().make_owned<MasterOutSubGroup, SongMasterTag>(object_id(), this, tr("Sheet Master"));
+    MasterOutSubGroup* master = TObjectFactory::make_derived<SongMasterTag>(this, tr("Sheet Master"));
+    [[maybe_unused]] bool added = m_project->object_pool().add<SongMasterTag>(master);
+    Q_ASSERT(added);
+    m_masterOutBusTrack = master;
     m_masterOutBusTrack->audio()->set_gain(0.5);
 
-    m_bounceTrack = m_project->objects().make_owned<TBounceTrack, BounceTrackTag>(object_id(), this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    m_bounceTrack = TObjectFactory::make_derived<BounceTrackTag>(this, tr("Bounce"), TTrack::INITIAL_HEIGHT);
+    added = m_project->object_pool().add<BounceTrackTag>(m_bounceTrack);
+    Q_ASSERT(added);
     // TODO: only on export add and after export remove this post send
     // m_masterOutBusTrack->add_post_send(m_bounceTrack->get_input_bus());
 

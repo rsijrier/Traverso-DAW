@@ -74,11 +74,12 @@ public:
     static constexpr FadeType FadeIn = TFadeShape::FadeIn;
     static constexpr FadeType FadeOut = TFadeShape::FadeOut;
 
-    TFadeCurve(TContextItem* parent, FadeType fadeType, TRtTransaction& transaction);
+    // Fade in or fade out by the subtype of its id (TObjectFactory::make_derived())
+    TFadeCurve(CurveId id, TContextItem* parent, TRtTransaction& transaction);
     ~TFadeCurve() override = default;
 
-    // Its id is derived from its clip's (fade in or fade out): it writes none
-    // (TObjectIds::is_derived()). The clip names the tag
+    // A part of its clip, not in the pool: its id is derived from the clip's
+    // and written nowhere. Made under two tags (fade in, fade out)
     using IdTag = void;
     CurveId object_id() const
     {
@@ -127,7 +128,6 @@ public:
     void get_columns(double x0, double columnWidth, int count, TCurveColumn* columns);
 
 private:
-    friend class TObjectFactory;
     CurveId                               m_objectId;
     TTimeLineEntity*                      m_parentTimeLineEntity{nullptr};
     float 		                          m_bendFactor{0.0f};
