@@ -34,7 +34,7 @@ TFaderCommand::~TFaderCommand()
 
 int TFaderCommand::prepare_actions()
 {
-    if (TFloatCompare::compare(m_origGain, m_newGain)) {
+    if (TFloatCompare::nearly_equal(m_origGain, m_newGain)) {
         return -1;
     }
     return 1;
@@ -55,7 +55,7 @@ void TFaderCommand::apply_new_gain_to_object(float newGain)
 int TFaderCommand::do_action()
 {
     PENTER;
-    if (TFloatCompare::compare(m_newGain, m_audioProcessingNode->get_gain())) {
+    if (TFloatCompare::nearly_equal(m_newGain, m_audioProcessingNode->get_gain())) {
         return 1;
     }
     m_audioProcessingNode->set_gain_animated(m_newGain);

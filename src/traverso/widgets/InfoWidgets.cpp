@@ -495,7 +495,7 @@ SystemValueBar::SystemValueBar(QWidget * parent)
 
 void SystemValueBar::set_value(float value)
 {
-    if (TFloatCompare::compare(m_current, value)) {
+    if (TFloatCompare::nearly_equal(m_current, value)) {
 		return;
 	}
 	

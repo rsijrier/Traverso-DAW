@@ -18,10 +18,10 @@ public:
     static constexpr float MarginFloat = 0.000001f;
     static constexpr double MarginDouble = 0.0000000000001;
 
-    static bool compare(float a, float b) T_REALTIME_SAFE { return std::fabs(a - b) <= MarginFloat; }
-    static bool compare(double a, double b) T_REALTIME_SAFE { return std::fabs(a - b) <= MarginDouble; }
-    static bool equals_1(float a) T_REALTIME_SAFE { return std::fabs(a - 1.0f) <= MarginFloat; }
-    static bool equals_1(double a) T_REALTIME_SAFE { return std::fabs(a - 1.0) <= MarginDouble; }
-    static bool equals_0(float a) T_REALTIME_SAFE { return std::fabs(a) <= MarginFloat; }
-    static bool equals_0(double a) T_REALTIME_SAFE { return std::fabs(a) <= MarginDouble; }
+    static bool nearly_equal(float a, float b) T_REALTIME_SAFE { return std::fabs(a - b) <= MarginFloat; }
+    static bool nearly_equal(double a, double b) T_REALTIME_SAFE { return std::fabs(a - b) <= MarginDouble; }
+    static bool is_one(float a) T_REALTIME_SAFE { return std::fabs(a - 1.0f) <= MarginFloat; }
+    static bool is_one(double a) T_REALTIME_SAFE { return std::fabs(a - 1.0) <= MarginDouble; }
+    static bool is_zero(float a) T_REALTIME_SAFE { return std::fabs(a) <= MarginFloat; }
+    static bool is_zero(double a) T_REALTIME_SAFE { return std::fabs(a) <= MarginDouble; }
 };

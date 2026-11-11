@@ -103,7 +103,7 @@ int TBusTrack::process(TProcessContext &context) T_REALTIME_SAFE
 {
     // Real-time Accumulation Protection: If the bus is muted or resting at absolute silence,
     // we MUST evacuate the streaming buffers to prevent scaling explosions from incoming track sends.
-    if (m_audio.is_muted() || (TFloatCompare::equals_0(m_audio.get_gain()))) {
+    if (m_audio.is_muted() || (TFloatCompare::is_zero(m_audio.get_gain()))) {
         if (m_processBus) {
             // Instantly wipe the shared summing bus clean for this hardware block duration
             m_processBus->silence_buffers();

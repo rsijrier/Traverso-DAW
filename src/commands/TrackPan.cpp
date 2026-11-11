@@ -31,7 +31,7 @@ TrackPan::TrackPan(TTrack* track, QVariantList args)
 
 int TrackPan::prepare_actions()
 {
-    if (TFloatCompare::compare(m_origPan, m_newPan))
+    if (TFloatCompare::nearly_equal(m_origPan, m_newPan))
     {
         return -1;
     }

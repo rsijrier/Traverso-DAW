@@ -58,7 +58,7 @@ void MoveCurveNode::toggle_vertical_only()
 
 int MoveCurveNode::prepare_actions()
 {
-    if (m_whenDiff.universal_frame() == 0 && TFloatCompare::equals_0(m_valueDiff)) {
+    if (m_whenDiff.universal_frame() == 0 && TFloatCompare::is_zero(m_valueDiff)) {
         return -1;
     }
     return 1;

@@ -211,7 +211,7 @@ public:
     }
 
     friend qreal operator/(const TTimeRef& left, double right) {
-        Q_ASSERT(!TFloatCompare::equals_0(right));
+        Q_ASSERT(!TFloatCompare::is_zero(right));
         return qreal(left.m_universalFrame) / qint64(right);
     }
 

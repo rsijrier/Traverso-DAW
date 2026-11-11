@@ -505,7 +505,7 @@ int TAudioClip::process(TProcessContext &context) T_REALTIME_SAFE
         return 0;
     }
 
-    if (m_audio.is_muted() || (TFloatCompare::equals_0(m_audio.get_gain())) ) {
+    if (m_audio.is_muted() || (TFloatCompare::is_zero(m_audio.get_gain())) ) {
         return 0;
     }
 
@@ -972,7 +972,7 @@ float TAudioClip::calculate_normalization_factor(float targetdB)
 {
     float target = TGain::from_dB(targetdB);
 
-    if (TFloatCompare::equals_1(target)) {
+    if (TFloatCompare::is_one(target)) {
         /* do not normalize to precisely 1.0 (0 dBFS), to avoid making it appear
            that we may have clipped.
         */
@@ -988,13 +988,13 @@ float TAudioClip::calculate_normalization_factor(float targetdB)
         return m_audio.get_gain();
     }
 
-    if (TFloatCompare::equals_0(maxamp)) {
+    if (TFloatCompare::is_zero(maxamp)) {
         PWARN("AudioClip::normalization: max amplitude == 0");
         /* don't even try */
         return m_audio.get_gain();
     }
 
-    if (TFloatCompare::compare(maxamp, target)) {
+    if (TFloatCompare::nearly_equal(maxamp, target)) {
         PWARN("AudioClip::normalization: max amplitude == target amplitude");
         /* we can't do anything useful */
         return m_audio.get_gain();

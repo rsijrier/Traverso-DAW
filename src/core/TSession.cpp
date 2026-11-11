@@ -341,7 +341,7 @@ void TSession::set_hzoom( qreal hzoom )
 	qreal old_hzoom = get_hzoom();
 	m_hzoom = hzoom;
 
-    if (!TFloatCompare::compare(old_hzoom, get_hzoom())) {
+    if (!TFloatCompare::nearly_equal(old_hzoom, get_hzoom())) {
 		emit hzoomChanged();
 	}
 }

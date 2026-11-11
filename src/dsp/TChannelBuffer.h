@@ -151,7 +151,7 @@ public:
 
     static void mix_buffers_with_gain(const TChannelBuffer &dest, const TChannelBuffer &src, nframes_t nframes, float gain) T_REALTIME_SAFE {
         Q_ASSERT(&dest != &src);
-        if (TFloatCompare::equals_1(gain)) {
+        if (TFloatCompare::is_one(gain)) {
             return TBufferOperations::mix(dest.get_data(nframes), src.get_data(nframes), nframes);
         }
 

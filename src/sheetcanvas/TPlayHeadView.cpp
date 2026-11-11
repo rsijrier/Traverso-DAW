@@ -207,7 +207,7 @@ void TPlayHeadView::set_animation_value(int /*value*/)
 {
 	// When the scalefactor changed, stop the animation here as it's no longer valid to run
 	// and reset the animation timeline time back to 0.
-    if (!TFloatCompare::compare(m_animScaleFactor, m_sv->timeref_scalefactor)) {
+    if (!TFloatCompare::nearly_equal(m_animScaleFactor, m_sv->timeref_scalefactor)) {
 		m_animation.stop();
 		m_animation.setCurrentTime(0);
 		animation_finished();
