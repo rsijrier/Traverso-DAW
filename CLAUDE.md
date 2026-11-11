@@ -67,3 +67,16 @@ Every target links PRIVATE, and links every library it uses itself,
 also when it only reaches that library through another library's
 headers. No PUBLIC links, no exceptions. The purpose: each target's
 CMakeLists.txt shows all its dependencies within Traverso.
+
+## Code built ahead of its users
+
+Code without a caller outside tests is allowed only when a planned
+ticket will use it, and only with a row in doc/ahead-of-use.md
+(planned user, limit).
+- When a ticket from that list is merged, update its rows.
+- When a limit is reached and the concept still has no caller, it goes
+  to Remon: keep it with a new limit, or remove it. Never extend a limit
+  yourself.
+- Every merge report lists the rows whose limit falls in that merge.
+- Looking up an object by id goes through the pool, never by walking
+  the tree.
