@@ -31,6 +31,10 @@ struct TLogThreadBuffer
 {
     static constexpr quint32 Capacity = 256;
 
+    // Free: no thread has it. Owned: its thread writes. Released: its thread
+    // ended; the drain empties it, then frees it for another thread
+    enum State : int { Free, Owned, Released };
+    std::atomic<int>     state{Free};
     std::atomic<quint32> head{0};
     std::atomic<quint32> tail{0};
     std::atomic<quint32> dropped{0};
@@ -45,32 +49,55 @@ struct TLogThreadBuffer
 static constexpr int MaxThreads = 64;
 
 static TLogThreadBuffer       s_buffers[MaxThreads];
+// The highest slot ever claimed + 1: the drain looks no further
 static std::atomic<int>       s_claimed{0};
 static std::atomic<quint32>   s_unclaimedDropped{0};
 
 static thread_local TLogThreadBuffer* t_buffer = nullptr;
-static thread_local bool              t_claimTried = false;
+
+// Gives the thread's slot back when the thread ends. Made at the claim, not
+// before: a thread that never logs registers nothing
+struct TLogRelease
+{
+    ~TLogRelease()
+    {
+        if (t_buffer) {
+            t_buffer->state.store(TLogThreadBuffer::Released, std::memory_order_release);
+            t_buffer = nullptr;
+        }
+    }
+};
+static thread_local TLogRelease t_release;
 
 // The seconds in the log count from the start of the process, so records
 // from before start() have no negative time
 static const uint64_t s_processStartNs = TClock::now_nanoseconds();
 static const int64_t s_processStartWallMs = QDateTime::currentMSecsSinceEpoch();
 
-// The calling thread's buffer, claimed from the pool on the first call.
-// nullptr when the pool is exhausted. Real-time safe: the thread_locals are
-// constant initialised (no TLS allocation) and the claim is an atomic add
+// The calling thread's buffer, claimed from the pool on the first call: the
+// first free slot. nullptr while all MaxThreads slots are owned; a later call
+// tries again, as an ended thread frees its slot. Real-time safe once
+// claimed: the thread_local pointer is constant initialised. The claim
+// itself registers the slot's release at thread exit, which may allocate:
+// a real-time thread logs a first time before its real-time part
 static TLogThreadBuffer* thread_buffer() T_REALTIME_SAFE
 {
     TLogThreadBuffer* buffer = nullptr;
-    bool claimTried = false;
-    T_REALTIME_SAFE_BY_CONTRACT(buffer = t_buffer; claimTried = t_claimTried;)
-    if (buffer || claimTried) {
+    T_REALTIME_SAFE_BY_CONTRACT(buffer = t_buffer;)
+    if (buffer) {
         return buffer;
     }
-    const int index = s_claimed.fetch_add(1, std::memory_order_acq_rel);
-    buffer = index < MaxThreads ? &s_buffers[index] : nullptr;
-    T_REALTIME_SAFE_BY_CONTRACT(t_claimTried = true; t_buffer = buffer;)
-    return buffer;
+    for (int i = 0; i < MaxThreads; ++i) {
+        int expected = TLogThreadBuffer::Free;
+        if (s_buffers[i].state.compare_exchange_strong(expected, TLogThreadBuffer::Owned, std::memory_order_acq_rel)) {
+            int claimed = s_claimed.load(std::memory_order_relaxed);
+            while (claimed < i + 1 && !s_claimed.compare_exchange_weak(claimed, i + 1, std::memory_order_acq_rel)) {
+            }
+            T_REALTIME_SAFE_BY_CONTRACT(t_buffer = &s_buffers[i]; (void)&t_release;)
+            return &s_buffers[i];
+        }
+    }
+    return nullptr;
 }
 
 void TLog::set_level(TLogLevel level)
@@ -239,6 +266,9 @@ struct TLogPending
 {
     TLog::Record record;
     int          thread;
+    // Copied when the record leaves its buffer: the slot may serve another
+    // thread by the time the line is written
+    char         name[12];
 };
 
 static std::thread            s_drain;
@@ -258,13 +288,13 @@ static struct TLogShutdown
     ~TLogShutdown() { TLog::stop(); }
 } s_shutdown;
 
-static const char* thread_name(int index)
+static void copy_thread_name(const TLogThreadBuffer& buffer, char (&name)[12])
 {
-    const TLogThreadBuffer& buffer = s_buffers[index];
     if (buffer.named.load(std::memory_order_acquire)) {
-        return buffer.name;
+        std::memcpy(name, buffer.name, sizeof(name));
+    } else {
+        name[0] = '\0';
     }
-    return nullptr;
 }
 
 static bool s_stderrIsTerminal = false;
@@ -305,8 +335,8 @@ static std::string format_line(const TLogPending& pending)
     const double seconds = double(sinceAnchorNs) / 1.0e9;
 
     char thread[16];
-    if (const char* name = thread_name(pending.thread)) {
-        std::snprintf(thread, sizeof(thread), "%s", name);
+    if (pending.name[0] != '\0') {
+        std::snprintf(thread, sizeof(thread), "%s", pending.name);
     } else {
         std::snprintf(thread, sizeof(thread), "t%d", pending.thread);
     }
@@ -337,10 +367,17 @@ static void drain_round(qint64 holdNs)
     const int claimed = std::min(s_claimed.load(std::memory_order_acquire), MaxThreads);
     for (int i = 0; i < claimed; ++i) {
         TLogThreadBuffer& buffer = s_buffers[i];
+        // Read before the records: a released buffer is complete
+        const int state = buffer.state.load(std::memory_order_acquire);
+        if (state == TLogThreadBuffer::Free) {
+            continue;
+        }
         quint32 tail = buffer.tail.load(std::memory_order_relaxed);
         const quint32 head = buffer.head.load(std::memory_order_acquire);
         while (tail != head) {
-            s_pending.push_back(TLogPending{buffer.records[tail & (TLogThreadBuffer::Capacity - 1)], i});
+            TLogPending pending{buffer.records[tail & (TLogThreadBuffer::Capacity - 1)], i, {}};
+            copy_thread_name(buffer, pending.name);
+            s_pending.push_back(pending);
             ++tail;
             buffer.tail.store(tail, std::memory_order_release);
         }
@@ -351,10 +388,23 @@ static void drain_round(qint64 holdNs)
             notice.record.timeNs = TClock::now_nanoseconds();
             notice.record.level = TLogLevel::Warning;
             notice.record.category = "log";
+            copy_thread_name(buffer, notice.name);
             std::snprintf(notice.record.text, TLog::TextSize, "%u records of this thread dropped, its log buffer was full",
                           dropped - buffer.reportedDropped);
             buffer.reportedDropped = dropped;
             s_pending.push_back(notice);
+        }
+        // Its thread ended and everything is out: free for another thread
+        if (state == TLogThreadBuffer::Released) {
+            buffer.head.store(0, std::memory_order_relaxed);
+            buffer.tail.store(0, std::memory_order_relaxed);
+            buffer.dropped.store(0, std::memory_order_relaxed);
+            buffer.reportedDropped = 0;
+            buffer.cycle = 0;
+            buffer.sequence = 0;
+            buffer.named.store(false, std::memory_order_relaxed);
+            buffer.name[0] = '\0';
+            buffer.state.store(TLogThreadBuffer::Free, std::memory_order_release);
         }
     }
 
@@ -365,7 +415,7 @@ static void drain_round(qint64 holdNs)
         notice.record.timeNs = TClock::now_nanoseconds();
         notice.record.level = TLogLevel::Warning;
         notice.record.category = "log";
-        std::snprintf(notice.record.text, TLog::TextSize, "%u records dropped, more than %d threads log", unclaimed, MaxThreads);
+        std::snprintf(notice.record.text, TLog::TextSize, "%u records dropped, more than %d threads log at once", unclaimed, MaxThreads);
         s_pending.push_back(notice);
     }
 
@@ -428,7 +478,27 @@ static void qt_message_handler(QtMsgType type, const QMessageLogContext& context
     }
     // Qt's category names are static strings; "default" says nothing
     const char* category = (context.category && std::strcmp(context.category, "default") != 0) ? context.category : "qt";
-    TLog::write_text(level, category, message);
+    if (type != QtFatalMsg) {
+        TLog::write_text(level, category, message);
+        return;
+    }
+    // Qt ends the process when this returns, before the drain could write a
+    // record: the reason of the crash is written here, at once
+    TLogPending pending{};
+    pending.record.timeNs = TClock::now_nanoseconds();
+    pending.record.level = level;
+    pending.record.category = category;
+    std::strncpy(pending.record.text, message.toUtf8().constData(), TLog::TextSize - 1);
+    pending.record.text[TLog::TextSize - 1] = '\0';
+    if (TLogThreadBuffer* buffer = thread_buffer()) {
+        pending.thread = int(buffer - s_buffers);
+        copy_thread_name(*buffer, pending.name);
+    }
+    write_line(format_line(pending), pending.thread);
+    if (s_file) {
+        std::fflush(s_file);
+    }
+    std::fflush(stderr);
 }
 
 bool TLog::start(const QString& directory, bool alsoStderr, const char* version)

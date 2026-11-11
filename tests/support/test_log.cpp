@@ -3,12 +3,14 @@
 
 // Headless test of TLog: records from several threads come out in time
 // order with their thread names, nothing is lost below the buffer size, a
-// full buffer drops and reports, and real-time records format in the drain.
+// full buffer drops and reports, real-time records format in the drain, an
+// ended thread gives its buffer back, and qFatal's message reaches the file.
 
 #include "TLog.h"
 
 #include <QDir>
 #include <QFile>
+#include <QProcess>
 #include <QTemporaryDir>
 
 #include <cstdio>
@@ -35,8 +37,14 @@ static QStringList lines_of(const QString& fileName)
     return QString::fromUtf8(file.readAll()).split('\n', Qt::SkipEmptyParts);
 }
 
-int main()
+int main(int argc, char** argv)
 {
+    // The child of the qFatal check: logs a fatal message and is aborted by Qt
+    if (argc == 3 && std::string(argv[1]) == "--fatal") {
+        TLog::start(QString::fromLocal8Bit(argv[2]), false, "test");
+        qFatal("fatal message %d", 9);
+    }
+
     QTemporaryDir directory;
 
     // Deferred formatting, without the drain
@@ -139,6 +147,47 @@ int main()
             if (line.contains(" W qt ") && line.endsWith("qt warning 7")) found = true;
         }
         check(found, "qWarning lands in the log as a warning of category qt");
+    }
+
+    // A thread that ends gives its buffer back: more threads than buffers,
+    // one after another, all get their record out
+    {
+        TLog::start(directory.path(), false, "test");
+        const int threads = 100;
+        for (int i = 0; i < threads; ++i) {
+            std::thread worker([i]() {
+                TLog::name_thread("short");
+                TLOG_I("test", "short-lived thread {}", i);
+            });
+            worker.join();
+            // A drain round (10 ms) frees the buffer of the ended thread
+            std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        }
+        TLog::stop();
+        const QStringList lines = lines_of(TLog::file_name());
+        int seen = 0;
+        bool dropped = false;
+        for (const QString& line : lines) {
+            if (line.contains("short-lived thread ") && line.contains(" short ")) ++seen;
+            if (line.contains("records dropped, more than")) dropped = true;
+        }
+        check(seen == threads, "100 threads one after another: every record out, on 64 buffers");
+        check(!dropped, "no thread found every buffer taken");
+    }
+
+    // qFatal ends the process, and its message is in the file already
+    {
+        QTemporaryDir fatalDirectory;
+        QProcess child;
+        child.start(QString::fromLocal8Bit(argv[0]), {"--fatal", fatalDirectory.path()});
+        child.waitForFinished(10000);
+        const QStringList lines = lines_of(fatalDirectory.path() + "/traverso.log");
+        bool found = false;
+        for (const QString& line : lines) {
+            if (line.contains(" E qt ") && line.endsWith("fatal message 9")) found = true;
+        }
+        check(child.exitStatus() == QProcess::CrashExit || child.exitCode() != 0, "qFatal ends the child");
+        check(found, "qFatal's message is in the log file");
     }
 
     if (failures) {
