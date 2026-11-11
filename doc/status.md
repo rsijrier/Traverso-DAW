@@ -1135,6 +1135,14 @@ From the GPU waveform test program, clip edges in variant A (branch
     (de bron in de DiskIO, de waveform voorbereiden, wat de peaks leest, de
     history stack, de plugin chain krijgt de song).
   In orde: `TAudioClip(name / node)` en de bronnen hebben geen eigenaar.
+  Met deze taak (Remon, 2026-11-11): `TObjectFactory::load<T>(node, args…)`
+  leest de id uit de node en geeft dezelfde node als laatste argument aan de
+  constructor, zodat elk object uit zijn toestand gemaakt wordt. Nu geven
+  zeven aanroepen de node twee keer mee (`node.toElement()` voor de id,
+  `node` voor de constructor: `TBusTrack` 2×, `TSheet`, `TAudioTrack`,
+  `TBufferedAudioStreamReader`, `TAudioClip`, `TTimeLineMarker`) en drie
+  alleen het element, met een losse `set_state()` erna (`TWorkspace` 2×,
+  `TSend`); die krijgen een constructor met een node.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
