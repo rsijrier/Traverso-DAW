@@ -1096,6 +1096,45 @@ From the GPU waveform test program, clip edges in variant A (branch
   the growing length and could drive the source range negative, since
   `tclip` it clamps against the empty source range
   (`TAudioClip::set_left_edge()`, `set_right_edge()`).
+- **T123 Edits-pijplijn** (Remon, 2026-11-11): tool → edit → changes →
+  poort → history step, zie `doc/design/edits.md`. Start met `TSplitEdit`.
+  Gevonden op master: stil overslaan in `create_command_split_entities()`
+  (verboden door CLAUDE.md), en `validate_split_boundary()` wordt dubbel
+  aangeroepen.
+  Met de pijplijn (Remon, 2026-11-11): de undo van curves en de commando's
+  houden pointers vast (`MoveCurveNode`, `MoveCurveNode.h:28-29`;
+  `TCurve::add_node()`/`remove_node()`, `TCurve.cpp:259, 278, 302`; de
+  fade-commando's, `Fade.h:62, 93, 114`, `TFadeRangeCommand.h:51-52`). Die
+  gaan naar (eigenaar, rol, nummer). Dat moet klaar zijn vóór undo ooit een
+  opgeslagen toestand wordt.
+- **T124 Maken en koppelen scheiden** (Remon, 2026-11-11; na de id-branch;
+  voorwaarde voor het platte formaat, T112, en voor undo als opgeslagen
+  toestand). Regel: een gelijke (track, marker, send, song, workspace)
+  krijgt geen eigenaar in de constructor. Maken uit de toestand; koppelen is
+  alleen een pointer zetten en `setParent()`. Activeren (DiskIO,
+  waveform/peaks, sources active) is een aparte stap. Alleen onderdelen en
+  1:1-objecten van een eigenaar (curves, masters, ruler) krijgen
+  `T(id, owner, args...)`.
+  Delen die elders verdwijnen: de history stack in objecten → T123
+  (edits-pijplijn); `pm().get_project()` → het opruimen van singletons; het
+  activeren → samen met de resources manager op id's.
+  Uitzoeken: `TAudioTrack` zet zijn hoogte in de song
+  (`sheet->set_track_height()`). Hoort dat in de view?
+  Inventaris (toets van 2026-11-11, branch `new-ids`):
+  - `TTrack(id, session)`: QObject-ouder, `m_audio(session)`, de history
+    stack van de sessie, `connect` naar `pm().get_project()`;
+    `TAudioTrack(id, sheet, …)` ook `sheet->set_track_height()`;
+    `TBusTrack(id, session, …)` via `TTrack`;
+  - `TTimeLineMarker(ruler, …)`: QObject-ouder, de history stack van de ruler;
+  - `TSend(track, …)`: QObject-ouder, `m_track`;
+  - `TSheet(id, project, …)`: het project, en via het project de factory en
+    de pool;
+  - `TWorkspace(parentSession)`: via `TSession`;
+  - koppelen dat meer doet dan een pointer: `TAudioClip::set_track()` (een
+    `connect`, `set_sources_active_state()`), `TAudioClip::attach_to_sheet()`
+    (de bron in de DiskIO, de waveform voorbereiden, wat de peaks leest, de
+    history stack, de plugin chain krijgt de song).
+  In orde: `TAudioClip(name / node)` en de bronnen hebben geen eigenaar.
 - **Note for `TClip`** (Remon, 2026-11-06; `TClip` is planned in his
   brainstorm "Traverso begrippen voor tools, edits en de virtuele cursor",
   § Klassen en ids: `TTimeLineEntity` → `TSplitableTimeLineEntity` → a thin
