@@ -575,7 +575,7 @@ TCommand* TraversoCommands::create(QObject* obj, TActionId action, QVariantList 
     {
         TSheet* sheet = qobject_cast<TSheet*>(obj);
         Q_ASSERT(sheet);
-        return sheet->add_track(sheet->get_project()->objects().make<TAudioTrack>(sheet, "Unnamed", TAudioTrack::INITIAL_HEIGHT));
+        return sheet->add_track(sheet->new_audio_track("Unnamed", TAudioTrack::INITIAL_HEIGHT));
     }
 
     case RemoveTrackCommand:

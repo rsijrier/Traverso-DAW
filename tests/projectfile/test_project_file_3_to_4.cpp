@@ -317,7 +317,34 @@ static void test_project(const char* activeSession, bool jackMasterBus)
         }
     });
     check(oneTarget, "5. every send has exactly one target");
-    check(sends == 8, "5. the dangling send and the send to a track's jack bus are gone");
+    check(sends == 10, "5. the dangling send and the send to a track's jack bus are gone, two sends to a master added");
+
+    // A song's track or master without a post send gets the one the version 3
+    // load gave it; one with a send is left alone
+    auto count_sends = [](const QDomElement& track) {
+        int n = 0;
+        for (QDomElement s = track.firstChildElement("Sends").firstChildElement("Send"); !s.isNull(); s = s.nextSiblingElement("Send")) {
+            ++n;
+        }
+        return n;
+    };
+    const QDomElement trackTwo = first(root, [](const QDomElement& e) { return e.attribute("name") == "audio two"; });
+    const QDomElement trackTwoSend = trackTwo.firstChildElement("Sends").firstChildElement("Send");
+    check(count_sends(trackTwo) == 1 && trackTwoSend.attribute("type") == "post"
+              && trackTwoSend.attribute("targettrack") == id_text(TrackKind, SongMasterSubtype, songOneNumber)
+              && kind_of(trackTwoSend.attribute("objectid")) == SendKind,
+          "default send: an audio track without a send gets one to its song master, with a counter id");
+    const QDomElement songTwo = songOne.nextSiblingElement("Sheet");
+    const QDomElement songTwoMaster = songTwo.firstChildElement("MasterOut").firstChildElement("BusTrack");
+    check(count_sends(songTwoMaster) == 1
+              && songTwoMaster.firstChildElement("Sends").firstChildElement("Send").attribute("targettrack")
+                     == id_text(TrackKind, ProjectMasterSubtype, 0),
+          "default send: a song master without a send gets one to the project master");
+    check(count_sends(first(root, [](const QDomElement& e) { return e.attribute("name") == "audio one"; })) == 4
+              && count_sends(first(root, [](const QDomElement& e) { return e.attribute("name") == "song bus"; })) == 1,
+          "default send: a track with a post send is left alone");
+    check(count_sends(first(root, [](const QDomElement& e) { return e.attribute("name") == "project bus"; })) == 0,
+          "default send: a project bus track gets none, as the version 3 load gave it none");
     check(send_with_name(root, "audio one", 3).attribute("targetport") == "Playback 1-2", "5. a send to a hardware bus names it");
     const QDomElement master = root.firstChildElement("MasterOut").firstChildElement("BusTrack");
     check(master.firstChildElement("Sends").lastChildElement("Send").attribute("targetport") == "jackmaster",
@@ -431,7 +458,9 @@ static void test_dangling()
     check(!properties.hasAttribute("currentsong"), "dangling: no current song is written, the load makes the first song current");
     check(has_warning(result.warnings, "the old id 1003 is used twice"), "dangling: an old id used twice gives a warning");
     check(has_warning(result.warnings, "names no bus (nowhere)"), "dangling: a send without a bus is dropped with a warning");
-    check(noId.firstChildElement("Sends").firstChildElement("Send").isNull(), "dangling: the send without a bus is gone");
+    const QDomElement left = noId.firstChildElement("Sends").firstChildElement("Send");
+    check(left.attribute("busname") != "nowhere" && left.hasAttribute("targettrack") && left.nextSiblingElement("Send").isNull(),
+          "dangling: the send without a bus is gone, the track gets the send to its master instead");
     check(result.leftOverIds == 0, "dangling: no old id is left");
 }
 

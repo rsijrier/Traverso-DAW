@@ -114,6 +114,9 @@ public:
 
     // Set functions
     int set_state( const QDomNode & node );
+    // The one place a new audio track is made: it sends to this song's
+    // master. Adding it to the song is the caller's
+    TAudioTrack* new_audio_track(const QString& name, int height);
 
     void set_artists(const QString& pArtistis);
     void set_work_at(const TTimeRef &location, const bool isFolder=false) override;

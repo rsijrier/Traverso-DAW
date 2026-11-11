@@ -97,6 +97,10 @@ public:
     // To a track (a bus track or a master), or to a port (a hardware or
     // software bus)
     void add_post_send(TrackId target);
+    // A new track's send: a song's track to the song's master, the song's
+    // master to the project's master. The bus is taken from the session, so it
+    // works before a new song is in the project
+    void add_default_post_send();
     void add_post_send(AudioBus* port);
     void add_pre_send(TrackId target);
     void add_pre_send(AudioBus* port);

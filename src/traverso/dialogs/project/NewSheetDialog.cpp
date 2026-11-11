@@ -81,7 +81,9 @@ void NewSheetDialog::accept()
 	for (int i=0; i<count; ++i) {
 		TSheet* sheet;
 		if (usetemplate) {
-			sheet = m_project->objects().make<TSheet>(m_project);
+			// A copy of the template song, made as at a load: a new song's
+			// constructor would give its master a second send
+			sheet = m_project->objects().load<TSheet>(node.toElement(), m_project, node);
 			sheet->set_state(node);
 		} else {
 			sheet = m_project->objects().make<TSheet>(m_project, trackcount);

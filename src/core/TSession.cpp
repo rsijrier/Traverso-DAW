@@ -29,6 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TConfig.h"
 #include "TBusTrack.h"
 #include "TSheet.h"
+#include "TSend.h"
+#include "TObjectFactory.h"
+#include "TProject.h"
 #include "TSnapList.h"
 #include "TLocation.h"
 #include "TTimeLineRuler.h"
@@ -573,3 +576,12 @@ void TSession::remove_child_session(TWorkspace *child)
 	emit sessionRemoved(child);
 }
 
+TBusTrack* TSession::new_bus_track(const QString& name, int channelCount)
+{
+    TObjectFactory& objects = get_project()->objects();
+    TBusTrack* track = objects.make<TBusTrack>(this, name, channelCount);
+    if (!is_project_session()) {
+        track->add_default_post_send();
+    }
+    return track;
+}

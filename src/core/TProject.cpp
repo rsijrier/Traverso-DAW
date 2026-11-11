@@ -676,16 +676,16 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
         if (m_createdOn.isValid()) {
             properties.setAttribute("createdon", m_createdOn.toUTC().toString(Qt::ISODate));
         }
-        // The project itself as the active session is not saved: the load
-        // opens the current song
-        if (m_activeSheet) {
-            TObjectFactory::write_reference(properties, "currentsong", m_activeSheet->object_id());
-        }
-        if (TWorkspace* workspace = qobject_cast<TWorkspace*>(m_activeSession)) {
-            TObjectFactory::write_reference(properties, "activeworkspace", workspace->object_id());
-        }
     } else {
         properties.setAttribute("title", "Template Project File!!");
+    }
+    // The project itself as the active session is not saved: the load opens
+    // the current song. A template keeps its ids, so it names them too
+    if (m_activeSheet) {
+        TObjectFactory::write_reference(properties, "currentsong", m_activeSheet->object_id());
+    }
+    if (TWorkspace* workspace = qobject_cast<TWorkspace*>(m_activeSession)) {
+        TObjectFactory::write_reference(properties, "activeworkspace", workspace->object_id());
     }
     properties.setAttribute("importdir", m_importDir);
     m_objects.write_sequence(properties);
@@ -756,10 +756,6 @@ QDomNode TProject::get_state(QDomDocument doc, bool istemplate)
     }
 
     projectNode.appendChild(workSheetsNode);
-
-    if (istemplate) {
-        TObjectFactory::remove_ids(projectNode);
-    }
 
     return projectNode;
 }

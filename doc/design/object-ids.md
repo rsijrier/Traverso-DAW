@@ -363,7 +363,7 @@ tag and then ignored.
 
 | Attribute | Where |
 |---|---|
-| `objectid` | every object with a counter id: track, clip, song (`Sheet`), marker, send. Not in templates (`TObjectFactory::remove_ids()` on a template's song or project). The masters still write theirs (derived: only as a check), until the rule below reaches them. The bounce track is not saved |
+| `objectid` | every object with a counter id: track, clip, song (`Sheet`), marker, send. Also in templates: a template keeps its ids, so its references (sends, workspace tracks) stay valid; a project made from it gets a new `uuid` and `createdon` only (Remon, 2026-11-11). The masters still write theirs (derived: only as a check), until the rule below reaches them. The bounce track is not saved |
 | `owner` | every object with a counter id and an owner: a track its song, a clip its track, a marker its ruler, a send its track. Not the project master, not a clip on no track (also not a removed clip that keeps its track for undo) |
 
 **Derived objects write no owner and no id** (Remon, 2026-11-08): their id

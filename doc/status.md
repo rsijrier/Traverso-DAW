@@ -1216,6 +1216,59 @@ From the GPU waveform test program, clip edges in variant A (branch
   wait for ever, and copy-convert only logs a failed open (older than the id
   branch). Telling the user from their own threads, and what a refused open
   means for them: T122. Name clashes of copied files: T113.
+- **T127 A copy within the project gets new ids, and its references go
+  with it** (medium; Remon, 2026-11-11, found at the T125 runtime test). A
+  song made from another song as its template (`NewSheetDialog`) is a copy:
+  it carries the ids of the original, so the factory gives every object a
+  new one ("used twice: a new one" in the log), but the references inside
+  the copy (a send's `targettrack` to its own song master or bus track, a
+  workspace's tracks, a clip list) are not mapped and may point at the
+  original song's objects (not checked; probably already so on `master`).
+  Needed: an old → new table over the copied state, as the 3 → 4 converter
+  does, so references inside the copy follow; later also for copy and
+  paste. Until then the dialog makes the copy through the load path (no
+  second send to the project master).
+- **T126 Projects known by their UUID, not by their title** (medium; Remon,
+  2026-11-11, found at the v4 runtime test). The project dropdown does not
+  tell two projects with the same title apart, also when they are separate
+  folders in the projects folder, and the app remembers the last project
+  by its title (`config "Project/current"`, `TProjectManager.cpp:213`,
+  `Traverso.cpp:119`): a copied project opened the original at the next
+  start. With the project UUID (version 4) both can be solved; two projects
+  may then share a title (Remon is no supporter of that).
+- **T125 The default send to the master only for a new track, not at every
+  load** (medium; Remon, 2026-11-11, found at the v4 runtime test).
+  `TTrack::set_state()` (`TTrack.cpp:182-207`) gives every track without a
+  post send a send to its song master (the song master one to the project
+  master), at every load. A routing removed on purpose comes back at every
+  load, and the send gets a new counter id each time (`next` goes up by one
+  per load, `nextobjectid` with it): an edit file or the agent that names
+  it does not find it after a reload. The default send belongs to making a
+  new track. Careful: the code's own note says a new project goes through
+  `set_state()` too (create, then load), so new tracks depend on it today.
+  With it, Remon: the 3 → 4 conversion gives an audio track without an
+  output (no post send) the send to its song master once in the file, so a
+  v3 project keeps what its loads always gave it.
+  **Converter part done** (branch `new-ids`, 2026-11-11): every song track,
+  song bus track and song master without a post send gets one Send to its
+  song master (the song master to the project master), as the v3 load did;
+  project bus tracks and the project master get none, as before. Headless
+  test in `tests/projectfile`.
+  **Load and new-track part done** (branch `new-ids`, 2026-11-11, Remon's
+  decision: one place for a new track): the default-send block is gone from
+  `TTrack::set_state()`; loading adds no send. A new track is made in one
+  place, `TSheet::new_audio_track()` and `TSession::new_bus_track()`, which
+  give it its post send to the session's own master by that master's bus
+  directly (no `get_audio_bus()` lookup, so it works in a new song not yet
+  in the project); project bus tracks get none, as before. A new song's
+  master gets its send to the project master in `TSheet`'s new-song
+  constructor. Callers: a new song's first tracks, `NewTrackDialog` (the
+  outputs chosen there replace the default send, as the old "only when it
+  has none" did), `AddNewAudioTrackCommand`. The send is added by one narrow function on the
+  track, `TTrack::add_default_post_send()` (no friend on `TTrack`, Remon).
+  **Templates** (Remon, 2026-11-11): a template keeps its ids and so its
+  routing; `remove_ids()` is gone, and a project made from a template gets
+  a new `uuid` and `createdon` only.
 - **T122 The writer never overwrites an audio file** (medium; Remon,
   2026-11-09; taken out of the id branch's C8, the work so far in
   `reports/new-ids-2026-11-07/c8-full-2026-11-09.patch`). Take names are

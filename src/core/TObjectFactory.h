@@ -195,16 +195,6 @@ public:
         return ids;
     }
 
-    // A template holds no ids: the objects made from it get their own
-    static void remove_ids(QDomElement element)
-    {
-        element.removeAttribute(ObjectIdAttribute);
-        element.removeAttribute(OwnerAttribute);
-        for (QDomElement child = element.firstChildElement(); !child.isNull(); child = child.nextSiblingElement()) {
-            remove_ids(child);
-        }
-    }
-
 private:
     static constexpr const char* ObjectIdAttribute = "objectid";
     static constexpr const char* OwnerAttribute = "owner";

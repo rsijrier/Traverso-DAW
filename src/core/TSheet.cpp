@@ -92,10 +92,13 @@ TSheet::TSheet(SongId id, TProject* project, int numtracks)
 
     TRtTransaction transaction;
 
+    // A new song's master sends to the project's master
+    m_masterOutBusTrack->add_default_post_send();
+
     for (int i=1; i <= numtracks; i++) {
         int height = TAudioTrack::INITIAL_HEIGHT;
         QString trackname = QString("Audio Track %1").arg(i);
-        TAudioTrack* track = m_project->objects().make<TAudioTrack>(this, trackname, height);
+        TAudioTrack* track = new_audio_track(trackname, height);
         private_add_track(track, transaction);
     }
 
@@ -282,9 +285,7 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
 {
     QDomElement sheetNode = doc.createElement("Sheet");
 
-    if (! istemplate) {
-        TObjectFactory::write(sheetNode, object_id());
-    }
+    TObjectFactory::write(sheetNode, object_id());
 
     QDomElement properties = doc.createElement("Properties");
     properties.setAttribute("title", m_name);
@@ -328,10 +329,6 @@ QDomNode TSheet::get_state(QDomDocument doc, bool istemplate)
     }
 
     sheetNode.appendChild(workSheetsNode);
-
-    if (istemplate) {
-        TObjectFactory::remove_ids(sheetNode);
-    }
 
     return sheetNode;
 }
@@ -1376,4 +1373,11 @@ TPeakBuild TSheet::request_peak_build(const QString& audioPath, const QString& p
 void TSheet::post_process_peaks(std::shared_ptr<TPeakStream> recorded)
 {
     m_project->get_peak_builds()->post_process(std::move(recorded), m_readScheduler);
+}
+
+TAudioTrack* TSheet::new_audio_track(const QString& name, int height)
+{
+    TAudioTrack* track = m_project->objects().make<TAudioTrack>(this, name, height);
+    track->add_default_post_send();
+    return track;
 }

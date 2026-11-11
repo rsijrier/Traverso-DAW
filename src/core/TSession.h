@@ -116,6 +116,9 @@ public:
 	void set_track_height(TrackId trackId, int height) {m_trackHeights.insert(trackId, height);}
 
     TCommand* add_track(TTrack* track, bool historable=true);
+    // The one place a new bus track is made; in a song it sends to the song's
+    // master. Adding it to the session is the caller's
+    TBusTrack* new_bus_track(const QString& name, int channelCount);
     TCommand* remove_track(TTrack* track, bool historable=true);
 
 	void add_child_session(TWorkspace* child);

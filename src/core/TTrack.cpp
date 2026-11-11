@@ -80,9 +80,9 @@ TTrack::~TTrack()
 }
 
 
-void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool istemplate)
+void TTrack::get_state(QDomDocument& doc, QDomElement& node, bool /*istemplate*/)
 {
-    if (!istemplate && !TObjectIds::is_derived(object_id())) {
+    if (!TObjectIds::is_derived(object_id())) {
         TObjectFactory::write(node, object_id());
         if (TSheet* sheet = qobject_cast<TSheet*>(m_session)) {
             TObjectFactory::write_owner(node, sheet->object_id());
@@ -177,32 +177,6 @@ int TTrack::set_state( const QDomNode & node )
                 }
             }
             sendNode = sendNode.nextSibling();
-        }
-    }
-
-    // Keep old project files up to 0.49.x working, at least, try our best...
-    // TODO: remove this at some point in future where everybody uses > 0.49.x
-    // NOTE: it is also called on a newly created project so at this point it does
-    // add default post send to a Track. In other words, this is very much needed
-    // for newly created tracks
-    // What about reviewing the whole create_project() and then load_project() scheme?
-    if (! m_session->is_project_session()) {
-        TProject* project = pm().get_project();
-        if (m_session && project) {
-            TrackId sendTarget;
-            if (m_name == "Sheet Master") {
-                TLOG_D("track", "sheet master gets the project master as target");
-                sendTarget = project->get_master_out_bus_track()->object_id();
-            } else {
-                sendTarget = m_session->get_master_out_bus_track()->object_id();
-            }
-
-            // Make sure we output always to the most logical bus.
-            // This might conflict with what the user asked for but then
-            // Use MUTE instead :)
-            if (m_postSends.gui_items().isEmpty()) {
-                add_post_send(sendTarget);
-            }
         }
     }
 
@@ -302,6 +276,23 @@ void TTrack::set_input_bus(AudioBus* bus, TRtTransaction& transaction)
     emit routingConfigurationChanged();
 }
 
+
+void TTrack::add_default_post_send()
+{
+    Q_ASSERT(m_session);
+    Q_ASSERT(!m_session->is_project_session());
+    Q_ASSERT(m_postSends.gui_items().isEmpty());
+    TProject* project = m_session->get_project();
+    TBusTrack* master = m_session->get_master_out_bus_track();
+    if (master == this) {
+        master = project->get_master_out_bus_track();
+    }
+    Q_ASSERT(master);
+    TSend* send = project->objects().make<TSend>(this, master->object_id(), master->get_process_bus());
+    send->set_type(TSend::POSTSEND);
+    TRtTransaction transaction;
+    private_add_post_send(send, transaction);
+}
 
 void TTrack::add_post_send(TrackId target)
 {

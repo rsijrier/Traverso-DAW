@@ -92,10 +92,11 @@ void NewTrackDialog::create_track()
         TTrack* track;
 
         if (isBusTrack->isChecked()) {
-                track = m_project->objects().make<TBusTrack>(session, title, 2);
+                track = session->new_bus_track(title, 2);
 
         } else {
-                track = m_project->objects().make<TAudioTrack>(sheet, title, TAudioTrack::INITIAL_HEIGHT);
+                Q_ASSERT(sheet);
+                track = sheet->new_audio_track(title, TAudioTrack::INITIAL_HEIGHT);
         }
 
         int channelCount = 1;
@@ -134,8 +135,12 @@ void NewTrackDialog::create_track()
                 }
             }
 
-            // add post send to Track/Bus if any was selected
+            // add post send to Track/Bus if any was selected; the outputs chosen
+            // replace the default send to the master
             QList<QListWidgetItem*> selectedOutputItems = routingOutputListWidget->selectedItems();
+            if (!selectedOutputItems.isEmpty()) {
+                track->remove_all_post_sends();
+            }
             foreach(QListWidgetItem* item, selectedOutputItems) {
                 // A track, or a port by name
                 if (item->data(Qt::UserRole).canConvert<TrackId>()) {

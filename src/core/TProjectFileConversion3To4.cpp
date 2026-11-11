@@ -111,6 +111,38 @@ static bool send_stays(const QDomElement& send, Tables& tables)
     return false;
 }
 
+// A track of a song without a post send after the conversion: the version 3
+// load gave it one to its master (a song's master one to the project's),
+// version 4 does not, so the file gets it once
+static bool has_post_send(const QDomElement& track, const Tables& tables)
+{
+    const QDomElement sends = track.firstChildElement("Sends");
+    for (QDomElement send = sends.firstChildElement("Send"); !send.isNull(); send = send.nextSiblingElement("Send")) {
+        if (send.attribute("type") != "pre" && !tables.removed.contains(send)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void add_master_send(QDomElement& track, Tables& tables, bool toProjectMaster)
+{
+    QDomElement sends = track.firstChildElement("Sends");
+    if (sends.isNull()) {
+        sends = track.ownerDocument().createElement("Sends");
+        track.appendChild(sends);
+    }
+    QDomElement send = track.ownerDocument().createElement("Send");
+    give_id(send, tables, SendKind, SendSubtype);
+    send.setAttribute("gain", "1");
+    send.setAttribute("pan", "0");
+    send.setAttribute("targettrack", toProjectMaster ? id_text(TrackKind, ProjectMasterSubtype, 0)
+                                                     : id_text(TrackKind, SongMasterSubtype, tables.song));
+    send.setAttribute("busname", toProjectMaster ? "Master" : "Sheet Master");
+    send.setAttribute("type", "post");
+    sends.appendChild(send);
+}
+
 static void remove_development_ids(QDomElement element)
 {
     element.removeAttribute("objectid");
@@ -180,6 +212,14 @@ static void give_ids(QDomElement element, Tables& tables)
     for (QDomElement child = element.firstChildElement(); !child.isNull(); child = child.nextSiblingElement()) {
         give_ids(child, tables);
     }
+
+    // A song's audio track, bus track or master: what the version 3 load added
+    const bool songTrack = grandParent == "Sheet"
+                           && ((name == "Track" && parent == "Tracks") || (name == "BusTrack" && parent == "BusTracks"));
+    const bool songMaster = grandParent == "Sheet" && name == "BusTrack" && parent == "MasterOut";
+    if ((songTrack || songMaster) && !has_post_send(element, tables)) {
+        add_master_send(element, tables, songMaster);
+    }
     tables.song = outerSong;
 }
 
@@ -228,6 +268,10 @@ static void convert_properties(QDomElement& element, Tables& tables, const QUuid
 
 static void convert_send(QDomElement& element, Tables& tables)
 {
+    // The send to a master that give_ids() added is in version 4 already
+    if (!element.hasAttribute("bus") && element.hasAttribute("targettrack")) {
+        return;
+    }
     const QString bus = element.attribute("bus");
     if (tables.tracks.contains(bus)) {
         element.setAttribute("targettrack", tables.tracks.value(bus));
