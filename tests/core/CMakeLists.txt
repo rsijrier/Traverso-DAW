@@ -13,3 +13,10 @@ add_executable(traverso_object_factory_test test_object_factory.cpp)
 target_include_directories(traverso_object_factory_test PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
 target_link_libraries(traverso_object_factory_test PRIVATE traverso_compiler_settings traverso_test_common traversosupport Qt6::Core Qt6::Xml)
 add_test(NAME object_factory COMMAND traverso_object_factory_test)
+
+# Headless test of the derived ids: every kind of derived object, no
+# id twice (TObjectIdTags.h's numbers, the factory and the pool, header only)
+add_executable(traverso_derived_ids_test test_derived_ids.cpp)
+target_include_directories(traverso_derived_ids_test PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
+target_link_libraries(traverso_derived_ids_test PRIVATE traverso_compiler_settings traverso_test_common traversosupport Qt6::Core Qt6::Xml)
+add_test(NAME derived_ids COMMAND traverso_derived_ids_test)

@@ -96,8 +96,10 @@ public:
         const std::optional<TObjectId<Tag>> id = TObjectId<Tag>::from_storage(owned_value<Tag>(ownerNumber));
         Q_ASSERT(id);
         T* object = construct<T>(*id, std::forward<Args>(args)...);
+        // Two owners with one number in the same role: the derivation rule
+        // does not hold for one of them
         [[maybe_unused]] const bool added = m_pool.add_owned(*id, object);
-        Q_ASSERT(added);
+        Q_ASSERT_X(added, "TObjectFactory::make_owned", ("a derived id made twice: " + id->to_string()).c_str());
         return object;
     }
 
@@ -221,8 +223,11 @@ private:
     T* build(TObjectId<Tag> id, Args&&... args)
     {
         T* object = construct<T>(id, std::forward<Args>(args)...);
+        // One sequence for all kinds: no two objects share a number, so an id
+        // derived from an owner's number is unique (a clip 7 and a track 7
+        // never exist together)
         [[maybe_unused]] const bool added = m_pool.add(id, object);
-        Q_ASSERT(added);
+        Q_ASSERT_X(added, "TObjectFactory::build", ("a number used twice: " + id.to_string()).c_str());
         return object;
     }
 

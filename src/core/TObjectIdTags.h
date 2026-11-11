@@ -35,6 +35,8 @@ class TTimeLineMarker;
 class TSend;
 class TBufferedAudioStreamReader;
 class TWorkspace;
+class TContextItem;
+class TFadeCurve;
 
 // Kind 0 is no kind. The numbers follow the tree, so an id reads as where it
 // stands in it (doc/design/object-ids.md). All are fixed, also those whose
@@ -76,6 +78,10 @@ enum : uint8_t {
     ProjectSubtype = 1,
 };
 
+// A fade curve belongs one to one to its clip: its id is derived from the
+// clip's number. Gain curves (derived, [5|1|owner]) and automation curves
+// (several per owner: counter ids) get their ids with T108. Subtype 5 is
+// unused: the bounce track has no gain curve
 enum : uint8_t {
     GainCurveSubtype = 1,
     FadeInCurveSubtype = 2,
@@ -286,6 +292,36 @@ struct WorkspaceTag
     using Object = TWorkspace;
 };
 
+// Curves: TCurve (gain, automation) and TFadeCurve have no common base below
+// TContextItem, so the tag over all curves names that (Remon 2026-11-11). Not
+// downcast after find(CurveId): the exact tags name the concrete type
+struct CurveTag
+{
+    static constexpr uint8_t Kind = CurveKind;
+    static constexpr uint64_t Subtypes = TObjectIds::AllSubtypes;
+    static constexpr const char* Name = "curve";
+    using Object = TContextItem;
+};
+
+struct FadeInCurveTag
+{
+    static constexpr bool FromOwner = true;
+    static constexpr uint8_t Kind = CurveKind;
+    static constexpr uint64_t Subtypes = TObjectIds::subtype(FadeInCurveSubtype);
+    static constexpr const char* Name = "fadein";
+    using Object = TFadeCurve;
+};
+
+struct FadeOutCurveTag
+{
+    static constexpr bool FromOwner = true;
+    static constexpr uint8_t Kind = CurveKind;
+    static constexpr uint64_t Subtypes = TObjectIds::subtype(FadeOutCurveSubtype);
+    static constexpr const char* Name = "fadeout";
+    using Object = TFadeCurve;
+};
+
+using CurveId = TObjectId<CurveTag>;
 using RulerId = TObjectId<RulerTag>;
 using MarkerId = TObjectId<MarkerTag>;
 using SendId = TObjectId<SendTag>;
@@ -312,6 +348,8 @@ inline void register_object_id_names()
     TObjectIds::register_tag(TObjectIds::make_tag(SendKind, SendSubtype), SendTag::Name, SendTag::FromOwner);
     TObjectIds::register_tag(TObjectIds::make_tag(AudioSourceKind, AudioSourceSubtype), AudioSourceTag::Name, AudioSourceTag::FromOwner);
     TObjectIds::register_tag(TObjectIds::make_tag(WorkspaceKind, WorkspaceSubtype), WorkspaceTag::Name, WorkspaceTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(CurveKind, FadeInCurveSubtype), FadeInCurveTag::Name, FadeInCurveTag::FromOwner);
+    TObjectIds::register_tag(TObjectIds::make_tag(CurveKind, FadeOutCurveSubtype), FadeOutCurveTag::Name, FadeOutCurveTag::FromOwner);
     // A clip id travels as item data in a drag from the resources window: the
     // stream of a QVariant names its type, which the reading side must know
     qRegisterMetaType<ClipId>();

@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 #include "TAudioTrack.h"
 #include "TAudioDeviceClient.h"
 #include "TProject.h"
+#include "TFadeCurve.h"
 #include "TSheet.h"
 #include "TWorkspace.h"
 #include "TProjectFileConversion3To4.h"
@@ -63,6 +64,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA.
 // joins when TAudioMixerTrack exists
 static_assert(objects_fit<TrackTag, AudioTrackTag, BusTrackTag, SongMasterTag, ProjectMasterTag, BounceTrackTag>());
 static_assert(objects_fit<ClipTag, AudioClipTag>());
+static_assert(objects_fit<CurveTag, FadeInCurveTag, FadeOutCurveTag>());
 
 #include "qapplication.h"
 #include "qthread.h"

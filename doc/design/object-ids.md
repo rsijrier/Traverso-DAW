@@ -172,7 +172,7 @@ from the counter: its id is derived from the owner.
 | Object | Id |
 |---|---|
 | Song master, project master, bounce track | derived (owner: song or project) |
-| Gain curve, fade-in, fade-out of a clip or track | derived (owner: clip or track) |
+| Gain curve, fade-in, fade-out of a clip or track (gain curves with T108; the bounce track has none) | derived (owner: clip or track) |
 | Ruler | derived (owner: song) |
 | Plugin chain | derived (owner: clip or track) |
 | Tracks, clips, plugins, markers, sends, automation lanes per parameter | counter |
@@ -192,6 +192,15 @@ derived id = [ kind of the role | subtype of the role | the owner's sequence num
 - The 48 bits are not divided further: the number has one meaning.
 - Unique: only one role uses a subtype, and each owner's number is unique. A
   derived id never meets one from the counter, its subtype is its own.
+- One sequence for all kinds: a clip 7 and a track 7 never exist together, so
+  `[5|1|7]` names one curve. The factory asserts it where it adds a counter id
+  (a number used twice) and where it adds a derived one (an id made twice).
+- An owner that is itself derived shares its number: the song master and the
+  bounce track both have the song's number `s`. Where two derived owners share
+  a number, their derived objects in the same role need different subtypes.
+  The bounce track has no gain curve (Remon 2026-11-11), so no gain curve
+  meets this now. `tests/core/test_derived_ids.cpp` builds every kind of
+  derived object next to counter owners and checks that no id is made twice.
 - A derived object has no function to change its owner.
 
 In branch `object-ids` the masters and the bounce track are derived; the
@@ -256,7 +265,12 @@ Remon, 2026-11-08).
 | | 5 | `BounceTrackTag` | `TBounceTrack` | derived |
 | 4 clip | all | `ClipTag` | `TClip` | |
 | | 1 | `AudioClipTag` | `TAudioClip` | counter |
-| 5 curve | gain, fade-in, fade-out, automation | | `TCurve` | gain and fades derived from their clip or track; automation counter, owner its track |
+| 5 curve | all | `CurveTag` | `TContextItem` (`TCurve` and `TFadeCurve` share no other base) | |
+| | 1 | (no tag yet) | `TCurve` of a clip's or track's fader | derived `[5|1|owner]` (project master `[5|1|0]`); with T108 |
+| | 2 | `FadeInCurveTag` | `TFadeCurve` | derived from its clip |
+| | 3 | `FadeOutCurveTag` | `TFadeCurve` | derived from its clip |
+| | 4 | (no tag yet) | an automation `TCurve` of a plugin port | counter, saved; with T108 |
+| | 5 | not used | | the bounce track has no gain curve |
 | 6 marker | 1 | | `TTimeLineMarker` | counter, owner its ruler |
 | 7 send | 1 | | `TSend` | counter, owner its track; its target is a track |
 | 8 audio source | 1 | | the source (resources manager) | counter, owner the project |

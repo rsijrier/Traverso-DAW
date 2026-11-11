@@ -1117,6 +1117,17 @@ From the GPU waveform test program, clip edges in variant A (branch
   `TProject`, resources manager and io schedulers. Then the edit test of
   `TSplitEdit` with a real sheet (Dummy driver, `test_audio_device`
   pattern). Likely makes T101 (a testable `TShortCutManager`) easier too.
+  **With it, the ids of gain and automation curves** (Remon 2026-11-11, from
+  the id branch, which does not touch plugins): the owner (clip, audio track,
+  bus track, song master, project master) makes its gain curve with a derived
+  id `[5|1|owner]` (project master `[5|1|0]`) and hands it to its fader
+  (`GainEnvelope::set_curve()`, Q2); the port's saved state fills the existing
+  curve, which ends the second curve per fader and its leak (F2). Remon asks:
+  why not through the plugin's own `set_state()` at the load; if it must come
+  from outside, a narrow named function, not the whole port `set_state()`
+  public. The bounce track has no gain curve. Automation curves (several per
+  owner) get counter ids. The work as first built:
+  `reports/new-ids-2026-11-07/c10-full-2026-11-11.patch`.
 - **T109 The gain curve of the right piece of a split is wrong** (Remon,
   2026-11-07, runtime test of `split-edit` step 0; also on d9728974, before
   `tclip`): its nodes stand at the wrong place. The gain curve of a clip has
