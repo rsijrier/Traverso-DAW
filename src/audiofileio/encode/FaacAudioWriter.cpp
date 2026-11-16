@@ -95,7 +95,11 @@ TAudioFileStatus FaacAudioWriter::open(const QString& fileName)
 
 #if defined(FAAC_VERSION_MAJOR) && (FAAC_VERSION_MAJOR >= 1)
 	faac_params params;
+#if FAAC_VERSION_MAJOR >= 2
+	faac_status st = faac_params_init(&params, sizeof(params));
+#else
 	faac_status st = faac_params_init(&params);
+#endif
 	if (st != FAAC_OK) {
 		why = QStringLiteral("AAC: faac_params_init failed: %1").arg(QString::fromUtf8(faac_strerror(st)));
 		fclose(m_fid);
