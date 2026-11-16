@@ -34,7 +34,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # 1. Platform-Specific Audio Backend Defaults
 # ---------------------------------------------------------------------------
 if(APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE STRING "Minimum macOS version" FORCE)
+    # libc++ implements std::format for floating point via std::to_chars, which
+    # is only available from macOS 13.3; the Qt 6 frameworks we link against
+    # already require macOS 14.4.
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 14.4 CACHE STRING "Minimum macOS version" FORCE)
 
     set(DEFAULT_WANT_ALSA OFF)
     set(DEFAULT_WANT_JACK OFF)

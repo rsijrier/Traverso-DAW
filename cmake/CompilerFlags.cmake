@@ -82,11 +82,15 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "[Dd]ebug" AND NOT WANT_DEBUG)
     )
 
     # 4. Debian Security Hardening - Linker Security Guards
-    target_link_options(traverso_compiler_settings INTERFACE
-        "LINKER:-z,relro"           # Enforce Read-Only Relocations to secure GOT assignment scopes
-        "LINKER:-z,now"             # Trigger immediate binding to eliminate runtime GOT exploitation vectors
-        "-pie"                      # Enforce dynamic address space randomization execution mapping
-    )
+    # -z relro / -z now are ELF linker options; ld64 on macOS rejects them
+    # (Xcode already maps __DATA_CONST read-only in the default layout).
+    if(NOT APPLE)
+        target_link_options(traverso_compiler_settings INTERFACE
+            "LINKER:-z,relro"           # Enforce Read-Only Relocations to secure GOT assignment scopes
+            "LINKER:-z,now"             # Trigger immediate binding to eliminate runtime GOT exploitation vectors
+            "-pie"                      # Enforce dynamic address space randomization execution mapping
+        )
+    endif()
 
     # 5. Link Time Optimization (LTO)
     include(CheckIPOSupported)
